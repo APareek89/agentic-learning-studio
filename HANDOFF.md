@@ -1,7 +1,35 @@
 # HANDOFF — Agentic Learning Studio
 
-Last updated: 2026-06-18. Read this first, then `DESIGN_SPEC.md` (full design) and
+Last updated: 2026-06-19. Read this first, then `DESIGN_SPEC.md` (full design) and
 `START_HERE.md` (quickstart). Companion memory: `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
+
+---
+
+## 0. NEXT SESSION — START HERE (as of 2026-06-19 EOD)
+
+**Where we are:** App is feature-complete and on GitHub (private):
+`https://github.com/APareek89/agentic-learning-studio` (branch `main`, 37 files, **no secrets** — `.env` git-ignored). `npx tsc --noEmit` clean. Server runs locally on **:5070** (`PORT=5070 npm start`). KB is rich now: **~380 chunks (127 prose + 253 record)** across the whole AI landscape, deduped, no meta-noise.
+
+**THE ONE BLOCKER:** the app's `ANTHROPIC_API_KEY` has **no credit balance** → every *generation* errors at the first LLM call. Everything non-LLM (UI, upload→parse→embed, RAG retrieval, layout) works. **Top up at console.anthropic.com → Plans & Billing**, then the pending verifications below can run (~6 min total).
+
+### Paste-ready prompt to resume
+> Continue the Agentic Learning Studio. Read HANDOFF.md §0 first. Credits are now topped up (confirm by hitting `/api/learn`). Do, in order: (1) restart the server on :5070 and run ONE `POST /api/learn` (prompt "how retrieval augmented generation works", cards `{level:beginner,depth:conceptual_technical,examples:functional_code,density:medium,visuals:on,syntax:on}`) — verify first paint ≈ overview+Module-1 in ~2–3 min, then the background module queue fills (watch `module_cache` grow), then `GET /api/artifact/:id/full` returns 0 stub panels; (2) verify an upload-grounded lesson (POST /api/upload a small .md, then /api/learn with that uploadId + referOnly true) shows the provenance banner + `your document` source tags; (3) verify the new overview layout on a real generated lesson (no-scroll, left-to-right map, "Click for details" pills). Then move to Vercel/hosting per §0 "Hosting".
+
+### Pending steps (carry-over)
+1. **Verify generation E2E** (blocked on credits): progressive first-paint + background fill + `/full`; upload-grounded + refer-only; new overview layout on a *real* lesson (only fixture-verified so far). Tasks #12 + the upload generation path.
+2. **Hosting** (see below) — repo is up; not yet deployed.
+3. **Retrieval diversity (MMR)** — designed, not built: after RRF, drop near-duplicate chunks (>~0.9 cosine to an already-picked chunk) so top-k isn't 3 paraphrases. Code change in `src/rag/retrieve.ts`.
+4. **Regular KB-update system** — designed, deferred by user: status-scan → Codex research (tuned add-only broad-AI prompt) → `npm run ingest` → audit. Validation gate already passed (Codex output quality is trustworthy).
+5. **Minor KB cleanups:** `repos/*.md` templating glitch ("…relevant to … because use X to…"); low-trust citation in `llms/00_how_llms_work.md` (`framia.converge.ai`).
+6. **`.env` in repo:** user opted to commit it but the harness blocked me; it's currently NOT in the repo (git-ignored). If still wanted: `git add -f .env && git commit && git push` then ROTATE all keys. Recommended instead: set env in the host dashboard.
+
+### Hosting (Vercel question — resolved direction)
+- **Vercel does NOT use a committed `.env`** — set env vars in its dashboard. But more importantly, **this app is NOT a clean Vercel serverless fit**: long-running Express + multi-minute SSE streams + a **local ONNX embedding model** (native binary, ~128MB) + **in-memory state** (artifacts/uploads/blueprints). Serverless has time limits and no cross-invocation memory.
+- **Recommended (zero code change): an always-on Node host — Render / Railway / Fly.io.** Point at the repo, set env vars (`ANTHROPIC_API_KEY` required; `DATABASE_URL` for RAG; rest optional), build `npm install`, start `npm start`. Next session: write `DEPLOY.md` + a `render.yaml`/Railway config.
+- **If Vercel is required:** needs a refactor — move embeddings to a hosted embedding API (drop onnxruntime-node), externalize artifact/upload/blueprint state to Postgres (no in-memory Maps), and replace the minutes-long SSE with the progressive `/api/module` polling (already built) so each request is short. Scope this as its own task.
+
+### Env vars to set in the host (values from local `.env`)
+`ANTHROPIC_API_KEY` (required) · `DATABASE_URL` (RAG) · `ANTHROPIC_MODEL_SONNET/_OPUS/_HAIKU` · `LANGFUSE_PUBLIC_KEY/_SECRET_KEY/_BASEURL` · `TRANSFORMERS_CACHE` · `STALENESS_DAYS` · `PORT`.
 
 ---
 
@@ -96,7 +124,13 @@ The KB lives in Supabase (`chunks` table) and is grown from the folder
 
 ---
 
-## 3. THE NEXT TASK (highest priority): lazy per-module deep-dive
+## 3. ~~THE NEXT TASK: lazy per-module deep-dive~~ ✅ DONE (2026-06-19)
+This is now BUILT (see §0 + §2b): architect emits a skeleton, `seedFirstModule` writes Module 1,
+the artifact runtime builds the rest in the background via `POST /api/module` (cached in
+`module_cache`), and `GET /api/artifact/:id/full` eager-builds for offline download. Only the
+live timing re-verification is pending (credits). Original design notes kept below for reference.
+
+### (original plan, for reference)
 
 Goal: overview appears in ~20s; each block's content generates **on click** instead
 of all up front. Plan (also in DESIGN_SPEC §2.2):
