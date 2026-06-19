@@ -1,0 +1,222 @@
+# HANDOFF — Agentic Learning Studio
+
+Last updated: 2026-06-18. Read this first, then `DESIGN_SPEC.md` (full design) and
+`START_HERE.md` (quickstart). Companion memory: `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
+
+---
+
+## 1. What this app is
+
+Tab 1 "Learning" generates, on demand, a **self-contained interactive HTML lesson**
+about any agentic-AI topic — mental-map-first, click-a-block-to-go-deeper,
+an `(i)` popover on every term, personalized, and RAG-grounded with citations.
+Replaces video with structured reading. Tab 2 = "Build a project" = **coming-soon stub**.
+
+Stack: TypeScript · LangGraph.js · LangChain · Claude (ChatAnthropic) ·
+Supabase (Postgres + pgvector) · local Transformers.js embeddings · Express + SSE ·
+vanilla front-end. Reuses patterns from the sibling `../seo-insights-agent` project.
+
+**Core design invariant:** the model emits a **Blueprint (JSON) only** — never HTML/JS.
+A deterministic renderer (`src/render/*`) turns the Blueprint into the page. That's
+why the interactivity, (i) terms, and 27 learner variants always work.
+
+---
+
+## 2. Current status — WORKS END TO END ✅
+
+Run it: `cd agentic-learning-studio && npm run dev` → http://localhost:5070
+(port 5070; 5060 is Chrome-blocked). Type a prompt, optionally pick the starter
+cards (Level / Depth / Examples / **Text density** + **Visuals** / **Explain syntax**),
+click **Generate lesson**.
+
+Verified working:
+- **Generation pipeline:** `profiler → retriever → architect → seedFirstModule → composer`, streamed over SSE.
+- **Lesson layout (2026-06-19):** topbar is now Overview(left) · title(center, 17px bold) · controls(right: toggles+progress+theme) via `.tb-left/.tb-center/.tb-right`. Overview `.shell` widened to `min(1240px,94vw)` and map cards to `flex 1 1 240px` so the mental map fills the screen; workbench `#blockmain` widened to 1000px with prose capped at 760px so wide blocks (matrix/code/viz) use the space but reading stays comfortable. Verified by local render fixture (`renderArtifact` is pure — no LLM needed).
+- **Document upload + provenance (2026-06-19):** learner can upload pdf/docx/md/txt/html/json + code files on the landing page. `POST /api/upload` (base64 JSON → tmp file → `loaders.loadSource` → chunk → embed LOCALLY → `lib/uploads.ts` in-memory **session** registry; never written to the shared KB). Front-end keeps docIds for the session (reusable across lessons, cleared on refresh) + a **"Refer only these"** toggle. `/api/learn` takes `{uploadIds, referOnly}`; the `retriever` + `runDeepDive` put upload chunks (`U#`) FIRST, append KB (`S#`) unless referOnly; prompts instruct "prefer [U#]". A **provenance banner** (from `meta.usedUpload/referOnly/uploadTitles`) tells the reader what came from where; Sources tags `your document` vs `knowledge base`. Citation kind gained `"upload"`. New: `lib/uploads.ts`, `/api/upload`, loaders text/code exts, `moduleCacheKey` already combo-keyed. **VERIFIED (no-LLM):** upload→parse→chunk→embed→`retrieveFromUploads` (sim 0.56), provenance banner + tags render. **PENDING (blocked: API credits):** full lesson generation grounded in an upload + refer-only end-to-end.
+- **Progressive generation (2026-06-19) — overview + Module 1 first, rest build in background:**
+  - `architect` now emits a SKELETON only (`SKELETON_SYSTEM`, `skeletonLLM` maxTokens **16000** — 8000 truncated once what/relevance+glossary+synthesis were added): mental map + module STUBS (`blocks:[]`, `loadState:"stub"`) + glossary + synthesis. New node `seedFirstModule` calls `runDeepDive()` to write Module 1's blocks. `composer` renders Module 1 full + the rest as `is-stub` "🛠 building…" panels and stores the Blueprint with the artifact.
+  - `runDeepDive(bp, moduleId)` (in `nodes.ts`, exported): focused `retrieve(title+terms, 6)` → compose blocks (`MODULE_SYSTEM`+`moduleUserPrompt`, `moduleLLM` streaming) → repair → mutate bp (`loadState:"full"`). Used for Module 1 AND lazily.
+  - `POST /api/module {artifactId,moduleId}` (server): `module_cache` hit (`moduleCacheKey`, now keyed incl. density/visuals/syntax) → instant; else `runDeepDive` → `renderModuleFragment` → cache → refresh stored html.
+  - The artifact's **own runtime** drives a **sequential** background queue over the stub ids (reads artifactId from its `/api/artifact/<id>` URL), injects each fragment + `hydrate(panel)`, flips nav building→ready; clicking a building chapter **reprioritizes** it; failures → "tap to retry".
+  - `GET /api/artifact/:id/full` eager-builds every remaining module (bounded re-check loop to beat the browser-queue race on the shared in-memory bp) → complete offline file. The Download button points here.
+  - **VERIFIED LIVE (before API credits ran out):** skeleton→Module-1-full + 4 stub panels/nav; `POST /api/module` cold 50s (built+cached) & warm 0s (cache hit); `module_cache` writes. **PENDING re-verify (blocked: Anthropic credit balance exhausted mid-test):** the `/full` bounded-retry fix, the trimmed-skeleton timing, and browser progressive-fill. First paint measured **~216s** before the skeleton trim (slower than the ~75s target — skeleton glossary+synthesis dominate); the trim is in but unmeasured.
+- **Generation pipeline (legacy single-call):** was `profiler → retriever → architect → composer`, streamed over SSE.
+- **Truncation fix (2026-06-19):** the single architect call was hitting `maxTokens:16000`
+  (`stop_reason:"max_tokens"`) → invalid tool JSON → "First draft was incomplete" and a
+  failed lesson. Fixed by raising the architect cap to **32000 + `streaming:true`**
+  (the Anthropic SDK refuses a *non-streaming* request whose max_tokens could exceed 10 min —
+  see Gotchas). `makeLLM` now takes a `streaming` opt. Files: `agent/llm.ts`, `agent/nodes.ts`.
+- **6 lesson-experience controls (2026-06-19):**
+  - **Text density** (Low/Med/High) — landing card → `profile.density` → architect prose sizing.
+  - **Visuals & demos** (landing toggle) → `profile.visualsRequested`; when on, architect adds
+    interactive **data-only** blocks: `interactiveScatter` / `interactiveSlider` / `steppedFlow`
+    (renderer+runtime own the SVG/JS, generalized from `~/Documents/rag-explained.html`).
+  - **Explain syntax** (landing toggle) → `profile.explainSyntax`; codeExample blocks carry a
+    `syntax[]` breakdown, revealed by the in-lesson "Explain syntax" toggle.
+  - **In-lesson toggles** (artifact top bar, instant CSS show/hide, no regen): Concept / Functional
+    / Code (`body.hide-*` + `b-concept/b-funcex/b-code` classes) + Explain-syntax (`body.show-syntax`).
+    Each renders only if that content exists.
+  - **Richer mental map:** each MapNode now carries `what` + `relevance`, rendered as info cards.
+  - Files: `render/schema.ts` (profile fields, `codeExample.syntax`, MapNode `what`/`relevance`,
+    3 new block kinds), `agent/prompts.ts` (DENSITY/VISUALS/SYNTAX/mental-map rules + VISUAL
+    REPRESENTATION GUIDE), `agent/nodes.ts`+`agent/state.ts` (card→profile wiring),
+    `render/components.ts` + `render/tokens.ts` + `render/runtime.ts` (render+CSS+hydration),
+    `public/{index.html,app.js,styles.css}` (landing controls). Verified heavy (all on, 86KB,
+    all 3 visuals) + light (low, opt-outs honored) E2E, no truncation.
+- **Fix 1 (scope/intent fidelity):** "overview of agentic frameworks" now produces a
+  FRAMEWORK COMPARISON (LangGraph/CrewAI/AutoGen/LangChain/OpenAI SDK/LlamaIndex +
+  a head-to-head decision matrix), not generic agent concepts. Done via prompt
+  (Profiler extracts `learningGoal`/`lessonFocus`/`mustCover`; Architect mirrors the ask). **RAG did NOT fix this — the prompt did.**
+- **Fix 2 (layout):** the artifact shows an OVERVIEW (hero + clickable mental map of
+  broad blocks) first; clicking a block enters the WORKBENCH = left nav of block
+  buttons + right content panel, with "← Overview".
+- **Fix 3 (RAG):** hybrid vector+keyword retrieval over Supabase, grounded + cited,
+  with graceful fallback to the model's own knowledge. KB already ingested
+  (247 framework records → 260 chunks).
+- **Robustness:** `repairBlueprint()` deterministically fixes mechanical gate failures
+  (no slow LLM repair loop); decision-matrix cells are an ARRAY (model-reliable).
+
+### KNOWN ISSUE — latency ~3–4 min (the #1 next task)
+Generating a full rich lesson in one Sonnet call is ~13k output tokens (~230s).
+Clients can time out (use `--max-time 280`+ when testing via curl).
+
+---
+
+## 2b. Knowledge base / RAG corpus (state as of 2026-06-19)
+
+The KB lives in Supabase (`chunks` table) and is grown from the folder
+`/Users/anandpareek/Documents/AI Knowledge base` via `npm run ingest -- "<that path>"`
+(idempotent, embeds LOCALLY with bge-small — **no Anthropic credits needed**).
+
+- **Current corpus: ~405 chunks (139 prose + 266 record).** Was 260 (catalog-heavy, almost no prose) at the start of the day.
+- **Expanded today (broad AI, not just agentic):** a first hand-built batch of 6 cited docs, then a large Codex research batch (~35 files) — domain docs across `foundations/ classic-ml/ deep-learning/ llms/ generative/ rag/ agentic/ eval/ safety/ infra/ ecosystem/`, 18 `repos/*.md` deep-dives, and `catalog/ai_tools.json` (19 records). All carry `Last updated` + a `## Sources` section with real primary-source URLs. Retrieval verified across new domains (coverage 0.83–0.90).
+- **Validation done (gate before automating updates):** structure + citations + spot-checked accuracy all hold up; Codex respected add-only (left the 6 hand-built docs untouched, logged in `catalog/2026-06-19_expansion_manifest.json`).
+- **Open items:** (1) `CONFIG_Research_Plan_for_AI_Knowledge_Base.docx` is a PLANNING artifact, not learning content — its 11 ingested chunks are retrieval noise; **recommend excluding** (delete-by-source_id + add to ingest ignore-list). (2) `repos/*.md` have a cosmetic templating glitch ("…relevant to … because use X to…"). (3) `llms/00_how_llms_work.md` cites a low-trust source (`framia.converge.ai`) for a model context-window claim — swap for an official source.
+- **To grow the KB:** the tuned, add-only, broad-AI **Codex prompt** is the generation step; then `npm run ingest`. A recurring "regular update" system (status scan → Codex research → ingest → audit) is DESIGNED but NOT built — deferred by the user ("plan it later"); validation of this first set was the gate to green-light it.
+
+---
+
+## 3. THE NEXT TASK (highest priority): lazy per-module deep-dive
+
+Goal: overview appears in ~20s; each block's content generates **on click** instead
+of all up front. Plan (also in DESIGN_SPEC §2.2):
+1. Architect produces only the **skeleton** (meta, mentalMap, module stubs with
+   summary/objectives/decisionItForces/termIds, glossary, synthesis, citations,
+   `blocks:[]`, `loadState:"stub"`). Fast (~30–50s).
+   - NOTE: a two-phase "skeleton + parallel module bodies" was tried and REVERTED —
+     the parallel module calls got rate-limited/serialized and were SLOWER, plus a
+     bad block dropped a whole module. If you re-attempt parallel, cap concurrency
+     and parse blocks resiliently (don't lose a module on one bad block).
+2. New `POST /api/module` route + a `deepDive(moduleId)` sub-graph: retrieve focused
+   chunks for that module, generate its `blocks[]` (small fast call), cache in the
+   `module_cache` table keyed by `moduleCacheKey()` (already in `src/lib/hash.ts`).
+3. Front-end: the artifact's runtime fetches block content on first open of a nav
+   item. BUT a downloaded standalone HTML can't call the server — so add a
+   **"Generate full lesson for download"** button that eagerly fills all modules,
+   preserving the offline-complete artifact.
+
+After that: optional LLM critic, web-search + daily-scan stubs (Step 10), and more
+KB docs as Codex fills `~/Documents/AI Knowledge base`.
+
+---
+
+## 4. File map (what's where)
+
+```
+src/
+  server.ts                 Express + SSE. POST /api/learn (runs the graph),
+                            GET /api/artifact/:id (+/download). Boot logs env status.
+  agent/
+    state.ts                GraphState (Annotation.Root) + Intent + RetrievedSource types
+    llm.ts                  makeLLM(tier, temp, {maxTokens}) — sonnet/opus/haiku + top_p fix
+    prompts.ts              PROFILER_SYSTEM, ARCHITECT_SYSTEM (intent-fidelity + grounding),
+                            architectUserPrompt(). (SKELETON_SYSTEM/MODULE_SYSTEM exist but
+                            are UNUSED right now — leftovers from the reverted two-phase.)
+    nodes.ts                profiler, retriever, architect (single call), composer
+    graph.ts                START→profiler→retriever→architect⟲(repair)→composer→END
+  rag/
+    embed.ts                bge-small-en-v1.5 local (384-dim); embedQuery vs embedPassages
+    loaders.ts              pdf/docx/md/txt/html/json(catalog or prose)/csv loaders
+    chunkers.ts             record chunker (1/repo) + prose chunker (~320 words, 60 overlap)
+    store.ts                idempotent embed+upsert (content_hash skip)
+    retrieve.ts             hybrid vector+tsvector RRF + coverage score (+ date→string coercion)
+    ingest.ts               CLI: npm run ingest -- "<path>"
+    embed.test.ts           npm run embed:test (verifies the local model)
+  render/
+    schema.ts               Blueprint Zod + validateBlueprint() (7 gates, gate2=warning)
+                            + repairBlueprint() (deterministic mechanical fixes)
+    components.ts           renderBody(): overview + workbench; all block renderers
+    tokens.ts               ARTIFACT_CSS (light+dark, workbench/nav/panel, 27-combo gates)
+    runtime.ts              RUNTIME_JS (overview↔workbench, (i) popovers, quiz, theme, progress)
+    index.ts                renderArtifact(bp) → one self-contained HTML string
+  lib/
+    db.ts                   pg pool + dbEnabled()/ragEnabled()/query()/rawPool()
+    artifacts.ts            in-memory artifact store (id → html)
+    langfuse.ts             makeLangfuseHandler() (null when keys absent)
+    hash.ts                 sha256, contentHash, topicHash, moduleCacheKey
+  types/declarations.d.ts   ambient decl for pdf-parse
+supabase/migrations/0001_rag.sql   documents, chunks(vector(384)+HNSW+tsvector), glossary,
+                                    generations, module_cache, kb_updates
+scripts/migrate.mjs         npm run migrate (globs migrations/*.sql)
+public/{index.html,styles.css,app.js}   tabbed shell, landing (icon cards), 30/70 + iframe viewer
+```
+
+---
+
+## 5. Gotchas (all hit + resolved — don't re-discover these)
+
+- **Port 5070**, not 5060 (Chrome blocks 5060 = SIP → ERR_UNSAFE_PORT).
+- **Corp MITM:** Claude API + Hugging Face model download need
+  `NODE_EXTRA_CA_CERTS="/Users/anandpareek/Documents/SEO content Skill/scripts/system-ca-bundle.pem"`.
+- **Supabase = same project as seo-insights-agent** (`kchrkdatcdxwyugurmws`). Connection
+  string is the **Session pooler** (IPv4); the direct `db.<ref>` host is IPv6-only and
+  won't resolve here. `.env` already has the working DATABASE_URL (copied from the SEO project).
+- **`.env` already populated** (ANTHROPIC_API_KEY, DATABASE_URL, LANGFUSE_*). Only
+  ANTHROPIC_API_KEY is strictly required; everything else is graceful-optional.
+- **pdf-parse:** import `"pdf-parse/lib/pdf-parse.js"` (not `"pdf-parse"`) to skip its debug self-test.
+- **onnxruntime-node** prints a benign `mutex lock failed` on forced `process.exit()` in
+  CLI scripts (embed.test, ingest). Harmless; never affects the long-running server.
+- **pg returns `date` columns as JS Date objects** → must coerce to YYYY-MM-DD strings
+  (CitationSchema wants a string). Done in retrieve.ts.
+- **decisionMatrix cells = ARRAY** of `{criterion,text,rating}`, NOT a record. A
+  record-keyed-by-dynamic-criterion shape malforms and (because blocks parse
+  all-or-nothing) drops the whole module. Keep it an array.
+- **Architect latency + token cap:** single call, now **maxTokens 32000 + streaming:true**.
+  A grounded beginner·both·both·high lesson runs ~18–22k output tokens; below ~16k it
+  truncates (`stop_reason:"max_tokens"` → invalid tool JSON → "First draft was incomplete").
+  Two-phase parallel was slower — see §3.
+- **Anthropic SDK "Streaming is required":** a NON-streaming request whose `max_tokens` is
+  large enough to possibly exceed 10 min is rejected up front by the SDK. So the big architect
+  call MUST set `streaming:true` (via `makeLLM(..., {streaming:true})`). `withStructuredOutput`
+  still aggregates the streamed tool-call into one parsed object — node logic unchanged.
+- **`grep syntax-panel` over an artifact counts CSS selectors too** (8 in `tokens.ts`), so real
+  syntax panels = matches − 8. Don't mistake the CSS for rendered panels when verifying opt-out.
+- **Restarting:** kill stale servers by port first: `lsof -ti tcp:5070 | xargs kill -9`.
+
+---
+
+## 6. Quick verification recipe
+
+```bash
+cd /Users/anandpareek/Documents/agentic-learning-studio
+export NODE_EXTRA_CA_CERTS="/Users/anandpareek/Documents/SEO content Skill/scripts/system-ca-bundle.pem"
+npx tsc --noEmit                      # must be clean
+lsof -ti tcp:5070 | xargs kill -9 2>/dev/null
+PORT=5070 npm start > /tmp/als.log 2>&1 &   # then open http://localhost:5070
+# CLI smoke test (give it time — generation is slow):
+curl -s -N -X POST http://localhost:5070/api/learn -H 'Content-Type: application/json' \
+  -d '{"prompt":"compare agentic frameworks","cards":{"level":"intermediate","depth":"conceptual_technical","examples":"functional_code"}}' \
+  --max-time 300
+# Inspect: the streamed `artifact` event has an id; GET /api/artifact/<id> is the lesson HTML.
+```
+Expect: Profiler says "I'll compare the options", Retriever pulls ~8 notes (~86%),
+Architect builds 5 modules, Composer returns an artifact. The HTML should contain
+`class="dm"` (decision matrix), `class="term-chip"` (i-terms), `class="quiz"`.
+
+---
+
+## 7. Decisions already locked (don't re-litigate)
+Stack = continue TS/LangGraph/Claude/Supabase. Embeddings = free local bge-small
+(384-dim), pluggable. Web search = stubbed (add later). Output = Blueprint→template
+(covers all 27 combos via body[data-*] CSS). Supabase = reuse existing project.
+Single-user/local for now. Example to beat: `../agentic-architect-trainer/index.html`.
