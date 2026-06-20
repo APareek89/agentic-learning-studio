@@ -27,6 +27,7 @@ import { extname } from "node:path";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
 import { addUpload } from "./lib/uploads";
+import { authEnabled, verifyToken, bearerFrom } from "./lib/auth";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -49,10 +50,39 @@ function sseSend(res: express.Response, event: string, data: unknown): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
+/**
+ * requireAuth — gate the generation endpoints behind a Supabase session. No-op when
+ * auth isn't configured (local dev / open mode), so the app still runs with zero
+ * auth setup. The front-end sends `Authorization: Bearer <access_token>`.
+ */
+async function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
+  if (!authEnabled()) {
+    next();
+    return;
+  }
+  const token = bearerFrom(req.headers.authorization);
+  const user = token ? await verifyToken(token) : null;
+  if (!user) {
+    res.status(401).json({ error: "Please sign in to continue." });
+    return;
+  }
+  (req as express.Request & { user?: typeof user }).user = user;
+  next();
+}
+
+// Public config the browser needs to wire up Supabase Auth (anon key is public).
+app.get("/api/config", (_req, res) => {
+  res.json({
+    authEnabled: authEnabled(),
+    supabaseUrl: process.env.SUPABASE_URL ?? "",
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+  });
+});
+
 // ----------------------------------------------------------------------------
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
-app.post("/api/learn", async (req, res) => {
+app.post("/api/learn", requireAuth, async (req, res) => {
   const { prompt, cards, threadId, uploadIds, referOnly } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
@@ -136,7 +166,7 @@ app.get("/api/artifact/:id/download", (req, res) => {
 // The artifact's own runtime calls this for each still-stub module (background
 // queue + click-to-prioritize). Returns the rendered fragment to inject.
 // ----------------------------------------------------------------------------
-app.post("/api/module", async (req, res) => {
+app.post("/api/module", requireAuth, async (req, res) => {
   const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
   const art = artifactId ? getArtifact(artifactId) : undefined;
   const bp = art?.blueprint;
@@ -222,7 +252,7 @@ app.get("/api/artifact/:id/full", async (req, res) => {
 // it LOCALLY (no API), keep it in the in-memory upload store, return its id. The
 // front-end remembers ids for the session and passes them to /api/learn.
 // ----------------------------------------------------------------------------
-app.post("/api/upload", async (req, res) => {
+app.post("/api/upload", requireAuth, async (req, res) => {
   const { filename, dataBase64 } = (req.body ?? {}) as { filename?: string; dataBase64?: string };
   if (!filename || !dataBase64) {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
@@ -261,7 +291,8 @@ const server = app.listen(PORT, () => {
   console.log(`  ANTHROPIC_API_KEY : ${process.env.ANTHROPIC_API_KEY ? "set" : "MISSING (required for real generation)"}`);
   console.log(`  Database (RAG)    : ${dbEnabled() ? "on" : "off (graceful — runs without retrieval)"}`);
   console.log(`  ragEnabled()      : ${ragEnabled()}`);
-  console.log(`  Langfuse tracing  : ${process.env.LANGFUSE_PUBLIC_KEY ? "on" : "off"}\n`);
+  console.log(`  Langfuse tracing  : ${process.env.LANGFUSE_PUBLIC_KEY ? "on" : "off"}`);
+  console.log(`  Sign-in (Supabase): ${authEnabled() ? "REQUIRED (auth on)" : "off (open — set SUPABASE_URL+SUPABASE_ANON_KEY to require sign-in)"}\n`);
 });
 
 // ----------------------------------------------------------------------------

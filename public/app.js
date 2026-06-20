@@ -77,7 +77,7 @@ fileInput.addEventListener("change", async () => {
       const dataBase64 = await fileToBase64(file);
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ filename: file.name, dataBase64 }),
       });
       const data = await res.json();
@@ -156,7 +156,7 @@ async function startGeneration() {
   try {
     const res = await fetch("/api/learn", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({
         prompt,
         cards: selectedCards,
@@ -164,6 +164,7 @@ async function startGeneration() {
         referOnly: referChk.checked,
       }),
     });
+    if (res.status === 401) { authOverlay.hidden = false; throw new Error("Please sign in to continue."); }
     if (!res.ok || !res.body) throw new Error("Request failed: " + res.status);
 
     await readSse(res.body, (event, data) => {
@@ -265,3 +266,99 @@ function mdLite(s) { return escapeHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$
 function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+// ============================================================================
+// Supabase Auth — gates generation when configured (SUPABASE_URL+ANON_KEY set
+// on the server); fully open otherwise so local dev needs no auth. The browser
+// gets the public anon key from /api/config, manages the session client-side,
+// and sends the access token as a Bearer header on gated requests.
+// ============================================================================
+let sb = null;
+let accessToken = null;
+let authMode = "signin";
+const authOverlay = document.getElementById("auth-overlay");
+const authLoading = document.getElementById("auth-loading");
+const authForm = document.getElementById("auth-form");
+const authTitle = document.getElementById("auth-title");
+const authSub = document.getElementById("auth-sub");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authMsg = document.getElementById("auth-msg");
+const authSubmit = document.getElementById("auth-submit");
+const authSwitchText = document.getElementById("auth-switch-text");
+const authToggle = document.getElementById("auth-toggle");
+const logoutBtn = document.getElementById("logout");
+const authWho = document.getElementById("auth-who");
+
+// Hoisted so the gated fetches above can use it regardless of auth state.
+function authHeaders() {
+  return accessToken ? { Authorization: "Bearer " + accessToken } : {};
+}
+function showAuthMsg(text, kind) {
+  authMsg.hidden = !text;
+  authMsg.textContent = text || "";
+  authMsg.className = "auth-msg" + (kind ? " " + kind : "");
+}
+function setAuthMode(mode) {
+  authMode = mode;
+  const signup = mode === "signup";
+  authTitle.textContent = signup ? "Create your account" : "Sign in";
+  authSub.textContent = signup ? "Sign up to start generating lessons." : "Sign in to generate lessons.";
+  authSubmit.textContent = signup ? "Create account" : "Sign in";
+  authSwitchText.textContent = signup ? "Already have an account?" : "New here?";
+  authToggle.textContent = signup ? "Sign in" : "Create an account";
+  authPassword.autocomplete = signup ? "new-password" : "current-password";
+  showAuthMsg("");
+}
+function applySession(session) {
+  accessToken = (session && session.access_token) || null;
+  const email = (session && session.user && session.user.email) || "";
+  authOverlay.hidden = !!accessToken; // hide the gate once signed in
+  if (logoutBtn) logoutBtn.hidden = !accessToken;
+  if (authWho) { authWho.hidden = !accessToken; authWho.textContent = email; }
+}
+
+async function bootAuth() {
+  let cfg;
+  try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
+  if (!cfg.authEnabled) { authOverlay.hidden = true; return; } // open / local-dev mode
+  if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
+    authLoading.textContent = "Sign-in is misconfigured — check SUPABASE_URL / SUPABASE_ANON_KEY.";
+    return;
+  }
+  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  authLoading.hidden = true;
+  authForm.hidden = false;
+  setAuthMode("signin");
+
+  const { data } = await sb.auth.getSession();
+  applySession(data.session);
+  sb.auth.onAuthStateChange((_e, session) => applySession(session));
+
+  authToggle.addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || password.length < 6) { showAuthMsg("Enter an email and a 6+ character password.", "err"); return; }
+    authSubmit.disabled = true;
+    showAuthMsg("Working…");
+    try {
+      if (authMode === "signup") {
+        const { data: d, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (!d.session) { showAuthMsg("Account created — check your email to confirm, then sign in.", "ok"); setAuthMode("signin"); }
+        // If email confirmation is OFF, a session is returned and onAuthStateChange hides the gate.
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+    } catch (err) {
+      showAuthMsg((err && err.message) || "Sign-in failed.", "err");
+    } finally {
+      authSubmit.disabled = false;
+    }
+  });
+  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); });
+}
+bootAuth();
