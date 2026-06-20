@@ -60,12 +60,14 @@ function keyTerms(termIds: string[], bp: Blueprint): string {
 
 // ---- per-block visibility gate classes (drive the 27-combo CSS) ----
 function gateClasses(b: Block): string {
-  const c: string[] = ["block"];
+  // `reveal` → scroll-reveal animation (runtime adds `.in`). blk-* → colored block type.
+  const c: string[] = ["block", "reveal"];
   // needs-* drive the 27-combo CSS gates; b-* drive the in-lesson Concept/Functional/Code toggles.
-  if (b.kind === "technical") c.push("needs-technical");
-  if (b.kind === "conceptual") c.push("needs-conceptual", "b-concept");
-  if (b.kind === "codeExample") c.push("needs-code", "b-code");
-  if (b.kind === "functionalExample") c.push("needs-functional", "b-funcex");
+  if (b.kind === "technical") c.push("needs-technical", "blk-explain");
+  if (b.kind === "conceptual") c.push("needs-conceptual", "b-concept", "blk-explain");
+  if (b.kind === "codeExample") c.push("needs-code", "b-code", "blk-code");
+  if (b.kind === "functionalExample") c.push("needs-functional", "b-funcex", "blk-example");
+  if (b.kind === "knowledgeCheck") c.push("blk-check");
   const vw = b.visibleWhen;
   if (vw?.depth?.length === 1 && vw.depth[0] === "technical") c.push("needs-technical");
   if (vw?.depth?.length === 1 && vw.depth[0] === "conceptual") c.push("needs-conceptual");
@@ -142,6 +144,48 @@ function quiz(b: Extract<Block, { kind: "selfCheckQuiz" }>): string {
   return `<div class="quiz"><div class="q">${esc(b.prompt)}</div>${body}</div>`;
 }
 
+// ---- "In plain words" analogy callout (beginner/intermediate; CSS gates by level) ----
+function analogyHtml(text: string | undefined): string {
+  if (!text) return "";
+  return `<div class="analogy"><span class="an-lab">In plain words</span>${esc(text)}</div>`;
+}
+
+// ---- a collapsible body (used to keep examples/code from flooding the page on landing) ----
+function collapsible(label: string, icon: string, inner: string): string {
+  return `<div class="collapse"><button class="collapse-h" aria-expanded="false"><span class="col-ico">${icon}</span><span class="col-lab">${esc(label)}</span><span class="col-chev">▸</span></button><div class="collapse-body">${inner}</div></div>`;
+}
+
+// ---- knowledge check (graded; MCQ checked vs the stored Blueprint, freeText by the LLM) ----
+function knowledgeCheck(b: Extract<Block, { kind: "knowledgeCheck" }>): string {
+  const qs = b.questions
+    .map((q, i) => {
+      const head = `<div class="kc-q"><span class="kc-n">Q${i + 1}</span>${esc(q.prompt)}</div>`;
+      let body = "";
+      if (q.kind === "mcq" && q.options) {
+        // No correctness in the DOM — the server verifies against the Blueprint ("by DB").
+        body = `<div class="kc-opts">${q.options
+          .map((o, oi) => `<button class="kc-opt" data-qid="${escAttr(q.id)}" data-choice="${oi}">${esc(o.text)}</button>`)
+          .join("")}</div>`;
+      } else {
+        body = `<div class="kc-free"><textarea class="kc-input" data-qid="${escAttr(q.id)}" rows="2" placeholder="Type your answer…"></textarea><button class="kc-submit" data-qid="${escAttr(q.id)}">Check</button></div>`;
+      }
+      return `<div class="kc-item" data-qid="${escAttr(q.id)}" data-kind="${q.kind}"><div class="kc-feedback" hidden></div>${head}${body}<div class="kc-explain" hidden>${esc(q.explanation)}</div></div>`;
+    })
+    .join("");
+  return `<div class="kc" data-block="${escAttr(b.id)}">${b.title ? `<h3>🧠 ${esc(b.title)}</h3>` : `<h3>🧠 Knowledge check</h3>`}${b.intro ? `<p class="kc-intro">${esc(b.intro)}</p>` : ""}<div class="kc-score" hidden>Score: <b>0</b>/${b.questions.length}</div>${qs}</div>`;
+}
+
+// ---- estimated reading time for a set of blocks (rough: ~200 wpm) ----
+function readingMinutes(m: Module): number {
+  let words = (m.summary || "").split(/\s+/).length;
+  const count = (s: string | undefined) => { if (s) words += s.split(/\s+/).length; };
+  for (const b of m.blocks) {
+    if ("body" in b && b.body) for (const n of b.body) { if (n.t === "ul" || n.t === "ol") n.items.forEach((it) => it.forEach((s) => count(s.text))); else if ("spans" in n) n.spans.forEach((s) => count(s.text)); }
+    if (b.kind === "codeExample") count(b.code);
+  }
+  return Math.max(1, Math.round(words / 200));
+}
+
 // ---- single block dispatch ----
 function block(b: Block, bp: Blueprint): string {
   const cls = gateClasses(b);
@@ -149,14 +193,21 @@ function block(b: Block, bp: Blueprint): string {
   switch (b.kind) {
     case "conceptual":
     case "technical":
+      inner = (b.title ? `<h3>${esc(b.title)}</h3>` : "") + analogyHtml(b.analogy) + richText(b.body, bp);
+      break;
     case "functionalExample":
-      inner = (b.title ? `<h3>${esc(b.title)}</h3>` : "") + richText(b.body, bp);
+      // Collapsible so the page isn't a wall of text on landing — open the example on demand.
+      inner = collapsible(b.title || "Real-world example", "💡", richText(b.body, bp));
       break;
     case "note":
       inner = `<div class="callout ${b.tone ?? "info"}">${richText(b.body, bp)}</div>`;
       break;
     case "codeExample":
-      inner = (b.title ? `<h3>${esc(b.title)}</h3>` : "") + codeBlock(b, bp);
+      // Collapsible code (less text up front; expand to read the snippet).
+      inner = collapsible(b.title || "Code example", "⟨⟩", codeBlock(b, bp));
+      break;
+    case "knowledgeCheck":
+      inner = knowledgeCheck(b);
       break;
     case "decisionCallout":
       inner = `<div class="dcall"><div class="use"><div class="lab">Use when</div>${esc(b.useWhen)}</div><div class="avoid"><div class="lab">Avoid when</div>${esc(b.avoidWhen)}</div><div class="rot"><div class="lab">Rule of thumb</div>${esc(b.ruleOfThumb)}</div></div>`;
@@ -220,16 +271,19 @@ function mentalMap(bp: Blueprint): string {
       const nodes = byLayer[L]
         .map((n) => {
           const click = n.moduleId && moduleIds.has(n.moduleId) ? ` data-deepdive="${escAttr(n.moduleId)}"` : "";
+          const icon = `<span class="mn-ico">${esc(n.icon || "●")}</span>`;
           // Richer overview card: WHAT it is + why it's RELEVANT here (falls back to sub).
           const what = n.what ? `<div class="mn-what">${esc(n.what)}</div>` : n.sub ? `<div class="mn-sub">${esc(n.sub)}</div>` : "";
+          // Plain-words analogy (CSS hides it for advanced learners).
+          const layman = n.laymanExplanation ? `<div class="mn-layman"><span class="mn-lay-ico">💡</span>${esc(n.laymanExplanation)}</div>` : "";
           const rel = n.relevance ? `<div class="mn-rel"><span class="mn-rel-lab">Why it matters here</span>${esc(n.relevance)}</div>` : "";
           const cue = click ? `<div class="mn-go"><span class="mn-cue-ico">⤢</span> Click for details</div>` : "";
-          return `<button class="map-node${n.emphasis === "spine" ? " spine" : ""}"${click}><div class="mn-title">${esc(n.label)}</div>${what}${rel}${cue}</button>`;
+          return `<button class="map-node${n.emphasis === "spine" ? " spine" : ""}"${click}><div class="mn-title">${icon}${esc(n.label)}</div>${what}${layman}${rel}${cue}</button>`;
         })
         .join("");
       const label = L !== "_" ? `<div class="map-layer-label">${esc(L)}</div>` : "";
-      // Glyph-less arrow; CSS sets → (horizontal layer flow) or ↓ (narrow/vertical fallback).
-      const arrow = i < layers.length - 1 ? `<div class="map-arrow" aria-hidden="true"></div>` : "";
+      // Animated "current flowing" connector between layers (circuit-board feel).
+      const arrow = i < layers.length - 1 ? `<div class="map-arrow flow" aria-hidden="true"><span class="spark"></span></div>` : "";
       return `<div class="map-layer">${label}<div class="map-row">${nodes}</div></div>${arrow}`;
     })
     .join("");
@@ -244,7 +298,9 @@ export function isBuilt(m: Module): boolean {
 // ---- the INNER content of a built module (head + body). Reused both inline AND as
 //      the fragment the runtime injects when a background module finishes. ----
 export function moduleInner(m: Module, bp: Blueprint): string {
-  const head = `<div class="module-head"><div class="num">${m.order}${m.icon ? " · " + esc(m.icon) : ""}</div><h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}</div>`;
+  const badge = m.icon ? `<div class="m-ico">${esc(m.icon)}</div>` : `<div class="num">${m.order}</div>`;
+  const mins = readingMinutes(m);
+  const head = `<div class="module-head">${badge}<div class="mh-text"><h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}<div class="m-time">⏱ ~${mins} min read</div></div></div>`;
   const obj = m.objectives.length
     ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`
     : "";

@@ -33,10 +33,17 @@ import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
+import { makeLLM } from "./agent/llm";
 import { renderArtifact } from "./render/index";
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
+import { retrieve } from "./rag/retrieve";
+import { ragEnabled as ragOn } from "./lib/db";
+import { hasUploads, retrieveFromUploads } from "./lib/uploads";
+import { z } from "zod";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { ChatMessage, ArtifactRef } from "./agent/state";
+import type { Block } from "./render/schema";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "..", "public");
@@ -103,6 +110,35 @@ app.get("/api/preferences", requireAuth, async (req, res) => {
   res.json({ prefs: await getPreferences(user.id) });
 });
 
+// POST /api/profile — save the learner's sign-up profile (industry/role/aspiring role/goal).
+app.post("/api/profile", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  const { industry, role, aspiringRole, personalGoal } = (req.body ?? {}) as Record<string, string>;
+  const prefs = await getPreferences(user.id);
+  const profile = { ...((prefs.profile as object) ?? {}), industry, role, aspiringRole, personalGoal };
+  await savePreferences(user.id, user.email, { ...prefs, profile });
+  res.json({ ok: true });
+});
+
+// GET /api/suggest — 3–4 suggested next topics from the learner's recent lessons + profile.
+app.get("/api/suggest", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.json({ topics: [] }); return; }
+  const lessons = await listLessons(user.id);
+  if (!lessons.length) { res.json({ topics: [] }); return; } // only AFTER the first lesson
+  const prefs = await getPreferences(user.id);
+  const profile = (prefs.profile as Record<string, string>) ?? {};
+  try {
+    const llm = makeLLM("haiku", 0.4).withStructuredOutput(z.object({ topics: z.array(z.string()).max(4) }), { name: "suggest" });
+    const out = await llm.invoke([
+      new SystemMessage("Suggest 3–4 SHORT next lesson topics (each ≤6 words) in agentic/AI engineering that build on what the learner has studied and fit their role/goal. Return concise titles only."),
+      new HumanMessage(`Recent lessons: ${lessons.slice(0, 6).map((l) => l.title).join("; ")}\nRole: ${profile.role ?? "?"} (aspiring ${profile.aspiringRole ?? "?"})\nGoal: ${profile.personalGoal ?? "?"}\nIndustry: ${profile.industry ?? "?"}`),
+    ]);
+    res.json({ topics: out.topics ?? [] });
+  } catch { res.json({ topics: [] }); }
+});
+
 // POST /api/rate — save a 1..5 rating (+ optional comment) for one of the user's lessons.
 app.post("/api/rate", requireAuth, async (req, res) => {
   const { artifactId, rating, comment } = (req.body ?? {}) as { artifactId?: string; rating?: number; comment?: string };
@@ -123,7 +159,7 @@ app.post("/api/rate", requireAuth, async (req, res) => {
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
 app.post("/api/learn", requireAuth, async (req, res) => {
-  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes } = (req.body ?? {}) as {
+  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes, framework } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
     threadId?: string;
@@ -133,6 +169,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
     buildGoal?: string;
     levels?: string[];
     lessonTypes?: string[];
+    framework?: string;
   };
 
   if (!prompt || !prompt.trim()) {
@@ -143,11 +180,15 @@ app.post("/api/learn", requireAuth, async (req, res) => {
   // Resolve the owner (real user when auth is on; a stable local id otherwise) so
   // the generated lesson lands in their dashboard, and remember their selections.
   const user = await getUser(req.headers.authorization);
+  let userProfile: Record<string, unknown> = {};
   if (user) {
+    const prefs = await getPreferences(user.id);
+    userProfile = (prefs.profile as Record<string, unknown>) ?? {};
     savePreferences(user.id, user.email, {
+      ...prefs,
       levels: levels ?? [], depth: cards?.depth, examples: cards?.examples,
       density: cards?.density, visuals: cards?.visuals === "on", syntax: cards?.syntax === "on",
-      lessonTypes: lessonTypes ?? [], industry: industry ?? "", buildGoal: buildGoal ?? "",
+      lessonTypes: lessonTypes ?? [], industry: industry ?? "", buildGoal: buildGoal ?? "", framework: framework ?? "",
     }).catch(() => {});
   }
 
@@ -179,6 +220,8 @@ app.post("/api/learn", requireAuth, async (req, res) => {
         buildGoal: buildGoal ?? "",
         levels: levels ?? [],
         lessonTypes: lessonTypes ?? [],
+        framework: framework ?? "",
+        userProfile,
         userId: user?.id ?? "",
         userEmail: user?.email ?? "",
       },
@@ -310,6 +353,112 @@ app.get("/api/artifact/:id/full", async (req, res) => {
   } catch (err) {
     console.error("[/api/artifact/:id/full]", err);
     res.status(500).send("Could not assemble the full lesson.");
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Helper: gather grounding (the lesson's uploads first, then the KB) for a question.
+// ----------------------------------------------------------------------------
+async function groundFor(query: string, uploadIds: string[] | undefined, referOnly: boolean | undefined) {
+  const out: { sid: string; title?: string; content: string }[] = [];
+  if (hasUploads(uploadIds)) {
+    try {
+      const hits = await retrieveFromUploads(query, uploadIds!, 5);
+      hits.forEach((h, i) => out.push({ sid: `U${i + 1}`, title: h.title || "Your document", content: h.content }));
+    } catch { /* ignore */ }
+  }
+  if (!referOnly && ragOn()) {
+    try {
+      const { chunks } = await retrieve(query, 5);
+      chunks.forEach((c, i) => out.push({ sid: `S${i + 1}`, title: c.title, content: c.content }));
+    } catch { /* ignore */ }
+  }
+  return out;
+}
+
+// ----------------------------------------------------------------------------
+// POST /api/ask — "Ask More": answer a learner question from RAG (short reply in chat).
+// ----------------------------------------------------------------------------
+app.post("/api/ask", requireAuth, async (req, res) => {
+  const { artifactId, question } = (req.body ?? {}) as { artifactId?: string; question?: string };
+  if (!question?.trim()) { res.status(400).json({ error: "Missing question." }); return; }
+  const art = artifactId ? await getArtifact(artifactId) : undefined;
+  const bp = art?.blueprint;
+  const topic = bp?.meta.topic ?? "";
+  try {
+    const sources = await groundFor(`${topic} — ${question}`, art?.uploadIds, art?.referOnly);
+    const src = sources.map((s) => `[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 700)}`).join("\n");
+    const sys = `You answer a learner's follow-up question about "${topic}" CONCISELY (3–5 sentences max, plain language). Prefer the SOURCES below; if they don't cover it, use your own accurate knowledge. Do not pad.`;
+    const llm = makeLLM("sonnet", 0.2, { maxTokens: 500 });
+    const out = await llm.invoke([new SystemMessage(sys), new HumanMessage(`QUESTION: ${question}\n\n${src ? "SOURCES:\n" + src : "(no sources retrieved)"}`)]);
+    const answer = typeof out.content === "string" ? out.content : Array.isArray(out.content) ? out.content.map((c) => ("text" in c ? c.text : "")).join("") : String(out.content);
+    res.json({ answer, sources: sources.map((s) => s.title).filter(Boolean) });
+  } catch (err) {
+    console.error("[/api/ask]", err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// POST /api/ask/expand — turn a Q&A into a full new module appended to the lesson.
+app.post("/api/ask/expand", requireAuth, async (req, res) => {
+  const { artifactId, question } = (req.body ?? {}) as { artifactId?: string; question?: string };
+  const art = artifactId ? await getArtifact(artifactId) : undefined;
+  const bp = art?.blueprint;
+  if (!bp || !question?.trim()) { res.status(404).json({ error: "Unknown lesson or question." }); return; }
+  try {
+    const id = `q-${bp.modules.length + 1}-${Date.now().toString(36)}`;
+    bp.modules.push({
+      id, order: bp.modules.length + 1, icon: "❓",
+      title: question.slice(0, 70), sub: "Added from your question",
+      summary: `A focused answer to: ${question}`,
+      objectives: [], termIds: [], loadState: "stub", blocks: [], citations: [],
+    });
+    const { ok } = await runDeepDive(bp, id, { uploadIds: art!.uploadIds, referOnly: art!.referOnly });
+    if (!ok) { res.status(502).json({ error: "Couldn't expand this into the lesson." }); return; }
+    await updateArtifact(artifactId!, { blueprint: bp, html: renderArtifact(bp) });
+    res.json({ ok: true, moduleId: id });
+  } catch (err) {
+    console.error("[/api/ask/expand]", err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// POST /api/check — grade ONE knowledge-check question. MCQ is verified against the
+// stored Blueprint ("by DB"); freeText is graded by the LLM.
+app.post("/api/check", requireAuth, async (req, res) => {
+  const { artifactId, blockId, questionId, choiceIndex, text } = (req.body ?? {}) as {
+    artifactId?: string; blockId?: string; questionId?: string; choiceIndex?: number; text?: string;
+  };
+  const art = artifactId ? await getArtifact(artifactId) : undefined;
+  const bp = art?.blueprint;
+  if (!bp || !blockId || !questionId) { res.status(404).json({ error: "Unknown lesson/question." }); return; }
+  // Find the knowledgeCheck block + question across all modules.
+  let q: Extract<Block, { kind: "knowledgeCheck" }>["questions"][number] | undefined;
+  for (const m of bp.modules) {
+    const blk = m.blocks.find((b) => b.kind === "knowledgeCheck" && b.id === blockId) as Extract<Block, { kind: "knowledgeCheck" }> | undefined;
+    if (blk) { q = blk.questions.find((x) => x.id === questionId); break; }
+  }
+  if (!q) { res.status(404).json({ error: "Question not found." }); return; }
+
+  if (q.kind === "mcq" && q.options) {
+    const correctIndex = q.options.findIndex((o) => o.correct);
+    const correct = typeof choiceIndex === "number" && choiceIndex === correctIndex;
+    res.json({ correct, correctIndex, explanation: q.explanation });
+    return;
+  }
+  // freeText → LLM grade against the reference answer.
+  try {
+    const grader = makeLLM("haiku", 0).withStructuredOutput(
+      z.object({ correct: z.boolean(), feedback: z.string() }), { name: "grade" }
+    );
+    const out = await grader.invoke([
+      new SystemMessage("You grade a learner's free-text answer. Mark correct=true if it captures the key idea (be encouraging, not pedantic). feedback = ONE short sentence of specific feedback."),
+      new HumanMessage(`QUESTION: ${q.prompt}\nREFERENCE ANSWER: ${q.acceptableAnswer ?? q.explanation}\nLEARNER ANSWER: ${text ?? ""}`),
+    ]);
+    res.json({ correct: out.correct, feedback: out.feedback, explanation: q.explanation });
+  } catch (err) {
+    console.error("[/api/check]", err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
 

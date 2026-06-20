@@ -5,6 +5,43 @@ Last updated: 2026-06-20. Read this first, then `DESIGN_SPEC.md` (full design) a
 
 ---
 
+## PHASE 2 (2026-06-20) — shipped, verified locally E2E, pushed to `main`
+
+Built all at once (user's call). Verified against a real beginner+code+LangGraph+knowledge-check
+generation locally + the knowledge-check grading API.
+
+- **Auth gate before landing** + **Dashboard as its own tab** (was inline above the prompt).
+  Gate is mandatory when auth is on (defaults to sign-up); local dev bypasses it.
+- **Sign-up onboarding** (`#onboard-overlay`): industry / role / aspiring role / goal, one at a
+  time, optional. Saved via `POST /api/profile` → `user_preferences.prefs.profile`; flows into
+  the agent as `state.userProfile` and personalizes prompts.
+- **Framework dropdown** appears when Examples=Code (LangChain/LangGraph · Claude Agent SDK ·
+  Other · Framework-agnostic) → `profile.framework` → codeExample blocks use it (verified LangGraph).
+- **Suggested topics** under the prompt after the first lesson (`GET /api/suggest`, LLM from context).
+- **Lesson workspace** = full-screen lesson; progress shows as a viewer overlay (no chat by
+  default). **Ask more** button opens a right-side chat → `POST /api/ask` (RAG, short answer) with
+  an "➕ Add this to my lesson in detail" → `POST /api/ask/expand` (appends a new module via
+  runDeepDive, re-renders, persists; reload iframe to view).
+- **Overview redesign** (`render/components.ts` + `tokens.ts`): node **icons**, **layman analogy**
+  cards (gated to beginner/intermediate via `body[data-level]`), **animated current-flow** connectors
+  between layers, est-time, "Why it matters here".
+- **Level-2 blocks**: colored block types (`.blk-explain/.blk-example/.blk-code/.blk-check`),
+  per-block **collapsible** examples/code (less text on landing), explanation→example→code order,
+  **"In plain words" analogy** on concept/technical, module **icon + reading time**, **scroll-reveal**
+  (IntersectionObserver), key-term hover animation.
+- **Knowledge check** = new `knowledgeCheck` block (4–5 Qs). MCQ verified server-side against the
+  stored Blueprint ("by DB"); free-text graded by the LLM. `POST /api/check`. Score tracked in-page.
+  Emitted when Lesson type includes "Knowledge check".
+- New endpoints: `/api/profile`, `/api/suggest`, `/api/ask`, `/api/ask/expand`, `/api/check`.
+  New schema: `LearnerProfile.{framework,role,aspiringRole,levels}`, `MapNode.{icon,laymanExplanation}`,
+  `Block.analogy`, `knowledgeCheck` block, `state.{framework,userProfile}`.
+
+**Phase 2 caveats:** `/api/ask/expand` adds a module then the user reloads the iframe to see it
+(not a live in-place inject — iframe sandbox). Knowledge-check + Ask-more need the live server
+(a downloaded offline file can't grade/ask). `/full` eager-build still slow (Phase 1 note).
+
+---
+
 ## PHASE 1 (2026-06-20) — shipped, verified locally E2E, pushed to `main`
 
 Deployed on Render (live; URL not stored in repo). Verified against a real generation

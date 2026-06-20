@@ -101,7 +101,7 @@ If the learner UPLOADED DOCUMENTS ([U#]), the outline MUST be shaped around them
 == WHAT TO PRODUCE (outline only — NO block bodies) ==
 - meta: { topic, title, thesis (one sentence), estTotalMinutes }
 - learnerProfile: echo the given level/depth/examples (+ industry/buildGoal).
-- mentalMap: the broad building blocks as labelled nodes grouped into layers (foundations → core → advanced → decision); most nodes link to a module via moduleId; mark the key path nodes emphasis:"spine". EVERY node MUST include "what" (one sentence: what this block IS, plainly) and "relevance" (one sentence: why it matters for THIS learner's goal/context) — the overview shows these as informative cards, not bare boxes.
+- mentalMap: the broad building blocks as labelled nodes grouped into layers (foundations → core → advanced → decision); most nodes link to a module via moduleId; mark the key path nodes emphasis:"spine". EVERY node MUST include "what" (one sentence: what this block IS, plainly), "relevance" (one sentence: why it matters for THIS learner's goal/context), an "icon" (a single fitting emoji), and — for beginner/intermediate learners — a "laymanExplanation" (one everyday-analogy sentence, e.g. "an agent is like a doorman who checks why you want in before opening the door"). The overview animates these as a flow of connected cards, not bare boxes.
 - modules: 4–5 stubs, ordered foundational→advanced (keep it tight — 5 max). Each: id, order, title, sub (its role), summary (2–3 sentences), objectives (2–4 "After this you'll be able to…"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
 - glossary: define the 10–14 MOST IMPORTANT terms only (core concepts + named options) — NOT every minor word. Each: id, label, a ONE-SENTENCE plain laymanDefinition; acronymExpansion for ALL-CAPS terms. SKIP technicalNote here (added when bodies are written). (Module bodies can ONLY use term ids that exist here.)
 - synthesis: recap (2–3 sentences MAX), buildOrder, decision checklist (from each module's decisionItForces), capstone tied to their goal.
@@ -116,9 +116,12 @@ This is an OUTLINE — keep EVERYTHING terse (summaries 1–2 sentences, definit
  */
 export const MODULE_SYSTEM = `You write the CONTENT BLOCKS for ONE module of an interactive agentic-AI lesson. Output DATA ONLY (a "blocks" array) — never HTML/CSS/JS.
 
-Produce 2–5 blocks that teach THIS module well:
-- Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note, and ONE selfCheckQuiz when useful.
-- Honor the learner's depth and examples settings. Tailor examples to their industry/build goal when given.
+Produce 2–6 blocks that teach THIS module well:
+- Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note, selfCheckQuiz, and knowledgeCheck (a graded 4–5 question quiz — ONLY when KNOWLEDGE CHECK is on, placed LAST).
+- ORDER the blocks so they build: EXPLANATION (conceptual/technical) → real-world functionalExample → codeExample. Explanation first, example next, code last.
+- On a conceptual/technical block for beginner/intermediate, add an "analogy" field: one plain everyday-analogy sentence that makes the idea click.
+- codeExample: honor the requested CODE FRAMEWORK (real APIs when a framework is named; clean pseudocode when framework-agnostic).
+- Honor the learner's depth and examples settings. Tailor examples to their industry/build goal/role when given.
 - Reference glossary terms by id inside spans ({text, term:"<id>"}) — ONLY ids from the provided glossary list. Cite sources via sources:["S#"] when a claim comes from them; trust the sources' recency over your training data.
 - If the learner uploaded documents ([U#]), treat them as the PRIMARY source: prefer their facts, names, and specifics over the knowledge base and your training data, and cite them via sources:["U#"]. The knowledge base only supplements what the uploads don't cover.
 - If this module's title or summary implies a COMPARISON or a CHOICE among named options (e.g. "X vs Y", "head-to-head", "picking your…", "comparison"), you MUST include a decisionMatrix block: rows = the specific named options; columns = the capabilities/criteria that matter; a REQUIRED whenToUse ("When to choose") per option; plus cost and complexity. This is the single most important block for such modules — do not replace it with a plain table or prose.
@@ -156,10 +159,14 @@ export function moduleUserPrompt(args: {
   lessonFocus?: string;
   levels?: string[];
   lessonTypes?: string[];
+  framework?: string;
+  role?: string;
+  aspiringRole?: string;
   glossary: { id: string; label: string }[];
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
 }): string {
   const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
+  const beginnerish = args.level === "beginner" || args.level === "intermediate";
   const lines = [
     `LESSON TOPIC FOCUS: ${args.lessonFocus ?? "teach this module"}`,
     `MODULE: ${args.moduleTitle}`,
@@ -168,12 +175,16 @@ export function moduleUserPrompt(args: {
     args.decisionItForces ? `DECISION THIS MODULE FORCES: ${args.decisionItForces}` : "",
     `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — scaffold for the least experienced while offering depthTier:"deeper" blocks for the more advanced.` : "",
-    knowledgeCheck ? `KNOWLEDGE CHECK: on — include at least one selfCheckQuiz block in this module (ask before revealing; prefer mcq or applyToYourBuild).` : "",
+    knowledgeCheck ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation.` : "",
+    `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
+    beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
+    args.framework ? `CODE FRAMEWORK: write every codeExample using ${args.framework}. Use its real APIs/imports; title the block with the framework.` : `CODE FRAMEWORK: framework-agnostic — use clear pseudocode/plain Python, no framework-specific imports.`,
     `DENSITY: ${args.density ?? "medium"}`,
     `VISUALS: ${args.visualsRequested ? "on — add ONE interactive visual block if a concept here is genuinely complex" : "off — do NOT emit interactive visual blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
     args.industry ? `FOCUS INDUSTRY: ${args.industry}` : "",
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",
+    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — pitch examples + framing to this person.` : "",
     `GLOSSARY TERM IDS YOU MAY REFERENCE: ${args.glossary.map((g) => `${g.id} (${g.label})`).join(", ") || "(none)"}`,
   ].filter(Boolean);
   const ups = (args.sources ?? []).filter((s) => s.origin === "upload");
@@ -202,6 +213,10 @@ export function architectUserPrompt(args: {
   buildGoal?: string;
   levels?: string[];
   lessonTypes?: string[];
+  framework?: string;
+  role?: string;
+  aspiringRole?: string;
+  personalGoal?: string;
   userPrompt: string;
   learningGoal?: string;
   lessonFocus?: string;
@@ -210,6 +225,7 @@ export function architectUserPrompt(args: {
   repairErrors?: string[];
 }): string {
   const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
+  const beginnerish = args.level === "beginner" || args.level === "intermediate";
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
     `TOPIC: ${args.topic}`,
@@ -218,7 +234,11 @@ export function architectUserPrompt(args: {
     args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
     `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
-    knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — ensure each module is structured so a selfCheckQuiz can test it; the recap should support active recall.` : "",
+    knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — each module's body will END with a graded knowledgeCheck block; structure modules so they're testable.` : "",
+    beginnerish ? `PLAIN WORDS: EVERY mental-map node MUST include a "laymanExplanation" — one everyday-analogy sentence (e.g. "an agent is like a doorman: it checks why someone wants in before letting them through"). Also give each node an "icon" emoji that fits its idea.` : `Give each mental-map node an "icon" emoji that fits its idea.`,
+    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""}.` : "",
+    args.personalGoal ? `LEARNER'S STANDING GOAL: ${args.personalGoal}.` : "",
+    args.framework ? `CODE FRAMEWORK (for later code examples): ${args.framework}.` : "",
     `DENSITY: ${args.density ?? "medium"}`,
     `VISUALS: ${args.visualsRequested ? "on — add interactive visual blocks for complex concepts per the guide" : "off — do NOT emit interactive visual blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,

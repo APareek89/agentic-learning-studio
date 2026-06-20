@@ -321,10 +321,90 @@ body[data-examples="code"] .needs-functional{display:none}
 body[data-level="advanced"] .lvl-beginner-only{display:none}
 body[data-level="beginner"] .lvl-advanced-only{display:none}
 
+/* ===== Phase 2 — colored block types (break the monotony of text) ===== */
+.blk-explain{background:linear-gradient(180deg,var(--surface) 0%,var(--surface) 100%);border-left:3px solid var(--accent)}
+.blk-example{background:#fff8ec;border-left:3px solid #f0a92b}
+[data-theme="dark"] .blk-example{background:#241d0f}
+.blk-code{background:#eef4ff;border-left:3px solid var(--accent-2)}
+[data-theme="dark"] .blk-code{background:#0e1733}
+.blk-check{background:#f0fbf5;border-left:3px solid var(--ok)}
+[data-theme="dark"] .blk-check{background:#0e2419}
+.block.blk-explain,.block.blk-example,.block.blk-code,.block.blk-check{border-radius:12px;padding:14px 16px;margin:14px 0}
+
+/* "In plain words" analogy callout */
+.analogy{background:var(--accent-weak);border-radius:10px;padding:9px 12px;margin:2px 0 10px;font-size:14.5px;color:var(--ink-soft)}
+.analogy .an-lab{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-2);margin-bottom:2px}
+body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{display:none}
+
+/* Collapsible example/code (keep landing light on text) */
+.collapse{margin:6px 0}
+.collapse-h{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px dashed var(--border-strong);background:transparent;color:var(--ink-soft);font:inherit;font-size:13.5px;font-weight:600;padding:9px 12px;border-radius:9px;cursor:pointer}
+.collapse-h:hover{border-color:var(--accent);color:var(--accent-2)}
+.collapse-h .col-ico{font-family:var(--font-mono)}
+.collapse-h .col-chev{margin-left:auto;transition:transform .15s}
+.collapse.open .collapse-h .col-chev{transform:rotate(90deg)}
+.collapse-body{display:none;padding-top:10px}
+.collapse.open .collapse-body{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+
+/* Knowledge check */
+.kc h3{margin:.1em 0 .4em}
+.kc-intro{color:var(--muted);font-size:14px;margin:0 0 12px}
+.kc-score{font-size:13px;color:var(--ok);font-weight:600;margin-bottom:10px}
+.kc-item{border-top:1px solid var(--border);padding:13px 0}
+.kc-item:first-of-type{border-top:none}
+.kc-q{font-weight:600;font-size:14.5px;margin-bottom:9px;display:flex;gap:8px}
+.kc-n{flex:none;background:var(--ok);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;height:fit-content}
+.kc-opts{display:flex;flex-direction:column;gap:7px}
+.kc-opt{text-align:left;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:9px 12px;border-radius:9px;cursor:pointer;transition:border-color .12s,background .12s}
+.kc-opt:hover{border-color:var(--accent)}
+.kc-opt.correct{border-color:var(--ok);background:var(--ok-weak);color:#0f6e4f}
+.kc-opt.wrong{border-color:var(--danger);background:var(--danger-weak);color:var(--danger)}
+.kc-opt[disabled]{cursor:default;opacity:.85}
+.kc-free{display:flex;flex-direction:column;gap:8px}
+.kc-input{border:1px solid var(--border-strong);border-radius:9px;font:inherit;font-size:14px;padding:9px 11px;resize:vertical;background:var(--surface);color:var(--ink)}
+.kc-input:focus{outline:none;border-color:var(--accent)}
+.kc-submit{align-self:flex-start;border:none;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:600;padding:7px 15px;border-radius:9px;cursor:pointer}
+.kc-submit[disabled]{opacity:.6;cursor:default}
+.kc-feedback{font-size:13.5px;font-weight:600;margin-bottom:8px;padding:8px 11px;border-radius:8px}
+.kc-feedback.ok{background:var(--ok-weak);color:#0f6e4f}
+.kc-feedback.no{background:var(--danger-weak);color:var(--danger)}
+.kc-feedback.grading{background:var(--accent-weak);color:var(--accent-2)}
+.kc-explain{font-size:13.5px;color:var(--muted);margin-top:9px;padding-left:11px;border-left:2px solid var(--border-strong)}
+
+/* Scroll-reveal — blocks ease in as you reach them */
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* Module head icon + reading time */
+.module-head{display:flex;gap:13px;align-items:flex-start}
+.module-head .m-ico{flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--accent-weak);border-radius:11px}
+.module-head .mh-text{min-width:0}
+.m-time{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Overview: node icons, layman card, animated current-flow connector */
+.mn-ico{margin-right:7px}
+.mn-layman{margin-top:7px;font-size:12.5px;color:var(--ink-soft);background:var(--accent-weak);border-radius:8px;padding:6px 9px;line-height:1.4}
+.mn-layman .mn-lay-ico{margin-right:5px}
+.map-arrow.flow{position:relative;overflow:hidden}
+.map-arrow.flow .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px 2px var(--accent);opacity:.9}
+@media (min-width:821px){
+  #overview .map-flow .map-arrow.flow{align-self:center;width:34px;height:3px;background:linear-gradient(90deg,var(--border-strong),var(--accent));border-radius:2px}
+  #overview .map-flow .map-arrow.flow::before{content:"";position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-left:7px solid var(--accent);border-top:4px solid transparent;border-bottom:4px solid transparent}
+  #overview .map-flow .map-arrow.flow .spark{top:50%;margin-top:-3px;animation:flowx 1.8s linear infinite}
+  @keyframes flowx{0%{left:-8px;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:34px;opacity:0}}
+}
+
+/* Key terms — subtle attention pulse on hover */
+.term-chip,.term{transition:background .15s,color .15s,transform .12s}
+.term-chip:hover,.term:hover{transform:translateY(-1px)}
+
 @media print{
   .topbar,.tbtn,.copy,.deeper-toggle,.map-node .mn-go{display:none!important}
   .deeper{display:block!important}.quiz .answer{display:block!important}
-  .syntax-panel{display:block!important}
+  .syntax-panel{display:block!important}.collapse-body{display:block!important}
+  .reveal{opacity:1!important;transform:none!important}
   .ex-pane{display:block!important}.module{break-inside:avoid;box-shadow:none}
 }
 @media (max-width:560px){.dcall{grid-template-columns:1fr}.module-head h2{font-size:20px}}

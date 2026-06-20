@@ -26,10 +26,23 @@ const ratingEl = document.getElementById("rating");
 const chatCompose = document.getElementById("chat-compose");
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
+const chatEl = document.getElementById("chat");
+const askMoreBtn = document.getElementById("ask-more");
+const chatCloseBtn = document.getElementById("chat-close");
+const genOverlay = document.getElementById("gen-overlay");
+const genLabel = document.getElementById("gen-label");
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
+askMoreBtn.addEventListener("click", () => toggleChat());
+chatCloseBtn.addEventListener("click", () => toggleChat(false));
+function toggleChat(force) {
+  const open = force === undefined ? !workspace.classList.contains("chat-open") : force;
+  workspace.classList.toggle("chat-open", open);
+  chatEl.hidden = !open;
+  if (open) chatInput.focus();
+}
 
 // Selections collected from the dropdowns.
-const sel = { level: [], depth: null, examples: null, density: null, extras: [], lessonType: [] };
+const sel = { level: [], depth: null, examples: null, density: null, extras: [], lessonType: [], framework: null };
 
 let currentArtifactId = null;
 let currentThreadId = null;
@@ -44,7 +57,7 @@ const VALUE_LABELS = {
   visuals: "Visuals", syntax: "Syntax",
   content: "Content", knowledge_check: "Knowledge check",
 };
-const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content" };
+const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content", framework: "Pick one" };
 
 // ---- Dropdown wiring (single + multi) ----
 document.querySelectorAll(".dd").forEach((dd) => {
@@ -78,9 +91,23 @@ document.querySelectorAll(".dd").forEach((dd) => {
         dd.classList.remove("open"); menu.hidden = true;
       }
       renderDdValue(dd, field, multi, valueEl);
+      if (field === "examples") updateFrameworkVisibility();
     });
   });
 });
+
+// The code-framework dropdown only matters when Code examples are chosen.
+function updateFrameworkVisibility() {
+  const dd = document.getElementById("dd-framework");
+  if (!dd) return;
+  const show = sel.examples === "code";
+  dd.hidden = !show;
+  if (!show) {
+    sel.framework = null;
+    dd.querySelectorAll(".dd-opt").forEach((o) => o.classList.remove("sel"));
+    renderDdValue(dd, "framework", false, dd.querySelector(".dd-value"));
+  }
+}
 
 function renderDdValue(dd, field, multi, valueEl) {
   let text, set;
@@ -183,6 +210,7 @@ function buildPayload(promptText, threadId) {
     cards,
     levels: sel.level,
     lessonTypes: sel.lessonType.length ? sel.lessonType : ["content"],
+    framework: sel.framework || "",
     industry: industryEl.value.trim(),
     buildGoal: buildGoalEl.value.trim(),
     uploadIds: uploadedDocs.map((d) => d.docId),
@@ -198,21 +226,71 @@ generateBtn.addEventListener("click", () => {
   if (authRequiredAndOut()) { openAuth("signup"); return; }
   basePrompt = p;
   currentThreadId = "web-" + Date.now();
-  startGeneration(p, currentThreadId, false);
+  startGeneration(p, currentThreadId);
 });
 promptEl.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generateBtn.click(); });
 
-// Modify-the-plan composer.
+// "Ask more" composer — answers from RAG (short reply), with an option to expand into the lesson.
 chatCompose.addEventListener("submit", (e) => {
   e.preventDefault();
   const text = chatInput.value.trim();
-  if (!text) return;
-  const combined = `${basePrompt}\n\n[Modification requested by the learner — apply this to the lesson]: ${text}`;
+  if (!text || !currentArtifactId) return;
   addUserBubble(text);
   chatInput.value = "";
-  startGeneration(combined, currentThreadId || ("web-" + Date.now()), true);
+  chatInput.style.height = "auto";
+  askQuestion(text);
 });
 chatInput.addEventListener("input", () => { chatInput.style.height = "auto"; chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px"; });
+chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); chatCompose.requestSubmit(); } });
+
+async function askQuestion(question) {
+  const thinking = addStatus("Thinking…");
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ artifactId: currentArtifactId, question }),
+    });
+    if (res.status === 401) { thinking.remove(); openAuth("signin"); return; }
+    const data = await res.json();
+    thinking.remove();
+    if (!res.ok) { addAssistantBubble({ content: "⚠️ " + (data.error || "Couldn't answer that.") }); return; }
+    const bubble = addAssistantBubble({ content: data.answer });
+    const srcs = (data.sources || []).filter(Boolean);
+    if (srcs.length) { const s = document.createElement("div"); s.className = "sugg-srcs"; s.textContent = "Sources: " + srcs.slice(0, 3).join(", "); bubble.appendChild(s); }
+    // Offer to expand the answer into a full lesson section.
+    const add = document.createElement("button");
+    add.className = "add-to-lesson";
+    add.textContent = "➕ Add this to my lesson in detail";
+    add.addEventListener("click", () => expandIntoLesson(question, add));
+    bubble.appendChild(add);
+  } catch (err) {
+    thinking.remove();
+    addAssistantBubble({ content: "⚠️ " + err.message });
+  }
+}
+
+async function expandIntoLesson(question, btn) {
+  btn.disabled = true;
+  btn.textContent = "Adding to your lesson… (keep reading)";
+  try {
+    const res = await fetch("/api/ask/expand", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ artifactId: currentArtifactId, question }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "expand failed");
+    btn.textContent = "✓ Added — open it";
+    btn.disabled = false;
+    btn.onclick = () => { viewerFrame.src = "/api/artifact/" + currentArtifactId; };
+    addAssistantBubble({ content: "Added a new section to your lesson. It's in the menu on the left of the lesson — click **open it** above to jump there." });
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = "➕ Add this to my lesson in detail";
+    addAssistantBubble({ content: "⚠️ Couldn't add it: " + err.message });
+  }
+}
 
 // Friendly progress text (we hide the raw node names from the learner).
 const STAGE_TEXT = {
@@ -224,12 +302,20 @@ const STAGE_TEXT = {
   composer: "Assembling your interactive lesson…",
 };
 
-async function startGeneration(promptText, threadId, isModify) {
+async function startGeneration(promptText, threadId) {
   landing.hidden = true;
   workspace.hidden = false;
-  if (!isModify) { chatLog.innerHTML = ""; addUserBubble(promptEl.value.trim() || basePrompt); }
-  setChatEnabled(false);
-  const statusEl = addStatus("Getting started…");
+  toggleChat(false);
+  chatLog.innerHTML = "";
+  // Full-screen lesson view: progress shows as an overlay on the viewer, not a chat.
+  viewerFrame.hidden = true;
+  viewerEmpty.hidden = true;
+  ratingEl.hidden = true;
+  askMoreBtn.hidden = true;
+  downloadBtn.hidden = true;
+  openWindowBtn.hidden = true;
+  genOverlay.hidden = false;
+  genLabel.textContent = "Getting started…";
 
   try {
     const res = await fetch("/api/learn", {
@@ -237,24 +323,19 @@ async function startGeneration(promptText, threadId, isModify) {
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(buildPayload(promptText, threadId)),
     });
-    if (res.status === 401) { openAuth("signin"); throw new Error("Please sign in to continue."); }
+    if (res.status === 401) { genOverlay.hidden = true; openAuth("signin"); return; }
     if (!res.ok || !res.body) throw new Error("Request failed: " + res.status);
 
     await readSse(res.body, (event, data) => {
-      if (event === "node") statusEl.querySelector(".label").textContent = STAGE_TEXT[data.stage] || "Working…";
+      if (event === "node") genLabel.textContent = STAGE_TEXT[data.stage] || "Working…";
       else if (event === "artifact") showArtifact(data);
-      else if (event === "error") { statusEl.remove(); addAssistantBubble({ content: "⚠️ " + data.message }); }
-      else if (event === "done") {
-        statusEl.remove();
-        addAssistantBubble({ content: "Your lesson is ready on the right. Start at the **mental map** — every underlined term has an **(i)** definition. Want to change anything? Ask below." });
-        setChatEnabled(true);
-        loadDashboard(); // refresh the dashboard so the new lesson appears next time
-      }
+      else if (event === "error") { genOverlay.hidden = true; viewerEmpty.hidden = false; viewerEmpty.textContent = "⚠️ " + data.message; }
+      else if (event === "done") { genOverlay.hidden = true; loadDashboard(); loadSuggestions(); }
     });
   } catch (err) {
-    statusEl.remove();
-    addAssistantBubble({ content: "⚠️ " + err.message });
-    setChatEnabled(true);
+    genOverlay.hidden = true;
+    viewerEmpty.hidden = false;
+    viewerEmpty.textContent = "⚠️ " + err.message;
   }
 }
 
@@ -288,6 +369,7 @@ function showArtifact(ref) {
 }
 function openInViewer(id, title) {
   currentArtifactId = id;
+  genOverlay.hidden = true;
   viewerEmpty.hidden = true;
   viewerFrame.hidden = false;
   viewerFrame.src = "/api/artifact/" + id;
@@ -295,6 +377,7 @@ function openInViewer(id, title) {
   downloadBtn.hidden = false;
   downloadBtn.href = "/api/artifact/" + id + "/full";
   openWindowBtn.hidden = false;
+  askMoreBtn.hidden = false;
   resetStars();
   ratingEl.hidden = false;
 }
@@ -330,8 +413,9 @@ function addUserBubble(text) {
 function addAssistantBubble({ content }) {
   const el = document.createElement("div");
   el.className = "msg";
-  el.innerHTML = `<div class="who">Studio</div>${mdLite(content)}`;
+  el.innerHTML = `<div class="who">Studio</div><div class="msg-body">${mdLite(content)}</div>`;
   chatLog.appendChild(el); scrollDown();
+  return el;
 }
 function addStatus(text) {
   const el = document.createElement("div");
@@ -340,19 +424,23 @@ function addStatus(text) {
   chatLog.appendChild(el); scrollDown();
   return el;
 }
-function setChatEnabled(on) { chatInput.disabled = !on; chatSend.disabled = !on; if (on) chatInput.focus(); }
 
 function resetToLanding() {
   workspace.hidden = true;
+  toggleChat(false);
   landing.hidden = false;
   viewerFrame.src = "about:blank";
   viewerFrame.hidden = true;
   viewerEmpty.hidden = false;
+  viewerEmpty.textContent = "Your lesson will open here…";
+  genOverlay.hidden = true;
   downloadBtn.hidden = true;
   openWindowBtn.hidden = true;
+  askMoreBtn.hidden = true;
   ratingEl.hidden = true;
   currentArtifactId = null;
   loadDashboard();
+  loadSuggestions();
 }
 
 // ---- Tabs (Learning / Dashboard) ----
@@ -408,11 +496,30 @@ function lessonCard(l) {
     basePrompt = l.prompt || l.title;
     currentThreadId = "web-" + Date.now();
     landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
-    addAssistantBubble({ content: `Opened **${l.title}**. Read on the right, or ask below to revise it.` });
+    toggleChat(false);
     openInViewer(l.id, l.title);
-    setChatEnabled(true);
   });
   return el;
+}
+
+// ---- Suggested next topics (after the first lesson; from the learner's context) ----
+const suggestedEl = document.getElementById("suggested");
+const suggChips = document.getElementById("sugg-chips");
+async function loadSuggestions() {
+  try {
+    const res = await fetch("/api/suggest", { headers: authHeaders() });
+    if (!res.ok) { suggestedEl.hidden = true; return; }
+    const { topics } = await res.json();
+    if (!topics || !topics.length) { suggestedEl.hidden = true; return; }
+    suggChips.innerHTML = "";
+    topics.forEach((t) => {
+      const c = document.createElement("button");
+      c.className = "sugg-chip"; c.type = "button"; c.textContent = t;
+      c.addEventListener("click", () => { promptEl.value = t; promptEl.focus(); promptEl.scrollIntoView({ behavior: "smooth", block: "center" }); });
+      suggChips.appendChild(c);
+    });
+    suggestedEl.hidden = false;
+  } catch { suggestedEl.hidden = true; }
 }
 
 // ---- Tiny helpers ----
@@ -522,7 +629,7 @@ function applySession(session) {
   if (tabBtnDashboard) tabBtnDashboard.hidden = !signedIn;
   if (signedIn) {
     authOverlay.hidden = true;
-    loadDashboard(); loadPreferences();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
   } else if (authIsEnabled) {
     showAuthGate(); // not signed in + auth on → block behind the gate
   }
@@ -537,7 +644,7 @@ async function bootAuth() {
     // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
     authOverlay.hidden = true;
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
-    loadDashboard(); loadPreferences();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
     return;
   }
 
@@ -594,6 +701,8 @@ async function loadPreferences() {
     applyPref("lessonType", prefs.lessonTypes, true);
     if (prefs.industry) industryEl.value = prefs.industry;
     if (prefs.buildGoal) buildGoalEl.value = prefs.buildGoal;
+    updateFrameworkVisibility();
+    if (prefs.framework && sel.examples === "code") applyPref("framework", prefs.framework, false);
   } catch { /* ignore */ }
 }
 function applyPref(field, value, multi, append) {
@@ -610,6 +719,42 @@ function applyPref(field, value, multi, append) {
     if (multi) { if (!sel[field].includes(v)) sel[field].push(v); } else { sel[field] = v; }
   }
   renderDdValue(dd, field, multi, valueEl);
+}
+
+// ---- Onboarding: one optional question at a time, after first sign-up ----
+const onboardOverlay = document.getElementById("onboard-overlay");
+const obSteps = Array.from(document.querySelectorAll(".ob-step"));
+const obNext = document.getElementById("ob-next");
+const obSkip = document.getElementById("ob-skip");
+let obStep = 0;
+function showOnboardStep(i) {
+  obSteps.forEach((s, si) => { s.hidden = si !== i; });
+  obNext.textContent = i >= obSteps.length - 1 ? "Finish" : "Next →";
+  const inp = obSteps[i].querySelector("input"); if (inp) setTimeout(() => inp.focus(), 50);
+}
+async function finishOnboarding() {
+  const payload = {
+    industry: (document.getElementById("ob-industry").value || "").trim(),
+    role: (document.getElementById("ob-role").value || "").trim(),
+    aspiringRole: (document.getElementById("ob-aspiring").value || "").trim(),
+    personalGoal: (document.getElementById("ob-goal").value || "").trim(),
+  };
+  onboardOverlay.hidden = true;
+  try { localStorage.setItem("als-onboarded", "1"); } catch (e) {}
+  try { await fetch("/api/profile", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(payload) }); } catch (e) {}
+  loadPreferences(); loadSuggestions();
+}
+obNext.addEventListener("click", () => { if (obStep >= obSteps.length - 1) finishOnboarding(); else { obStep++; showOnboardStep(obStep); } });
+obSkip.addEventListener("click", () => { try { localStorage.setItem("als-onboarded", "1"); } catch (e) {} onboardOverlay.hidden = true; });
+async function maybeOnboard() {
+  try { if (localStorage.getItem("als-onboarded")) return; } catch (e) {}
+  try {
+    const res = await fetch("/api/preferences", { headers: authHeaders() });
+    const { prefs } = await res.json();
+    const p = (prefs && prefs.profile) || {};
+    if (p.industry || p.role || p.aspiringRole || p.personalGoal) return;
+    obStep = 0; showOnboardStep(0); onboardOverlay.hidden = false;
+  } catch (e) {}
 }
 
 bootAuth();

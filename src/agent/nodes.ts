@@ -90,9 +90,13 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const visualsRequested = cards.visuals === "on";
   const explainSyntax = cards.syntax === "on";
 
-  // Explicit open-text context beats inference; lesson type defaults to "content".
-  const industry = (state.industry ?? "").trim() || inf.industry || undefined;
+  // Explicit open-text context beats inference; the saved sign-up profile fills gaps.
+  const up = state.userProfile ?? {};
+  const industry = (state.industry ?? "").trim() || up.industry || inf.industry || undefined;
   const buildGoal = (state.buildGoal ?? "").trim() || inf.buildGoal || undefined;
+  // Code-example framework only matters when code examples are in play.
+  const codeWanted = examples === "code" || examples === "functional_code";
+  const framework = codeWanted ? ((state.framework ?? "").trim() || undefined) : undefined;
   const lessonTypes = ((state.lessonTypes ?? []).filter((t) => t === "content" || t === "knowledge_check") as ("content" | "knowledge_check")[]);
   const finalLessonTypes = lessonTypes.length ? lessonTypes : (["content"] as ("content" | "knowledge_check")[]);
 
@@ -103,6 +107,9 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     topic: inf.topic,
     industry,
     buildGoal,
+    role: up.role || undefined,
+    aspiringRole: up.aspiringRole || undefined,
+    framework,
     levels: pickedLevels.length ? pickedLevels : undefined,
     lessonTypes: finalLessonTypes,
     inferred: noCards,
@@ -224,6 +231,10 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             buildGoal: p.buildGoal,
             levels: p.levels,
             lessonTypes: p.lessonTypes,
+            framework: p.framework,
+            role: p.role,
+            aspiringRole: p.aspiringRole,
+            personalGoal: state.userProfile?.personalGoal,
             userPrompt: state.userPrompt,
             learningGoal: intent?.learningGoal,
             lessonFocus: intent?.lessonFocus,
@@ -353,6 +364,9 @@ export async function runDeepDive(
             buildGoal: p.buildGoal,
             levels: p.levels,
             lessonTypes: p.lessonTypes,
+            framework: p.framework,
+            role: p.role,
+            aspiringRole: p.aspiringRole,
             glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
             sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
           })

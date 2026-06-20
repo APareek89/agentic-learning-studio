@@ -78,6 +78,13 @@ export const GraphState = Annotation.Root({
   buildGoal: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
   levels: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
   lessonTypes: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
+  // Phase 2: code-example framework + the learner's saved sign-up profile (role/aspiring
+  // role/personal goal/industry) so every lesson is personalized to who they are.
+  framework: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+  userProfile: Annotation<{ role?: string; aspiringRole?: string; personalGoal?: string; industry?: string }>({
+    reducer: (_o, n) => n ?? _o,
+    default: () => ({}),
+  }),
 
   // Ownership — so the composer persists the lesson against the right user.
   userId: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),

@@ -39,6 +39,12 @@ export const LearnerProfileSchema = z.object({
   topic: z.string(),
   industry: z.string().optional(),
   buildGoal: z.string().optional(),
+  /** the learner's role + the role they aspire to (from sign-up) — personalize tone/depth. */
+  role: z.string().optional(),
+  aspiringRole: z.string().optional(),
+  /** code-example framework when examples include code: e.g. "LangGraph", "Claude Agent SDK",
+   *  or "Framework-agnostic" (pseudocode/plain). Drives the codeExample blocks. */
+  framework: z.string().optional(),
   /** when the learner picked multiple levels, the full set (e.g. ["beginner","advanced"]);
    *  `level` above is the base (least-advanced) used for the 27-combo gating. */
   levels: z.array(LevelSchema).optional(),
@@ -117,6 +123,11 @@ export const MapNodeSchema = z.object({
   what: z.string().optional(),
   /** one sentence: how this block fits the learner's goal/context — why it matters HERE. */
   relevance: z.string().optional(),
+  /** an everyday-analogy explanation (the "doorman" style) shown to beginner/intermediate
+   *  learners so the overview reads in plain language, not jargon. */
+  laymanExplanation: z.string().optional(),
+  /** an emoji/icon hint for the node (renderer falls back to a default). */
+  icon: z.string().optional(),
   moduleId: z.string().optional(),
   layer: z.string().optional(),
   emphasis: z.enum(["spine", "normal"]).optional(),
@@ -183,8 +194,8 @@ export const MatrixOptionSchema = z.object({
 });
 
 export const BlockSchema = z.discriminatedUnion("kind", [
-  z.object({ ...blockBase, kind: z.literal("conceptual"), title: z.string().optional(), body: RichTextSchema }),
-  z.object({ ...blockBase, kind: z.literal("technical"), title: z.string().optional(), body: RichTextSchema }),
+  z.object({ ...blockBase, kind: z.literal("conceptual"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
+  z.object({ ...blockBase, kind: z.literal("technical"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
   z.object({
     ...blockBase,
     kind: z.literal("functionalExample"),
@@ -289,6 +300,26 @@ export const BlockSchema = z.discriminatedUnion("kind", [
     title: z.string().optional(),
     caption: z.string().optional(),
     steps: z.array(z.object({ label: z.string(), detail: z.string(), icon: z.string().optional() })).min(2),
+  }),
+  // knowledgeCheck — a graded mini-quiz (4–5 Qs). MCQ is checked against the stored
+  // Blueprint server-side; freeText is graded by the LLM (POST /api/check). Optional block.
+  z.object({
+    ...blockBase,
+    kind: z.literal("knowledgeCheck"),
+    title: z.string().optional(),
+    intro: z.string().optional(),
+    questions: z
+      .array(
+        z.object({
+          id: z.string(),
+          kind: z.enum(["mcq", "freeText"]),
+          prompt: z.string(),
+          options: z.array(z.object({ text: z.string(), correct: z.boolean().optional() })).optional(),
+          acceptableAnswer: z.string().optional(), // freeText: the model-graded reference answer
+          explanation: z.string(),
+        })
+      )
+      .min(3),
   }),
 ]);
 export type Block = z.infer<typeof BlockSchema>;

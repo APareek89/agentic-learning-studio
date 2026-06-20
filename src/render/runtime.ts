@@ -84,8 +84,12 @@ export const RUNTIME_JS = String.raw`
 
   // ---- one delegated click handler ----
   document.addEventListener("click", function(ev){
-    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building");
+    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
+
+    if(t.matches(".collapse-h")){ var col=t.closest(".collapse"); var open=col.classList.toggle("open"); t.setAttribute("aria-expanded", String(open)); return; }
+    if(t.matches(".kc-opt")){ kcAnswerMcq(t); return; }
+    if(t.matches(".kc-submit")){ kcAnswerFree(t); return; }
 
     if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); enterWorkbench(gid); if(isStub(gid)) prioritize(gid); return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
@@ -115,6 +119,55 @@ export const RUNTIME_JS = String.raw`
 
   document.addEventListener("keydown", function(e){ if(e.key==="Escape") closePopover(); });
   window.addEventListener("resize", closePopover);
+
+  // ---- knowledge check (grades via /api/check; MCQ vs the stored Blueprint, freeText by LLM) ----
+  function kcBumpScore(kc){
+    var items=kc.querySelectorAll(".kc-item"), got=0;
+    items.forEach(function(it){ if(it.getAttribute("data-result")==="ok") got++; });
+    var sc=kc.querySelector(".kc-score"); if(sc){ sc.hidden=false; var b=sc.querySelector("b"); if(b) b.textContent=String(got); }
+  }
+  function kcShow(item, ok, msg){
+    var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback "+(ok?"ok":"no"); fb.textContent=msg||(ok?"Correct ✓":"Not quite"); }
+    var ex=item.querySelector(".kc-explain"); if(ex) ex.hidden=false;
+    item.setAttribute("data-result", ok?"ok":"no");
+    kcBumpScore(item.closest(".kc"));
+  }
+  function kcCheck(payload){
+    return fetch("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(r){ return r.json(); });
+  }
+  function kcAnswerMcq(btn){
+    var item=btn.closest(".kc-item"); if(item.getAttribute("data-done")) return;
+    var kc=btn.closest(".kc"), bid=kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid"), choice=+btn.getAttribute("data-choice");
+    item.setAttribute("data-done","1");
+    item.querySelectorAll(".kc-opt").forEach(function(o){ o.setAttribute("disabled","1"); });
+    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
+    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,choiceIndex:choice}).then(function(res){
+      if(res.correct){ btn.classList.add("correct"); }
+      else{ btn.classList.add("wrong"); if(typeof res.correctIndex==="number"){ var c=item.querySelectorAll(".kc-opt")[res.correctIndex]; if(c) c.classList.add("correct"); } }
+      kcShow(item,!!res.correct);
+    }).catch(function(){ item.removeAttribute("data-done"); item.querySelectorAll(".kc-opt").forEach(function(o){ o.removeAttribute("disabled"); }); });
+  }
+  function kcAnswerFree(btn){
+    var item=btn.closest(".kc-item"), inp=item.querySelector(".kc-input"); if(!inp||!inp.value.trim()) return;
+    var kc=btn.closest(".kc"), bid=kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid");
+    var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback grading"; fb.textContent="Grading your answer…"; }
+    btn.setAttribute("disabled","1");
+    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
+    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,text:inp.value.trim()}).then(function(res){
+      kcShow(item,!!res.correct,res.feedback||(res.correct?"Correct ✓":"Not quite"));
+    }).catch(function(){ btn.removeAttribute("disabled"); if(fb){ fb.className="kc-feedback no"; fb.textContent="Couldn't grade — try again."; } });
+  }
+
+  // ---- scroll-reveal: blocks ease in as they enter the viewport ----
+  var revObs=null;
+  if("IntersectionObserver" in window){
+    revObs=new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); revObs.unobserve(e.target); } }); }, {rootMargin:"0px 0px -8% 0px"});
+  }
+  function observeReveals(root){
+    var els=(root||document).querySelectorAll(".reveal:not(.in)");
+    if(!revObs){ els.forEach(function(el){ el.classList.add("in"); }); return; }
+    els.forEach(function(el){ revObs.observe(el); });
+  }
 
   // ---- hydrate interactive visual blocks (data-only → live SVG/controls) ----
   function vEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -197,7 +250,7 @@ export const RUNTIME_JS = String.raw`
       .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
       .then(function(data){
         var panel=panelEl(id);
-        if(panel && data && data.fragmentHtml){ panel.innerHTML=data.fragmentHtml; panel.classList.remove("is-stub"); hydrate(panel); }
+        if(panel && data && data.fragmentHtml){ panel.innerHTML=data.fragmentHtml; panel.classList.remove("is-stub"); hydrate(panel); observeReveals(panel); }
         if(nav){ nav.classList.remove("building","failed"); }
       })
       .catch(function(){
@@ -215,6 +268,7 @@ export const RUNTIME_JS = String.raw`
   }
 
   hydrate(document);
+  observeReveals(document);
   setProgress();
   pump();             // start building the remaining modules, one by one
 })();

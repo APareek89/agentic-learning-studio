@@ -33,6 +33,22 @@
       </div>
     </div>
 
+    <!-- ===== Onboarding (after first sign-up; optional, one question at a time) ===== -->
+    <div class="auth-overlay" id="onboard-overlay" hidden>
+      <div class="auth-card onboard">
+        <div class="brand"><span class="dot"></span> A few quick questions</div>
+        <p class="auth-sub">These personalize every lesson. All optional — skip anytime.</p>
+        <div class="ob-step" data-step="0"><label class="ctx-label">Which industry are you focusing on?</label><input id="ob-industry" type="text" placeholder="e.g. e-commerce, healthcare" /></div>
+        <div class="ob-step" data-step="1" hidden><label class="ctx-label">What's your current role?</label><input id="ob-role" type="text" placeholder="e.g. backend engineer, PM" /></div>
+        <div class="ob-step" data-step="2" hidden><label class="ctx-label">What role are you aspiring to?</label><input id="ob-aspiring" type="text" placeholder="e.g. AI engineer" /></div>
+        <div class="ob-step" data-step="3" hidden><label class="ctx-label">What's your main learning goal?</label><input id="ob-goal" type="text" placeholder="e.g. ship a production agent" /></div>
+        <div class="ob-actions">
+          <button class="linkbtn" id="ob-skip" type="button">Skip all</button>
+          <button class="generate sm" id="ob-next" type="button">Next →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== Top bar ===== -->
     <header class="topbar">
       <div class="brand"><span class="dot"></span> Agentic Learning Studio</div>
@@ -119,6 +135,16 @@
                   <button class="dd-opt" data-value="knowledge_check" type="button">Knowledge check</button>
                 </div>
               </div>
+              <!-- Framework: appears only when Examples = Code -->
+              <div class="dd" data-field="framework" id="dd-framework" hidden>
+                <button class="dd-btn" type="button"><span class="dd-label">Code framework</span><span class="dd-value">Pick one</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="LangChain / LangGraph" type="button">LangChain / LangGraph</button>
+                  <button class="dd-opt" data-value="Claude Agent SDK" type="button">Claude Agent SDK</button>
+                  <button class="dd-opt" data-value="Other frameworks" type="button">Other frameworks</button>
+                  <button class="dd-opt" data-value="Framework-agnostic" type="button">Framework-agnostic</button>
+                </div>
+              </div>
             </div>
 
             <!-- Open-text context fields -->
@@ -151,27 +177,23 @@
               <span class="hint" id="cards-hint">Options are optional — leave blank and I'll infer.</span>
               <button class="generate" id="generate">Generate lesson →</button>
             </div>
+
+            <!-- Suggested next topics (appear after your first lesson, from your context) -->
+            <div class="suggested" id="suggested" hidden>
+              <span class="sugg-lab">Suggested for you</span>
+              <div class="sugg-chips" id="sugg-chips"></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- WORKSPACE: chat 30% (left) + viewer 70% (right) -->
+      <!-- WORKSPACE: full-screen lesson; an "Ask more" chat slides in on the right -->
       <section class="workspace" id="workspace" hidden>
-        <aside class="chat" id="chat">
-          <div class="chat-head">
-            <button class="ghost" id="new-thread">＋ New lesson</button>
-          </div>
-          <div class="chat-log" id="chat-log"></div>
-          <!-- Persistent modify-the-plan composer (enabled once a lesson is ready) -->
-          <form class="chat-compose" id="chat-compose">
-            <textarea id="chat-input" rows="1" placeholder="Want to change anything? e.g. “add a section on cost”, “make it more advanced”" disabled></textarea>
-            <button class="generate sm" id="chat-send" type="submit" disabled>Send</button>
-          </form>
-        </aside>
         <div class="viewer" id="viewer">
           <div class="viewer-bar">
             <span class="viewer-title" id="viewer-title">Lesson</span>
             <div class="viewer-actions">
+              <button class="vbtn" id="new-thread">＋ New</button>
               <div class="rating" id="rating" hidden title="Rate this lesson">
                 <span class="rate-label">Rate:</span>
                 <span class="stars" id="stars">
@@ -184,14 +206,31 @@
                 <span class="rate-thanks" id="rate-thanks" hidden>Thanks!</span>
               </div>
               <a class="vbtn" id="download" href="#" download hidden>⬇ Download</a>
-              <button class="vbtn" id="open-window" hidden>↗ Open in new window</button>
+              <button class="vbtn" id="open-window" hidden>↗ Open</button>
+              <button class="vbtn primary" id="ask-more" hidden>💬 Ask more</button>
             </div>
           </div>
           <div class="viewer-body">
             <div class="viewer-empty" id="viewer-empty">Your lesson will open here…</div>
+            <div class="gen-overlay" id="gen-overlay" hidden>
+              <span class="gen-spin"></span>
+              <span class="gen-label" id="gen-label">Getting started…</span>
+              <span class="gen-sub">This takes a couple of minutes — your first section appears first, the rest build as you read.</span>
+            </div>
             <iframe id="viewer-frame" title="Generated lesson" hidden></iframe>
           </div>
         </div>
+        <aside class="chat" id="chat" hidden>
+          <div class="chat-head">
+            <span class="chat-title">Ask about this lesson</span>
+            <button class="chat-close" id="chat-close" type="button" aria-label="Close">×</button>
+          </div>
+          <div class="chat-log" id="chat-log"></div>
+          <form class="chat-compose" id="chat-compose">
+            <textarea id="chat-input" rows="1" placeholder="Ask anything about this topic…"></textarea>
+            <button class="generate sm" id="chat-send" type="submit">Ask</button>
+          </form>
+        </aside>
       </section>
     </main>
 
