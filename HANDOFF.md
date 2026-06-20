@@ -17,8 +17,12 @@ so lessons survive the project switch. `.env` is the NEW project (auth ON locall
 Set in Render dashboard — and **URL-encode the password `@` as `%40`** or the DB silently disables:
 `DATABASE_URL=postgresql://postgres.kdgtlbnlyscdldogxorb:REDACTED@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres`,
 `SUPABASE_URL=https://kdgtlbnlyscdldogxorb.supabase.co`, `SUPABASE_ANON_KEY=sb_publishable_…`, `ANTHROPIC_API_KEY`.
-**Diagnose**: hit `GET /healthz` → `{db, rag, auth}`. If `db:false`, the DATABASE_URL is wrong →
-lessons won't persist → dashboard empty after refresh (this was the reported "lessons went away" bug).
+**Diagnose**: `GET /healthz` runs a LIVE `select 1` → `{db, dbConfigured, dbError, auth}`. If
+`db:false` (esp. `dbConfigured:true` + a `dbError`), the DATABASE_URL is reachable-but-wrong —
+classic cause: the password `@` left unencoded so the host parses as `2026@aws-…`. A dead DB =
+generations render in-memory but never persist → dashboard empty after refresh, and existing
+lessons can't be read. (Verified the app CODE is correct: a new auth user id + the same email
+sees prior lessons via the email-match in listLessons. So an empty dashboard = DB connectivity.)
 Also enable Supabase → Auth → Email → **Confirm email** (so the verify-email message + link work).
 
 ### What shipped since Phase 2

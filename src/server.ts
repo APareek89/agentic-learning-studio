@@ -617,9 +617,18 @@ app.post("/api/upload-repo", requireAuth, async (req, res) => {
   }
 });
 
-// Health check — surfaces whether persistence/auth are actually wired (so an empty
-// dashboard caused by a bad DATABASE_URL is diagnosable: hit /healthz and read `db`).
-app.get("/healthz", (_req, res) => res.json({ ok: true, db: dbEnabled(), rag: ragEnabled(), auth: authEnabled() }));
+// Health check — runs a LIVE `select 1` so a bad DATABASE_URL (e.g. an unencoded
+// `@` in the password) shows as db:false. A configured-but-unreachable DB is the
+// usual cause of "my lessons aren't saved / dashboard is empty after refresh".
+app.get("/healthz", async (_req, res) => {
+  let db = false;
+  let dbError: string | undefined;
+  if (dbEnabled()) {
+    try { const r = await query<{ ok: number }>("select 1 as ok"); db = r.length > 0; }
+    catch (e) { db = false; dbError = e instanceof Error ? e.message.slice(0, 120) : String(e); }
+  }
+  res.json({ ok: true, db, dbConfigured: dbEnabled(), dbError, rag: db, auth: authEnabled() });
+});
 
 // ----------------------------------------------------------------------------
 // Boot.
