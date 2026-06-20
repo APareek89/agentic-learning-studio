@@ -1,7 +1,42 @@
 # HANDOFF — Agentic Learning Studio
 
-Last updated: 2026-06-19. Read this first, then `DESIGN_SPEC.md` (full design) and
+Last updated: 2026-06-20. Read this first, then `DESIGN_SPEC.md` (full design) and
 `START_HERE.md` (quickstart). Companion memory: `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
+
+---
+
+## PHASE 1 (2026-06-20) — shipped, verified locally E2E, pushed to `main`
+
+Deployed on Render (live; URL not stored in repo). Verified against a real generation
+locally (credits restored) AND a server restart:
+
+- **Durable artifacts (the Render "Artifact not found" + broken Download fix):** artifacts
+  now persist to Supabase `lessons` (migration `0002_users_phase1.sql`) with an in-memory cache
+  in front (`src/lib/artifacts.ts`, now async). Verified: GET /api/artifact/:id returns 200 AFTER
+  a full restart (hydrates from DB). `/api/module` + `/full` hydrate too.
+- **Per-user dashboard:** `GET /api/lessons` (30-day window + days-remaining). Landing shows
+  "Your lessons" cards → Open/revise (loads in viewer) + Download. Keyed by Supabase user id
+  (or `local-dev` when auth off). `src/lib/lessons.ts`.
+- **Ratings:** ★1–5 in the viewer bar → `POST /api/rate` → `lessons.rating`.
+- **User preferences:** `user_preferences` table; saved on each generate; `GET /api/preferences`
+  pre-fills the landing dropdowns + context fields.
+- **Landing redesign:** electric-blue theme, animated neural-network hero canvas, Space Grotesk
+  headings + Lexend body + JetBrains Mono code (host app AND artifact `render/tokens.ts`).
+- **Form = dropdowns, 2 per row:** Level (MULTI), Depth (Conceptual/Technical), Examples
+  (Functional/Code), Text, Extras (multi), Lesson type (Content/Knowledge check, multi). Plus two
+  open-text fields (industry, build goal) flowing into the agent. Multi-level → base level =
+  least-advanced selected; full set passed as context. `public/{index.html,app.js,styles.css}`.
+- **Lesson type "Knowledge check":** lightly wired — emits the existing `selfCheckQuiz` blocks
+  (one verified rendered). Richer mode deferred per user.
+- **Lesson page chat:** raw node names hidden behind a friendly progress line; a persistent
+  composer lets the learner **modify the plan** (re-runs generation with feedback appended, same
+  thread for Langfuse).
+- **Auth (Phase 1):** Sign in / Sign up buttons in the topbar open a modal (`auth.ts` gained
+  `getUser()`). Open by default; require sign-in by setting SUPABASE_URL + SUPABASE_ANON_KEY.
+
+**Carry-over:** `/full` eager-build is slow on a fresh lesson (builds every module → can exceed a
+60s client timeout; fine in the browser but watch Render's request limit — consider backgrounding).
+MMR retrieval, regular KB-update system, minor KB cleanups, `.env`-in-repo decision still pending.
 
 ---
 

@@ -31,6 +31,18 @@ export function bearerFrom(header?: string): string | null {
   return m ? m[1] : null;
 }
 
+/**
+ * Resolve the current user from an Authorization header.
+ *  - auth ON  → validate the Bearer token with Supabase (null if invalid).
+ *  - auth OFF → return a stable "local-dev" identity so per-user features
+ *    (dashboard, preferences, ratings) still work for a single local user.
+ */
+export async function getUser(authorization?: string): Promise<AuthUser | null> {
+  if (!authEnabled()) return { id: "local-dev", email: "local@dev" };
+  const token = bearerFrom(authorization);
+  return token ? verifyToken(token) : null;
+}
+
 /** Validate an access token with Supabase; returns the user or null. */
 export async function verifyToken(token: string): Promise<AuthUser | null> {
   const url = process.env.SUPABASE_URL;

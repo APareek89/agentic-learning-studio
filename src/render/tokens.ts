@@ -14,32 +14,35 @@
 
 export const ARTIFACT_CSS = String.raw`
 :root{
-  --accent:#605bff; --accent-2:#4b46d6; --accent-weak:#eef0ff;
-  --ink:#0f1222; --ink-soft:#2b2f44; --muted:#5b6172; --faint:#8a90a6;
-  --bg:#f7f8fc; --surface:#ffffff; --surface-2:#fbfbfe;
-  --border:#e7e9f2; --border-strong:#d6d9e8;
+  --accent:#2563eb; --accent-2:#1d4ed8; --accent-weak:#e8efff;
+  --ink:#0f1729; --ink-soft:#27324a; --muted:#56607a; --faint:#8893ab;
+  --bg:#f5f8ff; --surface:#ffffff; --surface-2:#f9fbff;
+  --border:#e3e9f5; --border-strong:#d0d9ee;
   --ok:#1d9e75; --ok-weak:#e6f6ef; --warn:#b9770a; --warn-weak:#fbf1de;
-  --danger:#d2433a; --danger-weak:#fcebea; --info:#2f74d0; --info-weak:#e8f1fb;
-  --code-bg:#0f1326; --code-ink:#e7ebff;
+  --danger:#d2433a; --danger-weak:#fcebea; --info:#2563eb; --info-weak:#e8efff;
+  --code-bg:#0b1228; --code-ink:#e7ecff;
   --radius:14px; --radius-sm:9px; --measure:780px;
-  --shadow:0 1px 2px rgba(16,18,34,.05),0 10px 30px rgba(16,18,34,.07);
+  --font-body:Lexend,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-head:"Space Grotesk",Lexend,system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow:0 1px 2px rgba(15,23,41,.05),0 10px 30px rgba(37,99,235,.08);
 }
 [data-theme="dark"]{
-  --ink:#eef0fb; --ink-soft:#cfd3ea; --muted:#a3a9c2; --faint:#7e85a3;
-  --bg:#0c0e1a; --surface:#14172a; --surface-2:#171a31;
-  --border:#262a44; --border-strong:#343a5c; --accent-weak:#1d2150;
-  --code-bg:#0a0d1c; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.45);
+  --ink:#eaf0ff; --ink-soft:#c8d2ea; --muted:#9aa6c4; --faint:#76829f;
+  --bg:#0a0f1f; --surface:#121829; --surface-2:#161d31;
+  --border:#222a44; --border-strong:#313b5c; --accent-weak:#142149;
+  --code-bg:#070b18; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.62;font-size:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.65;font-size:16px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 a{color:var(--accent);text-decoration:none}
 .shell{max-width:min(1240px,94vw);margin:0 auto;padding:22px 26px 56px}
-h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;color:var(--ink)}
+h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;color:var(--ink);font-family:var(--font-head)}
 .eyebrow{color:var(--accent);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
 .muted{color:var(--muted)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:var(--accent-weak);color:var(--accent-2);padding:1px 6px;border-radius:6px}
+code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);color:var(--accent-2);padding:1px 6px;border-radius:6px}
 
 /* ---- top bar (theme toggle + progress) ---- */
 .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
@@ -180,9 +183,9 @@ table.dm td.when{background:var(--accent-weak);color:var(--accent-2);font-weight
 .ex input[type=radio]{position:absolute;opacity:0;pointer-events:none}
 .ex-pane{display:none;padding:0}
 .ex .pane-functional{padding:14px}
-pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.6px;line-height:1.6}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:12.8px;line-height:1.6}
 pre.code .cm{color:#7f88b3}
-.code-path{font-size:11px;color:var(--faint);padding:7px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);font-family:ui-monospace,monospace}
+.code-path{font-size:11px;color:var(--faint);padding:7px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);font-family:var(--font-mono)}
 .copy{float:right;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);font:inherit;font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer}
 /* which tab is active */
 .ex input.t-functional:checked ~ .ex-tabs label[for$="-fn"],

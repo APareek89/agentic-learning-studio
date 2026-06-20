@@ -72,24 +72,39 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     .withStructuredOutput(InferenceSchema, { name: "infer" })
     .invoke([new SystemMessage(PROFILER_SYSTEM), new HumanMessage(state.userPrompt)], config);
 
+  // Level can now be MULTI-select on the landing. The base `level` (used for the
+  // 27-combo gating + acronym policy) is the LEAST-advanced selected, so a mixed
+  // audience still gets the most scaffolding; the full set rides in `levels`.
+  const LEVEL_ORDER: LearnerProfile["level"][] = ["beginner", "intermediate", "advanced"];
+  const pickedLevels = (state.levels ?? []).filter((l): l is LearnerProfile["level"] => LEVEL_ORDER.includes(l as LearnerProfile["level"]));
+  const baseFromPicked = LEVEL_ORDER.find((l) => pickedLevels.includes(l));
+
   // Starter cards win; otherwise the model's inference; otherwise the MOST detailed default.
-  const level = (cards.level as LearnerProfile["level"]) || inf.level || "beginner";
+  const level = baseFromPicked || (cards.level as LearnerProfile["level"]) || inf.level || "beginner";
   const depth = (cards.depth as LearnerProfile["depth"]) || inf.depth || "conceptual_technical";
   const examples = (cards.examples as LearnerProfile["examples"]) || inf.examples || "functional_code";
-  const noCards = !(cards.level && cards.depth && cards.examples);
+  const noCards = !(pickedLevels.length || cards.level || cards.depth || cards.examples);
 
   // New landing controls (all optional; sensible defaults preserve old behaviour).
   const density = (["low", "medium", "high"].includes(cards.density as string) ? cards.density : "medium") as LearnerProfile["density"];
   const visualsRequested = cards.visuals === "on";
   const explainSyntax = cards.syntax === "on";
 
+  // Explicit open-text context beats inference; lesson type defaults to "content".
+  const industry = (state.industry ?? "").trim() || inf.industry || undefined;
+  const buildGoal = (state.buildGoal ?? "").trim() || inf.buildGoal || undefined;
+  const lessonTypes = ((state.lessonTypes ?? []).filter((t) => t === "content" || t === "knowledge_check") as ("content" | "knowledge_check")[]);
+  const finalLessonTypes = lessonTypes.length ? lessonTypes : (["content"] as ("content" | "knowledge_check")[]);
+
   const profile: LearnerProfile = {
     level,
     depth,
     examples,
     topic: inf.topic,
-    industry: inf.industry,
-    buildGoal: inf.buildGoal,
+    industry,
+    buildGoal,
+    levels: pickedLevels.length ? pickedLevels : undefined,
+    lessonTypes: finalLessonTypes,
     inferred: noCards,
     // Beginner + intermediate must never see an unexpanded acronym (validation enforces it).
     expandAcronymsOnFirstUse: level !== "advanced",
@@ -207,6 +222,8 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             explainSyntax: p.explainSyntax,
             industry: p.industry,
             buildGoal: p.buildGoal,
+            levels: p.levels,
+            lessonTypes: p.lessonTypes,
             userPrompt: state.userPrompt,
             learningGoal: intent?.learningGoal,
             lessonFocus: intent?.lessonFocus,
@@ -334,6 +351,8 @@ export async function runDeepDive(
             explainSyntax: p.explainSyntax,
             industry: p.industry,
             buildGoal: p.buildGoal,
+            levels: p.levels,
+            lessonTypes: p.lessonTypes,
             glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
             sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
           })
@@ -405,8 +424,21 @@ export async function composer(state: GraphStateType) {
     };
   }
   // Store the Blueprint with the artifact so POST /api/module can build the
-  // remaining modules on demand (and /full can eagerly finish them).
-  const ref = registerArtifact({ kind: "learning-artifact", title: bp.meta.title, html: renderArtifact(bp), blueprint: bp, uploadIds: state.uploadIds, referOnly: state.referOnly });
+  // remaining modules on demand (and /full can eagerly finish them). Persisted to
+  // the DB (durable across restarts) and scoped to the owning user for the dashboard.
+  const ref = await registerArtifact({
+    kind: "learning-artifact",
+    title: bp.meta.title,
+    html: renderArtifact(bp),
+    blueprint: bp,
+    uploadIds: state.uploadIds,
+    referOnly: state.referOnly,
+    userId: state.userId || undefined,
+    userEmail: state.userEmail || undefined,
+    prompt: state.userPrompt,
+    cards: state.cards,
+    profile: bp.learnerProfile,
+  });
 
   const caveat = state.validation && !state.validation.ok ? " (a couple of polish items remain)" : "";
   return {

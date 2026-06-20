@@ -72,6 +72,17 @@ export const GraphState = Annotation.Root({
   uploadIds: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
   referOnly: Annotation<boolean>({ reducer: (_o, n) => n ?? _o ?? false, default: () => false }),
 
+  // Explicit landing-form context (Phase 1). Open-text fields + multi-selects that
+  // override / augment what the Profiler infers.
+  industry: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+  buildGoal: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+  levels: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
+  lessonTypes: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
+
+  // Ownership — so the composer persists the lesson against the right user.
+  userId: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+  userEmail: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+
   // ---- produced by the nodes ----
   profile: Annotation<LearnerProfile | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),
   intent: Annotation<Intent | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),

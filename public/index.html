@@ -7,18 +7,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <!-- ===== Auth gate (shown only when Supabase Auth is configured + you're signed out) ===== -->
+    <!-- ===== Auth modal (opens from the Sign in / Sign up buttons) ===== -->
     <div class="auth-overlay" id="auth-overlay" hidden>
       <div class="auth-card">
+        <button class="auth-close" id="auth-close" type="button" aria-label="Close">×</button>
         <div class="brand"><span class="dot"></span> Agentic Learning Studio</div>
-        <div class="auth-loading" id="auth-loading">Loading…</div>
-        <form class="auth-form" id="auth-form" hidden>
+        <div class="auth-loading" id="auth-loading" hidden>Loading…</div>
+        <form class="auth-form" id="auth-form">
           <h2 id="auth-title">Sign in</h2>
           <p class="auth-sub" id="auth-sub">Sign in to generate lessons.</p>
           <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required />
@@ -33,7 +34,7 @@
       </div>
     </div>
 
-    <!-- ===== Top bar with tabs ===== -->
+    <!-- ===== Top bar ===== -->
     <header class="topbar">
       <div class="brand"><span class="dot"></span> Agentic Learning Studio</div>
       <nav class="tabs" role="tablist">
@@ -43,115 +44,110 @@
         </button>
       </nav>
       <div class="topbar-spacer"></div>
+      <!-- Signed-out: Sign in / Sign up. Signed-in: email + Sign out. -->
+      <div class="auth-actions" id="auth-actions" hidden>
+        <button class="ghost" id="btn-signin" type="button">Sign in</button>
+        <button class="generate sm" id="btn-signup" type="button">Sign up</button>
+      </div>
       <span class="auth-who" id="auth-who" hidden></span>
       <button class="ghost" id="logout" hidden>Sign out</button>
     </header>
 
     <!-- ===== TAB 1: Learning ===== -->
     <main class="tabpanel" id="tab-learning" role="tabpanel">
-      <!-- LANDING state: centered prompt + starter cards -->
+      <!-- LANDING -->
       <section class="landing" id="landing">
-        <div class="landing-inner">
-          <h1>What do you want to understand?</h1>
-          <p class="sub">
-            Build a visual, interactive lesson on anything in agentic AI — a mental map first, then
-            click any building block to go deeper. No videos.
-          </p>
+        <!-- Hero band with the animated neural-network backdrop -->
+        <div class="hero-band">
+          <canvas class="neural" id="neural" aria-hidden="true"></canvas>
+          <div class="hero-content">
+            <h1 id="hero-title">What do you want to understand?</h1>
+            <p class="sub">
+              Build a visual, interactive lesson on anything in agentic AI — a mental map first, then
+              click any building block to go deeper. No videos.
+            </p>
+          </div>
+        </div>
 
-          <!-- The prompt box -->
+        <div class="landing-inner">
+          <!-- DASHBOARD: the signed-in learner's previous lessons (30-day window) -->
+          <section class="dashboard" id="dashboard" hidden>
+            <div class="dash-head">
+              <h2>Your lessons</h2>
+              <span class="dash-note" id="dash-note"></span>
+            </div>
+            <div class="dash-grid" id="dash-grid"></div>
+          </section>
+
+          <!-- The prompt + options card -->
           <div class="prompt-card">
             <textarea
               id="prompt"
               rows="3"
-              placeholder="Write what do you want to learn and how... for best learning specify your focus industry and few words to describe what are you thinking of building"
+              placeholder="Describe what you want to learn and how. Tip: the two fields below let you focus the lesson on your industry and what you're building."
             ></textarea>
 
-            <!-- Three rows of OPTIONAL starter cards (icon cards, single-select per row) -->
-            <div class="cards">
-              <div class="card-group">
-                <span class="row-label">Level</span>
-                <div class="card-row" data-axis="level">
-                  <button class="starter" data-value="beginner">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M12 20c0-4 0-7 4-9M12 20c0-3 0-6-4-8M12 20v-4"/><path d="M16 11c2-1 3-3 3-5-3 0-5 1-6 3M8 12c-2-1-3-2-3-4 2 0 4 1 5 3"/></svg>
-                    <span class="s-title">Beginner</span><span class="s-sub">New to this</span>
-                  </button>
-                  <button class="starter" data-value="intermediate">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M4 19h16M7 19v-6M12 19V9M17 19v-9"/></svg>
-                    <span class="s-title">Intermediate</span><span class="s-sub">Some grounding</span>
-                  </button>
-                  <button class="starter" data-value="advanced">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M5 13c0-5 3-9 7-10 4 1 7 5 7 10 0 3-2 5-4 6H9c-2-1-4-3-4-6Z"/><circle cx="12" cy="9" r="2"/><path d="M9 19l-2 3M15 19l2 3"/></svg>
-                    <span class="s-title">Advanced</span><span class="s-sub">Go deep</span>
-                  </button>
+            <!-- Option dropdowns: two per row -->
+            <div class="dd-grid" id="dd-grid">
+              <div class="dd" data-field="level" data-multi="true">
+                <button class="dd-btn" type="button"><span class="dd-label">Level</span><span class="dd-value">Any</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="beginner" type="button">Beginner</button>
+                  <button class="dd-opt" data-value="intermediate" type="button">Intermediate</button>
+                  <button class="dd-opt" data-value="advanced" type="button">Advanced</button>
                 </div>
               </div>
-              <div class="card-group">
-                <span class="row-label">Depth</span>
-                <div class="card-row" data-axis="depth">
-                  <button class="starter" data-value="conceptual">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10Z"/></svg>
-                    <span class="s-title">Conceptual</span><span class="s-sub">The big picture</span>
-                  </button>
-                  <button class="starter" data-value="technical">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M13 7l-2 10"/></svg>
-                    <span class="s-title">Technical</span><span class="s-sub">How it works</span>
-                  </button>
-                  <button class="starter" data-value="conceptual_technical">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5M3 17l9 5 9-5"/></svg>
-                    <span class="s-title">Concept + Technical</span><span class="s-sub">Both layers</span>
-                  </button>
+              <div class="dd" data-field="depth">
+                <button class="dd-btn" type="button"><span class="dd-label">Depth</span><span class="dd-value">Auto</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="conceptual" type="button">Conceptual</button>
+                  <button class="dd-opt" data-value="technical" type="button">Technical</button>
                 </div>
               </div>
-              <div class="card-group">
-                <span class="row-label">Examples</span>
-                <div class="card-row" data-axis="examples">
-                  <button class="starter" data-value="functional">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M8 5v14l11-7-11-7Z"/></svg>
-                    <span class="s-title">Functional</span><span class="s-sub">Plain scenarios</span>
-                  </button>
-                  <button class="starter" data-value="code">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3"/></svg>
-                    <span class="s-title">Code</span><span class="s-sub">Runnable snippets</span>
-                  </button>
-                  <button class="starter" data-value="functional_code">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M5 5v14l8-5-8-5Z"/><path d="M17 8l3 4-3 4"/></svg>
-                    <span class="s-title">Functional + Code</span><span class="s-sub">Both</span>
-                  </button>
+              <div class="dd" data-field="examples">
+                <button class="dd-btn" type="button"><span class="dd-label">Examples</span><span class="dd-value">Auto</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="functional" type="button">Functional</button>
+                  <button class="dd-opt" data-value="code" type="button">Code</button>
                 </div>
               </div>
-              <div class="card-group">
-                <span class="row-label">Text</span>
-                <div class="card-row" data-axis="density">
-                  <button class="starter" data-value="low">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M5 8h14M5 12h7"/></svg>
-                    <span class="s-title">Low</span><span class="s-sub">Sharp &amp; direct</span>
-                  </button>
-                  <button class="starter" data-value="medium">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M5 7h14M5 12h14M5 17h8"/></svg>
-                    <span class="s-title">Medium</span><span class="s-sub">Balanced</span>
-                  </button>
-                  <button class="starter" data-value="high">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M5 6h14M5 10h14M5 14h14M5 18h14"/></svg>
-                    <span class="s-title">High</span><span class="s-sub">Read in depth</span>
-                  </button>
+              <div class="dd" data-field="density">
+                <button class="dd-btn" type="button"><span class="dd-label">Text</span><span class="dd-value">Balanced</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="low" type="button">Low — sharp &amp; direct</button>
+                  <button class="dd-opt" data-value="medium" type="button">Medium — balanced</button>
+                  <button class="dd-opt" data-value="high" type="button">High — read in depth</button>
                 </div>
               </div>
-              <div class="card-group">
-                <span class="row-label">Extras</span>
-                <div class="toggle-row">
-                  <button class="opt-toggle" data-toggle="visuals" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" class="s-icon"><circle cx="7" cy="8" r="2.5"/><circle cx="17" cy="15" r="2.5"/><path d="M9.2 9.2l5.6 4.6M12 4v3M12 17v3"/></svg>
-                    <span class="s-title">Visuals &amp; demos</span><span class="s-sub">Interactive visuals for hard concepts</span>
-                  </button>
-                  <button class="opt-toggle" data-toggle="syntax" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" class="s-icon"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M13 7l-2 10"/></svg>
-                    <span class="s-title">Explain syntax</span><span class="s-sub">Break down the code constructs</span>
-                  </button>
+              <div class="dd" data-field="extras" data-multi="true">
+                <button class="dd-btn" type="button"><span class="dd-label">Extras</span><span class="dd-value">None</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="visuals" type="button">Visuals &amp; demos</button>
+                  <button class="dd-opt" data-value="syntax" type="button">Explain syntax</button>
+                </div>
+              </div>
+              <div class="dd" data-field="lessonType" data-multi="true">
+                <button class="dd-btn" type="button"><span class="dd-label">Lesson type</span><span class="dd-value">Content</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="dd-menu" hidden>
+                  <button class="dd-opt" data-value="content" type="button">Content</button>
+                  <button class="dd-opt" data-value="knowledge_check" type="button">Knowledge check</button>
                 </div>
               </div>
             </div>
 
-            <!-- Optional: ground the lesson in the learner's own documents -->
+            <!-- Open-text context fields -->
+            <div class="ctx-grid">
+              <label class="ctx">
+                <span class="ctx-label">Specific industry you're focusing on</span>
+                <input id="industry" type="text" placeholder="e.g. e-commerce, healthcare, fintech" />
+              </label>
+              <label class="ctx">
+                <span class="ctx-label">Anything you want to build</span>
+                <input id="build-goal" type="text" placeholder="e.g. a support agent over our docs" />
+              </label>
+            </div>
+
+            <!-- Ground the lesson in the learner's own documents -->
             <div class="uploads">
               <div class="uploads-head">
                 <input type="file" id="file-input" multiple hidden
@@ -166,25 +162,41 @@
             </div>
 
             <div class="prompt-actions">
-              <span class="hint" id="cards-hint">Starter cards are optional — leave blank and I'll infer.</span>
+              <span class="hint" id="cards-hint">Options are optional — leave blank and I'll infer.</span>
               <button class="generate" id="generate">Generate lesson →</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- WORKSPACE state: chat 30% (left) + viewer 70% (right). Hidden until submit. -->
+      <!-- WORKSPACE: chat 30% (left) + viewer 70% (right) -->
       <section class="workspace" id="workspace" hidden>
         <aside class="chat" id="chat">
           <div class="chat-head">
             <button class="ghost" id="new-thread">＋ New lesson</button>
           </div>
           <div class="chat-log" id="chat-log"></div>
+          <!-- Persistent modify-the-plan composer (enabled once a lesson is ready) -->
+          <form class="chat-compose" id="chat-compose">
+            <textarea id="chat-input" rows="1" placeholder="Want to change anything? e.g. “add a section on cost”, “make it more advanced”" disabled></textarea>
+            <button class="generate sm" id="chat-send" type="submit" disabled>Send</button>
+          </form>
         </aside>
         <div class="viewer" id="viewer">
           <div class="viewer-bar">
             <span class="viewer-title" id="viewer-title">Lesson</span>
             <div class="viewer-actions">
+              <div class="rating" id="rating" hidden title="Rate this lesson">
+                <span class="rate-label">Rate:</span>
+                <span class="stars" id="stars">
+                  <button class="star" data-v="1" type="button">★</button>
+                  <button class="star" data-v="2" type="button">★</button>
+                  <button class="star" data-v="3" type="button">★</button>
+                  <button class="star" data-v="4" type="button">★</button>
+                  <button class="star" data-v="5" type="button">★</button>
+                </span>
+                <span class="rate-thanks" id="rate-thanks" hidden>Thanks!</span>
+              </div>
               <a class="vbtn" id="download" href="#" download hidden>⬇ Download</a>
               <button class="vbtn" id="open-window" hidden>↗ Open in new window</button>
             </div>
@@ -197,7 +209,6 @@
       </section>
     </main>
 
-    <!-- Supabase JS (UMD global `supabase`) for client-side auth; only used when configured. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/app.js"></script>
   </body>

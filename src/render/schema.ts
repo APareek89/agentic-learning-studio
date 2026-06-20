@@ -39,6 +39,11 @@ export const LearnerProfileSchema = z.object({
   topic: z.string(),
   industry: z.string().optional(),
   buildGoal: z.string().optional(),
+  /** when the learner picked multiple levels, the full set (e.g. ["beginner","advanced"]);
+   *  `level` above is the base (least-advanced) used for the 27-combo gating. */
+  levels: z.array(LevelSchema).optional(),
+  /** what to include — "content" and/or "knowledge_check" (the landing "Lesson Type"). */
+  lessonTypes: z.array(z.enum(["content", "knowledge_check"])).optional(),
   /** true when no starter cards were chosen and the Profiler inferred the axes. */
   inferred: z.boolean().default(false),
   /** beginner/intermediate ⇒ true ⇒ validation HARD-fails on unexpanded acronyms. */

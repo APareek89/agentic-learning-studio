@@ -1,20 +1,19 @@
 /**
- * # Front-end logic (vanilla JavaScript, runs in the browser)
+ * # Front-end logic (vanilla JS) — Phase 1
  *
- * Responsibilities for the Step-1 skeleton:
- *   1. Let the user select OPTIONAL starter cards (one per row, toggleable).
- *   2. On "Generate", switch from the landing view to the 30/70 workspace.
- *   3. POST the prompt + cards to /api/learn and read the Server-Sent Events
- *      stream, rendering each message in the left chat.
- *   4. When an `artifact` event arrives, show it in the right viewer (an iframe)
- *      and enable Download + Open-in-new-window.
- *
- * The generation engine behind /api/learn is stubbed for now; this front-end is
- * the real thing and won't change when the engine is wired in.
+ *  - Click-based dropdown controls (Level multi · Depth · Examples · Text ·
+ *    Extras multi · Lesson type multi) + two open-text context fields.
+ *  - Dashboard of the user's previous lessons (30-day window) — open or download.
+ *  - Generation streams over SSE; the raw node names are hidden behind a friendly
+ *    progress line. A persistent chat lets the learner ask to modify the plan.
+ *  - Star rating saved to the server. Animated neural-network hero backdrop.
+ *  - Supabase auth via a modal opened from the Sign in / Sign up buttons.
  */
 
-// ---- Grab elements ----
+// ---- Elements ----
 const promptEl = document.getElementById("prompt");
+const industryEl = document.getElementById("industry");
+const buildGoalEl = document.getElementById("build-goal");
 const generateBtn = document.getElementById("generate");
 const landing = document.getElementById("landing");
 const workspace = document.getElementById("workspace");
@@ -23,44 +22,86 @@ const viewerFrame = document.getElementById("viewer-frame");
 const viewerEmpty = document.getElementById("viewer-empty");
 const downloadBtn = document.getElementById("download");
 const openWindowBtn = document.getElementById("open-window");
+const ratingEl = document.getElementById("rating");
+const chatCompose = document.getElementById("chat-compose");
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
 
-// Currently selected starter cards, e.g. { level: "beginner" }. Only set axes are sent.
-const selectedCards = {};
-let currentArtifactId = null;
+// Selections collected from the dropdowns.
+const sel = { level: [], depth: null, examples: null, density: null, extras: [], lessonType: [] };
 
-// ---- Starter card selection: one selectable value per row, click again to clear ----
-// Covers Level / Depth / Examples AND the new Text (density) row — all single-select.
-document.querySelectorAll(".card-row").forEach((row) => {
-  const axis = row.dataset.axis; // "level" | "depth" | "examples" | "density"
-  row.querySelectorAll(".starter").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const already = btn.classList.contains("selected");
-      // Clear any other selection in this row first (single-select per row).
-      row.querySelectorAll(".starter").forEach((b) => b.classList.remove("selected"));
-      if (already) {
-        delete selectedCards[axis]; // toggle off
+let currentArtifactId = null;
+let currentThreadId = null;
+let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
+
+// Friendly labels for the dropdown summary.
+const VALUE_LABELS = {
+  beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced",
+  conceptual: "Conceptual", technical: "Technical",
+  functional: "Functional", code: "Code",
+  low: "Low", medium: "Medium", high: "High",
+  visuals: "Visuals", syntax: "Syntax",
+  content: "Content", knowledge_check: "Knowledge check",
+};
+const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content" };
+
+// ---- Dropdown wiring (single + multi) ----
+document.querySelectorAll(".dd").forEach((dd) => {
+  const field = dd.dataset.field;
+  const multi = dd.dataset.multi === "true";
+  const btn = dd.querySelector(".dd-btn");
+  const menu = dd.querySelector(".dd-menu");
+  const valueEl = dd.querySelector(".dd-value");
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = dd.classList.contains("open");
+    closeAllDropdowns();
+    if (!wasOpen) { dd.classList.add("open"); menu.hidden = false; }
+  });
+
+  menu.addEventListener("click", (e) => e.stopPropagation()); // keep multi-select open
+  menu.querySelectorAll(".dd-opt").forEach((opt) => {
+    opt.addEventListener("click", () => {
+      const v = opt.dataset.value;
+      if (multi) {
+        const arr = sel[field];
+        const i = arr.indexOf(v);
+        if (i >= 0) { arr.splice(i, 1); opt.classList.remove("sel"); }
+        else { arr.push(v); opt.classList.add("sel"); }
       } else {
-        btn.classList.add("selected");
-        selectedCards[axis] = btn.dataset.value;
+        const turningOff = sel[field] === v;
+        menu.querySelectorAll(".dd-opt").forEach((o) => o.classList.remove("sel"));
+        sel[field] = turningOff ? null : v;
+        if (!turningOff) opt.classList.add("sel");
+        dd.classList.remove("open"); menu.hidden = true;
       }
+      renderDdValue(dd, field, multi, valueEl);
     });
   });
 });
 
-// ---- On/off extras (Visuals & demos, Explain syntax): independent toggles ----
-document.querySelectorAll(".opt-toggle").forEach((btn) => {
-  const key = btn.dataset.toggle; // "visuals" | "syntax"
-  btn.addEventListener("click", () => {
-    const on = btn.classList.toggle("on");
-    btn.setAttribute("aria-pressed", String(on));
-    if (on) selectedCards[key] = "on";
-    else delete selectedCards[key];
-  });
-});
+function renderDdValue(dd, field, multi, valueEl) {
+  let text, set;
+  if (multi) {
+    const arr = sel[field];
+    set = arr.length > 0;
+    text = set ? arr.map((v) => VALUE_LABELS[v] || v).join(", ") : DD_DEFAULTS[field];
+  } else {
+    set = !!sel[field];
+    text = set ? VALUE_LABELS[sel[field]] : DD_DEFAULTS[field];
+  }
+  valueEl.textContent = text;
+  dd.classList.toggle("is-set", set);
+}
+function closeAllDropdowns() {
+  document.querySelectorAll(".dd.open").forEach((d) => { d.classList.remove("open"); d.querySelector(".dd-menu").hidden = true; });
+}
+document.addEventListener("click", closeAllDropdowns);
 
-// ---- Document uploads (session-scoped: kept until page refresh, reusable across lessons) ----
-const uploadedDocs = []; // [{ docId, title }]
+// ---- Document uploads (session-scoped) ----
+const uploadedDocs = [];
 const fileInput = document.getElementById("file-input");
 const addDocsBtn = document.getElementById("add-docs");
 const chipsEl = document.getElementById("upload-chips");
@@ -98,7 +139,7 @@ fileInput.addEventListener("change", async () => {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1]); // strip "data:...;base64,"
+    r.onload = () => resolve(String(r.result).split(",")[1]);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
@@ -111,10 +152,7 @@ function addChip(name, meta) {
   el.querySelector(".chip-meta").textContent = meta;
   el.querySelector(".chip-x").addEventListener("click", () => {
     const id = el.dataset.docId;
-    if (id) {
-      const i = uploadedDocs.findIndex((d) => d.docId === id);
-      if (i >= 0) uploadedDocs.splice(i, 1);
-    }
+    if (id) { const i = uploadedDocs.findIndex((d) => d.docId === id); if (i >= 0) uploadedDocs.splice(i, 1); }
     el.remove();
     updateUploadUI();
   });
@@ -132,55 +170,95 @@ function updateUploadUI() {
   }
 }
 
+// ---- Build the /api/learn payload from the current selections ----
+function buildPayload(promptText, threadId) {
+  const cards = {};
+  if (sel.depth) cards.depth = sel.depth;
+  if (sel.examples) cards.examples = sel.examples;
+  if (sel.density) cards.density = sel.density;
+  if (sel.extras.includes("visuals")) cards.visuals = "on";
+  if (sel.extras.includes("syntax")) cards.syntax = "on";
+  return {
+    prompt: promptText,
+    cards,
+    levels: sel.level,
+    lessonTypes: sel.lessonType.length ? sel.lessonType : ["content"],
+    industry: industryEl.value.trim(),
+    buildGoal: buildGoalEl.value.trim(),
+    uploadIds: uploadedDocs.map((d) => d.docId),
+    referOnly: referChk.checked,
+    threadId,
+  };
+}
+
 // ---- Submit ----
-generateBtn.addEventListener("click", startGeneration);
-promptEl.addEventListener("keydown", (e) => {
-  // Cmd/Ctrl + Enter submits.
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") startGeneration();
+generateBtn.addEventListener("click", () => {
+  const p = promptEl.value.trim();
+  if (!p) { promptEl.focus(); return; }
+  if (authRequiredAndOut()) { openAuth("signup"); return; }
+  basePrompt = p;
+  currentThreadId = "web-" + Date.now();
+  startGeneration(p, currentThreadId, false);
 });
+promptEl.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generateBtn.click(); });
 
-async function startGeneration() {
-  const prompt = promptEl.value.trim();
-  if (!prompt) {
-    promptEl.focus();
-    return;
-  }
+// Modify-the-plan composer.
+chatCompose.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) return;
+  const combined = `${basePrompt}\n\n[Modification requested by the learner — apply this to the lesson]: ${text}`;
+  addUserBubble(text);
+  chatInput.value = "";
+  startGeneration(combined, currentThreadId || ("web-" + Date.now()), true);
+});
+chatInput.addEventListener("input", () => { chatInput.style.height = "auto"; chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px"; });
 
-  // Switch to the workspace (chat left, viewer right).
+// Friendly progress text (we hide the raw node names from the learner).
+const STAGE_TEXT = {
+  start: "Getting started…",
+  profiler: "Understanding your goal…",
+  retriever: "Gathering grounded sources…",
+  architect: "Designing the lesson outline…",
+  seedFirstModule: "Writing your first building block…",
+  composer: "Assembling your interactive lesson…",
+};
+
+async function startGeneration(promptText, threadId, isModify) {
   landing.hidden = true;
   workspace.hidden = false;
-  chatLog.innerHTML = "";
-  addUserBubble(prompt);
-  const statusEl = addStatus("Starting…");
+  if (!isModify) { chatLog.innerHTML = ""; addUserBubble(promptEl.value.trim() || basePrompt); }
+  setChatEnabled(false);
+  const statusEl = addStatus("Getting started…");
 
   try {
     const res = await fetch("/api/learn", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({
-        prompt,
-        cards: selectedCards,
-        uploadIds: uploadedDocs.map((d) => d.docId),
-        referOnly: referChk.checked,
-      }),
+      body: JSON.stringify(buildPayload(promptText, threadId)),
     });
-    if (res.status === 401) { authOverlay.hidden = false; throw new Error("Please sign in to continue."); }
+    if (res.status === 401) { openAuth("signin"); throw new Error("Please sign in to continue."); }
     if (!res.ok || !res.body) throw new Error("Request failed: " + res.status);
 
     await readSse(res.body, (event, data) => {
-      if (event === "node") statusEl.querySelector(".label").textContent = data.message || data.stage;
-      else if (event === "message") addAssistantBubble(data);
+      if (event === "node") statusEl.querySelector(".label").textContent = STAGE_TEXT[data.stage] || "Working…";
       else if (event === "artifact") showArtifact(data);
-      else if (event === "error") addAssistantBubble({ node: "Error", content: "⚠️ " + data.message });
-      else if (event === "done") statusEl.remove();
+      else if (event === "error") { statusEl.remove(); addAssistantBubble({ content: "⚠️ " + data.message }); }
+      else if (event === "done") {
+        statusEl.remove();
+        addAssistantBubble({ content: "Your lesson is ready on the right. Start at the **mental map** — every underlined term has an **(i)** definition. Want to change anything? Ask below." });
+        setChatEnabled(true);
+        loadDashboard(); // refresh the dashboard so the new lesson appears next time
+      }
     });
   } catch (err) {
     statusEl.remove();
-    addAssistantBubble({ node: "Error", content: "⚠️ " + err.message });
+    addAssistantBubble({ content: "⚠️ " + err.message });
+    setChatEnabled(true);
   }
 }
 
-// ---- SSE reader: POST + manual parse of the text/event-stream body ----
+// ---- SSE reader ----
 async function readSse(body, onEvent) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -193,61 +271,76 @@ async function readSse(body, onEvent) {
     while ((sep = buffer.indexOf("\n\n")) !== -1) {
       const block = buffer.slice(0, sep);
       buffer = buffer.slice(sep + 2);
-      let event = "message";
-      let dataLine = "";
+      let event = "message"; let dataLine = "";
       for (const line of block.split("\n")) {
         if (line.startsWith("event:")) event = line.slice(6).trim();
         else if (line.startsWith("data:")) dataLine += line.slice(5).trim();
       }
       if (!dataLine) continue;
-      try {
-        onEvent(event, JSON.parse(dataLine));
-      } catch {
-        /* ignore malformed chunk */
-      }
+      try { onEvent(event, JSON.parse(dataLine)); } catch { /* ignore */ }
     }
   }
 }
 
 // ---- Viewer ----
 function showArtifact(ref) {
-  currentArtifactId = ref.id;
+  openInViewer(ref.id, ref.title || "Lesson");
+}
+function openInViewer(id, title) {
+  currentArtifactId = id;
   viewerEmpty.hidden = true;
   viewerFrame.hidden = false;
-  viewerFrame.src = "/api/artifact/" + ref.id;
-  document.getElementById("viewer-title").textContent = ref.title || "Lesson";
+  viewerFrame.src = "/api/artifact/" + id;
+  document.getElementById("viewer-title").textContent = title;
   downloadBtn.hidden = false;
-  // /full eagerly builds any not-yet-generated modules so the saved file is complete offline.
-  downloadBtn.href = "/api/artifact/" + ref.id + "/full";
+  downloadBtn.href = "/api/artifact/" + id + "/full";
   openWindowBtn.hidden = false;
+  resetStars();
+  ratingEl.hidden = false;
 }
-openWindowBtn.addEventListener("click", () => {
-  if (currentArtifactId) window.open("/api/artifact/" + currentArtifactId, "_blank");
-});
+openWindowBtn.addEventListener("click", () => { if (currentArtifactId) window.open("/api/artifact/" + currentArtifactId, "_blank"); });
+
+// ---- Rating ----
+const stars = Array.from(document.querySelectorAll(".star"));
+const rateThanks = document.getElementById("rate-thanks");
+stars.forEach((s) => s.addEventListener("click", () => submitRating(Number(s.dataset.v))));
+function paintStars(v) { stars.forEach((s) => s.classList.toggle("on", Number(s.dataset.v) <= v)); }
+function resetStars() { paintStars(0); rateThanks.hidden = true; }
+async function submitRating(v) {
+  if (!currentArtifactId) return;
+  paintStars(v);
+  try {
+    const res = await fetch("/api/rate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ artifactId: currentArtifactId, rating: v }),
+    });
+    if (res.status === 401) { openAuth("signin"); return; }
+    rateThanks.hidden = false;
+  } catch { /* ignore */ }
+}
 
 // ---- Chat rendering ----
 function addUserBubble(text) {
   const el = document.createElement("div");
   el.className = "msg user";
   el.innerHTML = `<div class="who">You</div>${mdLite(text)}`;
-  chatLog.appendChild(el);
-  scrollDown();
+  chatLog.appendChild(el); scrollDown();
 }
-function addAssistantBubble({ node, content }) {
+function addAssistantBubble({ content }) {
   const el = document.createElement("div");
   el.className = "msg";
-  el.innerHTML = `<div class="who">${escapeHtml(node || "Studio")}</div>${mdLite(content)}`;
-  chatLog.appendChild(el);
-  scrollDown();
+  el.innerHTML = `<div class="who">Studio</div>${mdLite(content)}`;
+  chatLog.appendChild(el); scrollDown();
 }
 function addStatus(text) {
   const el = document.createElement("div");
   el.className = "status";
   el.innerHTML = `<span class="spin"></span><span class="label">${escapeHtml(text)}</span>`;
-  chatLog.appendChild(el);
-  scrollDown();
+  chatLog.appendChild(el); scrollDown();
   return el;
 }
+function setChatEnabled(on) { chatInput.disabled = !on; chatSend.disabled = !on; if (on) chatInput.focus(); }
 
 function resetToLanding() {
   workspace.hidden = true;
@@ -257,26 +350,122 @@ function resetToLanding() {
   viewerEmpty.hidden = false;
   downloadBtn.hidden = true;
   openWindowBtn.hidden = true;
+  ratingEl.hidden = true;
   currentArtifactId = null;
+  loadDashboard();
+}
+
+// ---- Dashboard ----
+const dashboard = document.getElementById("dashboard");
+const dashGrid = document.getElementById("dash-grid");
+const dashNote = document.getElementById("dash-note");
+
+async function loadDashboard() {
+  try {
+    const res = await fetch("/api/lessons", { headers: authHeaders() });
+    if (!res.ok) { dashboard.hidden = true; return; }
+    const { lessons } = await res.json();
+    if (!lessons || !lessons.length) { dashboard.hidden = true; return; }
+    dashGrid.innerHTML = "";
+    for (const l of lessons) dashGrid.appendChild(lessonCard(l));
+    dashNote.textContent = `${lessons.length} saved · kept for 30 days`;
+    dashboard.hidden = false;
+  } catch { dashboard.hidden = true; }
+}
+function lessonCard(l) {
+  const el = document.createElement("div");
+  el.className = "lesson-card";
+  const days = l.daysRemaining;
+  const warn = days <= 5 ? " warn" : "";
+  const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
+  const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
+  el.innerHTML = `
+    <div class="lc-title">${escapeHtml(l.title)}</div>
+    <div class="lc-meta"><span class="lc-badge${warn}">${days}d left</span>${industry}${ratingHtml}</div>
+    <div class="lc-actions">
+      <button class="ghost lc-open" type="button">Open / revise</button>
+      <a class="ghost lc-dl" href="/api/artifact/${l.id}/full" download>Download</a>
+    </div>`;
+  el.querySelector(".lc-open").addEventListener("click", () => {
+    basePrompt = l.prompt || l.title;
+    currentThreadId = "web-" + Date.now();
+    landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+    addAssistantBubble({ content: `Opened **${l.title}**. Read on the right, or ask below to revise it.` });
+    openInViewer(l.id, l.title);
+    setChatEnabled(true);
+  });
+  return el;
 }
 
 // ---- Tiny helpers ----
 function scrollDown() { chatLog.scrollTop = chatLog.scrollHeight; }
 function mdLite(s) { return escapeHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>"); }
-function escapeHtml(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
+function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 // ============================================================================
-// Supabase Auth — gates generation when configured (SUPABASE_URL+ANON_KEY set
-// on the server); fully open otherwise so local dev needs no auth. The browser
-// gets the public anon key from /api/config, manages the session client-side,
-// and sends the access token as a Bearer header on gated requests.
+// Animated neural-network hero backdrop (canvas; respects reduced motion).
+// ============================================================================
+(function neural() {
+  const canvas = document.getElementById("neural");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let w, h, nodes, raf;
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.width = Math.max(1, r.width * dpr);
+    h = canvas.height = Math.max(1, r.height * dpr);
+    const count = Math.min(64, Math.floor((r.width * r.height) / 14000));
+    nodes = Array.from({ length: count }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.18 * dpr, vy: (Math.random() - 0.5) * 0.18 * dpr,
+      r: (Math.random() * 1.6 + 1.1) * dpr,
+    }));
+  }
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    const linkDist = 150 * (Math.min(window.devicePixelRatio || 1, 2));
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      a.x += a.vx; a.y += a.vy;
+      if (a.x < 0 || a.x > w) a.vx *= -1;
+      if (a.y < 0 || a.y > h) a.vy *= -1;
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < linkDist) {
+          const o = (1 - d / linkDist) * 0.5;
+          ctx.strokeStyle = `rgba(96,165,250,${o})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+    for (const n of nodes) {
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(125,211,252,0.9)"; ctx.fill();
+    }
+    if (!reduce) raf = requestAnimationFrame(frame);
+  }
+  resize();
+  frame();
+  let t;
+  window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { cancelAnimationFrame(raf); resize(); frame(); }, 150); });
+})();
+
+// ============================================================================
+// Supabase Auth — modal opened from Sign in / Sign up. When auth is OFF (no
+// SUPABASE_URL/ANON on the server) the app runs open and the dashboard uses a
+// local identity, so everything works locally with zero auth config.
 // ============================================================================
 let sb = null;
 let accessToken = null;
 let authMode = "signin";
+let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
+const authActions = document.getElementById("auth-actions");
 const authLoading = document.getElementById("auth-loading");
 const authForm = document.getElementById("auth-form");
 const authTitle = document.getElementById("auth-title");
@@ -287,23 +476,20 @@ const authMsg = document.getElementById("auth-msg");
 const authSubmit = document.getElementById("auth-submit");
 const authSwitchText = document.getElementById("auth-switch-text");
 const authToggle = document.getElementById("auth-toggle");
+const authClose = document.getElementById("auth-close");
 const logoutBtn = document.getElementById("logout");
 const authWho = document.getElementById("auth-who");
 
-// Hoisted so the gated fetches above can use it regardless of auth state.
-function authHeaders() {
-  return accessToken ? { Authorization: "Bearer " + accessToken } : {};
-}
-function showAuthMsg(text, kind) {
-  authMsg.hidden = !text;
-  authMsg.textContent = text || "";
-  authMsg.className = "auth-msg" + (kind ? " " + kind : "");
-}
+function authHeaders() { return accessToken ? { Authorization: "Bearer " + accessToken } : {}; }
+function authRequiredAndOut() { return authIsEnabled && !accessToken; }
+function showAuthMsg(text, kind) { authMsg.hidden = !text; authMsg.textContent = text || ""; authMsg.className = "auth-msg" + (kind ? " " + kind : ""); }
+function openAuth(mode) { setAuthMode(mode || "signin"); authOverlay.hidden = false; }
+function closeAuth() { authOverlay.hidden = true; }
 function setAuthMode(mode) {
   authMode = mode;
   const signup = mode === "signup";
   authTitle.textContent = signup ? "Create your account" : "Sign in";
-  authSub.textContent = signup ? "Sign up to start generating lessons." : "Sign in to generate lessons.";
+  authSub.textContent = signup ? "Sign up to start generating lessons." : "Welcome back.";
   authSubmit.textContent = signup ? "Create account" : "Sign in";
   authSwitchText.textContent = signup ? "Already have an account?" : "New here?";
   authToggle.textContent = signup ? "Sign in" : "Create an account";
@@ -313,23 +499,37 @@ function setAuthMode(mode) {
 function applySession(session) {
   accessToken = (session && session.access_token) || null;
   const email = (session && session.user && session.user.email) || "";
-  authOverlay.hidden = !!accessToken; // hide the gate once signed in
-  if (logoutBtn) logoutBtn.hidden = !accessToken;
-  if (authWho) { authWho.hidden = !accessToken; authWho.textContent = email; }
+  const signedIn = !!accessToken;
+  if (authActions) authActions.hidden = signedIn;
+  if (logoutBtn) logoutBtn.hidden = !signedIn;
+  if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }
+  if (signedIn) { closeAuth(); loadDashboard(); loadPreferences(); }
 }
+
+document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
+document.getElementById("btn-signup").addEventListener("click", () => openAuth("signup"));
+authClose.addEventListener("click", closeAuth);
+authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
 
 async function bootAuth() {
   let cfg;
   try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
-  if (!cfg.authEnabled) { authOverlay.hidden = true; return; } // open / local-dev mode
+  authIsEnabled = !!cfg.authEnabled;
+
+  if (!authIsEnabled) {
+    // Open mode (local dev): no auth UI; dashboard + prefs use the server's local id.
+    authActions.hidden = true;
+    loadDashboard(); loadPreferences();
+    return;
+  }
+
   if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
-    authLoading.textContent = "Sign-in is misconfigured — check SUPABASE_URL / SUPABASE_ANON_KEY.";
+    authActions.hidden = false;
     return;
   }
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  authLoading.hidden = true;
-  authForm.hidden = false;
   setAuthMode("signin");
+  authActions.hidden = false;
 
   const { data } = await sb.auth.getSession();
   applySession(data.session);
@@ -348,7 +548,6 @@ async function bootAuth() {
         const { data: d, error } = await sb.auth.signUp({ email, password });
         if (error) throw error;
         if (!d.session) { showAuthMsg("Account created — check your email to confirm, then sign in.", "ok"); setAuthMode("signin"); }
-        // If email confirmation is OFF, a session is returned and onAuthStateChange hides the gate.
       } else {
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -359,6 +558,41 @@ async function bootAuth() {
       authSubmit.disabled = false;
     }
   });
-  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); });
+  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); dashboard.hidden = true; });
 }
+
+// ---- Preferences: pre-fill the dropdowns + context fields from last time ----
+async function loadPreferences() {
+  try {
+    const res = await fetch("/api/preferences", { headers: authHeaders() });
+    if (!res.ok) return;
+    const { prefs } = await res.json();
+    if (!prefs) return;
+    applyPref("level", prefs.levels, true);
+    applyPref("depth", prefs.depth, false);
+    applyPref("examples", prefs.examples, false);
+    applyPref("density", prefs.density, false);
+    if (prefs.visuals) applyPref("extras", "visuals", true, true);
+    if (prefs.syntax) applyPref("extras", "syntax", true, true);
+    applyPref("lessonType", prefs.lessonTypes, true);
+    if (prefs.industry) industryEl.value = prefs.industry;
+    if (prefs.buildGoal) buildGoalEl.value = prefs.buildGoal;
+  } catch { /* ignore */ }
+}
+function applyPref(field, value, multi, append) {
+  const dd = document.querySelector(`.dd[data-field="${field}"]`);
+  if (!dd || value == null) return;
+  const valueEl = dd.querySelector(".dd-value");
+  const values = multi ? (Array.isArray(value) ? value : [value]) : [value];
+  if (!append) { sel[field] = multi ? [] : null; dd.querySelectorAll(".dd-opt").forEach((o) => o.classList.remove("sel")); }
+  for (const v of values) {
+    if (!v) continue;
+    const opt = dd.querySelector(`.dd-opt[data-value="${v}"]`);
+    if (!opt) continue;
+    opt.classList.add("sel");
+    if (multi) { if (!sel[field].includes(v)) sel[field].push(v); } else { sel[field] = v; }
+  }
+  renderDdValue(dd, field, multi, valueEl);
+}
+
 bootAuth();

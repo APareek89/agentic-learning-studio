@@ -154,9 +154,12 @@ export function moduleUserPrompt(args: {
   industry?: string;
   buildGoal?: string;
   lessonFocus?: string;
+  levels?: string[];
+  lessonTypes?: string[];
   glossary: { id: string; label: string }[];
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
 }): string {
+  const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const lines = [
     `LESSON TOPIC FOCUS: ${args.lessonFocus ?? "teach this module"}`,
     `MODULE: ${args.moduleTitle}`,
@@ -164,6 +167,8 @@ export function moduleUserPrompt(args: {
     args.objectives.length ? `OBJECTIVES: ${args.objectives.join("; ")}` : "",
     args.decisionItForces ? `DECISION THIS MODULE FORCES: ${args.decisionItForces}` : "",
     `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — scaffold for the least experienced while offering depthTier:"deeper" blocks for the more advanced.` : "",
+    knowledgeCheck ? `KNOWLEDGE CHECK: on — include at least one selfCheckQuiz block in this module (ask before revealing; prefer mcq or applyToYourBuild).` : "",
     `DENSITY: ${args.density ?? "medium"}`,
     `VISUALS: ${args.visualsRequested ? "on — add ONE interactive visual block if a concept here is genuinely complex" : "off — do NOT emit interactive visual blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
@@ -195,6 +200,8 @@ export function architectUserPrompt(args: {
   explainSyntax?: boolean;
   industry?: string;
   buildGoal?: string;
+  levels?: string[];
+  lessonTypes?: string[];
   userPrompt: string;
   learningGoal?: string;
   lessonFocus?: string;
@@ -202,6 +209,7 @@ export function architectUserPrompt(args: {
   sources?: { sid: string; title?: string; content: string; asOfDate?: string; origin?: "kb" | "upload" }[];
   repairErrors?: string[];
 }): string {
+  const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
     `TOPIC: ${args.topic}`,
@@ -209,6 +217,8 @@ export function architectUserPrompt(args: {
     args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
     args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
     `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
+    knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — ensure each module is structured so a selfCheckQuiz can test it; the recap should support active recall.` : "",
     `DENSITY: ${args.density ?? "medium"}`,
     `VISUALS: ${args.visualsRequested ? "on — add interactive visual blocks for complex concepts per the guide" : "off — do NOT emit interactive visual blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,

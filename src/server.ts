@@ -27,7 +27,8 @@ import { extname } from "node:path";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
 import { addUpload } from "./lib/uploads";
-import { authEnabled, verifyToken, bearerFrom } from "./lib/auth";
+import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
+import { listLessons, rateLesson, getPreferences, savePreferences } from "./lib/lessons";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -80,20 +81,74 @@ app.get("/api/config", (_req, res) => {
 });
 
 // ----------------------------------------------------------------------------
+// GET /api/lessons — the signed-in user's previous lessons (dashboard). Returns
+// title, prompt, days remaining (30-day window), and any rating.
+// ----------------------------------------------------------------------------
+app.get("/api/lessons", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) {
+    res.status(401).json({ error: "Please sign in." });
+    return;
+  }
+  res.json({ lessons: await listLessons(user.id) });
+});
+
+// GET /api/preferences — the user's stored landing selections (to pre-fill the form).
+app.get("/api/preferences", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) {
+    res.status(401).json({ error: "Please sign in." });
+    return;
+  }
+  res.json({ prefs: await getPreferences(user.id) });
+});
+
+// POST /api/rate — save a 1..5 rating (+ optional comment) for one of the user's lessons.
+app.post("/api/rate", requireAuth, async (req, res) => {
+  const { artifactId, rating, comment } = (req.body ?? {}) as { artifactId?: string; rating?: number; comment?: string };
+  const user = await getUser(req.headers.authorization);
+  if (!user) {
+    res.status(401).json({ error: "Please sign in." });
+    return;
+  }
+  if (!artifactId || !rating || rating < 1 || rating > 5) {
+    res.status(400).json({ error: "Expected { artifactId, rating: 1..5 }." });
+    return;
+  }
+  const ok = await rateLesson(user.id, artifactId, rating, comment);
+  res.json({ ok });
+});
+
+// ----------------------------------------------------------------------------
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
 app.post("/api/learn", requireAuth, async (req, res) => {
-  const { prompt, cards, threadId, uploadIds, referOnly } = (req.body ?? {}) as {
+  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
     threadId?: string;
     uploadIds?: string[];
     referOnly?: boolean;
+    industry?: string;
+    buildGoal?: string;
+    levels?: string[];
+    lessonTypes?: string[];
   };
 
   if (!prompt || !prompt.trim()) {
     res.status(400).json({ error: "Missing 'prompt'." });
     return;
+  }
+
+  // Resolve the owner (real user when auth is on; a stable local id otherwise) so
+  // the generated lesson lands in their dashboard, and remember their selections.
+  const user = await getUser(req.headers.authorization);
+  if (user) {
+    savePreferences(user.id, user.email, {
+      levels: levels ?? [], depth: cards?.depth, examples: cards?.examples,
+      density: cards?.density, visuals: cards?.visuals === "on", syntax: cards?.syntax === "on",
+      lessonTypes: lessonTypes ?? [], industry: industry ?? "", buildGoal: buildGoal ?? "",
+    }).catch(() => {});
   }
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -115,7 +170,18 @@ app.post("/api/learn", requireAuth, async (req, res) => {
     sseSend(res, "node", { stage: "start" });
     // streamMode "updates" yields { nodeName: partialUpdate } per node.
     for await (const chunk of await compiledGraph.stream(
-      { userPrompt: prompt, cards: cards ?? {}, uploadIds: uploadIds ?? [], referOnly: !!referOnly },
+      {
+        userPrompt: prompt,
+        cards: cards ?? {},
+        uploadIds: uploadIds ?? [],
+        referOnly: !!referOnly,
+        industry: industry ?? "",
+        buildGoal: buildGoal ?? "",
+        levels: levels ?? [],
+        lessonTypes: lessonTypes ?? [],
+        userId: user?.id ?? "",
+        userEmail: user?.email ?? "",
+      },
       { ...config, streamMode: "updates" }
     )) {
       for (const [nodeName, update] of Object.entries(chunk)) {
@@ -139,10 +205,10 @@ app.post("/api/learn", requireAuth, async (req, res) => {
 // GET /api/artifact/:id — serve the self-contained HTML (used as the viewer's
 // iframe source and for "open in new window").
 // ----------------------------------------------------------------------------
-app.get("/api/artifact/:id", (req, res) => {
-  const art = getArtifact(req.params.id);
+app.get("/api/artifact/:id", async (req, res) => {
+  const art = await getArtifact(req.params.id);
   if (!art) {
-    res.status(404).send("<p>Artifact not found (it may have expired on restart).</p>");
+    res.status(404).send("<p>Artifact not found.</p>");
     return;
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -150,8 +216,8 @@ app.get("/api/artifact/:id", (req, res) => {
 });
 
 // GET /api/artifact/:id/download — same HTML, but as a file download.
-app.get("/api/artifact/:id/download", (req, res) => {
-  const art = getArtifact(req.params.id);
+app.get("/api/artifact/:id/download", async (req, res) => {
+  const art = await getArtifact(req.params.id);
   if (!art) {
     res.status(404).send("Not found");
     return;
@@ -168,10 +234,10 @@ app.get("/api/artifact/:id/download", (req, res) => {
 // ----------------------------------------------------------------------------
 app.post("/api/module", requireAuth, async (req, res) => {
   const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
-  const art = artifactId ? getArtifact(artifactId) : undefined;
+  const art = artifactId ? await getArtifact(artifactId) : undefined;
   const bp = art?.blueprint;
   if (!bp || !moduleId) {
-    res.status(404).json({ error: "Unknown artifact or module (it may have expired on restart)." });
+    res.status(404).json({ error: "Unknown artifact or module." });
     return;
   }
   const module = bp.modules.find((m) => m.id === moduleId);
@@ -208,7 +274,7 @@ app.post("/api/module", requireAuth, async (req, res) => {
       [cacheKey, fragmentHtml]
     ).catch(() => {});
     // Refresh the stored artifact HTML so reloads / the /full download reflect built modules.
-    updateArtifact(artifactId!, { blueprint: bp, html: renderArtifact(bp) });
+    await updateArtifact(artifactId!, { blueprint: bp, html: renderArtifact(bp) });
     res.json({ moduleId, fragmentHtml, cached: false });
   } catch (err) {
     console.error("[/api/module]", err);
@@ -219,10 +285,10 @@ app.post("/api/module", requireAuth, async (req, res) => {
 // GET /api/artifact/:id/full — eagerly build EVERY remaining module, then return the
 // complete, offline-self-contained HTML as a download (the runtime queue stays inert).
 app.get("/api/artifact/:id/full", async (req, res) => {
-  const art = getArtifact(req.params.id);
+  const art = await getArtifact(req.params.id);
   const bp = art?.blueprint;
   if (!art || !bp) {
-    res.status(404).send("Not found (artifact may have expired on restart).");
+    res.status(404).send("Not found.");
     return;
   }
   try {
@@ -237,7 +303,7 @@ app.get("/api/artifact/:id/full", async (req, res) => {
       for (const m of stubs) await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly });
     }
     const html = renderArtifact(bp);
-    updateArtifact(req.params.id, { blueprint: bp, html });
+    await updateArtifact(req.params.id, { blueprint: bp, html });
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}.html"`);
     res.send(html);
