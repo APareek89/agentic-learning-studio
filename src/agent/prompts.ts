@@ -9,6 +9,8 @@
  *     fall back to the model's own knowledge only when the sources don't cover it.
  */
 
+import { calibrationDirective, type Level, type Density } from "./calibration";
+
 export const PROFILER_SYSTEM = `You analyze a learner's request and extract BOTH who they are and EXACTLY what they're asking for.
 Return:
 - topic: a concise canonical topic title (e.g. "Agentic Frameworks", "Agent Memory").
@@ -128,8 +130,8 @@ Produce 2–6 blocks that teach THIS module well:
 - At least ONE block must be always-visible (no visibleWhen) so every learner sees something.
 - Mark advanced/edge blocks depthTier:"deeper".
 
-== TEXT DENSITY ==
-Match the requested DENSITY exactly: "low" = sharp/direct, minimal prose, short bullet fragments, ~half the usual words; "medium" = balanced (a sentence or two per point); "high" = thorough, fuller explanations + analogies + the "why". Density changes word count, not which blocks you include.
+== WRITING LEVEL & TEXT DENSITY ==
+Follow the WRITING LEVEL and TEXT DENSITY spec in the user message EXACTLY. LEVEL controls SCAFFOLDING (how much support — advanced = LESS hand-holding + edge cases/tradeoffs, never just denser text). DENSITY controls per-sentence shape: keep EVERY sentence under the stated hard ceiling, hit the median, and match the GOLD example's rhythm. Density is per concept — total length scales with how many concepts the module has, not a fixed word count.
 
 == INTERACTIVE VISUALS ==
 When VISUALS is "on", add an interactive visual block for a genuinely COMPLEX or hard-to-picture idea in THIS module (something a hands-on novice struggles to imagine) — at most ONE per module, only if it truly helps. When VISUALS is "off", emit none. You supply DATA ONLY — the renderer draws it. Pick by shape:
@@ -173,13 +175,13 @@ export function moduleUserPrompt(args: {
     `MODULE SUMMARY: ${args.moduleSummary}`,
     args.objectives.length ? `OBJECTIVES: ${args.objectives.join("; ")}` : "",
     args.decisionItForces ? `DECISION THIS MODULE FORCES: ${args.decisionItForces}` : "",
-    `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    `DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — scaffold for the least experienced while offering depthTier:"deeper" blocks for the more advanced.` : "",
     knowledgeCheck ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation.` : "",
     `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
     beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
     args.framework ? `CODE FRAMEWORK: write every codeExample using ${args.framework}. Use its real APIs/imports; title the block with the framework.` : `CODE FRAMEWORK: framework-agnostic — use clear pseudocode/plain Python, no framework-specific imports.`,
-    `DENSITY: ${args.density ?? "medium"}`,
     `VISUALS: ${args.visualsRequested ? "on — add ONE interactive visual block if a concept here is genuinely complex" : "off — do NOT emit interactive visual blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
     args.industry ? `FOCUS INDUSTRY: ${args.industry}` : "",
@@ -232,7 +234,8 @@ export function architectUserPrompt(args: {
     args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
     args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
     args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
-    `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    `DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
     knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — each module's body will END with a graded knowledgeCheck block; structure modules so they're testable.` : "",
     beginnerish ? `PLAIN WORDS: EVERY mental-map node MUST include a "laymanExplanation" — one everyday-analogy sentence (e.g. "an agent is like a doorman: it checks why someone wants in before letting them through"). Also give each node an "icon" emoji that fits its idea.` : `Give each mental-map node an "icon" emoji that fits its idea.`,

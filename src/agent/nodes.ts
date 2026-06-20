@@ -29,6 +29,7 @@ import type { Blueprint, Block } from "../render/schema";
 import { renderArtifact } from "../render/index";
 import { registerArtifact } from "../lib/artifacts";
 import { PROFILER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, architectUserPrompt, moduleUserPrompt } from "./prompts";
+import { measureModule, repairDensity } from "./density";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
@@ -44,7 +45,10 @@ const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
-const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 8000, streaming: true });
+// 16k (streaming) so code/example-heavy modules don't truncate mid-tool-call (a
+// truncated structured output = a persistent "couldn't build this section" failure,
+// not a transient one). Streaming keeps it under the SDK's non-streaming ceiling.
+const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
 
 /** Structured-output shape for one module's body: just the blocks array. */
 const ModuleBlocksSchema = z.object({ blocks: z.array(BlockSchema) });
@@ -404,6 +408,15 @@ export async function runDeepDive(
   // Deterministic repair fixes dangling term/citation refs + matrix alignment for
   // the freshly-written module (operates on the whole bp; stub modules are no-ops).
   repairBlueprint(bp);
+  // Density enforcement (RULE 2): verify the prose against the tier; repair the
+  // over-ceiling sentences in one pass; log any residual (never block on it).
+  try {
+    if (measureModule(module, p.density).overCeiling > 0) {
+      const { repaired, residual } = await repairDensity(bp, moduleId, p.density, config);
+      if (residual > 0) console.warn(`[density] "${moduleId}" (${p.density}): ${residual} sentence(s) over ceiling after repairing ${repaired} block(s)`);
+      repairBlueprint(bp); // re-fix any refs the rewrite touched
+    }
+  } catch { /* never block on density */ }
   return { ok: true, sources };
 }
 

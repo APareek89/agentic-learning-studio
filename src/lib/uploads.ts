@@ -56,6 +56,31 @@ export async function addUpload(id: string, src: LoadedSource): Promise<{ id: st
   return { id, title: src.title, chunkCount: chunks.length };
 }
 
+/** Split text into ~`words`-word chunks (simple, for repo files). */
+function splitText(text: string, words = 280): string[] {
+  const toks = text.split(/\s+/).filter(Boolean);
+  if (toks.length <= words) return toks.length ? [text.trim()] : [];
+  const out: string[] = [];
+  for (let i = 0; i < toks.length; i += words) out.push(toks.slice(i, i + words).join(" "));
+  return out;
+}
+
+/** Ingest a cloned GitHub repo as ONE upload doc (chunks tagged with their file path). */
+export async function addRepoUpload(id: string, title: string, files: { path: string; content: string }[], maxChunks = 220): Promise<{ id: string; title: string; chunkCount: number }> {
+  const raw: { content: string; title: string }[] = [];
+  for (const f of files) {
+    for (const part of splitText(f.content, 280)) {
+      raw.push({ content: `[file: ${f.path}]\n${part}`, title: f.path });
+      if (raw.length >= maxChunks) break;
+    }
+    if (raw.length >= maxChunks) break;
+  }
+  if (!raw.length) { uploads.set(id, { id, title, sourceType: "repo", chunks: [] }); return { id, title, chunkCount: 0 }; }
+  const vectors = await localEmbeddings.embedPassages(raw.map((c) => c.content));
+  uploads.set(id, { id, title, sourceType: "repo", chunks: raw.map((c, i) => ({ content: c.content, embedding: vectors[i], title: c.title })) });
+  return { id, title, chunkCount: raw.length };
+}
+
 /** Titles for the given ids (used for the provenance banner). */
 export function getUploadTitles(ids: string[] | undefined): string[] {
   if (!ids) return [];

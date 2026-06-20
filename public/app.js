@@ -42,7 +42,7 @@ function toggleChat(force) {
 }
 
 // Selections collected from the dropdowns.
-const sel = { level: [], depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null };
+const sel = { level: null, depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null };
 // Combine a multi-select axis into the backend enum (e.g. both → "conceptual_technical").
 function combineAxis(arr, a, b, both) {
   const hasA = arr.includes(a), hasB = arr.includes(b);
@@ -181,6 +181,33 @@ fileInput.addEventListener("change", async () => {
   fileInput.value = "";
 });
 
+// ---- GitHub repo grounding (clone + extract on the server, same as documents) ----
+const repoUrlEl = document.getElementById("repo-url");
+const addRepoBtn = document.getElementById("add-repo");
+addRepoBtn.addEventListener("click", async () => {
+  const url = (repoUrlEl.value || "").trim();
+  if (!url) { repoUrlEl.focus(); return; }
+  const chip = addChip(url.replace(/^https?:\/\//, ""), "cloning & reading…");
+  addRepoBtn.disabled = true;
+  try {
+    const res = await fetch("/api/upload-repo", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ repoUrl: url }) });
+    if (res.status === 401) { openAuth("signin"); throw new Error("Sign in to add a repo."); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "clone failed");
+    uploadedDocs.push({ docId: data.docId, title: data.title });
+    chip.dataset.docId = data.docId;
+    chip.classList.remove("uploading");
+    chip.querySelector(".chip-name").textContent = "📦 " + data.title;
+    chip.querySelector(".chip-meta").textContent = `${data.fileCount} files · ${data.chunkCount} chunks`;
+    repoUrlEl.value = "";
+    updateUploadUI();
+  } catch (e) {
+    chip.classList.add("failed");
+    chip.querySelector(".chip-meta").textContent = "✕ " + e.message;
+  } finally { addRepoBtn.disabled = false; }
+});
+repoUrlEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addRepoBtn.click(); } });
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -228,7 +255,7 @@ function buildPayload(promptText, threadId) {
   return {
     prompt: promptText,
     cards,
-    levels: sel.level,
+    levels: sel.level ? [sel.level] : [],
     lessonTypes: sel.lessonType.length ? sel.lessonType : ["content"],
     framework: sel.framework || "",
     industry: industryEl.value.trim(),
@@ -584,11 +611,11 @@ function renderLibrary() {
   for (const l of items) {
     const el = document.createElement("button");
     el.className = "lib-card"; el.type = "button";
-    el.style.background = catTint(l.category);
+    el.style.setProperty("--cover-h", String(catHue(l.category)));
     el.innerHTML =
-      `<div class="lib-card-head"><span class="lib-ico">${CAT_ICONS[l.category] || "📘"}</span><span class="lib-title">${escapeHtml(l.title)}</span></div>` +
-      `<div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
-      `<div class="lib-foot"><span class="lib-cat-tag">${escapeHtml(l.category)}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div>`;
+      `<div class="lib-cover"><span class="lib-title">${escapeHtml(l.title)}</span></div>` +
+      `<div class="lib-body"><div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
+      `<div class="lib-foot"><span class="lib-cat-tag">${escapeHtml(l.category)}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div></div>`;
     el.addEventListener("click", () => openLibraryLesson(l.slug, l.title));
     libGrid.appendChild(el);
   }
@@ -907,7 +934,7 @@ async function loadPreferences() {
     if (!res.ok) return;
     const { prefs } = await res.json();
     if (!prefs) return;
-    applyPref("level", prefs.levels, true);
+    applyPref("level", prefs.levels && prefs.levels[0], false);
     applyPref("depth", axisToValues(prefs.depth), true);
     applyPref("examples", axisToValues(prefs.examples), true);
     applyPref("density", prefs.density, false);

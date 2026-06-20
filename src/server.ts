@@ -20,13 +20,15 @@ import "dotenv/config"; // load .env before anything reads process.env
 import express from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { writeFile, unlink } from "node:fs/promises";
+import { writeFile, unlink, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
-import { addUpload } from "./lib/uploads";
+import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse } from "./lib/lessons";
 import { createJob, getJob, lessonPercent } from "./lib/jobs";
@@ -99,7 +101,7 @@ app.get("/api/lessons", requireAuth, async (req, res) => {
     res.status(401).json({ error: "Please sign in." });
     return;
   }
-  res.json({ lessons: await listLessons(user.id) });
+  res.json({ lessons: await listLessons(user.id, user.email ?? "") });
 });
 
 // GET /api/preferences — the user's stored landing selections (to pre-fill the form).
@@ -153,7 +155,7 @@ app.post("/api/rate", requireAuth, async (req, res) => {
     res.status(400).json({ error: "Expected { artifactId, rating: 1..5 }." });
     return;
   }
-  const ok = await rateLesson(user.id, artifactId, rating, comment);
+  const ok = await rateLesson(user.id, artifactId, rating, comment, user.email ?? "");
   res.json({ ok });
 });
 
@@ -565,8 +567,59 @@ app.get("/api/lesson/:slug", async (req, res) => {
   res.send(rows[0].html);
 });
 
-// Health check.
-app.get("/healthz", (_req, res) => res.json({ ok: true }));
+// ----------------------------------------------------------------------------
+// POST /api/upload-repo — clone a PUBLIC git repo, extract its text/code, embed it
+// LOCALLY into the session upload store (same grounding path as documents).
+// ----------------------------------------------------------------------------
+const execFileP = promisify(execFile);
+const REPO_EXT = new Set([".md", ".mdx", ".txt", ".rst", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".py", ".java", ".go", ".rb", ".rs", ".c", ".cpp", ".h", ".cs", ".php", ".kt", ".swift", ".scala", ".sql", ".sh", ".yaml", ".yml", ".json", ".toml", ".html", ".css", ".scss"]);
+const REPO_SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", "vendor", "__pycache__", ".next", "target", "out", ".venv", "venv", "coverage", ".turbo"]);
+
+app.post("/api/upload-repo", requireAuth, async (req, res) => {
+  const repoUrl = typeof req.body?.repoUrl === "string" ? req.body.repoUrl.trim() : "";
+  if (!/^https:\/\/(www\.)?(github|gitlab|bitbucket)\.(com|org)\/[\w.-]+\/[\w.-]+/i.test(repoUrl)) {
+    res.status(400).json({ error: "Paste a public https GitHub / GitLab / Bitbucket repo URL." });
+    return;
+  }
+  const clean = repoUrl.replace(/\.git$/i, "").replace(/\/$/, "");
+  const dir = `${tmpdir()}/als-repo-${randomUUID()}`;
+  try {
+    await execFileP("git", ["clone", "--depth", "1", "--single-branch", clean + ".git", dir], { timeout: 90000, maxBuffer: 32 * 1024 * 1024 });
+    const files: { path: string; content: string }[] = [];
+    let totalBytes = 0;
+    async function walk(d: string, rel: string): Promise<void> {
+      if (files.length >= 400 || totalBytes > 4 * 1024 * 1024) return;
+      const entries = await readdir(d, { withFileTypes: true }).catch(() => []);
+      for (const e of entries) {
+        if (files.length >= 400 || totalBytes > 4 * 1024 * 1024) break;
+        const r = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) { if (!REPO_SKIP_DIRS.has(e.name) && !e.name.startsWith(".")) await walk(join(d, e.name), r); continue; }
+        if (!REPO_EXT.has(extname(e.name).toLowerCase())) continue;
+        const st = await stat(join(d, e.name)).catch(() => null);
+        if (!st || st.size > 200 * 1024) continue; // skip files > 200KB
+        const content = await readFile(join(d, e.name), "utf8").catch(() => null);
+        if (!content) continue;
+        totalBytes += st.size;
+        files.push({ path: r, content });
+      }
+    }
+    await walk(dir, "");
+    if (!files.length) { res.status(422).json({ error: "No readable text/code files found in that repo." }); return; }
+    const title = clean.split("/").slice(-2).join("/");
+    const id = randomUUID();
+    const info = await addRepoUpload(id, title, files);
+    res.json({ docId: id, title, chunkCount: info.chunkCount, fileCount: files.length });
+  } catch (err) {
+    console.error("[/api/upload-repo]", err);
+    res.status(500).json({ error: "Couldn't clone/read that repo. Make sure it's public. " + (err instanceof Error ? err.message.slice(0, 100) : "") });
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+});
+
+// Health check — surfaces whether persistence/auth are actually wired (so an empty
+// dashboard caused by a bad DATABASE_URL is diagnosable: hit /healthz and read `db`).
+app.get("/healthz", (_req, res) => res.json({ ok: true, db: dbEnabled(), rag: ragEnabled(), auth: authEnabled() }));
 
 // ----------------------------------------------------------------------------
 // Boot.

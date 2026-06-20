@@ -29,19 +29,21 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
  * List a user's non-expired lessons, newest first. A multi-lesson COURSE is shown
  * as ONE card (its kick-off lesson, course_index = 1); standalone lessons show as-is.
  */
-export async function listLessons(userId: string): Promise<LessonCard[]> {
+export async function listLessons(userId: string, email = ""): Promise<LessonCard[]> {
   if (!dbEnabled() || !userId) return [];
   const rows = await query<{
     id: string; title: string | null; prompt: string | null;
     created_at: Date; expires_at: Date; rating: number | null; profile: { industry?: string } | null;
     course_id: string | null; course_total: number | null;
   }>(
+    // Match by user id OR email, so a learner's lessons follow their email across
+    // sign-ins / a project migration (their auth user id can change; email is stable).
     `select id, title, prompt, created_at, expires_at, rating, profile, course_id, course_total
        from lessons
-      where user_id = $1 and expires_at > now() and (course_id is null or course_index = 1)
+      where (user_id = $1 or ($2 <> '' and user_email = $2)) and expires_at > now() and (course_id is null or course_index = 1)
       order by created_at desc
       limit 100`,
-    [userId]
+    [userId, email]
   ).catch(() => []);
   const now = Date.now();
   return rows.map((r) => ({
@@ -69,15 +71,15 @@ export async function getCourse(courseId: string): Promise<{ id: string; index: 
 }
 
 /** Save a 1..5 rating (+ optional comment) for a lesson the user owns. */
-export async function rateLesson(userId: string, lessonId: string, rating: number, comment?: string): Promise<boolean> {
+export async function rateLesson(userId: string, lessonId: string, rating: number, comment?: string, email = ""): Promise<boolean> {
   if (!dbEnabled() || !userId) return false;
   const clamped = Math.max(1, Math.min(5, Math.round(rating)));
   const res = await query(
     `update lessons set rating = $3, rating_comment = $4, updated_at = now()
-      where id = $1 and user_id = $2`,
-    [lessonId, userId, clamped, comment ?? null]
+      where id = $1 and (user_id = $2 or ($5 <> '' and user_email = $5))`,
+    [lessonId, userId, clamped, comment ?? null, email]
   ).catch(() => []);
-  return Array.isArray(res); // query returns rows (here []) on success; false only on hard failure
+  return Array.isArray(res);
 }
 
 export type UserPrefs = Record<string, unknown>;
