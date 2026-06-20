@@ -252,42 +252,47 @@ function miniMap(nodes: { id: string; label: string; sub?: string }[], _edges: u
   return `<div class="map-row">${nodes.map((n) => `<div class="map-node"><div class="mn-title">${esc(n.label)}</div>${n.sub ? `<div class="mn-sub">${esc(n.sub)}</div>` : ""}</div>`).join("")}</div>`;
 }
 
-// ---- the mental map (layered, clickable) ----
+// ---- the mental map — an ADVANCE ORGANIZER laid out by the topic's true STRUCTURE ----
 function mentalMap(bp: Blueprint): string {
   const mm = bp.mentalMap;
   const moduleIds = new Set(bp.modules.map((m) => m.id));
-  const layers: string[] = [];
-  const byLayer: Record<string, typeof mm.nodes> = {};
-  for (const n of mm.nodes) {
-    const L = n.layer ?? "_";
-    if (!byLayer[L]) {
-      byLayer[L] = [];
-      layers.push(L);
-    }
-    byLayer[L].push(n);
+  // Classify; fall back to "procedural" if any node carries an order, else conceptual.
+  const type = mm.structureType ?? (mm.nodes.some((n) => typeof n.order === "number") ? "procedural" : "conceptual");
+  const ordered = type === "procedural" || type === "dependency";
+
+  const nodes = mm.nodes.slice();
+  if (ordered) nodes.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const startId = mm.entryNodeId ?? (ordered ? (nodes[0]?.id ?? "") : "");
+
+  // Minimal advance-organizer card: number/icon + label + ONE orient line + open cue.
+  const card = (n: (typeof nodes)[number], i: number): string => {
+    const click = n.moduleId && moduleIds.has(n.moduleId) ? ` data-deepdive="${escAttr(n.moduleId)}"` : "";
+    const num = ordered ? (n.order ?? i + 1) : null;
+    const isStart = ordered && n.id === startId;
+    const badge = num != null ? `<span class="mn-num">${num}</span>` : `<span class="mn-ico">${esc(n.icon || "●")}</span>`;
+    const orient = n.orient ? `<div class="mn-orient">${esc(n.orient)}</div>` : n.sub ? `<div class="mn-orient">${esc(n.sub)}</div>` : "";
+    const startTag = isStart ? `<span class="mn-start">Start here</span>` : "";
+    const cue = click ? `<span class="mn-go">Open${num != null ? "" : " for details"} →</span>` : "";
+    return `<button class="map-node${n.emphasis === "spine" ? " spine" : ""}${isStart ? " is-start" : ""}"${click}><div class="mn-head">${badge}<span class="mn-title">${esc(n.label)}</span>${startTag}</div>${orient}${cue}</button>`;
+  };
+
+  let inner: string;
+  let eyebrow: string;
+  let cap: string;
+  if (ordered) {
+    eyebrow = type === "procedural" ? "Your build path · start at step 1" : "Learning path · in order";
+    cap = type === "procedural" ? "Follow these steps in order — each builds on the one before." : "Understand these in order — later ideas depend on earlier ones.";
+    inner = `<ol class="map-path">${nodes.map((n, i) => `<li class="map-step">${card(n, i)}${i < nodes.length - 1 ? `<div class="map-conn" aria-hidden="true"><span class="spark"></span></div>` : ""}</li>`).join("")}</ol>`;
+  } else if (type === "comparative") {
+    eyebrow = "The options · weigh and choose";
+    cap = "These are the choices on the table — compare them, then pick.";
+    inner = `<div class="map-options">${nodes.map((n, i) => card(n, i)).join("")}</div>`;
+  } else {
+    eyebrow = "Mental map · how the pieces relate";
+    cap = "Not a sequence — these connect as a whole. Open any piece.";
+    inner = `<div class="map-concept">${nodes.map((n, i) => card(n, i)).join("")}</div>`;
   }
-  const rows = layers
-    .map((L, i) => {
-      const nodes = byLayer[L]
-        .map((n) => {
-          const click = n.moduleId && moduleIds.has(n.moduleId) ? ` data-deepdive="${escAttr(n.moduleId)}"` : "";
-          const icon = `<span class="mn-ico">${esc(n.icon || "●")}</span>`;
-          // Richer overview card: WHAT it is + why it's RELEVANT here (falls back to sub).
-          const what = n.what ? `<div class="mn-what">${esc(n.what)}</div>` : n.sub ? `<div class="mn-sub">${esc(n.sub)}</div>` : "";
-          // Plain-words analogy (CSS hides it for advanced learners).
-          const layman = n.laymanExplanation ? `<div class="mn-layman"><span class="mn-lay-ico">💡</span>${esc(n.laymanExplanation)}</div>` : "";
-          const rel = n.relevance ? `<div class="mn-rel"><span class="mn-rel-lab">Why it matters here</span>${esc(n.relevance)}</div>` : "";
-          const cue = click ? `<div class="mn-go"><span class="mn-cue-ico">⤢</span> Click for details</div>` : "";
-          return `<button class="map-node${n.emphasis === "spine" ? " spine" : ""}"${click}><div class="mn-title">${icon}${esc(n.label)}</div>${what}${layman}${rel}${cue}</button>`;
-        })
-        .join("");
-      const label = L !== "_" ? `<div class="map-layer-label">${esc(L)}</div>` : "";
-      // Animated "current flowing" connector between layers (circuit-board feel).
-      const arrow = i < layers.length - 1 ? `<div class="map-arrow flow" aria-hidden="true"><span class="spark"></span></div>` : "";
-      return `<div class="map-layer">${label}<div class="map-row">${nodes}</div></div>${arrow}`;
-    })
-    .join("");
-  return `<div class="map"><div class="eyebrow">Mental map · start here</div><h2>${esc(mm.title)}</h2>${mm.caption ? `<p class="cap">${esc(mm.caption)}</p>` : ""}<div class="map-flow">${rows}</div></div>`;
+  return `<div class="map"><div class="eyebrow">${eyebrow}</div><h2>${esc(mm.title)}</h2><p class="cap">${esc(mm.caption || cap)}</p><div class="map-body map-${type}">${inner}</div></div>`;
 }
 
 /** True once a module's body has been written (vs a stub awaiting background build). */
@@ -298,9 +303,21 @@ export function isBuilt(m: Module): boolean {
 // ---- the INNER content of a built module (head + body). Reused both inline AND as
 //      the fragment the runtime injects when a background module finishes. ----
 export function moduleInner(m: Module, bp: Blueprint): string {
+  const total = bp.modules.length;
+  const idx = bp.modules.findIndex((x) => x.id === m.id);
+  const prev = idx > 0 ? bp.modules[idx - 1] : null;
+  const next = idx >= 0 && idx < total - 1 ? bp.modules[idx + 1] : null;
+  const node = bp.mentalMap.nodes.find((n) => n.moduleId === m.id);
+  const ordered = bp.mentalMap.structureType === "procedural" || bp.mentalMap.structureType === "dependency";
+  // SPINE: always show where you are, and what this builds on.
+  const spine = `<div class="m-spine"><span class="m-pos">${ordered ? "Step " : ""}${m.order} of ${total}</span>${prev ? `<span class="m-prev">↳ builds on “${esc(prev.title)}”</span>` : ""}</div>`;
   const badge = m.icon ? `<div class="m-ico">${esc(m.icon)}</div>` : `<div class="num">${m.order}</div>`;
   const mins = readingMinutes(m);
-  const head = `<div class="module-head">${badge}<div class="mh-text"><h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}<div class="m-time">⏱ ~${mins} min read</div></div></div>`;
+  // DETAIL layer (moved off the overview): what it is, the analogy, why it matters here.
+  const detail = node
+    ? `${node.what ? `<p class="m-what">${esc(node.what)}</p>` : ""}${node.laymanExplanation ? `<div class="analogy"><span class="an-lab">In plain words</span>${esc(node.laymanExplanation)}</div>` : ""}${node.relevance ? `<div class="m-rel"><span class="m-rel-lab">Why this matters for you</span>${esc(node.relevance)}</div>` : ""}`
+    : "";
+  const head = `<div class="module-head">${badge}<div class="mh-text">${spine}<h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}<div class="m-time">⏱ ~${mins} min read</div></div></div>${detail}`;
   const obj = m.objectives.length
     ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`
     : "";
@@ -310,7 +327,11 @@ export function moduleInner(m: Module, bp: Blueprint): string {
   const deeperHtml = deeper.length
     ? `<button class="deeper-toggle" data-label="Go deeper →">Go deeper →</button><div class="deeper">${deeper.map((b) => block(b, bp)).join("")}</div>`
     : "";
-  return `${head}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}${keyTerms(m.termIds, bp)}${core.map((b) => block(b, bp)).join("")}${deeperHtml}</div>`;
+  // SPINE forward link: continue the path.
+  const nextHtml = next
+    ? `<button class="next-step" data-deepdive="${escAttr(next.id)}">Next${ordered ? ` · step ${next.order}` : ""}: ${esc(next.title)} →</button>`
+    : `<button class="next-step" data-goto="_synth">Finish → Putting it together</button>`;
+  return `${head}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}${keyTerms(m.termIds, bp)}${core.map((b) => block(b, bp)).join("")}${deeperHtml}${nextHtml}</div>`;
 }
 
 /** The fragment served by POST /api/module and injected into the panel by the runtime. */

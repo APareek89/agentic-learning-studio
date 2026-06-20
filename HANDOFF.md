@@ -1,7 +1,69 @@
 # HANDOFF — Agentic Learning Studio
 
-Last updated: 2026-06-20. Read this first, then `DESIGN_SPEC.md` (full design) and
-`START_HERE.md` (quickstart). Companion memory: `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
+Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
+`START_HERE.md`. Companion memory: `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
+
+---
+
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 3/4)
+
+App runs on **:5070** (`PORT=5070 npm start`, env `NODE_EXTRA_CA_CERTS=…/system-ca-bundle.pem`).
+Hosted on **Render** (auto-deploys from `main`). **MIGRATED to a NEW Supabase project**
+(`kdgtlbnlyscdldogxorb`) — RE-DERIVE: schema + KB (380 chunks) + 100 prebuilt lessons rebuilt;
+real-account lessons copied over (`scripts/copy-user-data.mjs`). Identity now matches by **email**
+so lessons survive the project switch. `.env` is the NEW project (auth ON locally now).
+
+### ⚠️ Render env (the #1 thing to verify if prod misbehaves)
+Set in Render dashboard — and **URL-encode the password `@` as `%40`** or the DB silently disables:
+`DATABASE_URL=postgresql://postgres.kdgtlbnlyscdldogxorb:REDACTED@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres`,
+`SUPABASE_URL=https://kdgtlbnlyscdldogxorb.supabase.co`, `SUPABASE_ANON_KEY=sb_publishable_…`, `ANTHROPIC_API_KEY`.
+**Diagnose**: hit `GET /healthz` → `{db, rag, auth}`. If `db:false`, the DATABASE_URL is wrong →
+lessons won't persist → dashboard empty after refresh (this was the reported "lessons went away" bug).
+Also enable Supabase → Auth → Email → **Confirm email** (so the verify-email message + link work).
+
+### What shipped since Phase 2
+- **Background generation jobs** (`src/agent/orchestrator.ts`, `src/lib/jobs.ts`): `POST /api/generate`
+  runs DETACHED, registers the artifact at SKELETON-ready (openable early), builds modules in the
+  background; `GET /api/job/:id` drives a dashboard progress card; opens at ~overview-ready.
+- **Multi-lesson COURSES**: a planner splits broad asks ("teach me everything about X") into 2–5
+  lessons; kick-off first, rest with ⏳; lesson-tab strip in the viewer; recap card on lessons 2..N;
+  `GET /api/course/:id`; migration `0004_courses.sql`.
+- **Library** = public pre-built lessons (migration `0003`, `scripts/seed-library.ts`, `/api/library`
+  + `/api/lesson/:slug`). Cards = **book-cover** style (patterned category cover, ~5/row, no icons).
+- **GitHub repo grounding**: `POST /api/upload-repo` clones (depth 1) + extracts text/code + embeds
+  into the session upload store (`addRepoUpload`), same path as documents.
+- **LEVEL = scaffolding, DENSITY = enforced** (`src/agent/calibration.ts` + `src/agent/density.ts`):
+  per-tier scaffolding rules + countable density (median/ceiling per sentence, per concept) + gold
+  examples in the prompt + a post-gen validator & 1-pass repair (logs residuals). `runDeepDive` runs
+  it. Proof: `scripts/test-calibration.ts` → all 9 (level×density) PASS. moduleLLM bumped 8k→16k
+  (streaming) so code-heavy modules don't truncate (the persistent "couldn't build this section").
+- **Overview = advance organizer by STRUCTURE TYPE** (`mentalMap.structureType`): procedural→ordered
+  numbered path w/ "Start here" + connectors; dependency→prereq order; conceptual→relationship grid
+  (no fake steps); comparative→options. Detail (what/why/analogy) moved OFF the map INTO the module
+  head; a **spine** ("Step N of M", builds-on, Next link) runs through the lesson. Proof:
+  `scripts/test-structure.ts`. Renderer: `src/render/components.ts` (mentalMap, moduleInner) + tokens.ts.
+- **Landing UI**: Level single-select; "Depth"→"Coverage"; "all optional" note above the dropdowns.
+- **Auth**: on-demand modal (Sign in/Sign up buttons); browsing landing + Library is open; Generate/
+  Dashboard/Ask-more gated. Sign-up shows a verify-email message (needs Supabase Confirm-email ON).
+
+### Pending / next
+- Verify all the above on the live Render URL once env vars are confirmed (`/healthz` → db:true).
+- Generation latency: skeleton-first already helps; if courses still hit Anthropic rate limits on long
+  builds, consider a tier bump rather than parallel module agents (parallel was tried + reverted).
+- DESIGN_SPEC.md not yet updated for Phase 3/4 (this HANDOFF is the source of truth meanwhile).
+
+### Paste-ready resume prompt (give this to a fresh Claude Code session)
+> Continue the Agentic Learning Studio at `/Users/anandpareek/Documents/agentic-learning-studio`.
+> Read HANDOFF.md "⚡ CURRENT STATE" first, then DESIGN_SPEC.md. Repo: github.com/APareek89/agentic-learning-studio
+> (`main`, auto-deploys to Render). Env: PORT=5070, and every Claude/Supabase/HF call needs
+> `NODE_EXTRA_CA_CERTS="/Users/anandpareek/Documents/SEO content Skill/scripts/system-ca-bundle.pem"`.
+> Supabase = the NEW project `kdgtlbnlyscdldogxorb` (auth on; `.env` already set; password `@`→`%40`).
+> Before anything: `npx tsc --noEmit` clean, restart `:5070`, and `curl localhost:5070/healthz`
+> (expect `db:true`). Verify-then-act: the app uses background jobs (`/api/generate`→`/api/job/:id`),
+> multi-lesson courses, a public Library, level=scaffolding + code-enforced density, and a
+> structure-typed overview (see scripts/test-calibration.ts + test-structure.ts for how to prove
+> generation behavior cheaply). Push to `main` after changes (user tests on Render). Do NOT use the
+> LLM to hand-edit lesson content — generation is deterministic code + model calls.
 
 ---
 

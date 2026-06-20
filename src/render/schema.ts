@@ -118,8 +118,14 @@ export const MapNodeSchema = z.object({
   id: z.string(),
   label: z.string(),
   sub: z.string().optional(),
-  /** one sentence: WHAT this building block is (plain language). Drives the
-   *  richer overview cards so the map isn't just labelled boxes. */
+  /** position in an ordered structure (1..N). Set for procedural/dependency maps;
+   *  omit for conceptual/comparative. The overview shows it as the step number. */
+  order: z.number().optional(),
+  /** ONE short orientation line for the OVERVIEW (where this sits / what it's for) —
+   *  NOT an explanation. The advance-organizer layer; detail lives behind the card. */
+  orient: z.string().optional(),
+  /** one sentence: WHAT this building block is (plain language). DETAIL layer —
+   *  rendered inside the module, not on the overview map. */
   what: z.string().optional(),
   /** one sentence: how this block fits the learner's goal/context — why it matters HERE. */
   relevance: z.string().optional(),
@@ -141,6 +147,14 @@ export const MentalMapSchema = z.object({
   title: z.string(),
   caption: z.string().optional(),
   oneLineThesis: z.string(),
+  /** The TRUE shape of the topic — drives how the overview is laid out:
+   *  - "procedural": an ordered build/how-to path (steps 1..N with dependencies)
+   *  - "dependency": a layered system ordered by what must be understood first
+   *  - "conceptual": a relationship map (no forced order) — components / cause→effect / part-of
+   *  - "comparative": options weighed along shared dimensions (not a path) */
+  structureType: z.enum(["procedural", "dependency", "conceptual", "comparative"]).optional(),
+  /** for ordered types: the single unambiguous starting node id (the "start here"). */
+  entryNodeId: z.string().optional(),
   nodes: z.array(MapNodeSchema).min(1),
   edges: z.array(MapEdgeSchema),
 });

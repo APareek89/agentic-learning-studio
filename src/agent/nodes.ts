@@ -41,7 +41,10 @@ const profilerLLM = makeLLM("sonnet", 0);
 //   12–18 term glossary + synthesis). No block bodies, so far smaller than the old
 //   monolithic call — but the glossary + synthesis + per-node what/relevance still
 //   need real headroom; 8000 truncated. 16000 is the SDK's non-streaming-safe ceiling.
-const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
+// streaming:true so we can raise the cap past the SDK's non-streaming ceiling —
+// the skeleton now carries richer per-node fields (order/orient/what/relevance/
+// layman + structureType), which truncated at 16k and failed to parse.
+const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 24000, streaming: true });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.

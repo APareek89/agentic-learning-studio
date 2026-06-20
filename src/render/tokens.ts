@@ -402,6 +402,37 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 .recap ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-soft)}
 .recap li{margin:2px 0}
 
+/* ===== Overview structure (advance organizer) ===== */
+.map-body{margin-top:8px}
+/* ordered path — a numbered vertical spine with connectors */
+.map-path{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-width:760px}
+.map-step{display:flex;flex-direction:column}
+.map-conn{width:2px;height:16px;margin:2px 0 2px 31px;background:linear-gradient(var(--accent),var(--border-strong));position:relative;overflow:hidden}
+.map-conn .spark{position:absolute;left:-2px;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px 1px var(--accent);animation:flowy 1.8s linear infinite}
+@keyframes flowy{0%{top:-8px;opacity:0}20%{opacity:1}80%{opacity:1}100%{top:16px;opacity:0}}
+.map-path .map-node{width:100%}
+/* conceptual / comparative — responsive card grid */
+.map-concept,.map-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px}
+/* the minimal card */
+.map .map-node{display:flex;flex-direction:column;gap:7px;align-items:stretch}
+.mn-head{display:flex;align-items:center;gap:10px}
+.mn-num{flex:none;width:27px;height:27px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.map-node.is-start .mn-num{box-shadow:0 0 0 4px var(--accent-weak)}
+.mn-start{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:var(--ok);border-radius:99px;padding:2px 8px;margin-left:auto}
+.mn-orient{font-size:12.5px;color:var(--muted);line-height:1.42}
+.mn-go{font-size:11px;color:var(--accent-2);font-weight:700;align-self:flex-start;background:var(--accent-weak);border-radius:99px;padding:3px 10px}
+.map-node:hover .mn-go{background:var(--accent);color:#fff}
+
+/* ===== Spine inside the module ===== */
+.m-spine{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
+.m-pos{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--accent-2);background:var(--accent-weak);border-radius:99px;padding:2px 9px}
+.m-prev{font-size:12px;color:var(--muted)}
+.m-what{font-size:15.5px;color:var(--ink-soft);margin:12px 0 0;line-height:1.5}
+.m-rel{margin-top:10px;font-size:13.5px;color:var(--ink-soft);background:var(--surface-2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px}
+.m-rel-lab{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-2);margin-bottom:2px}
+.next-step{margin-top:20px;border:1px solid var(--accent);background:var(--accent-weak);color:var(--accent-2);font:inherit;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:10px;cursor:pointer}
+.next-step:hover{background:var(--accent);color:#fff}
+
 /* Key terms — subtle attention pulse on hover */
 .term-chip,.term{transition:background .15s,color .15s,transform .12s}
 .term-chip:hover,.term:hover{transform:translateY(-1px)}
