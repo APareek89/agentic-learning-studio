@@ -28,8 +28,18 @@ Last updated: 2026-06-19. Read this first, then `DESIGN_SPEC.md` (full design) a
 - **Recommended (zero code change): an always-on Node host — Render / Railway / Fly.io.** Point at the repo, set env vars (`ANTHROPIC_API_KEY` required; `DATABASE_URL` for RAG; rest optional), build `npm install`, start `npm start`. Next session: write `DEPLOY.md` + a `render.yaml`/Railway config.
 - **If Vercel is required:** needs a refactor — move embeddings to a hosted embedding API (drop onnxruntime-node), externalize artifact/upload/blueprint state to Postgres (no in-memory Maps), and replace the minutes-long SSE with the progressive `/api/module` polling (already built) so each request is short. Scope this as its own task.
 
+### Sign-up / auth (BUILT 2026-06-19)
+Supabase Auth is wired, graceful-optional (`src/lib/auth.ts`, `GET /api/config`, `requireAuth`
+on `/api/learn` `/api/upload` `/api/module`; viewer routes stay public). **Open by default**;
+to REQUIRE sign-up/login set **`SUPABASE_URL` + `SUPABASE_ANON_KEY`** (Supabase → Project
+Settings → API; the anon key is public). Also enable the **Email** provider in Supabase →
+Authentication → Providers (and optionally turn off email-confirmation for easy testing).
+Front-end = sign-up/login overlay (supabase-js via CDN) + Bearer token on gated calls + Sign out.
+Verified: open mode + 401 gating with auth on. **Deploy config ready:** `render.yaml` + `tsx`
+moved to deps + `engines node>=20` (so `npm start` works on a prod host).
+
 ### Env vars to set in the host (values from local `.env`)
-`ANTHROPIC_API_KEY` (required) · `DATABASE_URL` (RAG) · `ANTHROPIC_MODEL_SONNET/_OPUS/_HAIKU` · `LANGFUSE_PUBLIC_KEY/_SECRET_KEY/_BASEURL` · `TRANSFORMERS_CACHE` · `STALENESS_DAYS` · `PORT`.
+`ANTHROPIC_API_KEY` (required) · `DATABASE_URL` (RAG) · `SUPABASE_URL` + `SUPABASE_ANON_KEY` (to require sign-in) · `ANTHROPIC_MODEL_SONNET/_OPUS/_HAIKU` · `LANGFUSE_PUBLIC_KEY/_SECRET_KEY/_BASEURL` · `TRANSFORMERS_CACHE` · `STALENESS_DAYS` · `PORT`.
 
 ---
 
