@@ -45,6 +45,22 @@ export interface StoredArtifact {
 // In-memory cache (also the only store when the DB is off).
 const cache = new Map<string, StoredArtifact>();
 
+/** Coerce a jsonb column to a string[] — older rows stored upload_ids as `{}`/null/a
+ *  JSON string, which crashed `ids.some(...)`. Anything that isn't an array → undefined. */
+function toStringArray(v: unknown): string[] | undefined {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+  if (typeof v === "string") {
+    try { const p = JSON.parse(v); return Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : undefined; } catch { return undefined; }
+  }
+  return undefined;
+}
+/** Parse a jsonb column that may arrive as a string (driver/encoding differences). */
+function maybeParse<T>(v: unknown): T | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "string") { try { return JSON.parse(v) as T; } catch { return undefined; } }
+  return v as T;
+}
+
 /**
  * `registerArtifact` — save the HTML (+ Blueprint + ownership) and return a
  * lightweight reference. Writes the cache immediately (so the viewer's first
@@ -91,11 +107,11 @@ export async function getArtifact(id: string): Promise<StoredArtifact | undefine
   const r = rows[0];
   const art: StoredArtifact = {
     id: r.id, kind: r.kind, title: r.title, html: r.html,
-    blueprint: r.blueprint ?? undefined,
-    uploadIds: r.upload_ids ?? undefined,
+    blueprint: maybeParse<Blueprint>(r.blueprint),
+    uploadIds: toStringArray(r.upload_ids),
     referOnly: r.refer_only ?? undefined,
     userId: r.user_id ?? undefined, userEmail: r.user_email ?? undefined,
-    prompt: r.prompt ?? undefined, cards: r.cards ?? undefined, profile: r.profile,
+    prompt: r.prompt ?? undefined, cards: maybeParse<Record<string, unknown>>(r.cards), profile: maybeParse<unknown>(r.profile) ?? r.profile,
   };
   cache.set(id, art);
   return art;

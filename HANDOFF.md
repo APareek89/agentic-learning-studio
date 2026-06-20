@@ -5,7 +5,32 @@ Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
 
 ---
 
-## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4c — UI restructure + overview fix)
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4d — Ask More fix + retroactive overview)
+
+On `main`. `tsc` clean; verified in-browser on :5070 against a real DB lesson.
+
+- **Ask More crash fixed** (`ids.some is not a function`). Older lessons persisted `upload_ids` as
+  `{}` (object) instead of `[]`, so `hasUploads({}).some(...)` threw in `/api/ask` + `/api/ask/expand`.
+  Fix: `getArtifact` now coerces `upload_ids` to `string[] | undefined` (`toStringArray`) and defensively
+  parses `blueprint`/`cards`/`profile` if the driver hands them back as strings (`maybeParse`); plus
+  `hasUploads`/`getUploadTitles`/`retrieveFromUploads` guard with `Array.isArray`. Verified on the real
+  "Building Evals" lesson (`upload_ids:{}` → coerced to `undefined`, no crash). Ask More now returns a
+  crisp answer, and **"➕ Add this to my lesson in detail"** appends a new module to the END of the
+  CURRENT lesson via `/api/ask/expand`→`runDeepDive` (not a new lesson) — reload the viewer to see it.
+- **Overview fix now applies to EXISTING lessons.** `/api/artifact/:id` re-renders from the stored
+  Blueprint (fallback to stored HTML on any error) instead of serving the baked-in HTML, so old lessons
+  pick up the no-scroll/left-to-right overview (and any future renderer/CSS fix) without regeneration.
+  Verified: the old "Building Evals" lesson → 5-col grid, 9 cards, no scroll, all in-viewport.
+- **`/api/module` + `/api/check` made PUBLIC** (removed `requireAuth`). The artifact's own runtime (inside
+  the iframe / a standalone page) calls these with no auth token, so with auth ON they 401'd — silently
+  breaking progressive stub-module building AND knowledge-check grading. They only operate on an existing
+  artifact (unguessable UUID, same access model as the already-public `/api/artifact/:id`) and cache
+  results, so the surface is bounded; the lesson-creating entry points (`/api/generate`, `/api/learn`)
+  stay gated. Verified: the lesson that previously logged 4×`/api/module` 401s is now console-clean.
+
+---
+
+## ⚡ CURRENT STATE — (2026-06-20, Phase 4c — UI restructure + overview fix)
 
 On `main` (deploys to Render). Verified in-browser via Playwright on :5070; `tsc` clean.
 

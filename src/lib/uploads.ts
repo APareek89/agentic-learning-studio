@@ -81,20 +81,21 @@ export async function addRepoUpload(id: string, title: string, files: { path: st
   return { id, title, chunkCount: raw.length };
 }
 
-/** Titles for the given ids (used for the provenance banner). */
+/** Titles for the given ids (used for the provenance banner). Defensive: older lessons
+ *  persisted upload_ids as `{}`/null, so guard against non-array inputs everywhere. */
 export function getUploadTitles(ids: string[] | undefined): string[] {
-  if (!ids) return [];
+  if (!Array.isArray(ids)) return [];
   return ids.map((id) => uploads.get(id)?.title).filter((t): t is string => !!t);
 }
 
 /** True when at least one of the ids resolves to a stored upload. */
 export function hasUploads(ids: string[] | undefined): boolean {
-  return !!(ids && ids.some((id) => uploads.has(id)));
+  return Array.isArray(ids) && ids.some((id) => uploads.has(id));
 }
 
 /** Top-k chunks from the given uploads, by cosine similarity to the query. */
 export async function retrieveFromUploads(query: string, ids: string[] | undefined, k = 6): Promise<UploadHit[]> {
-  if (!ids || !ids.length || !query.trim()) return [];
+  if (!Array.isArray(ids) || !ids.length || !query.trim()) return [];
   const pool: UploadChunk[] = [];
   for (const id of ids) {
     const u = uploads.get(id);

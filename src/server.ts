@@ -312,6 +312,13 @@ app.get("/api/artifact/:id", async (req, res) => {
     return;
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  // Re-render from the stored Blueprint so EXISTING lessons pick up renderer/CSS fixes
+  // (e.g. the no-scroll overview) without regeneration. Fall back to the stored HTML if
+  // the blueprint is missing or anything throws — never break an openable lesson.
+  if (art.blueprint) {
+    try { res.send(renderArtifact(art.blueprint)); return; }
+    catch (e) { console.warn("[artifact] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
+  }
   res.send(art.html);
 });
 
@@ -332,7 +339,13 @@ app.get("/api/artifact/:id/download", async (req, res) => {
 // The artifact's own runtime calls this for each still-stub module (background
 // queue + click-to-prioritize). Returns the rendered fragment to inject.
 // ----------------------------------------------------------------------------
-app.post("/api/module", requireAuth, async (req, res) => {
+// PUBLIC (no requireAuth): the artifact's OWN runtime — inside the iframe / a standalone
+// page — calls this to build a still-stub module, and it has no auth token. Gating it 401s
+// progressive building whenever auth is on. It only builds a module for an already-existing
+// artifact (an unguessable UUID, same access model as the public /api/artifact/:id), and
+// results are cached, so the cost/abuse surface is bounded. The expensive entry points that
+// CREATE lessons (/api/generate, /api/learn) stay auth-gated.
+app.post("/api/module", async (req, res) => {
   const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
   const art = artifactId ? await getArtifact(artifactId) : undefined;
   const bp = art?.blueprint;
@@ -500,7 +513,10 @@ app.post("/api/ask/expand", requireAuth, async (req, res) => {
 
 // POST /api/check — grade ONE knowledge-check question. MCQ is verified against the
 // stored Blueprint ("by DB"); freeText is graded by the LLM.
-app.post("/api/check", requireAuth, async (req, res) => {
+// PUBLIC (no requireAuth): the artifact runtime grades knowledge-check answers from inside
+// the iframe (no auth token). Same access model as /api/artifact/:id; only reads/grades an
+// existing artifact's stored questions.
+app.post("/api/check", async (req, res) => {
   const { artifactId, blockId, questionId, choiceIndex, text } = (req.body ?? {}) as {
     artifactId?: string; blockId?: string; questionId?: string; choiceIndex?: number; text?: string;
   };
