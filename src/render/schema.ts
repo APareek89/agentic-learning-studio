@@ -64,6 +64,12 @@ export const LearnerProfileSchema = z.object({
   /** when true (landing "Explain syntax"), every codeExample carries a syntax[] breakdown
    *  that the in-lesson "Explain syntax" toggle reveals. */
   explainSyntax: z.boolean().default(false),
+  /** how the rendered lesson behaves (landing "Reading" preference):
+   *  - "vertical"   = the classic scrolling overview→workbench lesson (DEFAULT, unchanged)
+   *  - "horizontal" = a fixed-viewport paged deck: swipe page-to-page with a Next button,
+   *    heavy blocks open in a modal, and the last page is a knowledge check.
+   *  Drives the renderer (components/tokens/runtime); does not change lesson CONTENT. */
+  readingMode: z.enum(["vertical", "horizontal"]).default("vertical"),
 });
 
 // ----------------------------------------------------------------------------

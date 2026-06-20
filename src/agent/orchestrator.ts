@@ -31,6 +31,7 @@ export interface GenerateInput {
   levels?: string[];
   lessonTypes?: string[];
   framework?: string;
+  readingMode?: string;
   userProfile?: Record<string, unknown>;
   userId?: string;
   userEmail?: string;
@@ -70,7 +71,7 @@ export async function runJob(job: Job, input: GenerateInput): Promise<void> {
     const baseState: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
       industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
-      framework: input.framework ?? "", userProfile: input.userProfile ?? {},
+      framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(baseState, await profiler(baseState as any, {} as any));

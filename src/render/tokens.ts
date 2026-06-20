@@ -445,4 +445,49 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
   .ex-pane{display:block!important}.module{break-inside:avoid;box-shadow:none}
 }
 @media (max-width:560px){.dcall{grid-template-columns:1fr}.module-head h2{font-size:20px}}
+
+/* ============================================================================
+   HORIZONTAL reading mode — a fixed-viewport paged deck (additive; vertical mode
+   never sees these rules). The learner stays on one in-viewport screen the whole
+   time; only the left TOC stays put. Heavy blocks open in a modal, not inline.
+   ============================================================================ */
+.h-mode-tag{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-2);background:var(--accent-weak);border-radius:99px;padding:3px 10px}
+/* pages are fixed in the viewport, so force scroll-reveal blocks visible up front */
+[data-reading="horizontal"] .reveal{opacity:1!important;transform:none!important}
+#hworkbench{display:grid;grid-template-columns:248px 1fr;align-items:stretch}
+#hworkbench #blocknav{position:sticky;top:53px;align-self:start;max-height:calc(100vh - 53px);overflow:auto;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:3px;background:var(--surface)}
+.h-stage{position:relative;overflow:hidden;height:calc(100dvh - 55px)}
+.h-track{display:flex;height:100%;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform}
+@media (prefers-reduced-motion:reduce){.h-track{transition:none}}
+.h-page{flex:0 0 100%;width:100%;height:100%;display:flex;flex-direction:column;min-width:0}
+.h-page-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:24px 40px;width:100%;max-width:1000px;margin:0 auto}
+.h-page-body .block p,.h-page-body .block ul,.h-page-body .block ol,.h-page-body .module-body>p{max-width:760px}
+.h-page .h-next{flex:none;align-self:flex-end;margin:8px 40px 18px auto;border:1px solid var(--accent);background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:13.5px;padding:10px 20px;border-radius:10px;cursor:pointer}
+.h-page .h-next:hover{filter:brightness(1.06)}
+/* the module's own "Next" (.next-step from moduleInner) sits inside the body and advances the deck */
+.h-page .next-step{display:inline-block}
+/* in horizontal mode a collapsible advertises that it opens in a modal */
+[data-reading="horizontal"] .collapse-h .col-chev{transform:none;font-size:0}
+[data-reading="horizontal"] .collapse-h .col-chev::after{content:"⤢ open";font-size:12px;color:var(--accent-2);font-weight:700}
+[data-reading="horizontal"] .collapse-body{display:none!important}
+
+/* modal that heavy/expandable blocks open into (examples, code, "go deeper") */
+.hmodal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(8,12,24,.55);padding:24px}
+.hmodal[hidden]{display:none}
+.hmodal-card{position:relative;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--shadow);width:100%;max-width:780px;max-height:86vh;overflow:auto;padding:22px 24px}
+.hmodal-x{position:absolute;top:12px;right:14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);font:inherit;font-size:18px;line-height:1;width:30px;height:30px;border-radius:8px;cursor:pointer}
+.hmodal-x:hover{border-color:var(--accent);color:var(--accent-2)}
+.hmodal-title{font-family:var(--font-head);font-weight:700;font-size:17px;margin:0 40px 14px 0;color:var(--ink)}
+.hmodal-body .collapse-body,.hmodal-body .deeper{display:block!important}
+.hmodal-body .deeper-toggle{display:none}
+.kc-pending .kc-intro{color:var(--muted)}
+
+@media (max-width:820px){
+  #hworkbench{grid-template-columns:1fr}
+  #hworkbench #blocknav{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:none;border-right:none;border-bottom:1px solid var(--border);gap:6px;padding:10px}
+  #hworkbench #blocknav .navitem{flex:0 0 auto}
+  .h-stage{height:calc(100dvh - 112px)}
+  .h-page-body{padding:18px 18px}
+  .h-page .h-next{margin:8px 18px 14px auto}
+}
 `;

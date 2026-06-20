@@ -156,23 +156,52 @@ function collapsible(label: string, icon: string, inner: string): string {
 }
 
 // ---- knowledge check (graded; MCQ checked vs the stored Blueprint, freeText by the LLM) ----
+type KCQuestion = Extract<Block, { kind: "knowledgeCheck" }>["questions"][number];
+
+/** One graded question. `blockId` is stamped on the item so the runtime can grade it
+ *  even when questions from several blocks are mixed onto one page (horizontal mode). */
+function kcItemHtml(blockId: string, q: KCQuestion, i: number): string {
+  const head = `<div class="kc-q"><span class="kc-n">Q${i + 1}</span>${esc(q.prompt)}</div>`;
+  let body = "";
+  if (q.kind === "mcq" && q.options) {
+    // No correctness in the DOM — the server verifies against the Blueprint ("by DB").
+    body = `<div class="kc-opts">${q.options
+      .map((o, oi) => `<button class="kc-opt" data-qid="${escAttr(q.id)}" data-choice="${oi}">${esc(o.text)}</button>`)
+      .join("")}</div>`;
+  } else {
+    body = `<div class="kc-free"><textarea class="kc-input" data-qid="${escAttr(q.id)}" rows="2" placeholder="Type your answer…"></textarea><button class="kc-submit" data-qid="${escAttr(q.id)}">Check</button></div>`;
+  }
+  return `<div class="kc-item" data-qid="${escAttr(q.id)}" data-kind="${q.kind}" data-block="${escAttr(blockId)}"><div class="kc-feedback" hidden></div>${head}${body}<div class="kc-explain" hidden>${esc(q.explanation)}</div></div>`;
+}
+
 function knowledgeCheck(b: Extract<Block, { kind: "knowledgeCheck" }>): string {
-  const qs = b.questions
-    .map((q, i) => {
-      const head = `<div class="kc-q"><span class="kc-n">Q${i + 1}</span>${esc(q.prompt)}</div>`;
-      let body = "";
-      if (q.kind === "mcq" && q.options) {
-        // No correctness in the DOM — the server verifies against the Blueprint ("by DB").
-        body = `<div class="kc-opts">${q.options
-          .map((o, oi) => `<button class="kc-opt" data-qid="${escAttr(q.id)}" data-choice="${oi}">${esc(o.text)}</button>`)
-          .join("")}</div>`;
-      } else {
-        body = `<div class="kc-free"><textarea class="kc-input" data-qid="${escAttr(q.id)}" rows="2" placeholder="Type your answer…"></textarea><button class="kc-submit" data-qid="${escAttr(q.id)}">Check</button></div>`;
-      }
-      return `<div class="kc-item" data-qid="${escAttr(q.id)}" data-kind="${q.kind}"><div class="kc-feedback" hidden></div>${head}${body}<div class="kc-explain" hidden>${esc(q.explanation)}</div></div>`;
-    })
-    .join("");
+  const qs = b.questions.map((q, i) => kcItemHtml(b.id, q, i)).join("");
   return `<div class="kc" data-block="${escAttr(b.id)}">${b.title ? `<h3>🧠 ${esc(b.title)}</h3>` : `<h3>🧠 Knowledge check</h3>`}${b.intro ? `<p class="kc-intro">${esc(b.intro)}</p>` : ""}<div class="kc-score" hidden>Score: <b>0</b>/${b.questions.length}</div>${qs}</div>`;
+}
+
+/** Horizontal mode's FINAL page: one consolidated 4–5 question check drawn across the
+ *  modules' knowledgeCheck blocks (round-robin so it spans the lesson). Each item keeps
+ *  its source blockId so grading via /api/check still resolves. */
+function horizontalCheckPage(bp: Blueprint): string {
+  const groups: { blockId: string; q: KCQuestion }[][] = [];
+  for (const m of bp.modules) {
+    for (const b of m.blocks) {
+      if (b.kind === "knowledgeCheck") groups.push(b.questions.map((q) => ({ blockId: b.id, q })));
+    }
+  }
+  const flat: { blockId: string; q: KCQuestion }[] = [];
+  for (let i = 0; flat.length < 5; i++) {
+    let advanced = false;
+    for (const g of groups) {
+      if (g[i]) { flat.push(g[i]); advanced = true; if (flat.length >= 5) break; }
+    }
+    if (!advanced) break;
+  }
+  if (!flat.length) {
+    return `<div class="kc kc-pending"><h3>🧠 Knowledge check</h3><p class="kc-intro">Your knowledge check appears here once the lesson finishes building — give the pages a moment, then come back.</p></div>`;
+  }
+  const items = flat.map((x, i) => kcItemHtml(x.blockId, x.q, i)).join("");
+  return `<div class="kc" data-block="_mixed"><h3>🧠 Knowledge check</h3><p class="kc-intro">A quick check across what you just learned. Pick or type your answers.</p><div class="kc-score" hidden>Score: <b>0</b>/${flat.length}</div>${items}</div>`;
 }
 
 // ---- estimated reading time for a set of blocks (rough: ~200 wpm) ----
@@ -322,8 +351,12 @@ export function moduleInner(m: Module, bp: Blueprint): string {
     ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`
     : "";
   const forces = m.decisionItForces ? `<div class="decision-forces"><strong>Decision this forces:</strong> ${esc(m.decisionItForces)}</div>` : "";
-  const core = m.blocks.filter((b) => b.depthTier !== "deeper");
-  const deeper = m.blocks.filter((b) => b.depthTier === "deeper");
+  // Horizontal mode collects every knowledgeCheck onto a dedicated final page, so keep
+  // them out of the per-module pages (vertical is unchanged — it shows them inline).
+  const horizontal = bp.learnerProfile.readingMode === "horizontal";
+  const usable = horizontal ? m.blocks.filter((b) => b.kind !== "knowledgeCheck") : m.blocks;
+  const core = usable.filter((b) => b.depthTier !== "deeper");
+  const deeper = usable.filter((b) => b.depthTier === "deeper");
   const deeperHtml = deeper.length
     ? `<button class="deeper-toggle" data-label="Go deeper →">Go deeper →</button><div class="deeper">${deeper.map((b) => block(b, bp)).join("")}</div>`
     : "";
@@ -405,14 +438,126 @@ function citationsInner(bp: Blueprint): string {
   return `<div class="eyebrow">Provenance</div><h2>Sources</h2><div class="cites"><ol>${items}</ol></div>`;
 }
 
+/** Which in-lesson content toggles to render (shared by both layouts). */
+function contentToggleBar(bp: Blueprint): string {
+  let hasConcept = false, hasFunc = false, hasCode = false, hasSyntax = false;
+  for (const m of bp.modules)
+    for (const b of m.blocks) {
+      if (b.kind === "conceptual") hasConcept = true;
+      if (b.kind === "functionalExample") hasFunc = true;
+      if (b.kind === "codeExample") { hasCode = true; if (b.syntax && b.syntax.length) hasSyntax = true; }
+    }
+  const toggles =
+    (hasConcept ? `<button class="tbtn toggle" id="t-concept" aria-pressed="true">Concept</button>` : "") +
+    (hasFunc ? `<button class="tbtn toggle" id="t-funcex" aria-pressed="true">Functional</button>` : "") +
+    (hasCode ? `<button class="tbtn toggle" id="t-code" aria-pressed="true">Code</button>` : "") +
+    (hasSyntax ? `<button class="tbtn toggle" id="t-syntax" aria-pressed="false">Explain syntax</button>` : "");
+  return toggles ? `<div class="toggle-group" role="group" aria-label="Show or hide content">${toggles}</div>` : "";
+}
+
+/** The hero block (title/thesis/meta) reused by both layouts. */
+function heroInner(bp: Blueprint, metaBits: string[]): string {
+  return `<div class="hero"><div class="eyebrow">Interactive lesson</div><h1>${esc(bp.meta.title)}</h1>${bp.meta.thesis ? `<p class="thesis">${esc(bp.meta.thesis)}</p>` : ""}<div class="meta-line">${metaBits.map((m) => `<span>${esc(m)}</span>`).join("")}</div></div>`;
+}
+
+function metaBitsFor(bp: Blueprint): string[] {
+  const p = bp.learnerProfile;
+  return [
+    bp.meta.course ? `Part ${bp.meta.course.index} of ${bp.meta.course.total}` : "",
+    p.level,
+    p.depth.replace("_", " + "),
+    p.examples.replace("_", " + "),
+    bp.meta.estTotalMinutes ? `${bp.meta.estTotalMinutes} min read` : "",
+    p.industry ? `for ${p.industry}` : "",
+  ].filter(Boolean);
+}
+
+// ---- a module rendered as a HORIZONTAL PAGE (keeps the stub/data-module structure so
+//      the background build queue fills it in place, just like the vertical panel). ----
+function modulePageH(m: Module, bp: Blueprint, active: string): string {
+  if (isBuilt(m)) {
+    return `<section class="h-page${active}" data-panel="${escAttr(m.id)}" data-module="${escAttr(m.id)}" id="hp-${escAttr(m.id)}"><div class="h-page-body">${moduleInner(m, bp)}</div></section>`;
+  }
+  const head = `<div class="module-head"><div class="num">${m.order}${m.icon ? " · " + esc(m.icon) : ""}</div><h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}</div>`;
+  const obj = m.objectives.length
+    ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`
+    : "";
+  const forces = m.decisionItForces ? `<div class="decision-forces"><strong>Decision this forces:</strong> ${esc(m.decisionItForces)}</div>` : "";
+  return `<section class="h-page is-stub${active}" data-panel="${escAttr(m.id)}" data-module="${escAttr(m.id)}" id="hp-${escAttr(m.id)}"><div class="h-page-body">${head}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}<div class="building"><span class="bspin"></span> Building this section… <span class="muted">it'll fill in shortly</span></div></div></div></section>`;
+}
+
+/**
+ * HORIZONTAL reading mode — a fixed-viewport paged deck. The TOC nav stays on the left
+ * (same place as the vertical workbench); the right side is a horizontal track of full
+ * pages: overview (mental map) → modules → synthesis → [sources] → knowledge check (LAST).
+ * Each page has a Next button; heavy blocks open in a modal (the runtime owns that).
+ * Vertical mode is completely untouched — this is a separate, additive layout.
+ */
+function renderBodyHorizontal(bp: Blueprint): string {
+  const metaBits = metaBitsFor(bp);
+  const hasCitations = Object.keys(bp.citations).length > 0;
+
+  type Page = { id: string; label: string; icon?: string; num?: number; module?: boolean; special?: boolean; html?: string; last?: boolean };
+  const pages: Page[] = [];
+  pages.push({ id: "_map", label: "Overview", icon: "🗺", special: true, html: `${heroInner(bp, metaBits)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}` });
+  for (const m of bp.modules) pages.push({ id: m.id, label: m.title, num: m.order, module: true });
+  pages.push({ id: "_synth", label: "Putting it together", icon: "✦", special: true, html: synthesisInner(bp) });
+  if (hasCitations) pages.push({ id: "_sources", label: "Sources", icon: "⌕", special: true, html: citationsInner(bp) });
+  pages.push({ id: "_check", label: "Knowledge check", icon: "🧠", special: true, html: horizontalCheckPage(bp), last: true });
+
+  // Left TOC — module items are normal (counted toward progress); the rest are special.
+  const nav = pages
+    .map((pg) => {
+      const badge = pg.module ? `<span class="ni-num">${pg.num}</span>` : `<span class="ni-num">${esc(pg.icon || "•")}</span>`;
+      const building = pg.module && !isBuilt(bp.modules.find((x) => x.id === pg.id)!) ? " building" : "";
+      const cls = `navitem${pg.special ? " nav-special" : ""}${building}`;
+      return `<button class="${cls}" data-goto="${escAttr(pg.id)}">${badge}<span class="ni-label">${esc(pg.label)}</span><span class="ni-status" aria-hidden="true"></span></button>`;
+    })
+    .join("");
+
+  // The horizontal track of pages (only the first is active at load).
+  const track = pages
+    .map((pg, i) => {
+      const active = i === 0 ? " active" : "";
+      if (pg.module) return modulePageH(bp.modules.find((x) => x.id === pg.id)!, bp, active);
+      const next = pg.last ? "" : `<button class="h-next" type="button">Next →</button>`;
+      return `<section class="h-page${active}" data-panel="${escAttr(pg.id)}"><div class="h-page-body">${pg.html ?? ""}</div>${next}</section>`;
+    })
+    .join("");
+
+  const toggles = contentToggleBar(bp);
+  const modal = `<div id="hmodal" class="hmodal" hidden><div class="hmodal-card"><button class="hmodal-x" type="button" aria-label="Close">×</button><div class="hmodal-title"></div><div class="hmodal-body"></div></div></div>`;
+
+  return `
+  <div class="topbar"><div class="topbar-in">
+    <div class="tb-left"><span class="h-mode-tag">↔ Paged</span></div>
+    <div class="tb-center"><span class="brand-mini">${esc(bp.meta.title)}</span></div>
+    <div class="tb-right">
+      ${toggles}
+      <div class="progress" title="Progress"><i></i></div>
+      <button class="tbtn" id="theme">☾ Dark</button>
+    </div>
+  </div></div>
+
+  <div id="hworkbench">
+    <nav id="blocknav">${nav}</nav>
+    <div class="h-stage"><div class="h-track">${track}</div></div>
+  </div>
+  ${modal}`;
+}
+
 /**
  * Render the full page body.
  *
  * Layout (Fix 2): an OVERVIEW (hero + clickable mental map of the broad building
  * blocks) shown first, full width. Clicking any block enters the WORKBENCH — a
  * left rail of block buttons + the selected block's content on the right.
+ *
+ * The learner's "Reading" preference picks the layout: "horizontal" → a paged deck
+ * (renderBodyHorizontal); anything else → the classic vertical lesson below.
  */
 export function renderBody(bp: Blueprint): string {
+  if (bp.learnerProfile.readingMode === "horizontal") return renderBodyHorizontal(bp);
   const p = bp.learnerProfile;
   const metaBits = [
     bp.meta.course ? `Part ${bp.meta.course.index} of ${bp.meta.course.total}` : "",

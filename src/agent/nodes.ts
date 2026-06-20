@@ -61,6 +61,29 @@ const ModuleBlocksSchema = z.object({
   nodeMeta: z.object({ what: z.string().optional(), relevance: z.string().optional(), laymanExplanation: z.string().optional() }).optional(),
 });
 
+/**
+ * Cautiously infer a learning LEVEL from the learner's saved sign-up role — used
+ * ONLY as a gap-fill when no level was selected and none was implied by the request.
+ * Precedence is the caller's: selection > request-implied > THIS > cautious default.
+ *
+ * Rules (deliberately conservative — never returns "advanced"):
+ *  - an explicitly "technical" role/title, or a role/aspiration in a technical track
+ *    (engineer, developer, ML, data science, …) → "intermediate"
+ *  - any other stated, non-technical role (e.g. plain "product manager") → "beginner"
+ *  - no role info at all → null (let the caller fall through to its cautious default)
+ */
+function inferLevelFromRole(role?: string, aspiringRole?: string): LearnerProfile["level"] | null {
+  const r = (role ?? "").toLowerCase().trim();
+  const ar = (aspiringRole ?? "").toLowerCase().trim();
+  if (!r && !ar) return null;
+  const TECHNICAL = /(technical|engineer|developer|programmer|coder|software|swe|sde|data scien|machine learning|\bml\b|\bai\b|architect|devops|sre|researcher|scientist|cto|tech lead)/;
+  // A technical current role, or aspiring INTO a technical track, earns a step up — but
+  // only to intermediate; we never assume advanced from a job title.
+  if (TECHNICAL.test(r) || TECHNICAL.test(ar)) return "intermediate";
+  // A stated non-technical role → beginner (the most scaffolding).
+  return "beginner";
+}
+
 // What the Profiler model returns (small; we assemble the full profile in code).
 const InferenceSchema = z.object({
   topic: z.string(),
@@ -91,8 +114,16 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const pickedLevels = (state.levels ?? []).filter((l): l is LearnerProfile["level"] => LEVEL_ORDER.includes(l as LearnerProfile["level"]));
   const baseFromPicked = LEVEL_ORDER.find((l) => pickedLevels.includes(l));
 
-  // Starter cards win; otherwise the model's inference; otherwise the MOST detailed default.
-  const level = baseFromPicked || (cards.level as LearnerProfile["level"]) || inf.level || "beginner";
+  // GAP-FILL PRECEDENCE for level: selection > request-implied > profile-inferred >
+  // cautious default. A picked level always wins; only when nothing was selected AND
+  // the request didn't imply one do we cautiously read the saved role (never advanced).
+  const up = state.userProfile ?? {};
+  const level =
+    baseFromPicked ||
+    (cards.level as LearnerProfile["level"]) || // selection
+    inf.level ||                                 // request-implied
+    inferLevelFromRole(up.role, up.aspiringRole) || // profile-inferred (cautious)
+    "beginner";                                  // cautious default
   const depth = (cards.depth as LearnerProfile["depth"]) || inf.depth || "conceptual_technical";
   const examples = (cards.examples as LearnerProfile["examples"]) || inf.examples || "functional_code";
   const noCards = !(pickedLevels.length || cards.level || cards.depth || cards.examples);
@@ -102,15 +133,24 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const visualsRequested = cards.visuals === "on";
   const explainSyntax = cards.syntax === "on";
 
-  // Explicit open-text context beats inference; the saved sign-up profile fills gaps.
-  const up = state.userProfile ?? {};
-  const industry = (state.industry ?? "").trim() || up.industry || inf.industry || undefined;
+  // GAP-FILL PRECEDENCE for industry: explicit landing field (selection) >
+  // request-implied > profile-inferred. The saved profile industry only fills a gap
+  // the request left open — it must NEVER reframe the subject (that stays the ask).
+  const industry = (state.industry ?? "").trim() || inf.industry || up.industry || undefined;
   const buildGoal = (state.buildGoal ?? "").trim() || inf.buildGoal || undefined;
   // Code-example framework only matters when code examples are in play.
   const codeWanted = examples === "code" || examples === "functional_code";
   const framework = codeWanted ? ((state.framework ?? "").trim() || undefined) : undefined;
   const lessonTypes = ((state.lessonTypes ?? []).filter((t) => t === "content" || t === "knowledge_check") as ("content" | "knowledge_check")[]);
-  const finalLessonTypes = lessonTypes.length ? lessonTypes : (["content"] as ("content" | "knowledge_check")[]);
+  let finalLessonTypes = lessonTypes.length ? lessonTypes : (["content"] as ("content" | "knowledge_check")[]);
+
+  // Reading preference (renderer-only). Horizontal mode ENDS on a knowledge-check page,
+  // so it implies generating questions — fold knowledge_check in so the modules produce
+  // the knowledgeCheck blocks the final page is built from.
+  const readingMode: LearnerProfile["readingMode"] = state.readingMode === "horizontal" ? "horizontal" : "vertical";
+  if (readingMode === "horizontal" && !finalLessonTypes.includes("knowledge_check")) {
+    finalLessonTypes = [...finalLessonTypes, "knowledge_check"];
+  }
 
   const profile: LearnerProfile = {
     level,
@@ -131,6 +171,7 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     density,
     visualsRequested,
     explainSyntax,
+    readingMode,
   };
 
   const intent: Intent = {
@@ -402,6 +443,15 @@ export async function runDeepDive(
   if (!blocks.length) {
     console.warn(`[runDeepDive] module "${moduleId}" failed after 3 attempts:`, lastErr);
     return { ok: false, sources };
+  }
+
+  // GATE: question/quiz blocks ONLY when the learner asked for a Knowledge check.
+  // The model sometimes emits a selfCheckQuiz "when useful" regardless; this is the
+  // hard, deterministic guarantee that no quiz appears unless lessonType includes it.
+  const wantsKnowledgeCheck = (p.lessonTypes ?? []).includes("knowledge_check");
+  if (!wantsKnowledgeCheck) {
+    const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
+    if (noQuiz.length) blocks = noQuiz; // keep at least one block if the model returned only a quiz
   }
 
   // Merge focused sources into citations so any [S#]/[U#] in the new blocks resolves,

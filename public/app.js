@@ -42,7 +42,7 @@ function toggleChat(force) {
 }
 
 // Selections collected from the dropdowns.
-const sel = { level: null, depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null };
+const sel = { level: null, depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null, readingMode: null };
 // Combine a multi-select axis into the backend enum (e.g. both → "conceptual_technical").
 function combineAxis(arr, a, b, both) {
   const hasA = arr.includes(a), hasB = arr.includes(b);
@@ -74,8 +74,9 @@ const VALUE_LABELS = {
   low: "Low", medium: "Medium", high: "High",
   visuals: "Visuals", syntax: "Syntax",
   content: "Content", knowledge_check: "Knowledge check",
+  vertical: "Vertical scroll", horizontal: "Horizontal scroll",
 };
-const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content", framework: "Pick one" };
+const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content", framework: "Pick one", readingMode: "Vertical scroll" };
 
 // ---- Dropdown wiring (single + multi) ----
 document.querySelectorAll(".dd").forEach((dd) => {
@@ -114,14 +115,27 @@ document.querySelectorAll(".dd").forEach((dd) => {
   });
 });
 
-// The code-framework dropdown only matters when Code examples are chosen.
+// The code-framework dropdown is a CONTEXTUAL follow-on: by design it appears only
+// when Code examples are chosen (no point picking a language without code). It stays
+// put as long as Code is selected (selecting a framework never hides it); it's only
+// cleared when Code is deselected. We spotlight it on reveal so the appearance is
+// obvious rather than a silent layout shift.
 function updateFrameworkVisibility() {
   const dd = document.getElementById("dd-framework");
   if (!dd) return;
   const show = sel.examples.includes("code");
+  const wasHidden = dd.hidden;
   dd.hidden = !show;
-  if (!show) {
+  if (show) {
+    // Briefly spotlight it the first time it appears so it's clearly tied to "Code".
+    if (wasHidden) {
+      dd.classList.remove("dd-spotlight");
+      void dd.offsetWidth; // restart the animation
+      dd.classList.add("dd-spotlight");
+    }
+  } else {
     sel.framework = null;
+    dd.classList.remove("dd-spotlight");
     dd.querySelectorAll(".dd-opt").forEach((o) => o.classList.remove("sel"));
     renderDdValue(dd, "framework", false, dd.querySelector(".dd-value"));
   }
@@ -258,6 +272,7 @@ function buildPayload(promptText, threadId) {
     levels: sel.level ? [sel.level] : [],
     lessonTypes: sel.lessonType.length ? sel.lessonType : ["content"],
     framework: sel.framework || "",
+    readingMode: sel.readingMode || "vertical",
     industry: industryEl.value.trim(),
     buildGoal: buildGoalEl.value.trim(),
     uploadIds: uploadedDocs.map((d) => d.docId),
@@ -941,6 +956,7 @@ async function loadPreferences() {
     if (prefs.visuals) applyPref("extras", "visuals", true, true);
     if (prefs.syntax) applyPref("extras", "syntax", true, true);
     applyPref("lessonType", prefs.lessonTypes, true);
+    if (prefs.readingMode) applyPref("readingMode", prefs.readingMode, false);
     if (prefs.industry) industryEl.value = prefs.industry;
     if (prefs.buildGoal) buildGoalEl.value = prefs.buildGoal;
     updateFrameworkVisibility();

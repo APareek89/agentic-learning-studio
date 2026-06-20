@@ -5,7 +5,51 @@ Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
 
 ---
 
-## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 3/4)
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4 — 4 fixes landed)
+
+Latest session shipped 4 changes (tsc clean; verified in-browser via Playwright on :5070; pushed to `main`):
+
+1. **Sign-up profile fills GAPS, never overrides the subject.** `profiler()` (`src/agent/nodes.ts`)
+   now resolves level + industry by explicit precedence — **selection > request-implied >
+   profile-inferred > cautious default**. New `inferLevelFromRole()` reads the saved role ONLY as a
+   gap-fill: non-technical role → beginner, technical/aspiring-technical → intermediate, **never
+   advanced**; an explicit level pick always wins. Industry precedence reordered so a request-implied
+   industry beats the saved one. Prompts (`SKELETON_SYSTEM`/architect/module) gained a **SUBJECT
+   FIDELITY** rule: role/industry flavor EXAMPLES only — the topic/title/modules are never reframed
+   "for <role>s". Proven live with `scripts/test-profiler-gaps.ts` (PM→beginner, sr-eng→intermediate,
+   explicit Advanced wins). *Deliberately NOT added: an interactive "clarify industry" round-trip —
+   industry is optional and left general when truly absent, which the precedence already handles.*
+2. **Knowledge-check questions are GATED.** Quizzes (`selfCheckQuiz` AND `knowledgeCheck`) only appear
+   when lessonType includes `knowledge_check`. Deterministic gate in `runDeepDive` strips quiz blocks
+   when off (the reliable guarantee); `MODULE_SYSTEM` + `moduleUserPrompt` updated so the model doesn't
+   emit them unconditionally. **Plumbing audited end-to-end** (buildPayload → /api/generate → runJob →
+   profiler → architect/runDeepDive → prompts): every landing selection (level, coverage=depth,
+   examples, density, extras visuals/syntax, lessonType, framework, industry, buildGoal, levels) is
+   passed AND consumed — no drops found.
+3. **Framework dropdown** = confirmed INTENDED gating (shows only when Examples=Code) and made
+   stable/obvious: it now spans the full grid row (no reflow shuffle), carries an accent "· for your
+   code examples" label, and gets a one-shot spotlight pulse on reveal (`public/{app.js,styles.css,
+   index.html}`).
+4. **Reading-mode preference (vertical vs horizontal).** New landing "Reading" dropdown →
+   `profile.readingMode` (schema + state + server `/api/generate` & `/api/learn` + orchestrator +
+   profiler, persisted in prefs). **Vertical is byte-for-byte untouched.** Horizontal =
+   `renderBodyHorizontal()` in `components.ts`: a fixed-viewport paged deck (`.h-track` translateX,
+   per-page Next, TOC nav stays left), heavy/expandable blocks (collapsibles + "go deeper") open in a
+   **modal** (`#hmodal`) instead of inline, and the **LAST page is a consolidated 4–5 question
+   knowledge check** aggregated round-robin across modules (each item keeps its source blockId so
+   `/api/check` grading still resolves). Horizontal **implies** knowledge_check (folded in by profiler)
+   so the questions exist. CSS in `tokens.ts`, nav/modal/grading in `runtime.ts`. Proven with
+   `scripts/test-horizontal.ts` (renders both modes; no credits) + Playwright (paging, modal,
+   final-KC, no vertical scroll; vertical confirmed unchanged). *Open-early caveat: a horizontal
+   lesson opened mid-build shows its final-KC page from whatever modules existed at render time; the
+   orchestrator re-renders after each module so the stored HTML completes — typically opened when done.*
+
+**Prod DB note:** local `/healthz` returns `db:true` — the app code persists correctly. An empty
+Render dashboard is the **env**, not the code: the Render `DATABASE_URL` password `@` must be `%40`.
+
+---
+
+## ⚡ CURRENT STATE — (2026-06-20, Phase 3/4)
 
 App runs on **:5070** (`PORT=5070 npm start`, env `NODE_EXTRA_CA_CERTS=…/system-ca-bundle.pem`).
 Hosted on **Render** (auto-deploys from `main`). **MIGRATED to a NEW Supabase project**

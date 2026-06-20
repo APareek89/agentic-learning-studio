@@ -179,6 +179,7 @@ app.post("/api/generate", requireAuth, async (req, res) => {
       density: cards.density, visuals: cards.visuals === "on", syntax: cards.syntax === "on",
       lessonTypes: (body.lessonTypes as string[]) ?? [], industry: (body.industry as string) ?? "",
       buildGoal: (body.buildGoal as string) ?? "", framework: (body.framework as string) ?? "",
+      readingMode: (body.readingMode as string) ?? "",
     }).catch(() => {});
   }
   const job = createJob(user?.id ?? "anon");
@@ -187,7 +188,8 @@ app.post("/api/generate", requireAuth, async (req, res) => {
     userPrompt: prompt, cards, uploadIds: (body.uploadIds as string[]) ?? [], referOnly: !!body.referOnly,
     industry: (body.industry as string) ?? "", buildGoal: (body.buildGoal as string) ?? "",
     levels: (body.levels as string[]) ?? [], lessonTypes: (body.lessonTypes as string[]) ?? [],
-    framework: (body.framework as string) ?? "", userProfile, userId: user?.id ?? "", userEmail: user?.email ?? "",
+    framework: (body.framework as string) ?? "", readingMode: (body.readingMode as string) ?? "",
+    userProfile, userId: user?.id ?? "", userEmail: user?.email ?? "",
   });
   res.json({ jobId: job.id });
 });
@@ -211,7 +213,7 @@ app.get("/api/course/:courseId", requireAuth, async (req, res) => {
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
 app.post("/api/learn", requireAuth, async (req, res) => {
-  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes, framework } = (req.body ?? {}) as {
+  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes, framework, readingMode } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
     threadId?: string;
@@ -222,6 +224,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
     levels?: string[];
     lessonTypes?: string[];
     framework?: string;
+    readingMode?: string;
   };
 
   if (!prompt || !prompt.trim()) {
@@ -241,6 +244,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
       levels: levels ?? [], depth: cards?.depth, examples: cards?.examples,
       density: cards?.density, visuals: cards?.visuals === "on", syntax: cards?.syntax === "on",
       lessonTypes: lessonTypes ?? [], industry: industry ?? "", buildGoal: buildGoal ?? "", framework: framework ?? "",
+      readingMode: readingMode ?? "",
     }).catch(() => {});
   }
 
@@ -273,6 +277,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
         levels: levels ?? [],
         lessonTypes: lessonTypes ?? [],
         framework: framework ?? "",
+        readingMode: readingMode ?? "",
         userProfile,
         userId: user?.id ?? "",
         userEmail: user?.email ?? "",

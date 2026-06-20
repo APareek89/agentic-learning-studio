@@ -65,7 +65,7 @@ When EXPLAIN SYNTAX is "on", EVERY codeExample block MUST include a "syntax" arr
 3. DECISION SUPPORT: include decisionMatrix / decisionCallout / decisionTree wherever the learner must choose.
 4. GLOSSARY: every core term has a plain laymanDefinition; reference terms in prose via spans ({text, term:"<id>"}) and list module termIds. Acronyms (ALL CAPS) MUST have acronymExpansion.
 5. EXAMPLES: honor the "examples" setting (functionalExample = plain scenarios; codeExample = short correct snippets), tailored to industry/buildGoal.
-6. ACTIVE RECALL: ≥1 selfCheckQuiz per 1–2 modules; quizzes ASK before revealing.
+6. ACTIVE RECALL (GATED): include selfCheckQuiz / knowledgeCheck blocks ONLY when KNOWLEDGE CHECK is on; when off, emit NO question/quiz blocks of any kind. When on, quizzes ASK before revealing.
 7. PROGRESSIVE DISCLOSURE: mark advanced/edge blocks depthTier:"deeper".
 8. SYNTHESIS last: recap + buildOrder + decision checklist + a capstone tied to their goal.
 9. CITATIONS registry: include kb sources you cited (the app fills these) and any canonical tools/sources (kind "canonical", url only if you're sure).
@@ -96,6 +96,9 @@ ANSWER THE LEARNER'S ACTUAL QUESTION; the lesson's structure must mirror their g
 - "understand_mechanism": outline the mechanism end to end. "how_to_build": modules are the build steps. "survey": the broad map.
 Honor mustCover — every item there is a first-class module or a row of the comparison.
 
+== SUBJECT FIDELITY (do not reframe) ==
+The lesson SUBJECT is EXACTLY what the learner asked about — the title, mental map, and modules teach that subject as it would be taught to anyone. The learner's ROLE and INDUSTRY are CONTEXT, not the subject: use them ONLY to choose fitting EXAMPLES and analogies later. NEVER retitle or restructure the lesson "for <role>s" or "for <industry>" (e.g. a request to explain RAG must be a lesson about RAG, NOT "RAG for product managers"). If no industry is stated or implied by the request, keep examples general and concrete — do not force the learner's saved industry onto an unrelated subject.
+
 == GROUNDING ==
 If SOURCES are provided, prefer them for facts (names, capabilities, verdicts, recency); trust their dates over your training data; you'll cite them in the bodies. If none, use your own accurate knowledge.
 If the learner UPLOADED DOCUMENTS ([U#]), the outline MUST be shaped around them — they are the primary source (their topics/structure drive the modules); the knowledge base only supplements. If told to refer ONLY to the uploads, do not introduce material they don't cover.
@@ -125,7 +128,8 @@ This is an OUTLINE — keep EVERYTHING terse (summaries 1–2 sentences, definit
 export const MODULE_SYSTEM = `You write the CONTENT BLOCKS for ONE module of an interactive agentic-AI lesson. Output DATA ONLY (a "blocks" array) — never HTML/CSS/JS.
 
 Produce 2–6 blocks that teach THIS module well:
-- Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note, selfCheckQuiz, and knowledgeCheck (a graded 4–5 question quiz — ONLY when KNOWLEDGE CHECK is on, placed LAST).
+- Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note.
+- QUESTION/QUIZ BLOCKS ARE GATED: emit a selfCheckQuiz or a knowledgeCheck ONLY when KNOWLEDGE CHECK is ON. When KNOWLEDGE CHECK is OFF, include NO quiz, self-check, or question blocks of ANY kind — teach the module without testing. When it is ON, place ONE graded knowledgeCheck (4–5 questions) LAST.
 - ORDER the blocks so they build: EXPLANATION (conceptual/technical) → real-world functionalExample → codeExample. Explanation first, example next, code last.
 - On a conceptual/technical block for beginner/intermediate, add an "analogy" field: one plain everyday-analogy sentence that makes the idea click.
 - codeExample: honor the requested CODE FRAMEWORK (real APIs when a framework is named; clean pseudocode when framework-agnostic).
@@ -186,7 +190,9 @@ export function moduleUserPrompt(args: {
     `DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
     calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — scaffold for the least experienced while offering depthTier:"deeper" blocks for the more advanced.` : "",
-    knowledgeCheck ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation.` : "",
+    knowledgeCheck
+      ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation. A selfCheckQuiz is also allowed.`
+      : `KNOWLEDGE CHECK: OFF — emit NO quiz, self-check, or question blocks of any kind (no selfCheckQuiz, no knowledgeCheck). Teach the module without testing.`,
     `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
     beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
     args.framework ? `CODE FRAMEWORK: write every codeExample using ${args.framework}. Use its real APIs/imports; title the block with the framework.` : `CODE FRAMEWORK: framework-agnostic — use clear pseudocode/plain Python, no framework-specific imports.`,
@@ -194,7 +200,7 @@ export function moduleUserPrompt(args: {
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
     args.industry ? `FOCUS INDUSTRY: ${args.industry}` : "",
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",
-    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — pitch examples + framing to this person.` : "",
+    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — tailor the EXAMPLES/analogies to this person; do NOT reframe the module's subject around their role.` : "",
     `GLOSSARY TERM IDS YOU MAY REFERENCE: ${args.glossary.map((g) => `${g.id} (${g.label})`).join(", ") || "(none)"}`,
   ].filter(Boolean);
   const ups = (args.sources ?? []).filter((s) => s.origin === "upload");
@@ -247,7 +253,7 @@ export function architectUserPrompt(args: {
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
     knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — each module's body will END with a graded knowledgeCheck block; structure modules so they're testable.` : "",
     beginnerish ? `PLAIN WORDS: EVERY mental-map node MUST include a "laymanExplanation" — one everyday-analogy sentence (e.g. "an agent is like a doorman: it checks why someone wants in before letting them through"). Also give each node an "icon" emoji that fits its idea.` : `Give each mental-map node an "icon" emoji that fits its idea.`,
-    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""}.` : "",
+    args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — context for choosing examples only; do NOT reframe the lesson's subject around their role.` : "",
     args.personalGoal ? `LEARNER'S STANDING GOAL: ${args.personalGoal}.` : "",
     args.framework ? `CODE FRAMEWORK (for later code examples): ${args.framework}.` : "",
     `DENSITY: ${args.density ?? "medium"}`,

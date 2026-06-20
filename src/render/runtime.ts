@@ -36,6 +36,43 @@ export const RUNTIME_JS = String.raw`
   function markVisited(id){ if(moduleIds.indexOf(id) !== -1 && !visited[id]){ visited[id]=1; setProgress(); } }
   function setProgress(){ var n=Object.keys(visited).length; var bar=document.querySelector(".progress > i"); if(bar) bar.style.width = Math.round(n/total*100)+"%"; }
 
+  // ---- HORIZONTAL reading mode (paged deck): nav + modal + per-page Next ----
+  var HORIZ = document.body.getAttribute("data-reading")==="horizontal";
+  var hTrack = document.querySelector(".h-track");
+  var hPages = HORIZ ? Array.prototype.slice.call(document.querySelectorAll(".h-page")) : [];
+  var hOrder = hPages.map(function(p){ return p.getAttribute("data-panel"); });
+  var hIndex = 0;
+  var hModal = document.getElementById("hmodal");
+  function hRender(){
+    if(hTrack) hTrack.style.transform = "translateX(-"+(hIndex*100)+"%)";
+    hPages.forEach(function(p,i){ p.classList.toggle("active", i===hIndex); });
+    var cur = hOrder[hIndex];
+    document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-goto")===cur); });
+    markVisited(cur);
+    closePopover();
+    var body = hPages[hIndex] && hPages[hIndex].querySelector(".h-page-body"); if(body) body.scrollTop=0;
+  }
+  function hGoto(id){
+    var i = hOrder.indexOf(id);
+    if(i<0) return false;
+    hIndex=i; hRender();
+    if(isStub(id)) prioritize(id);
+    return true;
+  }
+  function hNext(){ if(hIndex < hPages.length-1){ hIndex++; hRender(); var id=hOrder[hIndex]; if(isStub(id)) prioritize(id); } }
+  // Modal: heavy/expandable blocks (examples, code, "go deeper") open here instead of inline.
+  function openModal(title, html){
+    if(!hModal) return;
+    var tt=hModal.querySelector(".hmodal-title"), bd=hModal.querySelector(".hmodal-body");
+    if(tt) tt.textContent=title||"";
+    if(bd){ bd.innerHTML=html||""; }
+    hModal.hidden=false;
+    if(bd){ hydrate(bd); bd.querySelectorAll(".reveal").forEach(function(el){ el.classList.add("in"); }); }
+  }
+  function closeModal(){ if(hModal && !hModal.hidden){ hModal.hidden=true; var bd=hModal.querySelector(".hmodal-body"); if(bd) bd.innerHTML=""; } }
+  function openCollapseModal(col){ if(!col) return; var lab=col.querySelector(".col-lab"), body=col.querySelector(".collapse-body"); openModal(lab?lab.textContent:"Details", body?body.innerHTML:""); }
+  function openDeeperModal(btn){ var d=btn && (btn.nextElementSibling && btn.nextElementSibling.classList.contains("deeper") ? btn.nextElementSibling : (btn.parentElement && btn.parentElement.querySelector(".deeper"))); openModal("Going deeper", d?d.innerHTML:""); }
+
   // ---- overview <-> workbench ----
   function enterWorkbench(id){
     var ov=document.getElementById("overview"), wb=document.getElementById("workbench"), back=document.getElementById("to-overview");
@@ -84,18 +121,30 @@ export const RUNTIME_JS = String.raw`
 
   // ---- one delegated click handler ----
   document.addEventListener("click", function(ev){
-    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit");
+    // Horizontal modal: a backdrop or close-button click dismisses it (handle before .closest).
+    if(HORIZ){
+      if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
+      if(ev.target.id==="hmodal"){ closeModal(); return; }
+    }
+    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.h-next");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
 
-    if(t.matches(".collapse-h")){ var col=t.closest(".collapse"); var open=col.classList.toggle("open"); t.setAttribute("aria-expanded", String(open)); return; }
+    if(t.matches(".h-next")){ hNext(); return; }
+    if(t.matches(".collapse-h")){
+      if(HORIZ){ openCollapseModal(t.closest(".collapse")); return; }
+      var col=t.closest(".collapse"); var open=col.classList.toggle("open"); t.setAttribute("aria-expanded", String(open)); return;
+    }
     if(t.matches(".kc-opt")){ kcAnswerMcq(t); return; }
     if(t.matches(".kc-submit")){ kcAnswerFree(t); return; }
 
-    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); enterWorkbench(gid); if(isStub(gid)) prioritize(gid); return; }
+    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(HORIZ){ hGoto(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
     if(t.id==="to-overview"){ showOverview(); return; }
     if(t.matches(".term,.term-chip")){ ev.preventDefault(); ev.stopPropagation(); if(pop.classList.contains("on") && pop._for===t){ closePopover(); } else { openPopover(t); pop._for=t; } return; }
-    if(t.matches(".deeper-toggle")){ var mod=t.closest(".panel"); mod.classList.toggle("show-deeper"); t.textContent = mod.classList.contains("show-deeper") ? "Hide advanced detail" : t.getAttribute("data-label"); return; }
+    if(t.matches(".deeper-toggle")){
+      if(HORIZ){ openDeeperModal(t); return; }
+      var mod=t.closest(".panel"); mod.classList.toggle("show-deeper"); t.textContent = mod.classList.contains("show-deeper") ? "Hide advanced detail" : t.getAttribute("data-label"); return;
+    }
     if(t.matches(".quiz .reveal")){ t.closest(".quiz").classList.add("revealed"); return; }
     if(t.matches(".quiz .opt")){
       var correct = t.getAttribute("data-correct")==="1";
@@ -117,7 +166,7 @@ export const RUNTIME_JS = String.raw`
     }
   });
 
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closePopover(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
   window.addEventListener("resize", closePopover);
 
   // ---- knowledge check (grades via /api/check; MCQ vs the stored Blueprint, freeText by LLM) ----
@@ -137,7 +186,7 @@ export const RUNTIME_JS = String.raw`
   }
   function kcAnswerMcq(btn){
     var item=btn.closest(".kc-item"); if(item.getAttribute("data-done")) return;
-    var kc=btn.closest(".kc"), bid=kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid"), choice=+btn.getAttribute("data-choice");
+    var kc=btn.closest(".kc"), bid=item.getAttribute("data-block")||kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid"), choice=+btn.getAttribute("data-choice");
     item.setAttribute("data-done","1");
     item.querySelectorAll(".kc-opt").forEach(function(o){ o.setAttribute("disabled","1"); });
     if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
@@ -149,7 +198,7 @@ export const RUNTIME_JS = String.raw`
   }
   function kcAnswerFree(btn){
     var item=btn.closest(".kc-item"), inp=item.querySelector(".kc-input"); if(!inp||!inp.value.trim()) return;
-    var kc=btn.closest(".kc"), bid=kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid");
+    var kc=btn.closest(".kc"), bid=item.getAttribute("data-block")||kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid");
     var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback grading"; fb.textContent="Grading your answer…"; }
     btn.setAttribute("disabled","1");
     if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
@@ -238,7 +287,8 @@ export const RUNTIME_JS = String.raw`
   var busy=false;
   function cssEsc(s){ return String(s).replace(/["\\]/g,"\\$&"); }
   function navItem(id){ return document.querySelector('.navitem[data-goto="'+cssEsc(id)+'"]'); }
-  function panelEl(id){ return document.querySelector('.panel[data-module="'+cssEsc(id)+'"]'); }
+  // Matches both the vertical workbench panel and the horizontal h-page (both carry data-module).
+  function panelEl(id){ return document.querySelector('[data-module="'+cssEsc(id)+'"]'); }
   function isStub(id){ var p=panelEl(id); return !!(p && p.classList.contains("is-stub")); }
   function pump(){
     if(busy || !ARTIFACT_ID) return;
@@ -250,7 +300,9 @@ export const RUNTIME_JS = String.raw`
       .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
       .then(function(data){
         var panel=panelEl(id);
-        if(panel && data && data.fragmentHtml){ panel.innerHTML=data.fragmentHtml; panel.classList.remove("is-stub"); hydrate(panel); observeReveals(panel); }
+        // Inject into the page body when present (horizontal h-page), else the panel itself.
+        var target=panel ? (panel.querySelector(".h-page-body")||panel) : null;
+        if(target && data && data.fragmentHtml){ target.innerHTML=data.fragmentHtml; if(panel) panel.classList.remove("is-stub"); hydrate(target); observeReveals(target); }
         if(nav){ nav.classList.remove("building","failed"); }
       })
       .catch(function(){
@@ -270,6 +322,7 @@ export const RUNTIME_JS = String.raw`
   hydrate(document);
   observeReveals(document);
   setProgress();
+  if(HORIZ) hRender(); // sync nav highlight + progress to the first page
   pump();             // start building the remaining modules, one by one
 })();
 `;

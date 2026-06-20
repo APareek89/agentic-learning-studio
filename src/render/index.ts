@@ -42,7 +42,7 @@ export function renderArtifact(bp: Blueprint): string {
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>${ARTIFACT_CSS}</style>${accentStyle}
 </head>
-<body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-theme="light">
+<body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="light">
 ${renderBody(bp)}
 <div id="popover" role="dialog" aria-label="Definition"></div>
 <script type="application/json" id="glossary-data">${glossaryJson}</script>
