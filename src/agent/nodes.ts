@@ -45,7 +45,16 @@ const profilerLLM = makeLLM("sonnet", 0);
 // glossary; the heavy detail-layer node fields what/relevance/layman are written
 // later per-module via nodeMeta), so it fits without truncation. Streaming
 // aggregation produced malformed JSON for large procedural skeletons, so we avoid it.
-const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
+// COST-CONTROLLED HYBRID: the architect SKELETON + structure classification is the one
+// reasoning-heavy step (it sets the whole lesson's spine and shape), so it runs on Opus
+// 4.8 for sharper pedagogy/sequencing. The ~5 module builds stay on Sonnet (moduleLLM
+// below) where the token bulk is, so the cost lift is ~10–15%, not ~2×. (No proofreader
+// pass — it would add a critic call per module and raise latency.)
+// NON-STREAMING 16k (deliberate): streaming withStructuredOutput double-encodes the
+// aggregated tool-call JSON for large skeletons on Opus (a langchain-anthropic bug), and
+// non-streaming can't exceed the SDK's ~16k ceiling — so the lever is keeping the OUTLINE
+// SMALL (SKELETON_SYSTEM forbids block bodies and caps the glossary), which fits 16k.
+const skeletonLLM = makeLLM("opus", 0.2, { maxTokens: 16000 });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
@@ -256,6 +265,83 @@ export async function retriever(state: GraphStateType) {
   return { retrieved: sources, coverage, messages: [{ role: "assistant" as const, node: "Retriever", content: msg }] };
 }
 
+/** Pull the Blueprint JSON object out of a raw model response (tolerates a ```json fence
+ *  or stray prose around it). Throws if no object / parse fails → caught as a repair retry. */
+function extractJsonObject(text: string): unknown {
+  let t = (text || "").trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  const a = t.indexOf("{");
+  const b = t.lastIndexOf("}");
+  if (a < 0 || b <= a) throw new Error("no JSON object found in model output");
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+/**
+ * Normalize a RAW-parsed skeleton, then Zod-validate it. With raw parsing (vs the old
+ * withStructuredOutput, which forced every required field) the model can omit a few
+ * required arrays (termIds/citations/edges/…); we fill those safe defaults, inject the
+ * app's resolved learnerProfile (the skeleton's echo is ignored anyway), then run
+ * BlueprintSchema so the rest is validated + defaulted. A genuinely malformed object
+ * throws → the architect's catch routes it to a repair retry.
+ */
+/** Recursively delete null-valued keys — the model emits `null` for optional fields it
+ *  doesn't fill, but Zod `.optional()` accepts `undefined`, not `null`. */
+function stripNulls<T>(v: T): T {
+  if (Array.isArray(v)) return (v.map(stripNulls).filter((x) => x !== null) as unknown) as T;
+  if (v && typeof v === "object") {
+    const r = v as Record<string, unknown>;
+    for (const k of Object.keys(r)) { if (r[k] === null) delete r[k]; else r[k] = stripNulls(r[k]); }
+  }
+  return v;
+}
+
+function coerceSkeleton(input: unknown, profile: LearnerProfile): Blueprint {
+  const o = stripNulls((input && typeof input === "object" ? input : {}) as Record<string, any>); // eslint-disable-line @typescript-eslint/no-explicit-any
+  o.schemaVersion = "1.0";
+  o.meta = o.meta && typeof o.meta === "object" ? o.meta : {};
+  o.meta.topic = o.meta.topic || profile.topic;
+  o.meta.title = o.meta.title || profile.topic;
+  o.learnerProfile = profile; // the app's resolved profile is authoritative
+  o.mentalMap = o.mentalMap && typeof o.mentalMap === "object" ? o.mentalMap : {};
+  o.mentalMap.nodes = Array.isArray(o.mentalMap.nodes) ? o.mentalMap.nodes : [];
+  o.mentalMap.edges = Array.isArray(o.mentalMap.edges) ? o.mentalMap.edges : [];
+  o.mentalMap.title = o.mentalMap.title || `${profile.topic} — the map`;
+  o.mentalMap.oneLineThesis = o.mentalMap.oneLineThesis || o.meta.thesis || "";
+  o.modules = Array.isArray(o.modules) ? o.modules : [];
+  o.modules.forEach((m: Record<string, any>, i: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    m.id = m.id || `m${i + 1}`;
+    m.order = typeof m.order === "number" ? m.order : i + 1;
+    m.title = m.title || `Module ${i + 1}`;
+    m.summary = m.summary || "";
+    m.objectives = Array.isArray(m.objectives) ? m.objectives : [];
+    m.termIds = Array.isArray(m.termIds) ? m.termIds : [];
+    m.citations = Array.isArray(m.citations) ? m.citations : [];
+    m.blocks = Array.isArray(m.blocks) ? m.blocks : [];
+    m.loadState = m.loadState === "full" ? "full" : "stub";
+  });
+  // glossary / citations: the model often emits an ARRAY of {id,…}; the schema wants a
+  // record keyed by id. Convert.
+  const toRecord = (v: unknown): Record<string, any> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (Array.isArray(v)) { const r: Record<string, any> = {}; for (const it of v as any[]) if (it && it.id) r[it.id] = it; return r; } // eslint-disable-line @typescript-eslint/no-explicit-any
+    return v && typeof v === "object" ? (v as Record<string, any>) : {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  o.glossary = toRecord(o.glossary);
+  o.citations = toRecord(o.citations);
+  o.synthesis = o.synthesis && typeof o.synthesis === "object" ? o.synthesis : {};
+  // recap: string → rich text nodes; array stays.
+  if (typeof o.synthesis.recap === "string") o.synthesis.recap = o.synthesis.recap.trim() ? [{ t: "p", spans: [{ text: o.synthesis.recap }] }] : undefined;
+  // buildOrder: ["step a", …] → [{step,label}]; checklist: ["…"] → [{id,label}].
+  o.synthesis.buildOrder = (Array.isArray(o.synthesis.buildOrder) ? o.synthesis.buildOrder : []).map((b: any, i: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
+    typeof b === "string" ? { step: i + 1, label: b } : { step: typeof b?.step === "number" ? b.step : i + 1, label: b?.label ?? String(b ?? ""), detail: b?.detail });
+  o.synthesis.checklist = (Array.isArray(o.synthesis.checklist) ? o.synthesis.checklist : []).map((c: any, i: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
+    typeof c === "string" ? { id: `c${i + 1}`, label: c } : { id: c?.id ?? `c${i + 1}`, label: c?.label ?? String(c ?? ""), fromModuleId: c?.fromModuleId });
+  o.synthesis.capstone = o.synthesis.capstone && typeof o.synthesis.capstone === "object" ? o.synthesis.capstone : { prompt: `Apply what you learned to ${profile.buildGoal || profile.topic}.` };
+  const parsed = BlueprintSchema.safeParse(o);
+  if (!parsed.success) throw new Error("skeleton shape invalid: " + parsed.error.issues.slice(0, 4).map((i) => `${i.path.join(".")} — ${i.message}`).join("; "));
+  return parsed.data;
+}
+
 // ============================================================================
 // NODE 2 — architect (produce + validate the SKELETON: stubs only, no block bodies)
 // ============================================================================
@@ -266,9 +352,14 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   const repairErrors = state.validation && !state.validation.ok ? state.validation.errors : undefined;
 
   // ---- Generate the SKELETON in one small call (map + module stubs + glossary) ----
-  let candidate;
+  // We call Opus RAW (not .withStructuredOutput) and parse the JSON ourselves: langchain's
+  // structured-output tool-call path truncates (non-streaming) / double-encodes (streaming)
+  // large Blueprints on Opus 4.8, whereas the raw text response is clean, compact JSON. The
+  // SKELETON_SYSTEM prompt already demands a single DATA-ONLY Blueprint object. validateBlueprint
+  // below still enforces the shape (Zod), so an off-shape parse routes through the repair edge.
+  let candidate: Blueprint;
   try {
-    candidate = await skeletonLLM.withStructuredOutput(BlueprintSchema, { name: "blueprint" }).invoke(
+    const raw = await skeletonLLM.invoke(
       [
         new SystemMessage(SKELETON_SYSTEM),
         new HumanMessage(
@@ -299,6 +390,8 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
       ],
       config
     );
+    const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
+    candidate = coerceSkeleton(extractJsonObject(text), p);
   } catch (err) {
     console.warn("[architect] skeleton generation failed:", (err as Error).message?.slice(0, 200));
     return {
@@ -396,6 +489,12 @@ export async function runDeepDive(
     }
   }
 
+  // The modules BEFORE this one (by spine order) — lets the body SPACE/INTERLEAVE
+  // retrieval of an earlier concept instead of massing all recall at the end.
+  const priorModules = bp.modules
+    .filter((x) => x.order < module.order)
+    .sort((a, b) => a.order - b.order)
+    .map((x) => ({ order: x.order, title: x.title, terms: (x.termIds ?? []).map((id) => bp.glossary[id]?.label).filter((t): t is string => !!t) }));
   const messages = [
     new SystemMessage(MODULE_SYSTEM),
     new HumanMessage(
@@ -417,6 +516,10 @@ export async function runDeepDive(
         framework: p.framework,
         role: p.role,
         aspiringRole: p.aspiringRole,
+        lessonTopic: bp.meta.topic,
+        thisOrder: module.order,
+        totalModules: bp.modules.length,
+        priorModules,
         glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
         sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
       })

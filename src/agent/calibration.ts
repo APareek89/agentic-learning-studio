@@ -114,6 +114,37 @@ export const LEVEL: Record<Level, LevelSpec> = {
   },
 };
 
+/**
+ * RULE 3 — LEVEL and DENSITY are COUPLED, not independent. "More text" buys different
+ * things at different levels: for an advanced learner it must buy SUBSTANCE (edge cases,
+ * failure modes, tradeoffs), never re-explanation of fundamentals (the redundancy /
+ * expertise-reversal effect); for a beginner it buys SCAFFOLDING. "Less text" cuts
+ * different things: for advanced it strips the why down to signal; for a beginner it cuts
+ * SCOPE (fewer concepts), never the support on the concepts that stay. This function names,
+ * for the resolved (level × density) cell, exactly what the chosen amount of text BUYS — so
+ * the model spends words on the right thing instead of padding explanations.
+ */
+export function densityBuys(level: Level, density: Density): string {
+  const M: Record<Level, Record<Density, string>> = {
+    advanced: {
+      high: "Spend the extra words on SUBSTANCE — additional edge cases, failure modes, corner cases, tradeoffs, performance notes, and non-obvious interactions. Do NOT re-explain fundamentals a practitioner already knows (redundancy/expertise reversal degrades the lesson). Depth, never hand-holding.",
+      medium: "Spend words on tradeoffs, failure modes, and when-NOT-to-use judgment. Assume the basics; do not restate them.",
+      low: "Terse, reference-style. Assume the why; signal only the non-obvious — bullet fragments over prose. No definitions.",
+    },
+    intermediate: {
+      high: "Spend the extra words on mechanisms, the main tradeoffs, edge cases, and when-to-use judgment — light on basics, no beginner re-explanations.",
+      medium: "Balanced: the what, a brief why, and the key tradeoff per point. Gloss only non-obvious terms.",
+      low: "Concise: keep the mechanism and the key tradeoff, drop the basics and the obvious definitions.",
+    },
+    beginner: {
+      high: "Spend the extra words on SCAFFOLDING — worked steps shown in full, a concrete analogy, pre-teaching of vocabulary, and the why behind each step. More support broken into smaller steps, NOT more concepts crammed in.",
+      medium: "Worked examples with the why; one concept per step; a plain analogy where it helps.",
+      low: "Stay short, but KEEP full scaffolding on every concept you teach — cut SCOPE (teach fewer concepts), never the support per concept. A beginner with less text still needs the worked steps.",
+    },
+  };
+  return (M[level] ?? M.beginner)[density] ?? (M[level] ?? M.beginner).medium;
+}
+
 /** The exact LEVEL+DENSITY directive injected into the generation prompts. */
 export function calibrationDirective(level: Level, density: Density): string {
   const L = LEVEL[level] ?? LEVEL.beginner;
@@ -126,7 +157,7 @@ export function calibrationDirective(level: Level, density: Density): string {
     `- Explanation: ${L.explanationDepth}`,
     `- OMIT: ${L.omit}`,
     `- Self-check questions: ${L.questionType}`,
-    `  (${L.scaffolding}. Higher levels get LESS hand-holding, not more words.)`,
+    `  (${L.scaffolding}. Higher levels FADE support, they don't deepen difficulty for its own sake.)`,
     ``,
     `TEXT DENSITY = ${D.label} (per CONCEPT — total length scales with how many concepts there are):`,
     `- Aim for a MEDIAN of ~${D.medianSentenceWords} words/sentence; keep EVERY sentence under ${D.hardCeilingWords} words (hard ceiling).`,
@@ -134,5 +165,8 @@ export function calibrationDirective(level: Level, density: Density): string {
     `- Style: ${D.style}`,
     `- Match the SHAPE and rhythm of this GOLD example for "${D.label}":`,
     `  «${D.gold}»`,
+    ``,
+    `RESOLVED ${L.label} × ${D.label} — what this amount of text BUYS (the coupling that matters most):`,
+    `- ${densityBuys(level, density)}`,
   ].join("\n");
 }

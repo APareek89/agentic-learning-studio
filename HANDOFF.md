@@ -5,7 +5,44 @@ Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
 
 ---
 
-## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4d — Ask More fix + retroactive overview)
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 5 — Opus skeleton + pedagogy upgrade)
+
+On `main`. `tsc` clean; verified with live generations (`scripts/test-structure.ts` + a built module).
+
+- **Opus 4.8 skeleton (no proofreader).** `skeletonLLM` (`src/agent/nodes.ts`) is `claude-opus-4-8`; the
+  ~5 module builds stay on Sonnet (`moduleLLM`), so the cost lift is ~10–15%. The proofreader was
+  intentionally NOT added (it adds a critic call per module → latency).
+  - **`makeLLM` drops `temperature` for the opus tier** (Opus 4.8 400s on it — same class as the top_p:-1 bug).
+  - **Skeleton is generated RAW, not via `.withStructuredOutput`.** langchain's structured-output tool-call
+    path on Opus 4.8 truncates (non-streaming) / double-encodes (streaming) large Blueprints; the raw text
+    response is clean, compact JSON (~4.7k tokens). New helpers in `nodes.ts`: `extractJsonObject` (pulls the
+    JSON, tolerates a code fence) + `coerceSkeleton` (deep-strips `null`s, converts the model's natural shapes
+    — glossary/citations arrays→records, recap string→rich-text, buildOrder/checklist strings→objects, fills
+    omitted required arrays, injects the app's resolved profile) → `BlueprintSchema.safeParse`. An off-shape
+    parse still routes to the existing repair-retry edge. Module builds keep `withStructuredOutput` on Sonnet
+    (that path is fine). Proven: procedural/dependency/comparative all classify + parse.
+- **Pedagogy upgrade (content + delivery only — no UI, no validation).**
+  - `src/agent/calibration.ts`: new `densityBuys(level, density)` — resolves the COUPLED level×density into
+    one config (what "more/less text" BUYS per cell: High+Advanced→substance/edge-cases NOT re-explanation;
+    High+Beginner→scaffolding; Low+Advanced→terse reference; Low+Beginner→cut scope not scaffolding), injected
+    into `calibrationDirective`.
+  - `PROFILER_SYSTEM`: infer level from the BUILD GOAL + topic complexity, not a default "intermediate".
+  - `SKELETON_SYSTEM`: ONE STRUCTURE SPINE (map order = module order = synthesis.buildOrder), unambiguous
+    start, no orphan modules, contextualize the spine through industry/build, plan the worked→completion→solo
+    ramp + spaced retrieval, synthesis = consolidate-via-retrieval + next-rung. Output tightened (8–12
+    glossary, 1–2-sentence summaries, hard "blocks:[] only") so it fits 16k.
+  - `MODULE_SYSTEM` + `moduleUserPrompt`: effortful RECALL-FIRST retrieval (predict-then-reveal, hidden
+    answers), SPACED/INTERLEAVED via a new `priorModules`+`thisOrder`/`totalModules` payload (a late module
+    brings back an earlier concept), worked→completion→solo paced by position×level, FAILURE MODES as
+    first-class content, EVALUATING AI-GENERATED OUTPUT for code/build modules, level=scaffolding-fades,
+    one-idea-per-block, progressive disclosure as pedagogy. Verified in a built module: predict-then-reveal,
+    failure modes, AI-verification, and spaced recall all present; quiz gate still honored.
+- **Superseded branch:** `hybrid-opus-skeleton-and-proofreader` used the (now-known-broken) Opus
+  `withStructuredOutput` path + the proofreader. It is OBSOLETE — this `main` work replaces it. Safe to delete.
+
+---
+
+## ⚡ CURRENT STATE — (2026-06-20, Phase 4d — Ask More fix + retroactive overview)
 
 On `main`. `tsc` clean; verified in-browser on :5070 against a real DB lesson.
 
