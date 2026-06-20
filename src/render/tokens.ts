@@ -85,34 +85,49 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
    would otherwise override the UA [hidden] rule and break the overview↔workbench swap). */
 [hidden]{display:none!important}
 
-/* ===== Overview = ONE non-scrolling screen; mental map flows LEFT-TO-RIGHT ===== */
-/* Scoped to :not([hidden]) so it only applies while the overview is the active view. */
-#overview:not([hidden]){min-height:calc(100dvh - 54px);overflow-y:auto;display:flex;flex-direction:column}
-#overview .shell{flex:1;display:flex;flex-direction:column;overflow:visible;padding:14px 26px}
-#overview .hero{padding:2px 0 0}
-#overview .hero h1{font-size:26px;margin:.06em 0 .12em}
-#overview .thesis{font-size:15px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* ===== Overview = ONE non-scrolling screen; the map flows LEFT-TO-RIGHT =====
+   The overview must fit the viewport with NO scrolling. (Regression note: the
+   structure-typed overview swapped the renderer to .map-path/.map-concept/.map-options,
+   but the old no-scroll rules targeted a now-dead .map-flow, and .map-node{flex:1 1 240px}
+   grew vertically inside the column .map-path → giant cards + scroll. Fixed below by
+   making #overview a fixed, clipped flex column and laying EVERY structure type out as a
+   compact left-to-right card grid where the numbers/icons carry the order.)
+   Scoped to :not([hidden]) so it only applies while the overview is the active view. */
+#overview:not([hidden]){height:calc(100dvh - 54px);overflow:hidden;display:flex;flex-direction:column}
+/* width:100% so the auto side-margins don't shrink the shell to content width in the
+   overview's flex column (which collapsed the card grid to ~2 columns). */
+#overview .shell{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;overflow:hidden;padding:14px 26px}
+#overview .hero{flex:none;padding:2px 0 0}
+#overview .hero h1{font-size:25px;margin:.05em 0 .1em}
+#overview .thesis{font-size:14.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #overview .meta-line{margin-top:6px;font-size:12.5px}
-#overview .ov-hint{margin:8px 0 0}
-#overview .map{display:flex;flex-direction:column;margin:12px 0 0;overflow:visible;padding:16px}
+#overview .ov-hint{flex:none;margin:8px 0 0}
+#overview .map{flex:1;min-height:0;display:flex;flex-direction:column;margin:12px 0 0;overflow:hidden;padding:14px 16px}
 #overview .map h2{font-size:14px}
 #overview .map .cap{margin:0 0 8px}
-/* layers become side-by-side columns; nodes stack inside their column */
-#overview .map-flow{display:flex;align-items:flex-start;gap:6px}
-#overview .map-flow .map-layer{flex:1 1 0;min-width:0;display:flex;flex-direction:column;margin:0}
-#overview .map-flow .map-row{display:flex;flex-direction:column;flex-wrap:nowrap;gap:8px}
-#overview .map-flow .map-node{flex:0 0 auto;min-width:0;overflow:visible;display:flex;flex-direction:column;gap:3px}
-#overview .map-flow .map-node .mn-go{margin-top:auto}
-#overview .map-flow .mn-what,#overview .map-flow .mn-rel{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#overview .map-flow .map-arrow{flex:0 0 auto;align-self:center;margin:0 2px}
-#overview .map-flow .map-arrow::before{content:"→"}
-/* narrow screens: fall back to vertical stacking + a normal scrolling page */
+#overview .map-body{flex:1;min-height:0;overflow:hidden}
+/* EVERY structure type → a compact left-to-right card grid that fits the viewport.
+   (procedural/dependency use .map-path with .map-step li wrappers; conceptual/comparative
+   use .map-concept/.map-options with the cards as direct children.) */
+#overview .map-path,#overview .map-concept,#overview .map-options{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;
+  max-width:none;align-content:flex-start;height:100%;overflow:hidden;
+}
+#overview .map-step{display:flex;flex-direction:column}        /* li wrapper just holds the card */
+#overview .map-conn{display:none}                              /* drop the vertical spine connector */
+/* stop the card growing vertically (the regression): natural height, fill its grid cell */
+#overview .map-node{flex:0 0 auto;width:100%;min-width:0;padding:10px 12px;gap:5px}
+#overview .map-node .mn-orient,#overview .map-node .mn-what,#overview .map-node .mn-rel{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+#overview .map-node .mn-go{margin-top:auto}
+#overview .mn-head{gap:8px}
+#overview .mn-num{width:24px;height:24px;font-size:12px}
+/* narrow screens: let the page scroll rather than clip the grid */
 @media(max-width:820px){
   #overview:not([hidden]){height:auto;overflow:visible}
-  #overview .shell,#overview .map,#overview .map-flow{overflow:visible}
-  #overview .map-flow{flex-direction:column}
-  #overview .map-flow .map-row{flex-direction:row;flex-wrap:wrap}
-  #overview .map-flow .map-arrow::before{content:"↓"}
+  #overview .shell,#overview .map,#overview .map-body{overflow:visible;min-height:0}
+  #overview .map-path,#overview .map-concept,#overview .map-options{height:auto;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 }
 
 /* ---- overview / workbench (Fix 2 layout) ---- */

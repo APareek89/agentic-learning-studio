@@ -5,7 +5,39 @@ Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
 
 ---
 
-## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4 — 4 fixes landed)
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4c — UI restructure + overview fix)
+
+On `main` (deploys to Render). Verified in-browser via Playwright on :5070; `tsc` clean.
+
+- **Overview no-scroll / left-to-right RESTORED** (`src/render/tokens.ts`, artifact CSS). Regression
+  cause: the Phase-3/4 structure-typed overview switched the renderer to `.map-path`/`.map-concept`/
+  `.map-options`, but the no-scroll CSS still targeted a now-dead `.map-flow`, and `.map-node{flex:1 1
+  240px}` grew vertically inside the column `.map-path` → giant cards + scrolling. Fix: `#overview` is a
+  fixed, clipped flex column, and EVERY structure type renders as a compact **left-to-right card grid**
+  (numbers/icons carry order; the vertical spine connector is dropped). Also `#overview .shell{width:100%}`
+  so its auto side-margins stop shrinking the grid to ~2 columns. Verified: 6-step procedural map → 5
+  columns, all cards in-viewport, `document.scrollHeight ≤ innerHeight` (no scroll). NOTE: artifact CSS is
+  baked in at render time, so **existing stored lessons keep the old overview** — only newly generated (or
+  re-rendered) lessons get the fix.
+- **Tabs restructured** (`public/index.html` + `app.js` + `styles.css`):
+  - "Learning" → **Configurator** (the options form only).
+  - New **Trainer** tab = the lesson workspace/viewer; it PERSISTS the open lesson.
+  - "Dashboard" → **My Lessons**.
+  - Generate (Configurator) → kicks off the background job and lands on **Trainer**, which KEEPS the
+    current lesson (or shows a "generating… open from My Lessons" empty state if none). Job progress +
+    the finished lesson appear in **My Lessons**; the Trainer's lesson only changes when you open one
+    there. A "⏳ generating" pill in the Trainer bar links to My Lessons.
+  - **New** button → goes to the Configurator and KEEPS the Trainer's current lesson (no longer wipes it).
+  - Opening a lesson from My Lessons / Library / a course → loads it into the Trainer tab.
+- **Download (`/full`) hardened** (`src/server.ts`): time-boxes the eager module build (55s), skips a
+  module that errors, and ALWAYS returns the best-available HTML (falls back to the stored `art.html` on
+  error) instead of hanging or 404-ing — that was the browser's "Site wasn't available". Persistence is
+  now fire-and-forget so a down DB can't block the download. (The remaining hard-404 case — artifact not
+  found after an instance recycle — is the Render `DATABASE_URL` env issue, not code.)
+
+---
+
+## ⚡ CURRENT STATE — (2026-06-20, Phase 4 — 4 fixes landed)
 
 Latest session shipped 4 changes (tsc clean; verified in-browser via Playwright on :5070; pushed to `main`):
 

@@ -31,6 +31,8 @@ const askMoreBtn = document.getElementById("ask-more");
 const chatCloseBtn = document.getElementById("chat-close");
 const genOverlay = document.getElementById("gen-overlay");
 const genLabel = document.getElementById("gen-label");
+const genStatus = document.getElementById("gen-status");
+if (genStatus) genStatus.addEventListener("click", () => switchTab("dashboard"));
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
 askMoreBtn.addEventListener("click", () => toggleChat());
 chatCloseBtn.addEventListener("click", () => toggleChat(false));
@@ -487,27 +489,18 @@ function addStatus(text) {
   return el;
 }
 
+// "New" → go to the Configurator for a fresh lesson. The Trainer KEEPS its current
+// lesson (it only changes when you open one from My Lessons), so we don't touch the viewer.
 function resetToLanding() {
-  workspace.hidden = true;
   toggleChat(false);
-  lessonTabsEl.hidden = true; currentCourse = null;
-  landing.hidden = false;
-  viewerFrame.src = "about:blank";
-  viewerFrame.hidden = true;
-  viewerEmpty.hidden = false;
-  viewerEmpty.textContent = "Your lesson will open here…";
-  genOverlay.hidden = true;
-  downloadBtn.hidden = true;
-  openWindowBtn.hidden = true;
-  askMoreBtn.hidden = true;
-  ratingEl.hidden = true;
-  currentArtifactId = null;
-  loadDashboard();
+  switchTab("configurator");
+  promptEl.value = "";
+  promptEl.focus();
   loadSuggestions();
 }
 
-// ---- Tabs (Learning / Library / Dashboard) ----
-const TAB_PANELS = { learning: "tab-learning", library: "tab-library", dashboard: "tab-dashboard" };
+// ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
+const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -638,8 +631,8 @@ function renderLibrary() {
 libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
 
 function openLibraryLesson(slug, title) {
-  switchTab("learning");
-  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  switchTab("trainer");
+  chatLog.innerHTML = "";
   toggleChat(false);
   lessonTabsEl.hidden = true; currentCourse = null;
   genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
@@ -665,8 +658,23 @@ async function startJob(promptText) {
   } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
   activeJobId = jobId;
   promptEl.value = "";
-  switchTab("dashboard");
+  // Land on the Trainer. It KEEPS the current lesson (or shows a generating empty state
+  // if none). The job's progress + the finished lesson appear in My Lessons; the Trainer
+  // only changes when the user opens a lesson there.
+  updateGenStatus(true);
+  if (!currentArtifactId) showTrainerGenerating();
+  switchTab("trainer");
   pollJob(jobId);
+}
+
+// The "⏳ generating" pill in the Trainer's bar (links to My Lessons for progress).
+function updateGenStatus(active) { if (genStatus) genStatus.hidden = !active; }
+// Trainer empty state while a lesson generates and nothing is open yet.
+function showTrainerGenerating() {
+  viewerFrame.hidden = true; genOverlay.hidden = true;
+  downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
+  viewerEmpty.hidden = false;
+  viewerEmpty.innerHTML = "⏳ Your lesson is generating… it'll appear in <strong>My Lessons</strong>. Open it there when it's ready.";
 }
 
 function pollJob(jobId) {
@@ -678,7 +686,16 @@ function pollJob(jobId) {
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
     renderJobCard(job);
     if (currentCourse && job.courseId && currentCourse.courseId === job.courseId) refreshCourseTabs(job.lessons);
-    if (job.status === "done" || job.status === "error") { activeJobId = null; dashActive.innerHTML = ""; loadDashboard(); loadSuggestions(); return; }
+    if (job.status === "done" || job.status === "error") {
+      activeJobId = null; dashActive.innerHTML = ""; updateGenStatus(false);
+      // If the Trainer is still on the generating empty-state (nothing opened), nudge the user.
+      if (!currentArtifactId) {
+        viewerEmpty.innerHTML = job.status === "done"
+          ? "✓ Your lesson is ready — open it from <strong>My Lessons</strong>."
+          : "⚠️ Generation failed — see <strong>My Lessons</strong>.";
+      }
+      loadDashboard(); loadSuggestions(); return;
+    }
     activeJobTimer = setTimeout(tick, 2500);
   };
   tick();
@@ -716,16 +733,16 @@ function openFromJob(job) {
 
 // ---- Course view (lesson-tab strip) ----
 function openLessonInWorkspace(id, title, prompt) {
-  switchTab("learning");
-  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  switchTab("trainer");
+  chatLog.innerHTML = "";
   toggleChat(false);
   lessonTabsEl.hidden = true; currentCourse = null;
   basePrompt = prompt || title;
   openInViewer(id, title);
 }
 function openCourse(courseId, lessons, activeIndex) {
-  switchTab("learning");
-  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  switchTab("trainer");
+  chatLog.innerHTML = "";
   toggleChat(false);
   currentCourse = { courseId, lessons, activeIndex: activeIndex || 0 };
   renderLessonTabs();

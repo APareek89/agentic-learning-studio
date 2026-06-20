@@ -392,24 +392,42 @@ app.get("/api/artifact/:id/full", async (req, res) => {
     return;
   }
   try {
-    // Build every stub. Re-check between passes so a build running concurrently in the
-    // open lesson's background queue (both mutate the same stored Blueprint) can't leave
-    // a straggler stub in the rendered snapshot. Bounded so a genuinely-failing module
-    // (runDeepDive ok:false) can't loop forever.
+    // Build every stub, but NEVER let the download hang or hard-fail (the cause of the
+    // browser's "Site wasn't available"). We time-box the build and skip any module that
+    // errors, then always serve the best-available HTML — a download with a couple of
+    // "building…" sections beats a failed download. Re-check between passes so a build
+    // running concurrently in the open lesson's queue can't leave a straggler stub.
+    const DEADLINE_MS = 55_000;
+    const startedAt = Date.now();
     const isStub = (m: (typeof bp.modules)[number]) => !(m.loadState === "full" && m.blocks.length > 0);
     for (let pass = 0; pass < 4; pass++) {
       const stubs = bp.modules.filter(isStub);
       if (!stubs.length) break;
-      for (const m of stubs) await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly });
+      let bailed = false;
+      for (const m of stubs) {
+        if (Date.now() - startedAt > DEADLINE_MS) { bailed = true; break; }
+        try { await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly }); }
+        catch (e) { console.warn(`[/full] module "${m.id}" failed, skipping:`, (e as Error).message?.slice(0, 100)); }
+      }
+      if (bailed) { console.warn(`[/full] build deadline hit for ${art.id}; serving partial.`); break; }
     }
     const html = renderArtifact(bp);
-    await updateArtifact(req.params.id, { blueprint: bp, html });
+    // Persist best-effort — but DON'T block the download if the DB is down (the classic
+    // Render misconfig). The download must succeed regardless of persistence.
+    void updateArtifact(req.params.id, { blueprint: bp, html }).catch(() => {});
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}.html"`);
     res.send(html);
   } catch (err) {
     console.error("[/api/artifact/:id/full]", err);
-    res.status(500).send("Could not assemble the full lesson.");
+    // Last resort: serve whatever HTML the artifact already has rather than fail the download.
+    if (art.html) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}.html"`);
+      res.send(art.html);
+    } else {
+      res.status(500).send("Could not assemble the full lesson.");
+    }
   }
 });
 
