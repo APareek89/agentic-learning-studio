@@ -13,12 +13,13 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <!-- ===== Auth gate (full-screen; blocks the app until signed in when auth is on) ===== -->
-    <div class="auth-overlay" id="auth-overlay">
+    <!-- ===== Auth modal (on-demand; gates generation/dashboard, NOT browsing the library) ===== -->
+    <div class="auth-overlay" id="auth-overlay" hidden>
       <div class="auth-card">
+        <button class="auth-close" id="auth-close" type="button" aria-label="Close">×</button>
         <div class="brand"><span class="dot"></span> Agentic Learning Studio</div>
-        <div class="auth-loading" id="auth-loading">Loading…</div>
-        <form class="auth-form" id="auth-form" hidden>
+        <div class="auth-loading" id="auth-loading" hidden>Loading…</div>
+        <form class="auth-form" id="auth-form">
           <h2 id="auth-title">Sign in</h2>
           <p class="auth-sub" id="auth-sub">Sign in to generate lessons.</p>
           <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required />
@@ -54,12 +55,17 @@
       <div class="brand"><span class="dot"></span> Agentic Learning Studio</div>
       <nav class="tabs" role="tablist">
         <button class="tab active" role="tab" aria-selected="true" data-tab="learning">Learning</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="library" id="tab-btn-library">Library</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="dashboard" id="tab-btn-dashboard" hidden>Dashboard</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="build" disabled>
           Build a project <span class="soon">soon</span>
         </button>
       </nav>
       <div class="topbar-spacer"></div>
+      <div class="auth-actions" id="auth-actions" hidden>
+        <button class="ghost" id="btn-signin" type="button">Sign in</button>
+        <button class="generate sm" id="btn-signup" type="button">Sign up</button>
+      </div>
       <span class="auth-who" id="auth-who" hidden></span>
       <button class="ghost" id="logout" hidden>Sign out</button>
     </header>
@@ -243,6 +249,25 @@
         </div>
         <div class="dash-grid" id="dash-grid"></div>
         <div class="dash-empty" id="dash-empty" hidden>No lessons yet — generate your first one from the <strong>Learning</strong> tab.</div>
+      </div>
+    </section>
+
+    <!-- ===== TAB: Library (public pre-built lessons; no sign-in, no generation) ===== -->
+    <section class="tabpanel lib-panel" id="tab-library" role="tabpanel" hidden>
+      <div class="lib-wrap">
+        <div class="lib-head">
+          <div>
+            <h2>Lesson library</h2>
+            <p class="lib-sub">Ready-made interactive lessons — open any one instantly, no sign-in needed.</p>
+          </div>
+          <div class="lib-search">
+            <svg viewBox="0 0 24 24" class="lib-search-ico"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input id="lib-search" type="search" placeholder="Search lessons…" autocomplete="off" />
+          </div>
+        </div>
+        <div class="lib-cats" id="lib-cats"></div>
+        <div class="lib-grid" id="lib-grid"></div>
+        <div class="lib-empty" id="lib-empty" hidden>No lessons match your search.</div>
       </div>
     </section>
 

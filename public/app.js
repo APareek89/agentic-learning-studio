@@ -46,6 +46,7 @@ const sel = { level: [], depth: null, examples: null, density: null, extras: [],
 
 let currentArtifactId = null;
 let currentThreadId = null;
+let currentViewUrl = null; // what "open in new window" points at (artifact OR library lesson)
 let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
 
 // Friendly labels for the dropdown summary.
@@ -369,6 +370,7 @@ function showArtifact(ref) {
 }
 function openInViewer(id, title) {
   currentArtifactId = id;
+  currentViewUrl = "/api/artifact/" + id;
   genOverlay.hidden = true;
   viewerEmpty.hidden = true;
   viewerFrame.hidden = false;
@@ -381,7 +383,7 @@ function openInViewer(id, title) {
   resetStars();
   ratingEl.hidden = false;
 }
-openWindowBtn.addEventListener("click", () => { if (currentArtifactId) window.open("/api/artifact/" + currentArtifactId, "_blank"); });
+openWindowBtn.addEventListener("click", () => { const u = currentViewUrl || (currentArtifactId && "/api/artifact/" + currentArtifactId); if (u) window.open(u, "_blank"); });
 
 // ---- Rating ----
 const stars = Array.from(document.querySelectorAll(".star"));
@@ -443,8 +445,8 @@ function resetToLanding() {
   loadSuggestions();
 }
 
-// ---- Tabs (Learning / Dashboard) ----
-const TAB_PANELS = { learning: "tab-learning", dashboard: "tab-dashboard" };
+// ---- Tabs (Learning / Library / Dashboard) ----
+const TAB_PANELS = { learning: "tab-learning", library: "tab-library", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -457,6 +459,7 @@ function switchTab(name) {
   });
   Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
   if (name === "dashboard") loadDashboard();
+  if (name === "library") loadLibrary();
 }
 
 // ---- Dashboard tab ----
@@ -520,6 +523,71 @@ async function loadSuggestions() {
     });
     suggestedEl.hidden = false;
   } catch { suggestedEl.hidden = true; }
+}
+
+// ---- Library (public pre-built lessons) ----
+const libGrid = document.getElementById("lib-grid");
+const libCatsEl = document.getElementById("lib-cats");
+const libSearch = document.getElementById("lib-search");
+const libEmpty = document.getElementById("lib-empty");
+let libAll = [];
+let libCat = "All";
+let libLoaded = false;
+const CAT_ICONS = { Foundations: "🧱", LLMs: "🧠", RAG: "🔎", Agents: "🤖", Frameworks: "🧩", Generative: "🎨", Evaluation: "📊", Safety: "🛡️", Infrastructure: "⚙️", "Build Projects": "🛠️" };
+function catGradient(cat) {
+  let h = 0; for (let i = 0; i < cat.length; i++) h = (h * 31 + cat.charCodeAt(i)) % 360;
+  return `linear-gradient(135deg, hsl(${h} 70% 52%), hsl(${(h + 40) % 360} 72% 42%))`;
+}
+async function loadLibrary() {
+  if (libLoaded) { renderLibrary(); return; }
+  try {
+    const res = await fetch("/api/library");
+    const { lessons } = await res.json();
+    libAll = lessons || [];
+    libLoaded = true;
+    const cats = ["All", ...Array.from(new Set(libAll.map((l) => l.category)))];
+    libCatsEl.innerHTML = "";
+    cats.forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "lib-cat" + (c === libCat ? " active" : "");
+      b.textContent = c; b.type = "button";
+      b.addEventListener("click", () => { libCat = c; libCatsEl.querySelectorAll(".lib-cat").forEach((x) => x.classList.toggle("active", x.textContent === c)); renderLibrary(); });
+      libCatsEl.appendChild(b);
+    });
+    renderLibrary();
+  } catch { libEmpty.hidden = false; libEmpty.textContent = "Couldn't load the library."; }
+}
+function renderLibrary() {
+  const q = (libSearch.value || "").trim().toLowerCase();
+  const items = libAll.filter((l) =>
+    (libCat === "All" || l.category === libCat) &&
+    (!q || (l.title + " " + l.description + " " + l.category).toLowerCase().includes(q))
+  );
+  libGrid.innerHTML = "";
+  libEmpty.hidden = items.length > 0;
+  for (const l of items) {
+    const el = document.createElement("button");
+    el.className = "lib-card"; el.type = "button";
+    el.innerHTML =
+      `<div class="lib-thumb" style="background:${catGradient(l.category)}">${CAT_ICONS[l.category] || "📘"}<span class="lib-cat-tag">${escapeHtml(l.category)}</span></div>` +
+      `<div class="lib-body"><div class="lib-title">${escapeHtml(l.title)}</div><div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
+      `<div class="lib-foot"><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span>·</span><span>⏱ ${l.estMinutes || "?"} min</span></div></div>`;
+    el.addEventListener("click", () => openLibraryLesson(l.slug, l.title));
+    libGrid.appendChild(el);
+  }
+}
+libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
+
+function openLibraryLesson(slug, title) {
+  switchTab("learning");
+  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  toggleChat(false);
+  genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
+  viewerFrame.src = "/api/lesson/" + slug;
+  document.getElementById("viewer-title").textContent = title;
+  currentArtifactId = null; currentViewUrl = "/api/lesson/" + slug;
+  ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
+  openWindowBtn.hidden = false;
 }
 
 // ---- Tiny helpers ----
@@ -590,6 +658,7 @@ let accessToken = null;
 let authMode = "signin";
 let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
+const authActions = document.getElementById("auth-actions");
 const authLoading = document.getElementById("auth-loading");
 const authForm = document.getElementById("auth-form");
 const authTitle = document.getElementById("auth-title");
@@ -600,15 +669,16 @@ const authMsg = document.getElementById("auth-msg");
 const authSubmit = document.getElementById("auth-submit");
 const authSwitchText = document.getElementById("auth-switch-text");
 const authToggle = document.getElementById("auth-toggle");
+const authClose = document.getElementById("auth-close");
 const logoutBtn = document.getElementById("logout");
 const authWho = document.getElementById("auth-who");
 
 function authHeaders() { return accessToken ? { Authorization: "Bearer " + accessToken } : {}; }
 function authRequiredAndOut() { return authIsEnabled && !accessToken; }
 function showAuthMsg(text, kind) { authMsg.hidden = !text; authMsg.textContent = text || ""; authMsg.className = "auth-msg" + (kind ? " " + kind : ""); }
-// The overlay is a GATE (blocks the app until signed in when auth is on).
-function showAuthGate() { authLoading.hidden = true; authForm.hidden = false; authOverlay.hidden = false; }
-function openAuth(mode) { setAuthMode(mode || "signin"); showAuthGate(); }
+// The overlay is an on-demand MODAL (gates generation/dashboard; browsing stays open).
+function openAuth(mode) { setAuthMode(mode || "signin"); authLoading.hidden = true; authForm.hidden = false; authOverlay.hidden = false; }
+function closeAuth() { authOverlay.hidden = true; }
 function setAuthMode(mode) {
   authMode = mode;
   const signup = mode === "signup";
@@ -627,13 +697,17 @@ function applySession(session) {
   if (logoutBtn) logoutBtn.hidden = !signedIn;
   if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }
   if (tabBtnDashboard) tabBtnDashboard.hidden = !signedIn;
+  if (authActions) authActions.hidden = signedIn || !authIsEnabled;
   if (signedIn) {
-    authOverlay.hidden = true;
+    closeAuth();
     loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
-  } else if (authIsEnabled) {
-    showAuthGate(); // not signed in + auth on → block behind the gate
   }
 }
+
+document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
+document.getElementById("btn-signup").addEventListener("click", () => openAuth("signup"));
+if (authClose) authClose.addEventListener("click", closeAuth);
+authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
 
 async function bootAuth() {
   let cfg;
@@ -649,11 +723,11 @@ async function bootAuth() {
   }
 
   if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
-    authLoading.textContent = "Sign-in is misconfigured — check SUPABASE_URL / SUPABASE_ANON_KEY.";
+    if (authActions) authActions.hidden = false; // still show the buttons (they'll report the error)
     return;
   }
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  setAuthMode("signup"); // new visitors sign up first
+  setAuthMode("signup"); // new visitors default to sign-up
 
   const { data } = await sb.auth.getSession();
   applySession(data.session);

@@ -494,6 +494,27 @@ app.post("/api/upload", requireAuth, async (req, res) => {
   }
 });
 
+// ----------------------------------------------------------------------------
+// Pre-built lesson library — PUBLIC (no auth, no generation). Pre-rendered HTML
+// served straight from the DB, so any visitor browses instantly with zero credits.
+// ----------------------------------------------------------------------------
+app.get("/api/library", async (_req, res) => {
+  const rows = await query<{ slug: string; title: string; description: string; category: string; level: string; est_minutes: number }>(
+    `select slug, title, description, category, level, est_minutes from prebuilt_lessons order by category, est_minutes`
+  ).catch(() => []);
+  res.json({
+    lessons: rows.map((r) => ({ slug: r.slug, title: r.title, description: r.description, category: r.category, level: r.level, estMinutes: r.est_minutes })),
+  });
+});
+
+// GET /api/lesson/:slug — serve a stored, pre-rendered library lesson (public).
+app.get("/api/lesson/:slug", async (req, res) => {
+  const rows = await query<{ html: string }>(`select html from prebuilt_lessons where slug = $1`, [req.params.slug]).catch(() => []);
+  if (!rows.length) { res.status(404).send("<p>Lesson not found.</p>"); return; }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(rows[0].html);
+});
+
 // Health check.
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
