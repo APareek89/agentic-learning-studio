@@ -355,22 +355,39 @@ function resetToLanding() {
   loadDashboard();
 }
 
-// ---- Dashboard ----
-const dashboard = document.getElementById("dashboard");
+// ---- Tabs (Learning / Dashboard) ----
+const TAB_PANELS = { learning: "tab-learning", dashboard: "tab-dashboard" };
+document.querySelectorAll(".tab[data-tab]").forEach((t) => {
+  if (t.disabled) return;
+  t.addEventListener("click", () => switchTab(t.dataset.tab));
+});
+function switchTab(name) {
+  document.querySelectorAll(".tab[data-tab]").forEach((t) => {
+    const on = t.dataset.tab === name;
+    t.classList.toggle("active", on);
+    t.setAttribute("aria-selected", String(on));
+  });
+  Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
+  if (name === "dashboard") loadDashboard();
+}
+
+// ---- Dashboard tab ----
 const dashGrid = document.getElementById("dash-grid");
 const dashNote = document.getElementById("dash-note");
+const dashEmpty = document.getElementById("dash-empty");
+const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
 async function loadDashboard() {
   try {
     const res = await fetch("/api/lessons", { headers: authHeaders() });
-    if (!res.ok) { dashboard.hidden = true; return; }
+    if (!res.ok) return;
     const { lessons } = await res.json();
-    if (!lessons || !lessons.length) { dashboard.hidden = true; return; }
     dashGrid.innerHTML = "";
+    if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
+    dashEmpty.hidden = true;
     for (const l of lessons) dashGrid.appendChild(lessonCard(l));
     dashNote.textContent = `${lessons.length} saved · kept for 30 days`;
-    dashboard.hidden = false;
-  } catch { dashboard.hidden = true; }
+  } catch { /* ignore */ }
 }
 function lessonCard(l) {
   const el = document.createElement("div");
@@ -387,6 +404,7 @@ function lessonCard(l) {
       <a class="ghost lc-dl" href="/api/artifact/${l.id}/full" download>Download</a>
     </div>`;
   el.querySelector(".lc-open").addEventListener("click", () => {
+    switchTab("learning");
     basePrompt = l.prompt || l.title;
     currentThreadId = "web-" + Date.now();
     landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
@@ -465,7 +483,6 @@ let accessToken = null;
 let authMode = "signin";
 let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
-const authActions = document.getElementById("auth-actions");
 const authLoading = document.getElementById("auth-loading");
 const authForm = document.getElementById("auth-form");
 const authTitle = document.getElementById("auth-title");
@@ -476,15 +493,15 @@ const authMsg = document.getElementById("auth-msg");
 const authSubmit = document.getElementById("auth-submit");
 const authSwitchText = document.getElementById("auth-switch-text");
 const authToggle = document.getElementById("auth-toggle");
-const authClose = document.getElementById("auth-close");
 const logoutBtn = document.getElementById("logout");
 const authWho = document.getElementById("auth-who");
 
 function authHeaders() { return accessToken ? { Authorization: "Bearer " + accessToken } : {}; }
 function authRequiredAndOut() { return authIsEnabled && !accessToken; }
 function showAuthMsg(text, kind) { authMsg.hidden = !text; authMsg.textContent = text || ""; authMsg.className = "auth-msg" + (kind ? " " + kind : ""); }
-function openAuth(mode) { setAuthMode(mode || "signin"); authOverlay.hidden = false; }
-function closeAuth() { authOverlay.hidden = true; }
+// The overlay is a GATE (blocks the app until signed in when auth is on).
+function showAuthGate() { authLoading.hidden = true; authForm.hidden = false; authOverlay.hidden = false; }
+function openAuth(mode) { setAuthMode(mode || "signin"); showAuthGate(); }
 function setAuthMode(mode) {
   authMode = mode;
   const signup = mode === "signup";
@@ -500,16 +517,16 @@ function applySession(session) {
   accessToken = (session && session.access_token) || null;
   const email = (session && session.user && session.user.email) || "";
   const signedIn = !!accessToken;
-  if (authActions) authActions.hidden = signedIn;
   if (logoutBtn) logoutBtn.hidden = !signedIn;
   if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }
-  if (signedIn) { closeAuth(); loadDashboard(); loadPreferences(); }
+  if (tabBtnDashboard) tabBtnDashboard.hidden = !signedIn;
+  if (signedIn) {
+    authOverlay.hidden = true;
+    loadDashboard(); loadPreferences();
+  } else if (authIsEnabled) {
+    showAuthGate(); // not signed in + auth on → block behind the gate
+  }
 }
-
-document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
-document.getElementById("btn-signup").addEventListener("click", () => openAuth("signup"));
-authClose.addEventListener("click", closeAuth);
-authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
 
 async function bootAuth() {
   let cfg;
@@ -517,19 +534,19 @@ async function bootAuth() {
   authIsEnabled = !!cfg.authEnabled;
 
   if (!authIsEnabled) {
-    // Open mode (local dev): no auth UI; dashboard + prefs use the server's local id.
-    authActions.hidden = true;
+    // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
+    authOverlay.hidden = true;
+    if (tabBtnDashboard) tabBtnDashboard.hidden = false;
     loadDashboard(); loadPreferences();
     return;
   }
 
   if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
-    authActions.hidden = false;
+    authLoading.textContent = "Sign-in is misconfigured — check SUPABASE_URL / SUPABASE_ANON_KEY.";
     return;
   }
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  setAuthMode("signin");
-  authActions.hidden = false;
+  setAuthMode("signup"); // new visitors sign up first
 
   const { data } = await sb.auth.getSession();
   applySession(data.session);
@@ -558,7 +575,7 @@ async function bootAuth() {
       authSubmit.disabled = false;
     }
   });
-  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); dashboard.hidden = true; });
+  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); });
 }
 
 // ---- Preferences: pre-fill the dropdowns + context fields from last time ----
