@@ -109,7 +109,7 @@ If the learner UPLOADED DOCUMENTS ([U#]), the outline MUST be shaped around them
     • "conceptual" — "how does X work" / "what is Y" → PREFER THIS for explanatory questions. Do NOT fake a linear order (OMIT "order"); use the REAL relationship (components, cause→effect, part-of). Only choose "dependency" instead when later ideas genuinely CANNOT be understood without earlier ones — not just because ideas build up loosely.
     • "comparative" — "X vs Y" / "which should I use" → nodes are the OPTIONS being weighed (OMIT "order"); the decision is the spine.
   Do NOT organize by difficulty (foundations/core/advanced) — difficulty is at most secondary metadata, never the primary axis. Most nodes link to a module via moduleId; mark the main path emphasis:"spine".
-  Each node carries, for the OVERVIEW, ONLY: "label", "order" (if ordered), an "icon" emoji, and ONE short "orient" line (where it sits / what it's for — a LOCATOR, not an explanation). ALSO include the DETAIL-layer fields "what" (one-sentence plain definition), "relevance" (why it matters for THIS goal), and for beginner/intermediate a "laymanExplanation" (everyday analogy) — these render INSIDE the module, never on the overview map.
+  Keep each node MINIMAL — for the OVERVIEW only: "label", "order" (if ordered), an "icon" emoji, "moduleId", and ONE short "orient" line (where it sits / what it's for — a LOCATOR, not an explanation). Do NOT put "what", "relevance", or "laymanExplanation" here — those detail-layer lines are written with each module's body (keeps this outline small + fast).
 - modules: 4–5 stubs, ordered foundational→advanced (keep it tight — 5 max). Each: id, order, title, sub (its role), summary (2–3 sentences), objectives (2–4 "After this you'll be able to…"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
 - glossary: define the 10–14 MOST IMPORTANT terms only (core concepts + named options) — NOT every minor word. Each: id, label, a ONE-SENTENCE plain laymanDefinition; acronymExpansion for ALL-CAPS terms. SKIP technicalNote here (added when bodies are written). (Module bodies can ONLY use term ids that exist here.)
 - synthesis: recap (2–3 sentences MAX), buildOrder, decision checklist (from each module's decisionItForces), capstone tied to their goal.
@@ -147,6 +147,8 @@ When VISUALS is "on", add an interactive visual block for a genuinely COMPLEX or
 
 == EXPLAIN SYNTAX ==
 When EXPLAIN SYNTAX is "on", EVERY codeExample MUST include a "syntax" array breaking down its key constructs/terms in plain language: each item = { part: "<construct, e.g. 'async def' or 'StateGraph(...)'>", explains: "<what it does, beginner-friendly>" }. Cover what a newcomer wouldn't recognise; skip the obvious. When "off", omit "syntax".
+
+Also return "nodeMeta" for this module's overview node: "what" (one plain sentence — what this block IS), "relevance" (one sentence — why it matters for THIS learner's goal/context), and for beginner/intermediate a "laymanExplanation" (one everyday-analogy sentence). These render in the module's detail header, not on the overview map.
 
 Keep prose tight, concrete, and accurate.`;
 

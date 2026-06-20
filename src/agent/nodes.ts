@@ -41,10 +41,11 @@ const profilerLLM = makeLLM("sonnet", 0);
 //   12–18 term glossary + synthesis). No block bodies, so far smaller than the old
 //   monolithic call — but the glossary + synthesis + per-node what/relevance still
 //   need real headroom; 8000 truncated. 16000 is the SDK's non-streaming-safe ceiling.
-// streaming:true so we can raise the cap past the SDK's non-streaming ceiling —
-// the skeleton now carries richer per-node fields (order/orient/what/relevance/
-// layman + structureType), which truncated at 16k and failed to parse.
-const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 24000, streaming: true });
+// Non-streaming 16k: the skeleton is kept SMALL (map structure + module stubs +
+// glossary; the heavy detail-layer node fields what/relevance/layman are written
+// later per-module via nodeMeta), so it fits without truncation. Streaming
+// aggregation produced malformed JSON for large procedural skeletons, so we avoid it.
+const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
@@ -53,8 +54,12 @@ const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 24000, streaming: true }
 // not a transient one). Streaming keeps it under the SDK's non-streaming ceiling.
 const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
 
-/** Structured-output shape for one module's body: just the blocks array. */
-const ModuleBlocksSchema = z.object({ blocks: z.array(BlockSchema) });
+/** Structured-output shape for one module's body: blocks + the map node's detail lines. */
+const ModuleBlocksSchema = z.object({
+  blocks: z.array(BlockSchema),
+  // The DETAIL-layer lines for THIS module's overview node (rendered in the module head):
+  nodeMeta: z.object({ what: z.string().optional(), relevance: z.string().optional(), laymanExplanation: z.string().optional() }).optional(),
+});
 
 // What the Profiler model returns (small; we assemble the full profile in code).
 const InferenceSchema = z.object({
@@ -380,11 +385,13 @@ export async function runDeepDive(
   // structured-output) with backoff — these are the usual "couldn't build" cause,
   // NOT a token wall. Each module is its own small call (≤8k), so no 36k limit applies.
   let blocks: Block[] = [];
+  let nodeMeta: { what?: string; relevance?: string; laymanExplanation?: string } | undefined;
   let lastErr = "";
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(messages, config ?? {});
       blocks = (out.blocks as Block[]) ?? [];
+      nodeMeta = out.nodeMeta;
       if (blocks.length) break;
       lastErr = "model returned no blocks";
     } catch (err) {
@@ -408,6 +415,13 @@ export async function runDeepDive(
   }
   module.blocks = blocks;
   module.loadState = "full";
+  // Populate this module's overview-node detail lines (the slim skeleton omits them).
+  const ovNode = bp.mentalMap.nodes.find((n) => n.moduleId === moduleId);
+  if (ovNode && nodeMeta) {
+    if (nodeMeta.what && !ovNode.what) ovNode.what = nodeMeta.what;
+    if (nodeMeta.relevance && !ovNode.relevance) ovNode.relevance = nodeMeta.relevance;
+    if (nodeMeta.laymanExplanation && !ovNode.laymanExplanation) ovNode.laymanExplanation = nodeMeta.laymanExplanation;
+  }
   // Deterministic repair fixes dangling term/citation refs + matrix alignment for
   // the freshly-written module (operates on the whole bp; stub modules are no-ops).
   repairBlueprint(bp);
