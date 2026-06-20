@@ -875,7 +875,18 @@ async function bootAuth() {
       if (authMode === "signup") {
         const { data: d, error } = await sb.auth.signUp({ email, password });
         if (error) throw error;
-        if (!d.session) { showAuthMsg("Account created — check your email to confirm, then sign in.", "ok"); setAuthMode("signin"); }
+        // Supabase returns a user with EMPTY identities when the email already exists.
+        if (d.user && Array.isArray(d.user.identities) && d.user.identities.length === 0) {
+          setAuthMode("signin"); authEmail.value = email;
+          showAuthMsg("This email is already registered — sign in instead (or reset your password).", "err");
+        } else if (!d.session) {
+          // Email confirmation is ON → verify before signing in.
+          setAuthMode("signin"); authEmail.value = email;
+          showAuthMsg("✉️ Verify your email — we sent a confirmation link to " + email + ". Click it, then sign in here.", "ok");
+        } else {
+          // Email confirmation is OFF on the project → signed in immediately.
+          showAuthMsg("Account created — you're signed in.", "ok");
+        }
       } else {
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;

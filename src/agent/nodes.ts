@@ -343,40 +343,50 @@ export async function runDeepDive(
     }
   }
 
+  const messages = [
+    new SystemMessage(MODULE_SYSTEM),
+    new HumanMessage(
+      moduleUserPrompt({
+        moduleTitle: module.title,
+        moduleSummary: module.summary,
+        objectives: module.objectives,
+        decisionItForces: module.decisionItForces,
+        level: p.level,
+        depth: p.depth,
+        examples: p.examples,
+        density: p.density,
+        visualsRequested: p.visualsRequested,
+        explainSyntax: p.explainSyntax,
+        industry: p.industry,
+        buildGoal: p.buildGoal,
+        levels: p.levels,
+        lessonTypes: p.lessonTypes,
+        framework: p.framework,
+        role: p.role,
+        aspiringRole: p.aspiringRole,
+        glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
+        sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
+      })
+    ),
+  ];
+  // Retry transient failures (rate-limit / overloaded / an occasional malformed
+  // structured-output) with backoff — these are the usual "couldn't build" cause,
+  // NOT a token wall. Each module is its own small call (≤8k), so no 36k limit applies.
   let blocks: Block[] = [];
-  try {
-    const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(
-      [
-        new SystemMessage(MODULE_SYSTEM),
-        new HumanMessage(
-          moduleUserPrompt({
-            moduleTitle: module.title,
-            moduleSummary: module.summary,
-            objectives: module.objectives,
-            decisionItForces: module.decisionItForces,
-            level: p.level,
-            depth: p.depth,
-            examples: p.examples,
-            density: p.density,
-            visualsRequested: p.visualsRequested,
-            explainSyntax: p.explainSyntax,
-            industry: p.industry,
-            buildGoal: p.buildGoal,
-            levels: p.levels,
-            lessonTypes: p.lessonTypes,
-            framework: p.framework,
-            role: p.role,
-            aspiringRole: p.aspiringRole,
-            glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
-            sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
-          })
-        ),
-      ],
-      config ?? {}
-    );
-    blocks = out.blocks as Block[];
-  } catch (err) {
-    console.warn(`[runDeepDive] module "${moduleId}" compose failed:`, (err as Error).message?.slice(0, 160));
+  let lastErr = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(messages, config ?? {});
+      blocks = (out.blocks as Block[]) ?? [];
+      if (blocks.length) break;
+      lastErr = "model returned no blocks";
+    } catch (err) {
+      lastErr = (err as Error).message?.slice(0, 160) || "error";
+    }
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 900 * (attempt + 1))); // 0.9s, 1.8s backoff
+  }
+  if (!blocks.length) {
+    console.warn(`[runDeepDive] module "${moduleId}" failed after 3 attempts:`, lastErr);
     return { ok: false, sources };
   }
 
