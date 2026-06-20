@@ -42,7 +42,20 @@ function toggleChat(force) {
 }
 
 // Selections collected from the dropdowns.
-const sel = { level: [], depth: null, examples: null, density: null, extras: [], lessonType: [], framework: null };
+const sel = { level: [], depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null };
+// Combine a multi-select axis into the backend enum (e.g. both → "conceptual_technical").
+function combineAxis(arr, a, b, both) {
+  const hasA = arr.includes(a), hasB = arr.includes(b);
+  if (hasA && hasB) return both;
+  if (hasA) return a;
+  if (hasB) return b;
+  return null;
+}
+function axisToValues(enumStr) {
+  if (!enumStr) return [];
+  if (enumStr.includes("_")) return enumStr.split("_");
+  return [enumStr];
+}
 
 let currentArtifactId = null;
 let currentThreadId = null;
@@ -101,7 +114,7 @@ document.querySelectorAll(".dd").forEach((dd) => {
 function updateFrameworkVisibility() {
   const dd = document.getElementById("dd-framework");
   if (!dd) return;
-  const show = sel.examples === "code";
+  const show = sel.examples.includes("code");
   dd.hidden = !show;
   if (!show) {
     sel.framework = null;
@@ -201,8 +214,10 @@ function updateUploadUI() {
 // ---- Build the /api/learn payload from the current selections ----
 function buildPayload(promptText, threadId) {
   const cards = {};
-  if (sel.depth) cards.depth = sel.depth;
-  if (sel.examples) cards.examples = sel.examples;
+  const depth = combineAxis(sel.depth, "conceptual", "technical", "conceptual_technical");
+  const examples = combineAxis(sel.examples, "functional", "code", "functional_code");
+  if (depth) cards.depth = depth;
+  if (examples) cards.examples = examples;
   if (sel.density) cards.density = sel.density;
   if (sel.extras.includes("visuals")) cards.visuals = "on";
   if (sel.extras.includes("syntax")) cards.syntax = "on";
@@ -767,8 +782,8 @@ async function loadPreferences() {
     const { prefs } = await res.json();
     if (!prefs) return;
     applyPref("level", prefs.levels, true);
-    applyPref("depth", prefs.depth, false);
-    applyPref("examples", prefs.examples, false);
+    applyPref("depth", axisToValues(prefs.depth), true);
+    applyPref("examples", axisToValues(prefs.examples), true);
     applyPref("density", prefs.density, false);
     if (prefs.visuals) applyPref("extras", "visuals", true, true);
     if (prefs.syntax) applyPref("extras", "syntax", true, true);
@@ -776,7 +791,7 @@ async function loadPreferences() {
     if (prefs.industry) industryEl.value = prefs.industry;
     if (prefs.buildGoal) buildGoalEl.value = prefs.buildGoal;
     updateFrameworkVisibility();
-    if (prefs.framework && sel.examples === "code") applyPref("framework", prefs.framework, false);
+    if (prefs.framework && sel.examples.includes("code")) applyPref("framework", prefs.framework, false);
   } catch { /* ignore */ }
 }
 function applyPref(field, value, multi, append) {

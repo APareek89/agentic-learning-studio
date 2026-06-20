@@ -87,21 +87,21 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
 
 /* ===== Overview = ONE non-scrolling screen; mental map flows LEFT-TO-RIGHT ===== */
 /* Scoped to :not([hidden]) so it only applies while the overview is the active view. */
-#overview:not([hidden]){height:calc(100dvh - 54px);overflow:hidden;display:flex;flex-direction:column}
-#overview .shell{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:14px 26px}
+#overview:not([hidden]){min-height:calc(100dvh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+#overview .shell{flex:1;display:flex;flex-direction:column;overflow:visible;padding:14px 26px}
 #overview .hero{padding:2px 0 0}
 #overview .hero h1{font-size:26px;margin:.06em 0 .12em}
 #overview .thesis{font-size:15px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #overview .meta-line{margin-top:6px;font-size:12.5px}
 #overview .ov-hint{margin:8px 0 0}
-#overview .map{flex:1;min-height:0;display:flex;flex-direction:column;margin:12px 0 0;overflow:hidden;padding:16px}
+#overview .map{display:flex;flex-direction:column;margin:12px 0 0;overflow:visible;padding:16px}
 #overview .map h2{font-size:14px}
 #overview .map .cap{margin:0 0 8px}
 /* layers become side-by-side columns; nodes stack inside their column */
-#overview .map-flow{flex:1;min-height:0;display:flex;align-items:stretch;gap:6px}
+#overview .map-flow{display:flex;align-items:flex-start;gap:6px}
 #overview .map-flow .map-layer{flex:1 1 0;min-width:0;display:flex;flex-direction:column;margin:0}
-#overview .map-flow .map-row{flex:1;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap;gap:8px}
-#overview .map-flow .map-node{flex:1 1 0;min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:3px}
+#overview .map-flow .map-row{display:flex;flex-direction:column;flex-wrap:nowrap;gap:8px}
+#overview .map-flow .map-node{flex:0 0 auto;min-width:0;overflow:visible;display:flex;flex-direction:column;gap:3px}
 #overview .map-flow .map-node .mn-go{margin-top:auto}
 #overview .map-flow .mn-what,#overview .map-flow .mn-rel{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #overview .map-flow .map-arrow{flex:0 0 auto;align-self:center;margin:0 2px}
