@@ -51,9 +51,10 @@ export function makeLLM(
     );
   }
 
+  const model = modelIdFor(tier);
   const chat = new ChatAnthropic({
     apiKey,
-    model: modelIdFor(tier),
+    model,
     temperature,
     // Blueprints/modules are large, so default the cap generously (callers override).
     maxTokens: opts.maxTokens ?? 4096,
@@ -72,6 +73,15 @@ export function makeLLM(
   // it's dropped from the request body entirely. (`as { topP?: number }` is a type
   // assertion letting us touch this non-public field; it changes nothing at runtime.)
   (chat as { topP?: number }).topP = undefined;
+
+  // ---- The Opus-4.8 `temperature` gotcha (same class of bug as top_p above) ----
+  // Opus 4.8 (and the Opus-4.7+/Fable family) REJECT an explicit `temperature` with a
+  // 400. The constructor always sets one, so — exactly like topP — we drop it from the
+  // request body by setting the field to `undefined` on the instance. This covers BOTH
+  // the architect-skeleton call (tier "opus") AND the Critic-fail → opus escalation, so
+  // neither 400s on a temperature it isn't allowed to send.
+  const dropsTemperature = tier === "opus" || /(opus-4-[789]|opus-[5-9]|fable)/i.test(model);
+  if (dropsTemperature) (chat as { temperature?: number }).temperature = undefined;
 
   return chat;
 }

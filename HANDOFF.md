@@ -5,7 +5,35 @@ Last updated: 2026-06-20 (Phase 3/4). Read this first, then `DESIGN_SPEC.md` and
 
 ---
 
-## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4 — 4 fixes landed)
+## ⚡ CURRENT STATE — START HERE (2026-06-20, Phase 4b — proofreader + Opus hybrid)
+
+On branch **`hybrid-opus-skeleton-and-proofreader`** (not yet merged to `main` — review/merge to deploy):
+
+- **Proofreader (a 2nd LLM layer).** `proofreadModule()` (`src/agent/nodes.ts`) runs at the end of
+  `runDeepDive` for EVERY built module: a cheap Sonnet critic (`CRITIC_SYSTEM`) reviews the module for
+  **MAJOR issues only** (accuracy / coverage / quality) and stays silent otherwise (empty list is the
+  normal result). On a hit it logs the issues and runs **ONE repair pass escalated to Opus 4.8**
+  (the "Critic-fail → opus escalation"), re-applying the quiz gate + density + `repairBlueprint`.
+  Bounded (1 critic + ≤1 repair per module), never blocks on its own failure, and is a no-op when
+  `LESSON_PROOFREAD=off`. Proven with `scripts/test-proofread.ts`: a deliberately-wrong "RAG fine-tunes
+  the model at query time" module → critic flagged 2 accuracy issues → Opus rewrote it correctly.
+- **Cost-controlled Opus hybrid.** The ONE reasoning-heavy step — the architect **skeleton + structure
+  classification** (both inside `SKELETON_SYSTEM`) — now runs on **`claude-opus-4-8`** (`skeletonLLM`,
+  `nodes.ts`). Everything else (profiler, the ~5 module builds via `moduleLLM`, density-repair, glossary)
+  stays on Sonnet/Haiku, so the bulk of tokens stay cheap (~10–15% cost bump, not ~2×). Optional next
+  lever noted in-code: `thinking:{type:"adaptive"}` (left off — raises cost/latency).
+- **Opus-4.8 `temperature` gotcha fixed** in `makeLLM` (`src/agent/llm.ts`): Opus 4.8 / Opus-4.7+/Fable
+  REJECT an explicit `temperature` with a 400 (same class as the `top_p:-1` bug). The factory now drops
+  `temperature` from the request for those models (sets it `undefined` on the instance) — covers BOTH the
+  skeleton call and the critic's opus-repair escalation. Verified: `makeLLM("opus")` → model
+  `claude-opus-4-8`, `temperature: undefined`; `makeLLM("sonnet")` → `claude-sonnet-4-6`, temp kept.
+- **Verified:** `npx tsc --noEmit` clean; `scripts/test-structure.ts` → skeleton hits Opus with no 400 and
+  still classifies procedural / conceptual / comparative with correct ordered nodes; `scripts/test-proofread.ts`
+  → critic+opus-repair fixes a factual error. Module builds confirmed still on `claude-sonnet-4-6`.
+
+---
+
+## ⚡ CURRENT STATE — (2026-06-20, Phase 4 — 4 fixes landed)
 
 Latest session shipped 4 changes (tsc clean; verified in-browser via Playwright on :5070; pushed to `main`):
 

@@ -25,11 +25,11 @@ import {
   validateBlueprint,
   repairBlueprint,
 } from "../render/schema";
-import type { Blueprint, Block } from "../render/schema";
+import type { Blueprint, Block, Module } from "../render/schema";
 import { renderArtifact } from "../render/index";
 import { registerArtifact } from "../lib/artifacts";
-import { PROFILER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, architectUserPrompt, moduleUserPrompt } from "./prompts";
-import { measureModule, repairDensity } from "./density";
+import { PROFILER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, CRITIC_SYSTEM, architectUserPrompt, moduleUserPrompt } from "./prompts";
+import { measureModule, repairDensity, blockProse } from "./density";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
@@ -45,7 +45,13 @@ const profilerLLM = makeLLM("sonnet", 0);
 // glossary; the heavy detail-layer node fields what/relevance/layman are written
 // later per-module via nodeMeta), so it fits without truncation. Streaming
 // aggregation produced malformed JSON for large procedural skeletons, so we avoid it.
-const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
+// COST-CONTROLLED HYBRID: the skeleton is the ONE reasoning-heavy step (overall
+// structure + structureType classification, both inside SKELETON_SYSTEM), so it runs
+// on Opus 4.8 for sharper architecture. The ~5 module builds stay on Sonnet (below),
+// where the bulk of the tokens are — so the cost increase is ~10–15%, not ~2×.
+// (Optional next lever if skeleton quality needs more: thinking:{type:"adaptive"} —
+// left off for now as it raises cost/latency.)
+const skeletonLLM = makeLLM("opus", 0.2, { maxTokens: 16000 });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
@@ -53,6 +59,54 @@ const skeletonLLM = makeLLM("sonnet", 0.2, { maxTokens: 16000 });
 // truncated structured output = a persistent "couldn't build this section" failure,
 // not a transient one). Streaming keeps it under the SDK's non-streaming ceiling.
 const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
+// PROOFREADER (a second LLM layer): a cheap, focused critic that reviews each freshly
+// built module for MAJOR accuracy/coverage/quality problems only. When it flags
+// something, ONE repair pass is escalated to OPUS (the strong model) — the "Critic-fail
+// → opus escalation" path. Both are bounded: one critic call + at most one repair per
+// module, and the whole layer is a no-op when LESSON_PROOFREAD=off.
+const criticLLM = makeLLM("sonnet", 0, { maxTokens: 1000 });
+const opusRepairLLM = makeLLM("opus", 0.3, { maxTokens: 16000, streaming: true });
+
+/** Major issues the proofreader may raise (empty list = the module is fine). */
+const ProofreadSchema = z.object({
+  majorIssues: z
+    .array(z.object({ kind: z.enum(["accuracy", "coverage", "quality"]), detail: z.string() }))
+    .max(6)
+    .default([]),
+});
+
+/** Strip quiz/question blocks unless the learner asked for a Knowledge check (shared gate). */
+function gateQuizBlocks(blocks: Block[], lessonTypes?: ("content" | "knowledge_check")[]): Block[] {
+  if ((lessonTypes ?? []).includes("knowledge_check")) return blocks;
+  const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
+  return noQuiz.length ? noQuiz : blocks; // keep at least one block if the model returned only a quiz
+}
+
+/** Build the module-writer args from the blueprint + module + the sources to ground in. */
+function moduleArgs(bp: Blueprint, m: Module, sources: RetrievedSource[]) {
+  const p = bp.learnerProfile;
+  return {
+    moduleTitle: m.title,
+    moduleSummary: m.summary,
+    objectives: m.objectives,
+    decisionItForces: m.decisionItForces,
+    level: p.level,
+    depth: p.depth,
+    examples: p.examples,
+    density: p.density,
+    visualsRequested: p.visualsRequested,
+    explainSyntax: p.explainSyntax,
+    industry: p.industry,
+    buildGoal: p.buildGoal,
+    levels: p.levels,
+    lessonTypes: p.lessonTypes,
+    framework: p.framework,
+    role: p.role,
+    aspiringRole: p.aspiringRole,
+    glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
+    sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
+  };
+}
 
 /** Structured-output shape for one module's body: blocks + the map node's detail lines. */
 const ModuleBlocksSchema = z.object({
@@ -396,32 +450,7 @@ export async function runDeepDive(
     }
   }
 
-  const messages = [
-    new SystemMessage(MODULE_SYSTEM),
-    new HumanMessage(
-      moduleUserPrompt({
-        moduleTitle: module.title,
-        moduleSummary: module.summary,
-        objectives: module.objectives,
-        decisionItForces: module.decisionItForces,
-        level: p.level,
-        depth: p.depth,
-        examples: p.examples,
-        density: p.density,
-        visualsRequested: p.visualsRequested,
-        explainSyntax: p.explainSyntax,
-        industry: p.industry,
-        buildGoal: p.buildGoal,
-        levels: p.levels,
-        lessonTypes: p.lessonTypes,
-        framework: p.framework,
-        role: p.role,
-        aspiringRole: p.aspiringRole,
-        glossary: Object.entries(bp.glossary).map(([id, t]) => ({ id, label: t.label })),
-        sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
-      })
-    ),
-  ];
+  const messages = [new SystemMessage(MODULE_SYSTEM), new HumanMessage(moduleUserPrompt(moduleArgs(bp, module, sources)))];
   // Retry transient failures (rate-limit / overloaded / an occasional malformed
   // structured-output) with backoff — these are the usual "couldn't build" cause,
   // NOT a token wall. Each module is its own small call (≤8k), so no 36k limit applies.
@@ -448,11 +477,7 @@ export async function runDeepDive(
   // GATE: question/quiz blocks ONLY when the learner asked for a Knowledge check.
   // The model sometimes emits a selfCheckQuiz "when useful" regardless; this is the
   // hard, deterministic guarantee that no quiz appears unless lessonType includes it.
-  const wantsKnowledgeCheck = (p.lessonTypes ?? []).includes("knowledge_check");
-  if (!wantsKnowledgeCheck) {
-    const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
-    if (noQuiz.length) blocks = noQuiz; // keep at least one block if the model returned only a quiz
-  }
+  blocks = gateQuizBlocks(blocks, p.lessonTypes);
 
   // Merge focused sources into citations so any [S#]/[U#] in the new blocks resolves,
   // tagged by origin (upload vs KB).
@@ -484,7 +509,93 @@ export async function runDeepDive(
       repairBlueprint(bp); // re-fix any refs the rewrite touched
     }
   } catch { /* never block on density */ }
+
+  // PROOFREAD (second LLM layer): review the finished module for MAJOR issues only;
+  // a hit triggers ONE opus-escalated repair. Never blocks the build on its own failure.
+  try { await proofreadModule(bp, moduleId, sources, config); } catch { /* never block on the proofreader */ }
   return { ok: true, sources };
+}
+
+// ============================================================================
+// proofreadModule — the second LLM layer: a quiet critic that only speaks up on
+// MAJOR accuracy/coverage/quality problems, then escalates ONE repair to Opus.
+// ============================================================================
+
+/** Flatten a built module into review text (prose + code + decision options). */
+function moduleReviewText(m: Module): string {
+  const parts: string[] = [`# ${m.title}`, m.summary];
+  if (m.objectives.length) parts.push("Objectives: " + m.objectives.join("; "));
+  for (const b of m.blocks) {
+    if (b.kind === "knowledgeCheck" || b.kind === "selfCheckQuiz") continue; // questions aren't prose to proofread
+    if ("title" in b && b.title) parts.push("## " + b.title);
+    for (const line of blockProse(b)) parts.push(line);
+    if (b.kind === "codeExample") parts.push("```" + b.language + "\n" + b.code + "\n```");
+    if (b.kind === "decisionMatrix") parts.push("Decision matrix options: " + b.options.map((o) => `${o.name} (when: ${o.whenToUse})`).join("; "));
+    if (b.kind === "decisionCallout") parts.push(`Use when: ${b.useWhen}. Avoid when: ${b.avoidWhen}. Rule: ${b.ruleOfThumb}`);
+  }
+  return parts.join("\n");
+}
+
+export async function proofreadModule(bp: Blueprint, moduleId: string, sources: RetrievedSource[], config?: RunnableConfig): Promise<void> {
+  if (process.env.LESSON_PROOFREAD === "off") return;
+  const m = bp.modules.find((x) => x.id === moduleId);
+  if (!m || !m.blocks.length) return;
+  const p = bp.learnerProfile;
+
+  const text = moduleReviewText(m).slice(0, 9000);
+  const srcText = sources.map((s) => `[${s.sid}] ${s.title ?? ""}: ${s.content.slice(0, 400)}`).join("\n").slice(0, 5000);
+
+  let issues: { kind: "accuracy" | "coverage" | "quality"; detail: string }[] = [];
+  try {
+    const out = await criticLLM.withStructuredOutput(ProofreadSchema, { name: "proofread" }).invoke(
+      [
+        new SystemMessage(CRITIC_SYSTEM),
+        new HumanMessage(
+          `LESSON TOPIC: ${bp.meta.topic}\nMODULE: ${m.title}\nLEVEL: ${p.level} · DEPTH: ${p.depth} · EXAMPLES: ${p.examples}\nSTATED OBJECTIVES: ${m.objectives.join("; ") || "(none)"}\n\nMODULE CONTENT TO REVIEW:\n${text}\n\n${srcText ? "GROUND-TRUTH SOURCES (the content must not contradict these):\n" + srcText : "(no sources provided — judge against well-established knowledge; flag only clear errors)"}`
+        ),
+      ],
+      config ?? {}
+    );
+    issues = out.majorIssues ?? [];
+  } catch {
+    return; // proofreader unavailable → ship the module as-is
+  }
+  if (!issues.length) return; // the common, expected outcome — stay silent
+
+  console.warn(`[proofread] module "${moduleId}" — ${issues.length} major issue(s): ` + issues.map((i) => `(${i.kind}) ${i.detail}`).join(" | ").slice(0, 280));
+
+  // CRITIC-FAIL → ONE repair pass escalated to OPUS, told exactly what to fix.
+  try {
+    const critique = issues.map((i) => `- (${i.kind}) ${i.detail}`).join("\n");
+    const messages = [
+      new SystemMessage(MODULE_SYSTEM),
+      new HumanMessage(
+        moduleUserPrompt(moduleArgs(bp, m, sources)) +
+          `\n\n⚠️ A PROOFREADER FLAGGED MAJOR ISSUES IN THE PREVIOUS DRAFT OF THIS MODULE. Regenerate the blocks and FIX exactly these, without introducing new errors and without dropping correct material:\n${critique}`
+      ),
+    ];
+    const out = await opusRepairLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(messages, config ?? {});
+    let fixed = (out.blocks as Block[]) ?? [];
+    if (!fixed.length) return; // repair produced nothing → keep the original (best effort)
+    fixed = gateQuizBlocks(fixed, p.lessonTypes);
+    m.blocks = fixed;
+    m.loadState = "full";
+    if (out.nodeMeta) {
+      const ovNode = bp.mentalMap.nodes.find((n) => n.moduleId === moduleId);
+      if (ovNode) {
+        if (out.nodeMeta.what) ovNode.what = out.nodeMeta.what;
+        if (out.nodeMeta.relevance) ovNode.relevance = out.nodeMeta.relevance;
+        if (out.nodeMeta.laymanExplanation) ovNode.laymanExplanation = out.nodeMeta.laymanExplanation;
+      }
+    }
+    repairBlueprint(bp);
+    try {
+      if (measureModule(m, p.density).overCeiling > 0) { await repairDensity(bp, moduleId, p.density, config); repairBlueprint(bp); }
+    } catch { /* density never blocks */ }
+    console.warn(`[proofread] module "${moduleId}" repaired with opus (${fixed.length} blocks)`);
+  } catch (err) {
+    console.warn(`[proofread] opus repair failed for "${moduleId}" — keeping original:`, (err as Error).message?.slice(0, 120));
+  }
 }
 
 // ============================================================================

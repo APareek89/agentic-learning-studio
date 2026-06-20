@@ -24,7 +24,7 @@ function wordCount(s: string): number {
   return s.split(/\s+/).filter(Boolean).length;
 }
 /** Pull plain prose strings out of a block's rich-text (each paragraph/list item). */
-function blockProse(b: Block): string[] {
+export function blockProse(b: Block): string[] {
   const out: string[] = [];
   const walk = (rt: unknown) => {
     if (!Array.isArray(rt)) return;
