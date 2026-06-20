@@ -1,0 +1,46 @@
+# Render blueprint — one-click deploy for Agentic Learning Studio.
+# In Render: New + → Blueprint → pick this repo. Or create a Web Service manually
+# with the same Build/Start/Health settings below.
+#
+# NOTE: this app loads a local ONNX embedding model (~128MB) into memory, so give it
+# enough RAM. `standard` (2GB) is comfortable; `starter` (512MB) may OOM on model load.
+services:
+  - type: web
+    name: agentic-learning-studio
+    runtime: node
+    plan: standard            # 2GB RAM. Use `starter` only to experiment (may OOM).
+    region: oregon            # pick the region nearest you / your Supabase
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Writable cache so the embedding model downloads once per instance.
+      - key: TRANSFORMERS_CACHE
+        value: /opt/render/project/src/.transformers-cache
+      # --- Secrets: set these VALUES in the Render dashboard (sync:false = not in git) ---
+      - key: ANTHROPIC_API_KEY      # REQUIRED
+        sync: false
+      - key: DATABASE_URL           # Supabase pooler URL → enables RAG
+        sync: false
+      - key: ANTHROPIC_MODEL_SONNET
+        sync: false
+      - key: ANTHROPIC_MODEL_OPUS
+        sync: false
+      - key: ANTHROPIC_MODEL_HAIKU
+        sync: false
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: LANGFUSE_BASEURL
+        sync: false
+
+# OPTIONAL — persist the downloaded model across deploys/restarts so it doesn't
+# re-download each cold start. Uncomment to attach a small disk:
+#   disk:
+#     name: model-cache
+#     mountPath: /opt/render/project/src/.transformers-cache
+#     sizeGB: 1
