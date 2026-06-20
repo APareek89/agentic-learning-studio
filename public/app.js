@@ -61,6 +61,10 @@ let currentArtifactId = null;
 let currentThreadId = null;
 let currentViewUrl = null; // what "open in new window" points at (artifact OR library lesson)
 let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
+let activeJobId = null;
+let activeJobTimer = null;
+let currentCourse = null; // { courseId, lessons:[{index,title,artifactId,status}], activeIndex }
+const lessonTabsEl = document.getElementById("lesson-tabs");
 
 // Friendly labels for the dropdown summary.
 const VALUE_LABELS = {
@@ -241,8 +245,7 @@ generateBtn.addEventListener("click", () => {
   if (!p) { promptEl.focus(); return; }
   if (authRequiredAndOut()) { openAuth("signup"); return; }
   basePrompt = p;
-  currentThreadId = "web-" + Date.now();
-  startGeneration(p, currentThreadId);
+  startJob(p);
 });
 promptEl.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generateBtn.click(); });
 
@@ -445,6 +448,7 @@ function addStatus(text) {
 function resetToLanding() {
   workspace.hidden = true;
   toggleChat(false);
+  lessonTabsEl.hidden = true; currentCourse = null;
   landing.hidden = false;
   viewerFrame.src = "about:blank";
   viewerFrame.hidden = true;
@@ -481,6 +485,7 @@ function switchTab(name) {
 const dashGrid = document.getElementById("dash-grid");
 const dashNote = document.getElementById("dash-note");
 const dashEmpty = document.getElementById("dash-empty");
+const dashActive = document.getElementById("dash-active");
 const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
 async function loadDashboard() {
@@ -500,22 +505,20 @@ function lessonCard(l) {
   el.className = "lesson-card";
   const days = l.daysRemaining;
   const warn = days <= 5 ? " warn" : "";
+  const isCourse = l.courseId && (l.courseTotal || 0) > 1;
   const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
   const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
+  const courseBadge = isCourse ? `<span class="lc-badge">Course · ${l.courseTotal} parts</span>` : "";
   el.innerHTML = `
     <div class="lc-title">${escapeHtml(l.title)}</div>
-    <div class="lc-meta"><span class="lc-badge${warn}">${days}d left</span>${industry}${ratingHtml}</div>
+    <div class="lc-meta"><span class="lc-badge${warn}">${days}d left</span>${courseBadge}${industry}${ratingHtml}</div>
     <div class="lc-actions">
-      <button class="ghost lc-open" type="button">Open / revise</button>
-      <a class="ghost lc-dl" href="/api/artifact/${l.id}/full" download>Download</a>
+      <button class="ghost lc-open" type="button">${isCourse ? "Open course" : "Open / revise"}</button>
+      ${isCourse ? "" : `<a class="ghost lc-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
     </div>`;
   el.querySelector(".lc-open").addEventListener("click", () => {
-    switchTab("learning");
-    basePrompt = l.prompt || l.title;
-    currentThreadId = "web-" + Date.now();
-    landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
-    toggleChat(false);
-    openInViewer(l.id, l.title);
+    if (isCourse) { openCourseById(l.courseId, l.title); return; }
+    openLessonInWorkspace(l.id, l.title, l.prompt);
   });
   return el;
 }
@@ -549,10 +552,8 @@ let libAll = [];
 let libCat = "All";
 let libLoaded = false;
 const CAT_ICONS = { Foundations: "🧱", LLMs: "🧠", RAG: "🔎", Agents: "🤖", Frameworks: "🧩", Generative: "🎨", Evaluation: "📊", Safety: "🛡️", Infrastructure: "⚙️", "Build Projects": "🛠️" };
-function catGradient(cat) {
-  let h = 0; for (let i = 0; i < cat.length; i++) h = (h * 31 + cat.charCodeAt(i)) % 360;
-  return `linear-gradient(135deg, hsl(${h} 70% 52%), hsl(${(h + 40) % 360} 72% 42%))`;
-}
+function catHue(cat) { let h = 0; for (let i = 0; i < cat.length; i++) h = (h * 31 + cat.charCodeAt(i)) % 360; return h; }
+function catTint(cat) { return `hsl(${catHue(cat)} 52% 97.5%)`; } // very light category wash
 async function loadLibrary() {
   if (libLoaded) { renderLibrary(); return; }
   try {
@@ -583,10 +584,11 @@ function renderLibrary() {
   for (const l of items) {
     const el = document.createElement("button");
     el.className = "lib-card"; el.type = "button";
+    el.style.background = catTint(l.category);
     el.innerHTML =
-      `<div class="lib-thumb" style="background:${catGradient(l.category)}">${CAT_ICONS[l.category] || "📘"}<span class="lib-cat-tag">${escapeHtml(l.category)}</span></div>` +
-      `<div class="lib-body"><div class="lib-title">${escapeHtml(l.title)}</div><div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
-      `<div class="lib-foot"><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span>·</span><span>⏱ ${l.estMinutes || "?"} min</span></div></div>`;
+      `<div class="lib-card-head"><span class="lib-ico">${CAT_ICONS[l.category] || "📘"}</span><span class="lib-title">${escapeHtml(l.title)}</span></div>` +
+      `<div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
+      `<div class="lib-foot"><span class="lib-cat-tag">${escapeHtml(l.category)}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div>`;
     el.addEventListener("click", () => openLibraryLesson(l.slug, l.title));
     libGrid.appendChild(el);
   }
@@ -597,12 +599,125 @@ function openLibraryLesson(slug, title) {
   switchTab("learning");
   landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
   toggleChat(false);
+  lessonTabsEl.hidden = true; currentCourse = null;
   genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
   viewerFrame.src = "/api/lesson/" + slug;
   document.getElementById("viewer-title").textContent = title;
   currentArtifactId = null; currentViewUrl = "/api/lesson/" + slug;
   ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
   openWindowBtn.hidden = false;
+}
+
+// ============================================================================
+// Background generation jobs — start, poll, show progress on the dashboard,
+// open as soon as the overview exists. Handles single lessons AND courses.
+// ============================================================================
+async function startJob(promptText) {
+  let jobId;
+  try {
+    const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(buildPayload(promptText, null)) });
+    if (res.status === 401) { openAuth("signin"); return; }
+    const data = await res.json();
+    if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start generation.");
+    jobId = data.jobId;
+  } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
+  activeJobId = jobId;
+  promptEl.value = "";
+  switchTab("dashboard");
+  pollJob(jobId);
+}
+
+function pollJob(jobId) {
+  if (activeJobTimer) clearTimeout(activeJobTimer);
+  const tick = async () => {
+    if (activeJobId !== jobId) return;
+    let job;
+    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) { dashActive.innerHTML = ""; activeJobId = null; loadDashboard(); return; } job = await r.json(); }
+    catch { activeJobTimer = setTimeout(tick, 3000); return; }
+    renderJobCard(job);
+    if (currentCourse && job.courseId && currentCourse.courseId === job.courseId) refreshCourseTabs(job.lessons);
+    if (job.status === "done" || job.status === "error") { activeJobId = null; dashActive.innerHTML = ""; loadDashboard(); loadSuggestions(); return; }
+    activeJobTimer = setTimeout(tick, 2500);
+  };
+  tick();
+}
+
+function renderJobCard(job) {
+  const first = job.lessons && job.lessons[0];
+  const pct = first ? first.percent : (job.status === "planning" ? 5 : 8);
+  const openable = !!(first && first.artifactId);
+  let parts = "";
+  if (job.isCourse) {
+    parts = `<div class="job-parts">` + job.lessons.map((l) => {
+      const ico = l.status === "done" ? "✓" : (l.artifactId ? "▸" : (l.status === "designing" || l.status === "building" ? "⏳" : "·"));
+      const pctTxt = (l.status !== "pending" && l.status !== "done") ? ` · ${l.percent}%` : "";
+      return `<div class="job-part ${l.status === "done" ? "done" : ""}"><span class="jp-ico">${ico}</span>${escapeHtml(l.title)}${pctTxt}</div>`;
+    }).join("") + `</div>`;
+  }
+  const headline = job.isCourse ? `Course · ${job.lessons.length} lessons` : (first && first.title ? first.title : "Designing your lesson…");
+  const statusText = job.status === "error" ? ("⚠️ " + (job.error || "Generation failed")) :
+    openable ? (job.isCourse ? "Kick-off ready — open while the rest build" : "Overview ready — open and read while modules build") : "Designing your lesson…";
+  dashActive.innerHTML = `<div class="job-card">
+      <div class="job-title"><span class="job-spin"></span>${escapeHtml(headline)}</div>
+      <div class="job-bar"><i style="width:${pct}%"></i></div>
+      <div class="job-meta"><span>${escapeHtml(statusText)}</span><button class="job-open" ${openable ? "" : "disabled"}>${openable ? "Open →" : pct + "%"}</button></div>
+      ${parts}
+    </div>`;
+  const btn = dashActive.querySelector(".job-open");
+  if (btn && openable) btn.addEventListener("click", () => openFromJob(job));
+}
+
+function openFromJob(job) {
+  if (job.isCourse) openCourse(job.courseId, job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status })), 0);
+  else { const f = job.lessons[0]; if (f && f.artifactId) openLessonInWorkspace(f.artifactId, f.title); }
+}
+
+// ---- Course view (lesson-tab strip) ----
+function openLessonInWorkspace(id, title, prompt) {
+  switchTab("learning");
+  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  toggleChat(false);
+  lessonTabsEl.hidden = true; currentCourse = null;
+  basePrompt = prompt || title;
+  openInViewer(id, title);
+}
+function openCourse(courseId, lessons, activeIndex) {
+  switchTab("learning");
+  landing.hidden = true; workspace.hidden = false; chatLog.innerHTML = "";
+  toggleChat(false);
+  currentCourse = { courseId, lessons, activeIndex: activeIndex || 0 };
+  renderLessonTabs();
+  const a = lessons[currentCourse.activeIndex];
+  if (a && a.artifactId) openInViewer(a.artifactId, a.title);
+}
+function renderLessonTabs() {
+  if (!currentCourse) { lessonTabsEl.hidden = true; return; }
+  lessonTabsEl.hidden = false;
+  lessonTabsEl.innerHTML = "";
+  currentCourse.lessons.forEach((l, i) => {
+    const ready = !!l.artifactId;
+    const b = document.createElement("button");
+    b.className = "lesson-tab" + (i === currentCourse.activeIndex ? " active" : "");
+    if (!ready) b.disabled = true;
+    const ico = l.status === "done" || ready ? "" : "⏳ ";
+    b.innerHTML = `${ico}<b>${i + 1}.</b> ${escapeHtml(l.title)}`;
+    b.addEventListener("click", () => { if (ready) { currentCourse.activeIndex = i; renderLessonTabs(); openInViewer(l.artifactId, l.title); } });
+    lessonTabsEl.appendChild(b);
+  });
+}
+function refreshCourseTabs(jobLessons) {
+  if (!currentCourse) return;
+  // merge artifactIds/status as later lessons come online
+  currentCourse.lessons = jobLessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status }));
+  renderLessonTabs();
+}
+async function openCourseById(courseId, title) {
+  try {
+    const res = await fetch("/api/course/" + courseId, { headers: authHeaders() });
+    const { lessons } = await res.json();
+    if (!lessons || !lessons.length) return;
+    openCourse(courseId, lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.id, status: "done" })), 0);
+  } catch { /* ignore */ }
 }
 
 // ---- Tiny helpers ----

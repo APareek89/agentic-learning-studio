@@ -19,20 +19,26 @@ export interface LessonCard {
   daysRemaining: number;
   rating: number | null;
   industry: string | null;
+  courseId: string | null;
+  courseTotal: number | null;
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-/** List a user's non-expired lessons, newest first, with days-remaining computed. */
+/**
+ * List a user's non-expired lessons, newest first. A multi-lesson COURSE is shown
+ * as ONE card (its kick-off lesson, course_index = 1); standalone lessons show as-is.
+ */
 export async function listLessons(userId: string): Promise<LessonCard[]> {
   if (!dbEnabled() || !userId) return [];
   const rows = await query<{
     id: string; title: string | null; prompt: string | null;
     created_at: Date; expires_at: Date; rating: number | null; profile: { industry?: string } | null;
+    course_id: string | null; course_total: number | null;
   }>(
-    `select id, title, prompt, created_at, expires_at, rating, profile
+    `select id, title, prompt, created_at, expires_at, rating, profile, course_id, course_total
        from lessons
-      where user_id = $1 and expires_at > now()
+      where user_id = $1 and expires_at > now() and (course_id is null or course_index = 1)
       order by created_at desc
       limit 100`,
     [userId]
@@ -47,7 +53,19 @@ export async function listLessons(userId: string): Promise<LessonCard[]> {
     daysRemaining: Math.max(0, Math.ceil((new Date(r.expires_at).getTime() - now) / MS_PER_DAY)),
     rating: r.rating,
     industry: r.profile?.industry ?? null,
+    courseId: r.course_id,
+    courseTotal: r.course_total,
   }));
+}
+
+/** The lessons of one course, ordered — drives the lesson-tab strip when reopened. */
+export async function getCourse(courseId: string): Promise<{ id: string; index: number; title: string }[]> {
+  if (!dbEnabled() || !courseId) return [];
+  const rows = await query<{ id: string; course_index: number; title: string | null }>(
+    `select id, course_index, title from lessons where course_id = $1 order by course_index`,
+    [courseId]
+  ).catch(() => []);
+  return rows.map((r) => ({ id: r.id, index: r.course_index, title: r.title || `Lesson ${r.course_index}` }));
 }
 
 /** Save a 1..5 rating (+ optional comment) for a lesson the user owns. */

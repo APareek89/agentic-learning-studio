@@ -28,7 +28,9 @@ import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
 import { addUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
-import { listLessons, rateLesson, getPreferences, savePreferences } from "./lib/lessons";
+import { listLessons, rateLesson, getPreferences, savePreferences, getCourse } from "./lib/lessons";
+import { createJob, getJob, lessonPercent } from "./lib/jobs";
+import { runJob } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -153,6 +155,54 @@ app.post("/api/rate", requireAuth, async (req, res) => {
   }
   const ok = await rateLesson(user.id, artifactId, rating, comment);
   res.json({ ok });
+});
+
+// ----------------------------------------------------------------------------
+// POST /api/generate — start a DETACHED background generation (single lesson or a
+// multi-lesson course). Returns a jobId immediately; the dashboard polls
+// GET /api/job/:id and the lesson becomes openable as soon as its overview exists.
+// ----------------------------------------------------------------------------
+app.post("/api/generate", requireAuth, async (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const prompt = typeof body.prompt === "string" ? body.prompt : "";
+  if (!prompt.trim()) { res.status(400).json({ error: "Missing 'prompt'." }); return; }
+  const cards = (body.cards as Record<string, string>) ?? {};
+  const user = await getUser(req.headers.authorization);
+  let userProfile: Record<string, unknown> = {};
+  if (user) {
+    const prefs = await getPreferences(user.id);
+    userProfile = (prefs.profile as Record<string, unknown>) ?? {};
+    savePreferences(user.id, user.email, {
+      ...prefs, levels: (body.levels as string[]) ?? [], depth: cards.depth, examples: cards.examples,
+      density: cards.density, visuals: cards.visuals === "on", syntax: cards.syntax === "on",
+      lessonTypes: (body.lessonTypes as string[]) ?? [], industry: (body.industry as string) ?? "",
+      buildGoal: (body.buildGoal as string) ?? "", framework: (body.framework as string) ?? "",
+    }).catch(() => {});
+  }
+  const job = createJob(user?.id ?? "anon");
+  // Fire-and-forget: the job runs in the background, surviving this response.
+  void runJob(job, {
+    userPrompt: prompt, cards, uploadIds: (body.uploadIds as string[]) ?? [], referOnly: !!body.referOnly,
+    industry: (body.industry as string) ?? "", buildGoal: (body.buildGoal as string) ?? "",
+    levels: (body.levels as string[]) ?? [], lessonTypes: (body.lessonTypes as string[]) ?? [],
+    framework: (body.framework as string) ?? "", userProfile, userId: user?.id ?? "", userEmail: user?.email ?? "",
+  });
+  res.json({ jobId: job.id });
+});
+
+// GET /api/job/:id — live progress for the dashboard.
+app.get("/api/job/:id", requireAuth, (req, res) => {
+  const job = getJob(req.params.id);
+  if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
+  res.json({
+    id: job.id, status: job.status, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
+    lessons: job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status, percent: lessonPercent(l), builtModules: l.builtModules, totalModules: l.totalModules })),
+  });
+});
+
+// GET /api/course/:courseId — ordered lessons of a course (for the lesson-tab strip).
+app.get("/api/course/:courseId", requireAuth, async (req, res) => {
+  res.json({ lessons: await getCourse(req.params.courseId) });
 });
 
 // ----------------------------------------------------------------------------

@@ -396,6 +396,12 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
   @keyframes flowx{0%{left:-8px;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:34px;opacity:0}}
 }
 
+/* Course recap card (overview top, lessons 2..N) */
+.recap{background:var(--accent-weak);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:12px 0 0}
+.recap-h{font-weight:700;font-size:13px;color:var(--accent-2);margin-bottom:6px}
+.recap ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-soft)}
+.recap li{margin:2px 0}
+
 /* Key terms — subtle attention pulse on hover */
 .term-chip,.term{transition:background .15s,color .15s,transform .12s}
 .term-chip:hover,.term:hover{transform:translateY(-1px)}

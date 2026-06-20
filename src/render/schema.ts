@@ -405,6 +405,11 @@ export const MetaSchema = z.object({
   usedUpload: z.boolean().optional(),
   referOnly: z.boolean().optional(),
   uploadTitles: z.array(z.string()).optional(),
+  // For a multi-lesson COURSE (lessons 2..N): a short recap of the previous lesson,
+  // rendered as a card atop the overview so each part links back to the last.
+  recap: z.object({ previousTitle: z.string(), points: z.array(z.string()) }).optional(),
+  // Course position (set by the orchestrator); drives the lesson-tab strip.
+  course: z.object({ index: z.number(), total: z.number(), title: z.string().optional() }).optional(),
 });
 
 // ----------------------------------------------------------------------------

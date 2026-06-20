@@ -38,6 +38,8 @@ export interface StoredArtifact {
   prompt?: string;
   cards?: Record<string, unknown>;
   profile?: unknown;
+  // Multi-lesson course position (null for a standalone lesson).
+  course?: { id: string; index: number; total: number; title?: string };
 }
 
 // In-memory cache (also the only store when the DB is off).
@@ -60,6 +62,7 @@ export async function registerArtifact(input: {
   prompt?: string;
   cards?: Record<string, unknown>;
   profile?: unknown;
+  course?: { id: string; index: number; total: number; title?: string };
 }): Promise<{ id: string; kind: string; title: string }> {
   const id = randomUUID();
   const art: StoredArtifact = { id, ...input };
@@ -116,8 +119,9 @@ export async function updateArtifact(id: string, patch: Partial<Omit<StoredArtif
 async function persist(a: StoredArtifact): Promise<void> {
   if (!dbEnabled()) return;
   await query(
-    `insert into lessons (id, user_id, user_email, kind, title, prompt, cards, profile, blueprint, html, upload_ids, refer_only)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+    `insert into lessons (id, user_id, user_email, kind, title, prompt, cards, profile, blueprint, html, upload_ids, refer_only,
+                          course_id, course_index, course_total, course_title)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
      on conflict (id) do update set
        title = excluded.title, blueprint = excluded.blueprint, html = excluded.html, updated_at = now()`,
     [
@@ -125,6 +129,7 @@ async function persist(a: StoredArtifact): Promise<void> {
       a.prompt ?? null, JSON.stringify(a.cards ?? {}), a.profile ? JSON.stringify(a.profile) : null,
       a.blueprint ? JSON.stringify(a.blueprint) : null, a.html,
       JSON.stringify(a.uploadIds ?? []), !!a.referOnly,
+      a.course?.id ?? null, a.course?.index ?? null, a.course?.total ?? null, a.course?.title ?? null,
     ]
   );
 }

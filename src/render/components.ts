@@ -350,6 +350,14 @@ function whatsNew(bp: Blueprint): string {
   return `<div class="whatsnew"><div class="lab">What's new</div><ul>${bp.whatsNew.map((w) => `<li>${esc(w.title)} — ${esc(w.summary)}</li>`).join("")}</ul></div>`;
 }
 
+// ---- recap card: links a course lesson back to the previous one (overview top) ----
+function recapBanner(bp: Blueprint): string {
+  const r = bp.meta.recap;
+  if (!r) return "";
+  const pts = r.points.slice(0, 5).map((p) => `<li>${esc(p)}</li>`).join("");
+  return `<div class="recap"><div class="recap-h">↩ Recap — building on “${esc(r.previousTitle)}”</div><ul>${pts}</ul></div>`;
+}
+
 // ---- provenance banner: tells the reader what the lesson drew on (only when they uploaded) ----
 function provenanceBanner(bp: Blueprint): string {
   const m = bp.meta;
@@ -386,6 +394,7 @@ function citationsInner(bp: Blueprint): string {
 export function renderBody(bp: Blueprint): string {
   const p = bp.learnerProfile;
   const metaBits = [
+    bp.meta.course ? `Part ${bp.meta.course.index} of ${bp.meta.course.total}` : "",
     p.level,
     p.depth.replace("_", " + "),
     p.examples.replace("_", " + "),
@@ -443,6 +452,7 @@ export function renderBody(bp: Blueprint): string {
         ${bp.meta.thesis ? `<p class="thesis">${esc(bp.meta.thesis)}</p>` : ""}
         <div class="meta-line">${metaBits.map((m) => `<span>${esc(m)}</span>`).join("")}</div>
       </div>
+      ${recapBanner(bp)}
       ${provenanceBanner(bp)}
       ${whatsNew(bp)}
       ${mentalMap(bp)}
