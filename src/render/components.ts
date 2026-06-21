@@ -293,30 +293,42 @@ function mentalMap(bp: Blueprint): string {
   if (ordered) nodes.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   const startId = mm.entryNodeId ?? (ordered ? (nodes[0]?.id ?? "") : "");
 
-  // Minimal advance-organizer card: number/icon + label + ONE orient line + open cue.
+  // A uniform SQUARE block: corner badge (number for ordered, icon otherwise) + a 4–6 word
+  // headline + a 10–15 word description. Nothing else on the card — deeper detail lives in
+  // the module the card opens. The whole card is the click target (runtime delegates on
+  // data-deepdive), so the open cue is a hover-only flourish that never changes the square's size.
+  // The badge + open-cue are absolutely positioned (out of flow) so the corner number can
+  // overflow the square; the text lives in a clipped .mn-body so the square stays uniform.
   const card = (n: (typeof nodes)[number], i: number): string => {
-    const click = n.moduleId && moduleIds.has(n.moduleId) ? ` data-deepdive="${escAttr(n.moduleId)}"` : "";
+    const linked = !!(n.moduleId && moduleIds.has(n.moduleId));
+    const click = linked ? ` data-deepdive="${escAttr(n.moduleId!)}"` : "";
     const num = ordered ? (n.order ?? i + 1) : null;
     const isStart = ordered && n.id === startId;
     const badge = num != null ? `<span class="mn-num">${num}</span>` : `<span class="mn-ico">${esc(n.icon || "●")}</span>`;
-    const orient = n.orient ? `<div class="mn-orient">${esc(n.orient)}</div>` : n.sub ? `<div class="mn-orient">${esc(n.sub)}</div>` : "";
-    const startTag = isStart ? `<span class="mn-start">Start here</span>` : "";
-    const cue = click ? `<span class="mn-go">Open${num != null ? "" : " for details"} →</span>` : "";
-    return `<button class="map-node${n.emphasis === "spine" ? " spine" : ""}${isStart ? " is-start" : ""}"${click}><div class="mn-head">${badge}<span class="mn-title">${esc(n.label)}</span>${startTag}</div>${orient}${cue}</button>`;
+    const desc = n.orient || n.sub || "";
+    const descHtml = desc ? `<span class="mn-desc">${esc(desc)}</span>` : "";
+    const cue = linked ? `<span class="mn-go" aria-hidden="true">Open →</span>` : "";
+    const cls = `map-node${n.emphasis === "spine" ? " spine" : ""}${isStart ? " is-start" : ""}${linked ? "" : " no-link"}`;
+    return `<button class="${cls}"${click}>${badge}${cue}<span class="mn-body"><span class="mn-title">${esc(n.label)}</span>${descHtml}</span></button>`;
   };
+  const conn = `<div class="map-conn" aria-hidden="true"><span class="spark"></span></div>`;
 
   let inner: string;
   let eyebrow: string;
   let cap: string;
   if (ordered) {
+    // Process: equal-width numbered squares in ONE sequence joined by animated arrows
+    // (a single non-wrapping row keeps it on one screen; CSS shrinks the squares to fit).
     eyebrow = type === "procedural" ? "Your build path · start at step 1" : "Learning path · in order";
     cap = type === "procedural" ? "Follow these steps in order — each builds on the one before." : "Understand these in order — later ideas depend on earlier ones.";
-    inner = `<ol class="map-path">${nodes.map((n, i) => `<li class="map-step">${card(n, i)}${i < nodes.length - 1 ? `<div class="map-conn" aria-hidden="true"><span class="spark"></span></div>` : ""}</li>`).join("")}</ol>`;
+    inner = `<div class="map-path">${nodes.map((n, i) => `${card(n, i)}${i < nodes.length - 1 ? conn : ""}`).join("")}</div>`;
   } else if (type === "comparative") {
+    // The options, side by side.
     eyebrow = "The options · weigh and choose";
     cap = "These are the choices on the table — compare them, then pick.";
     inner = `<div class="map-options">${nodes.map((n, i) => card(n, i)).join("")}</div>`;
   } else {
+    // Conceptual relationship map.
     eyebrow = "Mental map · how the pieces relate";
     cap = "Not a sequence — these connect as a whole. Open any piece.";
     inner = `<div class="map-concept">${nodes.map((n, i) => card(n, i)).join("")}</div>`;

@@ -75,27 +75,20 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
 .map-node.spine{border-left:3px solid var(--accent)}
 .map-node .mn-title{font-weight:600;font-size:13.5px}
 .map-node .mn-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
-/* Persistent "click for details" affordance on every linked block. */
-.map-node .mn-go{display:inline-flex;align-items:center;gap:5px;width:fit-content;font-size:11px;color:var(--accent-2);font-weight:700;margin-top:8px;background:var(--accent-weak);border-radius:99px;padding:3px 10px}
-.map-node .mn-cue-ico{font-size:11px;line-height:1}
-.map-node:hover .mn-go{background:var(--accent);color:#fff}
-.map-arrow{display:flex;justify-content:center;color:var(--faint);font-size:14px;margin:2px 0}
 
 /* Make the hidden attribute authoritative (author #overview/#workbench rules below
    would otherwise override the UA [hidden] rule and break the overview↔workbench swap). */
 [hidden]{display:none!important}
 
-/* ===== Overview = ONE non-scrolling screen; the map flows LEFT-TO-RIGHT =====
-   The overview must fit the viewport with NO scrolling. (Regression note: the
-   structure-typed overview swapped the renderer to .map-path/.map-concept/.map-options,
-   but the old no-scroll rules targeted a now-dead .map-flow, and .map-node{flex:1 1 240px}
-   grew vertically inside the column .map-path → giant cards + scroll. Fixed below by
-   making #overview a fixed, clipped flex column and laying EVERY structure type out as a
-   compact left-to-right card grid where the numbers/icons carry the order.)
+/* ===== Overview = ONE non-scrolling screen; the concept/process map is centred =====
+   The overview must fit the viewport with NO scrolling. #overview is a fixed, clipped flex
+   column; the square-block map (.map-path / .map-concept / .map-options — styled in the
+   "Overview structure" block below) is centred in the remaining space and the squares shrink
+   on smaller screens so the whole map stays on one screen. The narrow-screen media query
+   lets the page scroll rather than clip when the viewport is genuinely too small.
    Scoped to :not([hidden]) so it only applies while the overview is the active view. */
 #overview:not([hidden]){height:calc(100dvh - 54px);overflow:hidden;display:flex;flex-direction:column}
-/* width:100% so the auto side-margins don't shrink the shell to content width in the
-   overview's flex column (which collapsed the card grid to ~2 columns). */
+/* width:100% so the auto side-margins don't shrink the shell to content width. */
 #overview .shell{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;overflow:hidden;padding:14px 26px}
 #overview .hero{flex:none;padding:2px 0 0}
 #overview .hero h1{font-size:25px;margin:.05em 0 .1em}
@@ -105,29 +98,19 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
 #overview .map{flex:1;min-height:0;display:flex;flex-direction:column;margin:12px 0 0;overflow:hidden;padding:14px 16px}
 #overview .map h2{font-size:14px}
 #overview .map .cap{margin:0 0 8px}
-#overview .map-body{flex:1;min-height:0;overflow:hidden}
-/* EVERY structure type → a compact left-to-right card grid that fits the viewport.
-   (procedural/dependency use .map-path with .map-step li wrappers; conceptual/comparative
-   use .map-concept/.map-options with the cards as direct children.) */
+/* centre the map and clip anything that would overflow the one-screen budget */
+#overview .map-body{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
 #overview .map-path,#overview .map-concept,#overview .map-options{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;
-  max-width:none;align-content:flex-start;height:100%;overflow:hidden;
+  width:100%;max-height:100%;justify-content:center;align-content:center;align-items:center;
 }
-#overview .map-step{display:flex;flex-direction:column}        /* li wrapper just holds the card */
-#overview .map-conn{display:none}                              /* drop the vertical spine connector */
-/* stop the card growing vertically (the regression): natural height, fill its grid cell */
-#overview .map-node{flex:0 0 auto;width:100%;min-width:0;padding:10px 12px;gap:5px}
-#overview .map-node .mn-orient,#overview .map-node .mn-what,#overview .map-node .mn-rel{
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
-#overview .map-node .mn-go{margin-top:auto}
-#overview .mn-head{gap:8px}
-#overview .mn-num{width:24px;height:24px;font-size:12px}
-/* narrow screens: let the page scroll rather than clip the grid */
+/* squares shrink a touch in the overview so more fit on one screen */
+#overview .map .map-node{width:clamp(132px,13vw,176px)}
+/* narrow screens: let the page scroll rather than clip the map */
 @media(max-width:820px){
   #overview:not([hidden]){height:auto;overflow:visible}
   #overview .shell,#overview .map,#overview .map-body{overflow:visible;min-height:0}
-  #overview .map-path,#overview .map-concept,#overview .map-options{height:auto;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  #overview .map-body{align-items:flex-start}
+  #overview .map .map-node{width:clamp(128px,40vw,176px)}
 }
 
 /* ---- overview / workbench (Fix 2 layout) ---- */
@@ -398,45 +381,68 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 .module-head .mh-text{min-width:0}
 .m-time{font-size:12px;color:var(--muted);margin-top:4px}
 
-/* Overview: node icons, layman card, animated current-flow connector */
-.mn-ico{margin-right:7px}
-.mn-layman{margin-top:7px;font-size:12.5px;color:var(--ink-soft);background:var(--accent-weak);border-radius:8px;padding:6px 9px;line-height:1.4}
-.mn-layman .mn-lay-ico{margin-right:5px}
-.map-arrow.flow{position:relative;overflow:hidden}
-.map-arrow.flow .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px 2px var(--accent);opacity:.9}
-@media (min-width:821px){
-  #overview .map-flow .map-arrow.flow{align-self:center;width:34px;height:3px;background:linear-gradient(90deg,var(--border-strong),var(--accent));border-radius:2px}
-  #overview .map-flow .map-arrow.flow::before{content:"";position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-left:7px solid var(--accent);border-top:4px solid transparent;border-bottom:4px solid transparent}
-  #overview .map-flow .map-arrow.flow .spark{top:50%;margin-top:-3px;animation:flowx 1.8s linear infinite}
-  @keyframes flowx{0%{left:-8px;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:34px;opacity:0}}
-}
-
 /* Course recap card (overview top, lessons 2..N) */
 .recap{background:var(--accent-weak);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:12px 0 0}
 .recap-h{font-weight:700;font-size:13px;color:var(--accent-2);margin-bottom:6px}
 .recap ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-soft)}
 .recap li{margin:2px 0}
 
-/* ===== Overview structure (advance organizer) ===== */
+/* ===== Overview = a CONCEPT/PROCESS MAP of uniform SQUARE blocks (advance organizer) =====
+   Every block is the same size (aspect-ratio:1). A corner badge (number for an ordered
+   process, icon for a concept/option map) sits with its CENTRE on the top-left corner.
+   Ordered maps are a left-to-right SEQUENCE joined by animated arrows; conceptual/comparative
+   maps are wrapping rows of squares. Card content = headline + short description only. */
 .map-body{margin-top:8px}
-/* ordered path — a numbered vertical spine with connectors */
-.map-path{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-width:760px}
-.map-step{display:flex;flex-direction:column}
-.map-conn{width:2px;height:16px;margin:2px 0 2px 31px;background:linear-gradient(var(--accent),var(--border-strong));position:relative;overflow:hidden}
-.map-conn .spark{position:absolute;left:-2px;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px 1px var(--accent);animation:flowy 1.8s linear infinite}
-@keyframes flowy{0%{top:-8px;opacity:0}20%{opacity:1}80%{opacity:1}100%{top:16px;opacity:0}}
-.map-path .map-node{width:100%}
-/* conceptual / comparative — responsive card grid */
-.map-concept,.map-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px}
-/* the minimal card */
-.map .map-node{display:flex;flex-direction:column;gap:7px;align-items:stretch}
-.mn-head{display:flex;align-items:center;gap:10px}
-.mn-num{flex:none;width:27px;height:27px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
-.map-node.is-start .mn-num{box-shadow:0 0 0 4px var(--accent-weak)}
-.mn-start{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:var(--ok);border-radius:99px;padding:2px 8px;margin-left:auto}
-.mn-orient{font-size:12.5px;color:var(--muted);line-height:1.42}
-.mn-go{font-size:11px;color:var(--accent-2);font-weight:700;align-self:flex-start;background:var(--accent-weak);border-radius:99px;padding:3px 10px}
-.map-node:hover .mn-go{background:var(--accent);color:#fff}
+
+/* the uniform square block. overflow:visible so the corner badge can sit on the corner;
+   the text is clipped inside .mn-body instead, so every square stays the same size. */
+.map .map-node{
+  position:relative;box-sizing:border-box;
+  flex:0 0 auto;width:clamp(150px,15vw,196px);min-width:0;aspect-ratio:1;
+  text-align:left;border:1px solid var(--border-strong);background:var(--surface-2);
+  border-radius:14px;padding:16px 14px 14px;cursor:pointer;font:inherit;color:var(--ink);
+  overflow:visible;transition:border-color .12s,transform .08s,box-shadow .12s;
+}
+.map .map-node:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.map .map-node.spine{border-color:var(--accent);border-width:1.5px}
+.map .map-node.no-link{cursor:default}
+.map .map-node.no-link:hover{transform:none;box-shadow:none}
+/* clipped text region fills the square so long text can never grow it past a square */
+.map .mn-body{display:flex;flex-direction:column;gap:6px;height:100%;overflow:hidden}
+/* corner badge — its CENTRE lands ON the top-left corner of the square */
+.map .mn-num,.map .mn-ico{
+  position:absolute;top:0;left:0;transform:translate(-42%,-42%);
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:14px;box-shadow:0 1px 3px rgba(0,0,0,.18);margin:0;z-index:1;
+}
+.map .mn-num{background:var(--accent);color:#fff}
+.map .mn-ico{background:var(--surface);border:1px solid var(--border-strong);font-size:16px}
+.map .map-node.is-start .mn-num{box-shadow:0 0 0 4px var(--accent-weak),0 1px 3px rgba(0,0,0,.18)}
+.map .mn-title{font-weight:700;font-size:14px;line-height:1.25;margin-top:2px}
+.map .mn-desc{font-size:12px;color:var(--muted);line-height:1.42;
+  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+/* hover-only open cue — absolute so it never resizes the square; a pill backdrop keeps it
+   legible over the description's last line */
+.map .mn-go{position:absolute;right:9px;bottom:8px;font-size:10.5px;font-weight:700;color:#fff;
+  background:var(--accent);border-radius:99px;padding:2px 9px;box-shadow:0 1px 4px rgba(0,0,0,.15);
+  opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s}
+.map .map-node:hover .mn-go{opacity:1;transform:none}
+
+/* ordered: ONE non-wrapping row of equal squares joined by animated arrows. Cards flex to
+   share the row (min-width:0) so the whole sequence stays on one screen with no scroll. */
+.map-path{margin:0;padding:16px 10px 8px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:8px}
+.map-path .map-node{flex:1 1 0;min-width:0;width:auto;max-width:200px}
+.map-conn{flex:none;position:relative;width:clamp(20px,3vw,34px);height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--border-strong),var(--accent));overflow:visible}
+.map-conn::after{content:"";position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+  border-left:7px solid var(--accent);border-top:4px solid transparent;border-bottom:4px solid transparent}
+.map-conn .spark{position:absolute;top:50%;margin-top:-3px;left:0;width:6px;height:6px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 8px 2px var(--accent);animation:flowx 1.8s linear infinite}
+@keyframes flowx{0%{left:-4px;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:calc(100% - 4px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.map-conn .spark{animation:none;display:none}}
+
+/* conceptual / comparative: wrapping rows of equal squares, centred */
+.map-concept,.map-options{display:flex;flex-wrap:wrap;gap:16px 12px;align-items:flex-start;justify-content:center;padding:14px 10px 6px}
 
 /* ===== Spine inside the module ===== */
 .m-spine{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
