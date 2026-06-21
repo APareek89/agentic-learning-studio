@@ -39,7 +39,8 @@ src/server.ts        Express + all routes. /api/overview (bg, free skeleton draf
                      /api/build (bg, promote draft→lesson + build bodies)·/api/job/:id·/api/learn (SSE)·
                      /api/artifact/:id (RE-RENDERS from blueprint)·/…/full (download, time-boxed)·
                      /api/module + /api/check (PUBLIC, no auth — artifact iframe calls them)·
-                     /api/ask + /ask/expand·/api/upload(+ -repo)·/api/library + /lesson/:slug·
+                     /api/ask + /ask/expand·/api/upload(+ -repo)·/api/library + /lesson/:slug
+                     (RE-RENDERS from stored blueprint, falls back to stored html)·
                      /api/lessons /preferences /profile /suggest /rate·/healthz.
 src/agent/           THE GENERATION PIPELINE (LangGraph):
   state.ts           GraphState channels (inputs: cards, levels, lessonTypes, framework,
@@ -61,10 +62,18 @@ src/agent/           THE GENERATION PIPELINE (LangGraph):
   density.ts         measureModule + repairDensity (per-tier sentence ceilings; RULE 2).
 src/render/          BLUEPRINT → HTML (deterministic; the model never writes HTML/JS):
   schema.ts          Blueprint Zod + block kinds + validateBlueprint (7 gates) + repairBlueprint.
+                     `diagram` block = discriminated `template` (neuralNetwork/pipeline/agentLoop/
+                     graph/sequence/layeredArchitecture) + a flexible all-optional `data` bag
+                     (DiagramDataSchema). Model supplies DATA ONLY — never SVG.
+  diagrams.ts        PREBUILT diagram component library (NEW). One pure fn per template → a
+                     self-contained INLINE SVG string (theme-aware via CSS vars, <title>/<desc>,
+                     every label escaped, $0/offline, no JS). renderDiagram(template,data,idSeed)
+                     dispatches; bad/empty payload → safe empty-state, never throws.
   tokens.ts          ARTIFACT_CSS — design tokens, 27-combo gates, OVERVIEW no-scroll grid,
-                     HORIZONTAL-mode CSS, modal.
+                     HORIZONTAL-mode CSS, modal, `.diagram` container (+ `.hmodal .diagram`).
   components.ts      renderBody (vertical) + renderBodyHorizontal + mentalMap() + moduleInner()
-                     + every block renderer. THIS is the overview/layout file.
+                     + every block renderer (diagramBlock() wraps renderDiagram in a <figure>).
+                     THIS is the overview/layout file.
   runtime.ts         RUNTIME_JS — nav, (i) popovers, quiz grading, viz hydration, bg module
                      queue, horizontal pager + modal.
   index.ts           renderArtifact(bp) → one self-contained HTML string (body data-level/depth/
@@ -74,7 +83,9 @@ src/lib/             db.ts · artifacts.ts (durable store + JSONB coercion) · l
                      jobs.ts · auth.ts · hash.ts · langfuse.ts.
 src/rag/             embed · loaders · chunkers · store · retrieve · ingest (KB in Supabase `chunks`).
 public/              index.html (tabs Configurator/Trainer/My Lessons/Library) · app.js · styles.css.
-supabase/migrations/ schema. scripts/ migrate · seed-library · test-structure · test-horizontal · …
+supabase/migrations/ schema (0005 = prebuilt_lessons.content_version/rebuilt_at). scripts/ migrate ·
+                     seed-library (deterministic, from prebuilt/*.json) · rebuild-library (RE-GENERATES
+                     prebuilt lessons through the LIVE pipeline; filter-gated) · test-structure · test-horizontal · …
 ```
 
 ---
@@ -88,7 +99,9 @@ supabase/migrations/ schema. scripts/ migrate · seed-library · test-structure 
 - **Quiz gate:** `selfCheckQuiz` + `knowledgeCheck` ONLY when lessonType includes `knowledge_check` (enforced in `runDeepDive` + prompts). In-flow retrieval (predict-then-reveal, recall hooks) is NOT gated.
 - **Reading mode:** `learnerProfile.readingMode` `vertical` (default) | `horizontal` (paged deck, modal-on-expand, final knowledge-check page). Horizontal implies knowledge_check. `data-reading` attr drives CSS/runtime.
 - **Overview:** a no-scroll concept/process map of uniform SQUARE blocks (`#overview` + `.map*` in `tokens.ts`; `mentalMap()` in `components.ts`) — corner number/icon badge on the top-left corner; ordered = single arrow-connected row, conceptual/comparative = wrapping square rows. Card = headline + 10–15-word `orient` description only; detail (what/why/analogy) lives in the module head, not on the map.
-- **Existing lessons pick up renderer fixes:** `/api/artifact/:id` RE-RENDERS from the stored Blueprint (fallback to stored html).
+- **Existing lessons pick up renderer fixes:** both `/api/artifact/:id` (user lessons) AND `/api/lesson/:slug` (library) RE-RENDER from the stored Blueprint (fallback to stored html), so renderer/overview changes reach saved + prebuilt lessons without re-generating.
+- **Prebuilt library = real generated lessons:** the library is RE-GENERATED through the SAME live pipeline as fresh lessons (`scripts/rebuild-library.ts`), not authored by hand — so it carries the concept-map overview, 7-question coverage, scenario shaping, and pedagogy. Every module is FULLY built (no stubs — the library has no background build queue). `prebuilt_lessons.content_version` + `rebuilt_at` make rebuilds resumable.
+- **Prebuilt diagrams (data-as-CODE, $0):** the `diagram` block extends the viz-block pattern (model emits DATA ONLY, renderer owns every SVG tag) but as STATIC inline SVG — no hydration, so it shows identically in vertical, horizontal, and the horizontal modal. The model picks a `template` by SHAPE when a beginner can't picture an idea from code/prose; archetype→template map lives in `MODULE_SYSTEM` "INTERACTIVE VISUALS & DIAGRAMS" + the `moduleUserPrompt` VISUALS line (agent loop→agentLoop · pipeline/chain→pipeline · state/multi-agent topology→graph · trace/request path→sequence · stack→layeredArchitecture · net→neuralNetwork). Gated on `visualsRequested`, ≤1 visual per module. For `graph` the model gives coarse col/row grid coords; the renderer places + routes (no auto-layout). Fixture: `scripts/test-diagrams.ts` (NO credits) → renders all six in both modes to `/tmp/als-diagrams-*.html`.
 
 ---
 
@@ -122,6 +135,7 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 - **Ask speed + upload-401 (DONE Jun 2026):** `/api/ask` no longer does RAG (instant follow-ups; see §5); `/api/upload` + `/api/upload-repo` are now public so signed-out learners can attach files/repos in the open Configurator (`public/app.js` file-input also calls `openAuth("signin")` on a 401, mirroring the repo handler). Verified: signed-out `curl /api/upload` → 200 + docId/chunkCount; browser signed-out attach → "1 chunk" chip with no sign-in error; signed-out Generate still opens the sign-in modal.
   - **ENV (Render) to confirm — code is correct:** a SIGNED-IN user's gated calls still need a valid token, so `SUPABASE_URL` + `SUPABASE_ANON_KEY` on Render must be the NEW project (`kdgtlbnlyscdldogxorb`). A wrong/old value makes `verifyToken` reject the front-end token → 401 on every gated route (same env-mismatch family as the `DATABASE_URL` `%40` issue).
 - **Human-in-the-loop overview gate (DONE Jun 2026):** the Configurator CTA is now "Generate Overview — Free" → builds only the overview (free, preview-only draft) and lands on Trainer with progress → on ready, shows **Generate Lesson** + **Edit overview** CTAs. Generate Lesson promotes the draft and builds all bodies, sending the user to My Lessons (the prior build flow). Edit overview reopens the Configurator feedback as a modal and regenerates the overview. See §3/§4/§5. **Decision (note for the user):** the gate operates on a SINGLE lesson — auto course-splitting was retired from the live generate flow (gating a multi-lesson course behind one overview was awkward + costly); existing course artifacts still render/open. Verified: tsc clean; runOverviewJob→draft(overview-draft, preview-only, stubs)→runBuildJob→promoted(learning-artifact, 5/5 built); /api/overview + /api/build gated (401); UI CTAs/modal wired, no console errors.
+- **Library rebuilt through the live pipeline (IN PROGRESS Jun 2026):** `scripts/rebuild-library.ts` re-generates each prebuilt lesson with the CURRENT pipeline (profiler→retriever→architect→runDeepDive ALL modules→renderArtifact) and upserts fresh `{blueprint, html}` keyed by slug; inputs reconstructed from the stored row + old blueprint's learnerProfile (level from row, readingMode=vertical); slug/category/level/description/title preserved, est_minutes refreshed. SAFETY: default = DRY RUN; needs `--slug`/`--category`/`--all` (and `--all` needs `--yes`); resumable via `content_version` (skip current unless `--force`); per-lesson failure logs + CONTINUES leaving old html intact. `/api/lesson/:slug` now re-renders from the stored blueprint (migration 0005 adds content_version/rebuilt_at; `blueprint` col already existed). Run with `NODE_EXTRA_CA_CERTS=…`. **Verified:** tsc clean; migration applied; rebuilt `vector-databases-compared` (comparative, 5/5, eyeballed concept-map overview + 7-question coverage), `the-agent-loop` (procedural, 6/6); a transient module-parse failure on `build-document-qa-bot` correctly left the old html intact. **NEXT (user's cost call):** run `--category "<X>"` per category, then `--all --yes` (~100 lessons; bump `CONTENT_VERSION` if the pipeline changes again).
 - DESIGN_SPEC.md not updated for recent phases (this HANDOFF is canonical).
 - Obsolete branch `hybrid-opus-skeleton-and-proofreader` (broken Opus structured-output path + proofreader) — superseded by `main`; safe to delete.
 

@@ -44,7 +44,14 @@ import { moduleCacheKey } from "./lib/hash";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { ChatMessage, ArtifactRef } from "./agent/state";
-import type { Block } from "./render/schema";
+import type { Block, Blueprint } from "./render/schema";
+
+/** jsonb may arrive as an object (pg auto-parse) or a string (driver/encoding) — normalize. */
+function maybeParseBlueprint(v: unknown): Blueprint | null {
+  if (v == null) return null;
+  if (typeof v === "string") { try { return JSON.parse(v) as Blueprint; } catch { return null; } }
+  return v as Blueprint;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "..", "public");
@@ -603,11 +610,21 @@ app.get("/api/library", async (_req, res) => {
   });
 });
 
-// GET /api/lesson/:slug — serve a stored, pre-rendered library lesson (public).
+// GET /api/lesson/:slug — serve a library lesson (public). RE-RENDERS from the stored
+// Blueprint so renderer/overview fixes apply to library lessons without re-generating
+// (mirrors /api/artifact/:id); falls back to the stored html on any error.
 app.get("/api/lesson/:slug", async (req, res) => {
-  const rows = await query<{ html: string }>(`select html from prebuilt_lessons where slug = $1`, [req.params.slug]).catch(() => []);
+  const rows = await query<{ html: string; blueprint: Blueprint | null }>(
+    `select html, blueprint from prebuilt_lessons where slug = $1`,
+    [req.params.slug]
+  ).catch(() => []);
   if (!rows.length) { res.status(404).send("<p>Lesson not found.</p>"); return; }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  const bp = maybeParseBlueprint(rows[0].blueprint);
+  if (bp) {
+    try { res.send(renderArtifact(bp)); return; }
+    catch (e) { console.warn("[lesson] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
+  }
   res.send(rows[0].html);
 });
 
