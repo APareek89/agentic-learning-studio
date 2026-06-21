@@ -41,9 +41,6 @@ import { makeLLM } from "./agent/llm";
 import { renderArtifact } from "./render/index";
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
-import { retrieve } from "./rag/retrieve";
-import { ragEnabled as ragOn } from "./lib/db";
-import { hasUploads, retrieveFromUploads } from "./lib/uploads";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { ChatMessage, ArtifactRef } from "./agent/state";
@@ -445,26 +442,6 @@ app.get("/api/artifact/:id/full", async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// Helper: gather grounding (the lesson's uploads first, then the KB) for a question.
-// ----------------------------------------------------------------------------
-async function groundFor(query: string, uploadIds: string[] | undefined, referOnly: boolean | undefined) {
-  const out: { sid: string; title?: string; content: string }[] = [];
-  if (hasUploads(uploadIds)) {
-    try {
-      const hits = await retrieveFromUploads(query, uploadIds!, 5);
-      hits.forEach((h, i) => out.push({ sid: `U${i + 1}`, title: h.title || "Your document", content: h.content }));
-    } catch { /* ignore */ }
-  }
-  if (!referOnly && ragOn()) {
-    try {
-      const { chunks } = await retrieve(query, 5);
-      chunks.forEach((c, i) => out.push({ sid: `S${i + 1}`, title: c.title, content: c.content }));
-    } catch { /* ignore */ }
-  }
-  return out;
-}
-
-// ----------------------------------------------------------------------------
 // POST /api/ask — "Ask More": answer a learner question from RAG (short reply in chat).
 // ----------------------------------------------------------------------------
 app.post("/api/ask", requireAuth, async (req, res) => {
@@ -474,13 +451,20 @@ app.post("/api/ask", requireAuth, async (req, res) => {
   const bp = art?.blueprint;
   const topic = bp?.meta.topic ?? "";
   try {
-    const sources = await groundFor(`${topic} — ${question}`, art?.uploadIds, art?.referOnly);
-    const src = sources.map((s) => `[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 700)}`).join("\n");
-    const sys = `You answer a learner's follow-up question about "${topic}" CONCISELY (3–5 sentences max, plain language). Prefer the SOURCES below; if they don't cover it, use your own accurate knowledge. Do not pad.`;
+    // FAST PATH — answer from the model's own knowledge, NO RAG retrieval. The KB embed +
+    // vector search is the slow part, and this is a quick in-chat follow-up that should feel
+    // instant. We ground the reply in the lesson's own structure (already in memory: topic,
+    // thesis, module titles) so it stays on-topic with zero retrieval latency. The heavier
+    // "add details in lesson" action (/api/ask/expand) is unchanged — it still does full
+    // grounding when the learner wants a new module written.
+    const ctx = bp
+      ? `LESSON: ${bp.meta.title}${bp.meta.thesis ? ` — ${bp.meta.thesis}` : ""}\nMODULES: ${bp.modules.map((m) => m.title).join("; ")}`
+      : "";
+    const sys = `You answer a learner's follow-up question about "${topic}" CONCISELY (3–5 sentences max, plain language). Answer from your own accurate knowledge and stay consistent with the lesson context below. Be concrete; do not pad.`;
     const llm = makeLLM("sonnet", 0.2, { maxTokens: 500 });
-    const out = await llm.invoke([new SystemMessage(sys), new HumanMessage(`QUESTION: ${question}\n\n${src ? "SOURCES:\n" + src : "(no sources retrieved)"}`)]);
+    const out = await llm.invoke([new SystemMessage(sys), new HumanMessage(`${ctx ? ctx + "\n\n" : ""}QUESTION: ${question}`)]);
     const answer = typeof out.content === "string" ? out.content : Array.isArray(out.content) ? out.content.map((c) => ("text" in c ? c.text : "")).join("") : String(out.content);
-    res.json({ answer, sources: sources.map((s) => s.title).filter(Boolean) });
+    res.json({ answer, sources: [] });
   } catch (err) {
     console.error("[/api/ask]", err);
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -557,8 +541,11 @@ app.post("/api/check", async (req, res) => {
 // POST /api/upload — accept ONE document (base64 in JSON), parse + chunk + embed
 // it LOCALLY (no API), keep it in the in-memory upload store, return its id. The
 // front-end remembers ids for the session and passes them to /api/learn.
+// PUBLIC (no requireAuth): the Configurator is open, so learners attach files BEFORE
+// signing in (the auth wall is at Generate). Uploads go to the session-scoped in-memory
+// store (random docIds, not user data) and generation stays gated, so the real wall holds.
 // ----------------------------------------------------------------------------
-app.post("/api/upload", requireAuth, async (req, res) => {
+app.post("/api/upload", async (req, res) => {
   const { filename, dataBase64 } = (req.body ?? {}) as { filename?: string; dataBase64?: string };
   if (!filename || !dataBase64) {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
@@ -609,12 +596,15 @@ app.get("/api/lesson/:slug", async (req, res) => {
 // ----------------------------------------------------------------------------
 // POST /api/upload-repo — clone a PUBLIC git repo, extract its text/code, embed it
 // LOCALLY into the session upload store (same grounding path as documents).
+// PUBLIC (no requireAuth): same reason as /api/upload — learners attach a repo in the open
+// Configurator before signing in; generation stays gated. Abuse bounds below (≤400 files /
+// ≤4MB / 90s timeout, public https github/gitlab/bitbucket only) are unchanged.
 // ----------------------------------------------------------------------------
 const execFileP = promisify(execFile);
 const REPO_EXT = new Set([".md", ".mdx", ".txt", ".rst", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".py", ".java", ".go", ".rb", ".rs", ".c", ".cpp", ".h", ".cs", ".php", ".kt", ".swift", ".scala", ".sql", ".sh", ".yaml", ".yml", ".json", ".toml", ".html", ".css", ".scss"]);
 const REPO_SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", "vendor", "__pycache__", ".next", "target", "out", ".venv", "venv", "coverage", ".turbo"]);
 
-app.post("/api/upload-repo", requireAuth, async (req, res) => {
+app.post("/api/upload-repo", async (req, res) => {
   const repoUrl = typeof req.body?.repoUrl === "string" ? req.body.repoUrl.trim() : "";
   if (!/^https:\/\/(www\.)?(github|gitlab|bitbucket)\.(com|org)\/[\w.-]+\/[\w.-]+/i.test(repoUrl)) {
     res.status(400).json({ error: "Paste a public https GitHub / GitLab / Bitbucket repo URL." });

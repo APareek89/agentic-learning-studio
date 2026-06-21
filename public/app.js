@@ -182,6 +182,9 @@ fileInput.addEventListener("change", async () => {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ filename: file.name, dataBase64 }),
       });
+      // Defensive: /api/upload is public now, but if it ever 401s, surface sign-in
+      // (mirrors the repo handler) instead of a dead "✕ Please sign in" on the chip.
+      if (res.status === 401) { openAuth("signin"); throw new Error("Sign in to add files."); }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "upload failed");
       uploadedDocs.push({ docId: data.docId, title: data.title });
