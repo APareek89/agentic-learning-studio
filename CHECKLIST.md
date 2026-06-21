@@ -97,4 +97,88 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [ ] `/healthz` `db:true`; error tracking receives a test error; spend shows in Anthropic + Langfuse.
 - [ ] Account deletion works; data export works.
 - [ ] Legal pages reachable from footer + checkout.
-```
+
+---
+
+# DEFERRED MEDIA FEATURES (look into later)
+Both honor the app's core invariant — **the model emits DATA, a deterministic engine renders the
+media** — so they're correct, cheap, and theme-consistent. Both are **expensive per unit**, so each
+must run as a **background, credit-gated job** (never inline) with **content-hash caching** so
+re-plays are free. Neither should touch the core text-generation path.
+
+## 11. Audio narration (TTS, no actor) `[TODO / later]`
+**Goal:** let a learner *listen* to a lesson or a module — accessibility + a "watch-free" mode.
+
+**Tiered approach (ship cheapest first):**
+- **Tier A — FREE, zero-infra (MVP): browser Web Speech API (`speechSynthesis`).** A "🔊 Listen"
+  button in the artifact runtime reads the visible lesson/module text aloud using the user's OS
+  voices. $0, no API, no storage, no server load; play/pause/per-section. Quality varies by OS and
+  it's not a downloadable file — fine for a first version. (Add in `src/render/runtime.ts`.)
+- **Tier B — OSS, real audio files, ~$0 marginal: run a local model like the embedder.** Use
+  **Kokoro-82M** (Apache-2.0, tiny, good quality, ONNX/`kokoro-js`) or **Piper** (MIT) **in the Node
+  server** — exactly the pattern as the bge-small embedding model in `src/rag/embed.ts`. Produces an
+  MP3/WAV you can store and replay. Consistent voice, downloadable, works offline. This is the
+  recommended "real" tier.
+- **Tier C — paid (only if a premium voice becomes a selling point):** OpenAI TTS / Google Cloud TTS
+  / Deepgram Aura / ElevenLabs. Recurring per-character cost — avoid until justified.
+
+**How it plugs in:**
+- **Narration text ≠ raw prose.** Add an optional `narration` (a spoken-friendly script) per module,
+  or a small LLM step that turns a built module into a listenable script (short sentences, no code
+  dumps read aloud). Keep DATA-only: the script is a field; the renderer/engine makes the audio.
+- **Player UI** in the artifact runtime (per-module play, optional highlight-follow).
+- **Storage:** audio files in object storage (Supabase Storage / S3); URL referenced from the
+  blueprint/lesson. **Cache by content hash** so the same module isn't re-synthesized.
+- **Cost/gating:** Tier A is free → keep ungated. Tier B/C file generation = a **background job,
+  credit-gated**, cached.
+- **Compliance:** Kokoro (Apache) / Piper (MIT) licenses are fine; **disclose AI voice**; never clone
+  a real/celebrity voice. Add the TTS provider to the privacy sub-processor list (§5) if using a
+  hosted one.
+
+**Build outline (for a future session):** add `narration?` to the schema → a `narrate` step
+(Kokoro via transformers.js, mirroring `embed.ts`) → object-storage upload + content-hash cache → a
+player in `runtime.ts` → a background, credit-gated job. Verify locally with one module before commit.
+
+## 12. AI explainer videos (no actor — "board" that draws diagrams / types code) `[TODO / later]`
+**Goal:** short explainer clips where a diagram is *drawn* and code is *typed on a board* with
+narration — for beginners who can't visualize from code/prose. **No actor.**
+
+**Do NOT use generative video models (Veo / Sora / Kling) for this** — they make cinematic b-roll but
+**cannot render correct code, accurate diagrams, or legible labels** (they hallucinate garbled text).
+This is **programmatic animation + TTS**, not generative video.
+
+**Pipeline:** LLM authors a **storyboard** (ordered scenes: `draw-diagram | type-code | reveal-step |
+highlight`, each with narration) → a **code-driven animation engine** renders it to video → **TTS**
+(reuse §11 Kokoro/Piper) makes the voiceover → **ffmpeg** muxes audio+video → MP4. The LLM only
+emits the storyboard DATA; the engine owns the pixels, so code/diagrams are always correct.
+
+**Engine options (pick one):**
+- **Motion Canvas** (TypeScript, MIT) — purpose-built for code+diagram explainer videos (typewriter
+  code, highlighting, draw-on diagrams). Best fit: TS, and it can **reuse the diagram template
+  library** (§ the diagrams work just added in `src/render/diagrams.ts`).
+- **Remotion** (React → MP4 via headless Chrome) — reuse the existing SVG/diagram components as React
+  compositions. ⚠️ **Check Remotion's license** — it requires a company license above a small-team
+  threshold.
+- **Manim** (Python, MIT) — the polished 3Blue1Brown "board" look; `manim-voiceover` syncs narration.
+  Separate Python sidecar.
+- **Lowest-new-tech:** a "presentation mode" that animates the EXISTING diagram/code/scroll-reveal
+  components step-by-step, **screen-recorded headlessly** (Playwright `recordVideo`, or headless
+  Chrome + ffmpeg), with the TTS track overlaid. Reuses everything already built.
+
+**Storyboard schema (model emits DATA):** `videoStoryboard = { scenes: [{ visual: <diagram-template |
+code | highlight | callout>, data, narration, durationHint }] }`. Reuse the diagram templates +
+codeExample shapes — the model picks a template per scene, supplies data + narration.
+
+**Operational (critical):** video rendering is **CPU/GPU-heavy and slow** (seconds–minutes per clip).
+Run it as a **background job on a worker**, **never inline in a request**; **cache by content hash**;
+store the MP4 in object storage; expose a **"🎬 Make explainer video"** button per lesson/module. It is
+**far pricier than a text lesson**, so make it a **premium / opt-in, heavily-metered** action.
+
+**Compliance:** AI-generated (disclose); voice-model license (§11); render our own visuals so no
+third-party logos and no SynthID/watermark concerns.
+
+**Build outline (for a future session):** `videoStoryboard` schema + an LLM storyboard step (reuse the
+diagram templates) → a Motion-Canvas (or presentation-mode + Playwright-record) renderer → Kokoro
+narration → ffmpeg mux → object storage + content-hash cache → a background, credit-gated job → the
+"Make explainer video" button. Verify with one short clip locally before committing.
+
