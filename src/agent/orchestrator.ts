@@ -1,25 +1,31 @@
 /**
- * # Orchestrator — background generation with progressive availability
+ * # Orchestrator — two-stage generation with a human-in-the-loop OVERVIEW gate
  *
- * Runs DETACHED from the HTTP request so the learner can watch the dashboard. The
- * key latency win: each lesson's artifact is registered the moment its SKELETON
- * (overview + mental map + module stubs) is ready — BEFORE any module body is
- * written — so the "Open" link activates early while modules fill in behind it.
+ * Generation is split so the learner aligns on the OVERVIEW before any (paid)
+ * module bodies are written:
+ *   - runOverviewJob: profile → retrieve → architect → register the skeleton
+ *     (overview + mental map + module stubs) as a DRAFT (kind "overview-draft",
+ *     hidden from My Lessons, rendered preview-only so nothing builds). Cheap +
+ *     fast — this is the "Generate Overview — Free" step.
+ *   - runBuildJob: once the learner clicks "Generate Lesson", promote the draft
+ *     to a real lesson (kind "learning-artifact") and write every module body.
  *
- * For a broad ask ("teach me everything about X") a planner splits the topic into
- * a short COURSE of 2–5 lessons; the kick-off lesson is built first, the rest
- * follow, each linking back to the previous with a recap card.
+ * Both run DETACHED from the HTTP request so the learner can watch progress on
+ * the dashboard / Trainer. (Auto course-splitting was retired from the live flow:
+ * the gate is about aligning on ONE lesson's overview. Existing multi-lesson
+ * course artifacts still render and open fine.)
  */
 
-import { z } from "zod";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { randomUUID } from "node:crypto";
-import { makeLLM } from "./llm";
 import { profiler, retriever, architect, runDeepDive } from "./nodes";
-import { registerArtifact, updateArtifact } from "../lib/artifacts";
+import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
-import { lessonPercent, type Job } from "../lib/jobs";
+import { lessonPercent, type Job, type JobLesson } from "../lib/jobs";
 import type { Blueprint } from "../render/schema";
+
+/** Drafts (un-approved overviews) carry this kind so My Lessons can hide them. */
+export const OVERVIEW_DRAFT_KIND = "overview-draft";
+/** A real, learner-approved lesson. */
+export const LESSON_KIND = "learning-artifact";
 
 export interface GenerateInput {
   userPrompt: string;
@@ -37,105 +43,82 @@ export interface GenerateInput {
   userEmail?: string;
 }
 
-const LessonPlanSchema = z.object({
-  lessons: z
-    .array(z.object({ title: z.string(), summary: z.string(), subtopics: z.array(z.string()).default([]) }))
-    .min(1)
-    .max(5),
-});
-
-const COURSE_PLANNER_SYSTEM = `You decide whether a learning request is best taught as ONE focused lesson or a short COURSE of 2–5 lessons.
-Rules:
-- DEFAULT to ONE lesson. Return a single lesson for any focused ask (a concept, a comparison, a how-to) that fits in ~4–6 modules.
-- Split into a COURSE only when the topic is genuinely BROAD: the learner asks to learn "everything"/"complete"/"comprehensive"/"master"/"end-to-end"/"from scratch", OR the scope spans clearly distinct sub-areas that each deserve their own ~4–5 module lesson.
-- Each lesson must be COHERENT, ordered foundational→advanced, and small enough to teach well in ~5 modules (this keeps each lesson within the generator's token budget — never cram a broad topic into one bloated lesson). Max 5 lessons.
-- Lesson 1 is the KICK-OFF: the foundation the rest build on.
-Return lessons[] with {title, summary (one sentence), subtopics[] (the concrete things THIS lesson covers)}. For a focused ask, return EXACTLY ONE lesson.`;
-
-async function planLessons(userPrompt: string, topic: string, learningGoal: string, mustCover: string[], level: string) {
-  const hint = /everything|complete|comprehensive|master|end.?to.?end|from scratch|deep dive|bootcamp|full course|all about|in depth/i.test(userPrompt)
-    ? "The phrasing suggests BROAD/comprehensive coverage — a course of several lessons is likely appropriate."
-    : "The phrasing suggests a focused ask — one lesson is likely enough.";
-  const llm = makeLLM("sonnet", 0.2, { maxTokens: 1400 }).withStructuredOutput(LessonPlanSchema, { name: "plan" });
-  const out = await llm.invoke([
-    new SystemMessage(COURSE_PLANNER_SYSTEM),
-    new HumanMessage(`REQUEST: ${userPrompt}\nTOPIC: ${topic}\nGOAL: ${learningGoal}\nMUST COVER: ${mustCover.join(", ")}\nLEVEL: ${level}\nHINT: ${hint}`),
-  ]);
-  return out.lessons;
-}
-
-/** Run a full generation job (1 lesson, or a multi-lesson course) in the background. */
-export async function runJob(job: Job, input: GenerateInput): Promise<void> {
+/**
+ * STAGE 1 — design the OVERVIEW only (skeleton), register it as a preview-only
+ * DRAFT, and stop. No module bodies are written, so this is fast and free.
+ */
+export async function runOverviewJob(job: Job, input: GenerateInput): Promise<void> {
+  job.stage = "overview";
   try {
-    // 1. Profile the request once (resolves level/depth/examples/topic/intent).
-    const baseState: Record<string, unknown> = {
+    const st: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
       industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
       framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(baseState, await profiler(baseState as any, {} as any));
+    Object.assign(st, await profiler(st as any, {} as any));
     job.status = "running";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = st.profile as any;
+    const jl: JobLesson = { index: 1, title: profile?.topic || "Your lesson", artifactId: null, status: "designing", builtModules: 0, totalModules: 0, percent: 12 };
+    job.lessons = [jl];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profile = baseState.profile as any;
+    Object.assign(st, await retriever(st as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const intent = baseState.intent as any;
+    Object.assign(st, await architect(st as any, {} as any));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, {} as any));
 
-    // 2. Plan: one lesson, or a short course.
-    const plan = await planLessons(input.userPrompt, profile.topic, intent?.learningGoal ?? "", intent?.mustCover ?? [], profile.level);
-    job.isCourse = plan.length > 1;
-    job.courseId = job.isCourse ? randomUUID() : undefined;
-    job.lessons = plan.map((l, i) => ({ index: i + 1, title: l.title, artifactId: null, status: "pending" as const, builtModules: 0, totalModules: 0, percent: 2 }));
+    const bp = st.blueprint as Blueprint | null;
+    if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
 
-    // 3. Build each lesson: skeleton → register (overview ready) → modules.
-    let prev: { title: string; points: string[] } | null = null;
-    for (let i = 0; i < plan.length; i++) {
-      const spec = plan[i];
-      const jl = job.lessons[i];
-      jl.status = "designing"; jl.percent = lessonPercent(jl);
-
-      const subs = spec.subtopics ?? [];
-      const st: Record<string, unknown> = { ...baseState };
-      if (job.isCourse) {
-        st.profile = { ...profile, topic: spec.title };
-        st.intent = { ...intent, learningGoal: spec.summary, mustCover: subs.length ? subs : intent?.mustCover ?? [] };
-        st.userPrompt = `${input.userPrompt}\n\n[Course part ${i + 1} of ${plan.length}. This lesson covers ONLY: ${spec.title} — ${spec.summary}. Subtopics: ${subs.join(", ")}. Do not re-teach the other parts.]`;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.assign(st, await retriever(st as any));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.assign(st, await architect(st as any, {} as any));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, {} as any));
-
-      const bp = st.blueprint as Blueprint | null;
-      if (!bp) { jl.status = "error"; continue; }
-      if (prev) bp.meta.recap = { previousTitle: prev.title, points: prev.points };
-      if (job.isCourse) bp.meta.course = { index: i + 1, total: plan.length, title: spec.title };
-
-      const ref = await registerArtifact({
-        kind: "learning-artifact", title: bp.meta.title, html: renderArtifact(bp), blueprint: bp,
-        uploadIds: input.uploadIds, referOnly: input.referOnly, userId: input.userId, userEmail: input.userEmail,
-        prompt: input.userPrompt, cards: input.cards, profile: bp.learnerProfile,
-        course: job.isCourse ? { id: job.courseId!, index: i + 1, total: plan.length, title: spec.title } : undefined,
-      });
-      jl.artifactId = ref.id; jl.totalModules = bp.modules.length; jl.builtModules = 0;
-      jl.status = "building"; jl.percent = lessonPercent(jl);
-
-      for (const m of bp.modules) {
-        if (m.loadState === "full" && m.blocks.length > 0) { jl.builtModules++; jl.percent = lessonPercent(jl); continue; }
-        await runDeepDive(bp, m.id, { uploadIds: input.uploadIds, referOnly: input.referOnly });
-        jl.builtModules++; jl.percent = lessonPercent(jl);
-        await updateArtifact(ref.id, { blueprint: bp, html: renderArtifact(bp) });
-      }
-      jl.status = "done"; jl.percent = 100;
-      prev = { title: bp.meta.title, points: bp.modules.slice(0, 5).map((m) => m.title) };
-    }
+    const ref = await registerArtifact({
+      kind: OVERVIEW_DRAFT_KIND, title: bp.meta.title, html: renderArtifact(bp, { previewOnly: true }), blueprint: bp,
+      uploadIds: input.uploadIds, referOnly: input.referOnly, userId: input.userId, userEmail: input.userEmail,
+      prompt: input.userPrompt, cards: input.cards, profile: bp.learnerProfile,
+    });
+    jl.artifactId = ref.id; jl.title = bp.meta.title; jl.totalModules = bp.modules.length;
+    jl.status = "ready"; jl.percent = 100;
     job.status = "done";
   } catch (e) {
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);
-    console.error("[runJob]", e);
+    console.error("[runOverviewJob]", e);
+  }
+}
+
+/**
+ * STAGE 2 — the learner approved the overview: promote the draft to a real
+ * lesson and write every module body (the old build loop), updating the stored
+ * artifact after each so the lesson is readable while the rest fill in.
+ */
+export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
+  job.stage = "build";
+  try {
+    const art = await getArtifact(artifactId);
+    const bp = art?.blueprint;
+    if (!art || !bp) { job.status = "error"; job.error = "That overview wasn't found (it may have expired)."; return; }
+
+    // Promote draft → real lesson so it appears in My Lessons from now on.
+    if (art.kind !== LESSON_KIND) await updateArtifact(artifactId, { kind: LESSON_KIND });
+    job.status = "running";
+
+    const jl: JobLesson = { index: 1, title: bp.meta.title, artifactId, status: "building", builtModules: 0, totalModules: bp.modules.length, percent: 30 };
+    job.lessons = [jl];
+    jl.percent = lessonPercent(jl);
+
+    for (const m of bp.modules) {
+      if (m.loadState === "full" && m.blocks.length > 0) { jl.builtModules++; jl.percent = lessonPercent(jl); continue; }
+      await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly });
+      jl.builtModules++; jl.percent = lessonPercent(jl);
+      await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) });
+    }
+    jl.status = "done"; jl.percent = 100;
+    job.status = "done";
+  } catch (e) {
+    job.status = "error";
+    job.error = e instanceof Error ? e.message : String(e);
+    console.error("[runBuildJob]", e);
   }
 }

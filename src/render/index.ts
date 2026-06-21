@@ -18,7 +18,7 @@ function escAttr(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
 
-export function renderArtifact(bp: Blueprint): string {
+export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean } = {}): string {
   const p = bp.learnerProfile;
   // The glossary is embedded as inert JSON; the runtime parses it for popovers.
   // We escape `<` so a stray "</script>" inside a definition can't break out.
@@ -26,8 +26,14 @@ export function renderArtifact(bp: Blueprint): string {
   // Lesson config drives the runtime's background build queue: which modules are
   // still stubs. The runtime reads the artifactId from its own iframe URL
   // (/api/artifact/<id>). Empty stub list = nothing to fetch (the /full download).
-  const stubModuleIds = bp.modules.filter((m) => !(m.loadState === "full" && m.blocks.length > 0)).map((m) => m.id);
-  const configJson = JSON.stringify({ stubModuleIds }).replace(/</g, "\\u003c");
+  //
+  // PREVIEW mode (the human-in-the-loop overview gate): the artifact shows the
+  // OVERVIEW only — no module body is built (none auto-queued, and clicking a node
+  // is intercepted with a "generate the full lesson" note) so it stays free until
+  // the learner approves. Driven by `previewOnly` in the config.
+  const previewOnly = !!opts.previewOnly;
+  const stubModuleIds = previewOnly ? [] : bp.modules.filter((m) => !(m.loadState === "full" && m.blocks.length > 0)).map((m) => m.id);
+  const configJson = JSON.stringify({ stubModuleIds, previewOnly }).replace(/</g, "\\u003c");
   // Optional per-industry accent override (only the accent token changes).
   const accentStyle = bp.meta.accent ? `<style>:root{--accent:${escAttr(bp.meta.accent)}}</style>` : "";
 

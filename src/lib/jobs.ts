@@ -28,6 +28,8 @@ export interface Job {
   id: string;
   userId: string;
   status: "planning" | "running" | "done" | "error";
+  /** which stage this job is: the free overview, or the full lesson build. */
+  stage?: "overview" | "build";
   error?: string;
   isCourse: boolean;
   courseId?: string;

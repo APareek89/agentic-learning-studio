@@ -124,10 +124,11 @@ export async function updateArtifact(id: string, patch: Partial<Omit<StoredArtif
   const next = { ...a, ...patch };
   cache.set(id, next);
   if (!dbEnabled()) return;
-  // Only the fields that change on a rebuild need updating.
+  // Only the fields that change on a rebuild need updating. `kind` is included so the
+  // overview-draft → real-lesson promotion (build stage) persists.
   await query(
-    `update lessons set blueprint = $2, html = $3, updated_at = now() where id = $1`,
-    [id, next.blueprint ?? null, next.html]
+    `update lessons set kind = $2, blueprint = $3, html = $4, updated_at = now() where id = $1`,
+    [id, next.kind, next.blueprint ?? null, next.html]
   ).catch((e) => console.warn("[artifacts] update failed:", (e as Error).message));
 }
 

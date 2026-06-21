@@ -137,7 +137,7 @@ export const RUNTIME_JS = String.raw`
     if(t.matches(".kc-opt")){ kcAnswerMcq(t); return; }
     if(t.matches(".kc-submit")){ kcAnswerFree(t); return; }
 
-    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(HORIZ){ hGoto(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
+    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(PREVIEW && isStub(gid)){ previewNote(); return; } if(HORIZ){ hGoto(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
     if(t.id==="to-overview"){ showOverview(); return; }
     if(t.matches(".term,.term-chip")){ ev.preventDefault(); ev.stopPropagation(); if(pop.classList.contains("on") && pop._for===t){ closePopover(); } else { openPopover(t); pop._for=t; } return; }
@@ -284,7 +284,17 @@ export const RUNTIME_JS = String.raw`
   var _m=(location.pathname||"").match(/\/api\/artifact\/([^\/?#]+)/);
   var ARTIFACT_ID=_m?_m[1]:"";
   var queue=(cfg.stubModuleIds||[]).slice();
+  var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
   var busy=false;
+  // Transient toast shown when a learner tries to open a section in preview mode.
+  function previewNote(){
+    var n=document.getElementById("preview-note");
+    if(!n){ n=document.createElement("div"); n.id="preview-note"; document.body.appendChild(n);
+      n.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:var(--ink,#15171c);color:#fff;font:600 13px/1.4 inherit;padding:10px 16px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:84vw;text-align:center;opacity:0;transition:opacity .15s"; }
+    n.textContent="🔒 This is the free overview — click “Generate Lesson” to build and read the full sections.";
+    requestAnimationFrame(function(){ n.style.opacity="1"; });
+    clearTimeout(n._t); n._t=setTimeout(function(){ n.style.opacity="0"; },3200);
+  }
   function cssEsc(s){ return String(s).replace(/["\\]/g,"\\$&"); }
   function navItem(id){ return document.querySelector('.navitem[data-goto="'+cssEsc(id)+'"]'); }
   // Matches both the vertical workbench panel and the horizontal h-page (both carry data-module).
@@ -313,6 +323,7 @@ export const RUNTIME_JS = String.raw`
       .then(function(){ busy=false; pump(); });
   }
   function prioritize(id){
+    if(PREVIEW) return;               // preview gate: never build on demand
     var i=queue.indexOf(id);
     if(i>0){ queue.splice(i,1); queue.unshift(id); }
     else if(i===-1 && isStub(id)){ queue.unshift(id); }

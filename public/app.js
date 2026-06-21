@@ -32,6 +32,13 @@ const chatCloseBtn = document.getElementById("chat-close");
 const genOverlay = document.getElementById("gen-overlay");
 const genLabel = document.getElementById("gen-label");
 const genStatus = document.getElementById("gen-status");
+// Overview-gate elements (human-in-the-loop: review a free overview before building).
+const genLessonBtn = document.getElementById("gen-lesson");
+const editOverviewBtn = document.getElementById("edit-overview");
+const editOverlay = document.getElementById("edit-overlay");
+const editFeedback = document.getElementById("edit-feedback");
+const editRegenBtn = document.getElementById("edit-regen");
+const editCloseBtn = document.getElementById("edit-close");
 if (genStatus) genStatus.addEventListener("click", () => switchTab("dashboard"));
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
 askMoreBtn.addEventListener("click", () => toggleChat());
@@ -66,6 +73,8 @@ let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
 let activeJobId = null;
 let activeJobTimer = null;
 let currentCourse = null; // { courseId, lessons:[{index,title,artifactId,status}], activeIndex }
+let overviewArtifactId = null; // the free overview draft currently under review (gate)
+let lastOverviewPayload = null; // the payload used to build it (so "Edit overview" can re-run)
 const lessonTabsEl = document.getElementById("lesson-tabs");
 
 // Friendly labels for the dropdown summary.
@@ -292,7 +301,7 @@ generateBtn.addEventListener("click", () => {
   if (!p) { promptEl.focus(); return; }
   if (authRequiredAndOut()) { openAuth("signup"); return; }
   basePrompt = p;
-  startJob(p);
+  startOverview(buildPayload(p, null));
 });
 promptEl.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generateBtn.click(); });
 
@@ -435,6 +444,7 @@ function showArtifact(ref) {
 }
 function openInViewer(id, title) {
   currentArtifactId = id;
+  overviewArtifactId = null; setOverviewMode(false); // a real lesson, not an overview draft
   currentViewUrl = "/api/artifact/" + id;
   genOverlay.hidden = true;
   viewerEmpty.hidden = true;
@@ -637,6 +647,7 @@ function openLibraryLesson(slug, title) {
   switchTab("trainer");
   chatLog.innerHTML = "";
   toggleChat(false);
+  overviewArtifactId = null; setOverviewMode(false);
   lessonTabsEl.hidden = true; currentCourse = null;
   genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
   viewerFrame.src = "/api/lesson/" + slug;
@@ -650,35 +661,107 @@ function openLibraryLesson(slug, title) {
 // Background generation jobs — start, poll, show progress on the dashboard,
 // open as soon as the overview exists. Handles single lessons AND courses.
 // ============================================================================
-async function startJob(promptText) {
+// ---- STAGE 1: the FREE OVERVIEW (human-in-the-loop gate) ----
+// Generate only the overview (skeleton), land on the Trainer, show progress, then
+// render the overview with two CTAs: Generate Lesson / Edit overview.
+async function startOverview(payload) {
+  lastOverviewPayload = payload;
+  let jobId;
+  // Land on the Trainer and show overview-generation progress over the viewer.
+  switchTab("trainer");
+  lessonTabsEl.hidden = true; currentCourse = null;
+  toggleChat(false);
+  setOverviewMode(false);
+  viewerFrame.hidden = true; viewerEmpty.hidden = true;
+  downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
+  genOverlay.hidden = false;
+  genLabel.textContent = "Designing your overview…";
+  try {
+    const res = await fetch("/api/overview", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(payload) });
+    if (res.status === 401) { genOverlay.hidden = true; openAuth("signin"); return; }
+    const data = await res.json();
+    if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the overview.");
+    jobId = data.jobId;
+  } catch (e) { genOverlay.hidden = true; viewerEmpty.hidden = false; viewerEmpty.innerHTML = "⚠️ " + escapeHtml(e.message); return; }
+  activeJobId = jobId;
+  promptEl.value = "";
+  pollOverview(jobId);
+}
+
+function pollOverview(jobId) {
+  if (activeJobTimer) clearTimeout(activeJobTimer);
+  const tick = async () => {
+    if (activeJobId !== jobId) return;
+    let job;
+    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) throw new Error("lost"); job = await r.json(); }
+    catch { activeJobTimer = setTimeout(tick, 3000); return; }
+    const l = job.lessons && job.lessons[0];
+    if (job.status === "error") { activeJobId = null; genOverlay.hidden = true; viewerEmpty.hidden = false; viewerEmpty.innerHTML = "⚠️ " + escapeHtml(job.error || "Overview generation failed."); return; }
+    if (job.status === "done" && l && l.artifactId) { activeJobId = null; openOverviewDraft(l.artifactId, l.title); return; }
+    genLabel.textContent = l && l.status === "designing" ? "Designing the lesson outline…" : "Generating your overview…";
+    activeJobTimer = setTimeout(tick, 2000);
+  };
+  tick();
+}
+
+// Show the overview draft with the approve/refine CTAs (no Ask/Download/Rate — it's free, not a full lesson yet).
+function openOverviewDraft(id, title) {
+  overviewArtifactId = id;
+  currentArtifactId = null; // not a real lesson yet → Ask-more etc. stay off
+  currentViewUrl = "/api/artifact/" + id;
+  genOverlay.hidden = true; viewerEmpty.hidden = true;
+  viewerFrame.hidden = false; viewerFrame.src = "/api/artifact/" + id;
+  document.getElementById("viewer-title").textContent = title || "Overview";
+  downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
+  openWindowBtn.hidden = false;
+  setOverviewMode(true);
+}
+
+// Toggle the overview-gate CTAs (Generate Lesson / Edit overview).
+function setOverviewMode(on) {
+  if (genLessonBtn) genLessonBtn.hidden = !on;
+  if (editOverviewBtn) editOverviewBtn.hidden = !on;
+}
+
+// ---- STAGE 2: approve → build the full lesson, then go to My Lessons (current flow) ----
+async function startBuild(artifactId) {
   let jobId;
   try {
-    const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(buildPayload(promptText, null)) });
+    const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
     if (res.status === 401) { openAuth("signin"); return; }
     const data = await res.json();
-    if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start generation.");
+    if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the lesson build.");
     jobId = data.jobId;
   } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
   activeJobId = jobId;
-  promptEl.value = "";
-  // Land on the Trainer. It KEEPS the current lesson (or shows a generating empty state
-  // if none). The job's progress + the finished lesson appear in My Lessons; the Trainer
-  // only changes when the user opens a lesson there.
+  overviewArtifactId = null;
+  setOverviewMode(false);
+  // Send the learner to My Lessons, where the build progresses and opens when ready.
   updateGenStatus(true);
-  if (!currentArtifactId) showTrainerGenerating();
-  switchTab("trainer");
+  switchTab("dashboard");
   pollJob(jobId);
+}
+
+// CTA wiring for the overview gate.
+if (genLessonBtn) genLessonBtn.addEventListener("click", () => { if (overviewArtifactId) startBuild(overviewArtifactId); });
+if (editOverviewBtn) editOverviewBtn.addEventListener("click", openEditOverview);
+if (editCloseBtn) editCloseBtn.addEventListener("click", () => { editOverlay.hidden = true; });
+if (editRegenBtn) editRegenBtn.addEventListener("click", () => {
+  const fb = (editFeedback.value || "").trim();
+  if (!lastOverviewPayload) { editOverlay.hidden = true; return; }
+  const payload = { ...lastOverviewPayload };
+  if (fb) payload.prompt = (basePrompt || lastOverviewPayload.prompt || "") + "\n\n[Please revise the overview based on this feedback: " + fb + "]";
+  editOverlay.hidden = true;
+  startOverview(payload);
+});
+function openEditOverview() {
+  if (editFeedback) editFeedback.value = "";
+  if (editOverlay) editOverlay.hidden = false;
+  if (editFeedback) editFeedback.focus();
 }
 
 // The "⏳ generating" pill in the Trainer's bar (links to My Lessons for progress).
 function updateGenStatus(active) { if (genStatus) genStatus.hidden = !active; }
-// Trainer empty state while a lesson generates and nothing is open yet.
-function showTrainerGenerating() {
-  viewerFrame.hidden = true; genOverlay.hidden = true;
-  downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
-  viewerEmpty.hidden = false;
-  viewerEmpty.innerHTML = "⏳ Your lesson is generating… it'll appear in <strong>My Lessons</strong>. Open it there when it's ready.";
-}
 
 function pollJob(jobId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);

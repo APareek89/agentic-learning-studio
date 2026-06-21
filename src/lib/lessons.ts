@@ -40,7 +40,9 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     // sign-ins / a project migration (their auth user id can change; email is stable).
     `select id, title, prompt, created_at, expires_at, rating, profile, course_id, course_total
        from lessons
-      where (user_id = $1 or ($2 <> '' and user_email = $2)) and expires_at > now() and (course_id is null or course_index = 1)
+      where (user_id = $1 or ($2 <> '' and user_email = $2)) and expires_at > now()
+        and kind = 'learning-artifact'
+        and (course_id is null or course_index = 1)
       order by created_at desc
       limit 100`,
     [userId, email]

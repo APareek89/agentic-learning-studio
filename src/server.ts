@@ -32,7 +32,7 @@ import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse } from "./lib/lessons";
 import { createJob, getJob, lessonPercent } from "./lib/jobs";
-import { runJob } from "./agent/orchestrator";
+import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -157,11 +157,12 @@ app.post("/api/rate", requireAuth, async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// POST /api/generate — start a DETACHED background generation (single lesson or a
-// multi-lesson course). Returns a jobId immediately; the dashboard polls
-// GET /api/job/:id and the lesson becomes openable as soon as its overview exists.
+// POST /api/overview — STAGE 1 of the human-in-the-loop flow ("Generate Overview —
+// Free"): design ONLY the overview (skeleton) as a preview-only DRAFT and return a
+// jobId immediately. No module bodies are written (free); the learner reviews the
+// overview, then clicks "Generate Lesson" (→ /api/build) to commit.
 // ----------------------------------------------------------------------------
-app.post("/api/generate", requireAuth, async (req, res) => {
+app.post("/api/overview", requireAuth, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
   if (!prompt.trim()) { res.status(400).json({ error: "Missing 'prompt'." }); return; }
@@ -181,7 +182,7 @@ app.post("/api/generate", requireAuth, async (req, res) => {
   }
   const job = createJob(user?.id ?? "anon");
   // Fire-and-forget: the job runs in the background, surviving this response.
-  void runJob(job, {
+  void runOverviewJob(job, {
     userPrompt: prompt, cards, uploadIds: (body.uploadIds as string[]) ?? [], referOnly: !!body.referOnly,
     industry: (body.industry as string) ?? "", buildGoal: (body.buildGoal as string) ?? "",
     levels: (body.levels as string[]) ?? [], lessonTypes: (body.lessonTypes as string[]) ?? [],
@@ -191,12 +192,27 @@ app.post("/api/generate", requireAuth, async (req, res) => {
   res.json({ jobId: job.id });
 });
 
-// GET /api/job/:id — live progress for the dashboard.
+// POST /api/build — STAGE 2 ("Generate Lesson"): the learner approved the overview
+// draft; promote it to a real lesson and write every module body. Returns a jobId;
+// the dashboard (My Lessons) polls GET /api/job/:id and opens it as bodies fill in.
+// ----------------------------------------------------------------------------
+app.post("/api/build", requireAuth, async (req, res) => {
+  const artifactId = typeof req.body?.artifactId === "string" ? req.body.artifactId : "";
+  if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
+  const art = await getArtifact(artifactId);
+  if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
+  const user = await getUser(req.headers.authorization);
+  const job = createJob(user?.id ?? "anon");
+  void runBuildJob(job, artifactId);
+  res.json({ jobId: job.id });
+});
+
+// GET /api/job/:id — live progress for the dashboard / Trainer.
 app.get("/api/job/:id", requireAuth, (req, res) => {
   const job = getJob(req.params.id);
   if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
   res.json({
-    id: job.id, status: job.status, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
+    id: job.id, status: job.status, stage: job.stage, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
     lessons: job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status, percent: lessonPercent(l), builtModules: l.builtModules, totalModules: l.totalModules })),
   });
 });
@@ -313,7 +329,9 @@ app.get("/api/artifact/:id", async (req, res) => {
   // (e.g. the no-scroll overview) without regeneration. Fall back to the stored HTML if
   // the blueprint is missing or anything throws — never break an openable lesson.
   if (art.blueprint) {
-    try { res.send(renderArtifact(art.blueprint)); return; }
+    // A draft (un-approved overview) renders preview-only — overview shown, nothing builds.
+    const previewOnly = art.kind === OVERVIEW_DRAFT_KIND;
+    try { res.send(renderArtifact(art.blueprint, { previewOnly })); return; }
     catch (e) { console.warn("[artifact] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(art.html);
