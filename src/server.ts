@@ -30,7 +30,8 @@ import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
-import { listLessons, rateLesson, getPreferences, savePreferences, getCourse } from "./lib/lessons";
+import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
+import { listCommunity, getCommunityHtml, likeCommunity, shareLesson } from "./lib/community";
 import { createJob, getJob, lessonPercent } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
@@ -161,6 +162,18 @@ app.post("/api/rate", requireAuth, async (req, res) => {
   }
   const ok = await rateLesson(user.id, artifactId, rating, comment, user.email ?? "");
   res.json({ ok });
+});
+
+// POST /api/progress — the host relays the artifact iframe's progress here (the iframe is
+// unauthenticated, so it postMessages the host, which posts this with the auth token). Drives
+// My Lessons % completed + the Trainer "share & save" popup.
+app.post("/api/progress", requireAuth, async (req, res) => {
+  const { lessonId, percent, visited, total } = (req.body ?? {}) as { lessonId?: string; percent?: number; visited?: number; total?: number };
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
+  await saveProgress(user.id, user.email ?? "", lessonId, percent ?? 0, visited ?? 0, total ?? 0);
+  res.json({ ok: true });
 });
 
 // ----------------------------------------------------------------------------
@@ -626,6 +639,42 @@ app.get("/api/lesson/:slug", async (req, res) => {
     catch (e) { console.warn("[lesson] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(rows[0].html);
+});
+
+// ----------------------------------------------------------------------------
+// Community Courses — learner-shared lessons. Browsing is PUBLIC (no sign-in, like the
+// Library); sharing is gated (you share YOUR lesson). Likes are anonymous (client dedupes).
+// ----------------------------------------------------------------------------
+app.get("/api/community", async (_req, res) => {
+  res.json({ lessons: await listCommunity() });
+});
+
+// GET /api/community/lesson/:slug — serve a shared lesson (public; re-renders from blueprint).
+app.get("/api/community/lesson/:slug", async (req, res) => {
+  const html = await getCommunityHtml(req.params.slug);
+  if (!html) { res.status(404).send("<p>Lesson not found.</p>"); return; }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(html);
+});
+
+// POST /api/community/like — anonymous +1 (the browser prevents double-likes via localStorage).
+app.post("/api/community/like", async (req, res) => {
+  const slug = typeof req.body?.slug === "string" ? req.body.slug : "";
+  if (!slug) { res.status(400).json({ error: "Missing slug." }); return; }
+  const likes = await likeCommunity(slug);
+  if (likes == null) { res.status(404).json({ error: "Lesson not found." }); return; }
+  res.json({ ok: true, likes });
+});
+
+// POST /api/community/share — snapshot the learner's lesson public + mint a discount code.
+app.post("/api/community/share", requireAuth, async (req, res) => {
+  const { lessonId, displayName } = (req.body ?? {}) as { lessonId?: string; displayName?: string };
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
+  const result = await shareLesson(lessonId, { id: user.id, email: user.email ?? "" }, displayName);
+  if (!result.ok) { res.status(400).json({ error: result.error || "Couldn't share." }); return; }
+  res.json({ ok: true, slug: result.slug, code: result.code });
 });
 
 // ----------------------------------------------------------------------------

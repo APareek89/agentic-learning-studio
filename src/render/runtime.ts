@@ -34,7 +34,10 @@ export const RUNTIME_JS = String.raw`
   var total = moduleIds.length || 1;
   var visited = {};
   function markVisited(id){ if(moduleIds.indexOf(id) !== -1 && !visited[id]){ visited[id]=1; setProgress(); } }
-  function setProgress(){ var n=Object.keys(visited).length; var bar=document.querySelector(".progress > i"); if(bar) bar.style.width = Math.round(n/total*100)+"%"; }
+  function setProgress(){ var n=Object.keys(visited).length; var pct=Math.round(n/total*100); var bar=document.querySelector(".progress > i"); if(bar) bar.style.width = pct+"%";
+    // Relay progress to the host app (this iframe is unauthenticated; the host persists it
+    // server-side + uses the count for the "share & save" popup). Harmless when standalone.
+    try { if(window.parent && window.parent!==window) window.parent.postMessage({type:"als-progress", visited:n, total:total, percent:pct}, "*"); } catch(e){} }
 
   // ---- HORIZONTAL reading mode (paged deck): nav + modal + per-page Next ----
   var HORIZ = document.body.getAttribute("data-reading")==="horizontal";

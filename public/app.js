@@ -75,6 +75,7 @@ let activeJobTimer = null;
 let currentCourse = null; // { courseId, lessons:[{index,title,artifactId,status}], activeIndex }
 let overviewArtifactId = null; // the free overview draft currently under review (gate)
 let lastOverviewPayload = null; // the payload used to build it (so "Edit overview" can re-run)
+let currentLessonOwned = false; // is the open Trainer lesson the user's own (eligible for progress + share)?
 const lessonTabsEl = document.getElementById("lesson-tabs");
 
 // Friendly labels for the dropdown summary.
@@ -444,6 +445,7 @@ function showArtifact(ref) {
 }
 function openInViewer(id, title) {
   currentArtifactId = id;
+  currentLessonOwned = true; // a saved lesson the user owns → eligible for progress + share
   overviewArtifactId = null; setOverviewMode(false); // a real lesson, not an overview draft
   currentViewUrl = "/api/artifact/" + id;
   genOverlay.hidden = true;
@@ -513,7 +515,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", dashboard: "tab-dashboard" };
+const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -527,6 +529,7 @@ function switchTab(name) {
   Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
+  if (name === "community") loadCommunity();
 }
 
 // ---- Dashboard tab ----
@@ -550,24 +553,32 @@ async function loadDashboard() {
 }
 function lessonCard(l) {
   const el = document.createElement("div");
-  el.className = "lesson-card";
+  el.className = "lesson-row";
   const days = l.daysRemaining;
   const warn = days <= 5 ? " warn" : "";
   const isCourse = l.courseId && (l.courseTotal || 0) > 1;
   const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
   const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
   const courseBadge = isCourse ? `<span class="lc-badge">Course · ${l.courseTotal} parts</span>` : "";
+  const pct = Math.max(0, Math.min(100, l.percent || 0));
+  const shared = isShared(l.id);
   el.innerHTML = `
-    <div class="lc-title">${escapeHtml(l.title)}</div>
-    <div class="lc-meta"><span class="lc-badge${warn}">${days}d left</span>${courseBadge}${industry}${ratingHtml}</div>
-    <div class="lc-actions">
-      <button class="ghost lc-open" type="button">${isCourse ? "Open course" : "Open / revise"}</button>
-      ${isCourse ? "" : `<a class="ghost lc-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
+    <div class="lr-main">
+      <div class="lr-title">${escapeHtml(l.title)}</div>
+      <div class="lr-meta"><span class="lc-badge${warn}">${days}d left</span>${courseBadge}${industry}${ratingHtml}</div>
+      <div class="lr-prog"><div class="lr-bar"><i style="width:${pct}%"></i></div><span class="lr-pct">${pct}% complete</span></div>
+    </div>
+    <div class="lr-actions">
+      <button class="ghost lr-open" type="button">${isCourse ? "Open course" : "Open"}</button>
+      ${isCourse ? "" : `<a class="ghost lr-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
+      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Community Share — 30% off"}</button>
     </div>`;
-  el.querySelector(".lc-open").addEventListener("click", () => {
+  el.querySelector(".lr-open").addEventListener("click", () => {
     if (isCourse) { openCourseById(l.courseId, l.title); return; }
     openLessonInWorkspace(l.id, l.title, l.prompt);
   });
+  const share = el.querySelector(".lr-share");
+  if (share && !shared) share.addEventListener("click", () => openShareModal(l.id));
   return el;
 }
 
@@ -678,10 +689,176 @@ function openLibraryLesson(slug, title) {
   genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
   viewerFrame.src = "/api/lesson/" + slug;
   document.getElementById("viewer-title").textContent = title;
-  currentArtifactId = null; currentViewUrl = "/api/lesson/" + slug;
+  currentArtifactId = null; currentLessonOwned = false; currentViewUrl = "/api/lesson/" + slug;
   ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
   openWindowBtn.hidden = false;
 }
+
+// ============================================================================
+// Community courses — learner-shared lessons (public browse), likes, and the
+// "Community Share & save 30%" flow (My Lessons + the Trainer 2-module popup).
+// ============================================================================
+const commSearch = document.getElementById("comm-search");
+const commFeatured = document.getElementById("comm-featured");
+const commFeatGrid = document.getElementById("comm-feat-grid");
+const commAllH = document.getElementById("comm-all-h");
+const commGrid = document.getElementById("comm-grid");
+const commEmpty = document.getElementById("comm-empty");
+let commAll = [];
+let commLoaded = false;
+
+// ---- anonymous like dedupe (per-browser) ----
+function likedSet() { try { return new Set(JSON.parse(localStorage.getItem("als-liked") || "[]")); } catch { return new Set(); } }
+function saveLiked(set) { try { localStorage.setItem("als-liked", JSON.stringify([...set])); } catch { /* ignore */ } }
+// ---- which of the user's lessons have already been shared (hide the offer) ----
+function sharedSet() { try { return new Set(JSON.parse(localStorage.getItem("als-shared") || "[]")); } catch { return new Set(); } }
+function isShared(id) { return sharedSet().has(id); }
+function markShared(id) { const s = sharedSet(); s.add(id); try { localStorage.setItem("als-shared", JSON.stringify([...s])); } catch { /* ignore */ } }
+
+async function loadCommunity() {
+  try {
+    const res = await fetch("/api/community");
+    const { lessons } = await res.json();
+    commAll = lessons || [];
+    commLoaded = true;
+    renderCommunity();
+  } catch { commGrid.innerHTML = ""; commEmpty.hidden = false; commEmpty.textContent = "Couldn't load community courses."; }
+}
+
+function communityTile(l) {
+  const s = catStyle(l.category || "Community");
+  const liked = likedSet().has(l.slug);
+  const el = document.createElement("div");
+  el.className = "lib-card comm-card";
+  el.style.setProperty("--cov-bg", s.bg);
+  el.style.setProperty("--cov-icon", s.icon);
+  el.style.setProperty("--cov-text", s.text);
+  el.innerHTML =
+    `<button class="lib-open" type="button" aria-label="Open ${escapeHtml(l.title)}">` +
+      `<div class="lib-cover"><span class="lib-ico" aria-hidden="true">${s.svg}</span>` +
+        `<div class="lib-cover-text"><span class="lib-title">${escapeHtml(l.title)}</span>` +
+        (l.description ? `<span class="lib-desc">${escapeHtml(l.description)}</span>` : "") + `</div></div>` +
+    `</button>` +
+    `<div class="lib-foot">` +
+      `<span class="lib-pill">${escapeHtml(l.category || "Community")}</span>` +
+      `<span class="comm-by">by ${escapeHtml(l.submitter || "a learner")}</span>` +
+      `<button class="comm-like${liked ? " liked" : ""}" type="button" aria-pressed="${liked}" title="Like this lesson">♥ <b class="comm-likes">${l.likes || 0}</b></button>` +
+    `</div>`;
+  el.querySelector(".lib-open").addEventListener("click", () => openCommunityLesson(l.slug, l.title));
+  el.querySelector(".comm-like").addEventListener("click", (e) => { e.stopPropagation(); likeCommunityCard(l, el.querySelector(".comm-like")); });
+  return el;
+}
+
+async function likeCommunityCard(l, btn) {
+  const set = likedSet();
+  if (set.has(l.slug)) return; // one like per browser
+  try {
+    const res = await fetch("/api/community/like", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: l.slug }) });
+    const data = await res.json();
+    if (!res.ok) return;
+    l.likes = data.likes;
+    set.add(l.slug); saveLiked(set);
+    btn.classList.add("liked"); btn.setAttribute("aria-pressed", "true");
+    const c = btn.querySelector(".comm-likes"); if (c) c.textContent = data.likes;
+  } catch { /* ignore */ }
+}
+
+function renderCommunity() {
+  const q = (commSearch.value || "").trim().toLowerCase();
+  if (!commAll.length) {
+    commFeatured.hidden = true; commAllH.hidden = true; commGrid.innerHTML = "";
+    commEmpty.hidden = false; commEmpty.textContent = "No community courses yet — share one of yours from My Lessons!";
+    return;
+  }
+  const matches = commAll.filter((l) => !q || (l.title + " " + (l.description || "") + " " + (l.category || "") + " " + (l.submitter || "")).toLowerCase().includes(q));
+  // Featured = top 10 by likes; hidden while searching so results are unambiguous.
+  if (!q) {
+    const featured = [...commAll].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10);
+    commFeatGrid.innerHTML = ""; featured.forEach((l) => commFeatGrid.appendChild(communityTile(l)));
+    commFeatured.hidden = false; commAllH.hidden = false;
+  } else {
+    commFeatured.hidden = true; commAllH.hidden = true;
+  }
+  commGrid.innerHTML = "";
+  matches.forEach((l) => commGrid.appendChild(communityTile(l)));
+  commEmpty.hidden = matches.length > 0;
+  if (!matches.length) commEmpty.textContent = "No community courses match your search.";
+}
+commSearch.addEventListener("input", () => { if (commLoaded) renderCommunity(); });
+
+function openCommunityLesson(slug, title) {
+  switchTab("trainer");
+  chatLog.innerHTML = "";
+  toggleChat(false);
+  overviewArtifactId = null; setOverviewMode(false);
+  lessonTabsEl.hidden = true; currentCourse = null;
+  genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
+  viewerFrame.src = "/api/community/lesson/" + slug;
+  document.getElementById("viewer-title").textContent = title;
+  currentArtifactId = null; currentLessonOwned = false; currentViewUrl = "/api/community/lesson/" + slug;
+  ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
+  openWindowBtn.hidden = false;
+}
+
+// ---- Share flow: confirm a display name → POST /api/community/share → show the code ----
+const shareOverlay = document.getElementById("share-overlay");
+const shareName = document.getElementById("share-name");
+const shareMsg = document.getElementById("share-msg");
+const shareGo = document.getElementById("share-go");
+const codeOverlay = document.getElementById("code-overlay");
+const codeValue = document.getElementById("code-value");
+let shareLessonId = null;
+const offeredShare = {}; // per-lesson, so the Trainer popup only fires once per session
+
+function openShareModal(lessonId) {
+  if (authRequiredAndOut()) { openAuth("signin"); return; }
+  shareLessonId = lessonId;
+  shareMsg.hidden = true; shareMsg.textContent = "";
+  if (!shareName.value) shareName.value = defaultDisplayName();
+  shareOverlay.hidden = false;
+  shareName.focus();
+}
+function defaultDisplayName() { return currentUserEmail ? currentUserEmail.split("@")[0] : ""; }
+document.getElementById("share-close").addEventListener("click", () => { shareOverlay.hidden = true; });
+document.getElementById("code-close").addEventListener("click", () => { codeOverlay.hidden = true; });
+shareGo.addEventListener("click", async () => {
+  if (!shareLessonId) { shareOverlay.hidden = true; return; }
+  shareGo.disabled = true; shareGo.textContent = "Sharing…";
+  try {
+    const res = await fetch("/api/community/share", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ lessonId: shareLessonId, displayName: shareName.value.trim() }) });
+    if (res.status === 401) { shareOverlay.hidden = true; openAuth("signin"); return; }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Couldn't share this lesson.");
+    markShared(shareLessonId);
+    shareOverlay.hidden = true;
+    codeValue.textContent = data.code || "—";
+    codeOverlay.hidden = false;
+    if (!document.getElementById("tab-dashboard").hidden) loadDashboard(); // refresh the row → "✓ Shared"
+  } catch (e) {
+    shareMsg.hidden = false; shareMsg.textContent = "⚠️ " + e.message;
+  } finally {
+    shareGo.disabled = false; shareGo.textContent = "Share & get my code →";
+  }
+});
+document.getElementById("code-copy").addEventListener("click", () => {
+  try { navigator.clipboard.writeText(codeValue.textContent || ""); } catch { /* ignore */ }
+});
+document.getElementById("code-view").addEventListener("click", () => { codeOverlay.hidden = true; switchTab("community"); commLoaded = false; loadCommunity(); });
+
+// ---- Progress relay (from the artifact iframe) → server + the Trainer share popup ----
+window.addEventListener("message", (e) => {
+  const d = e.data;
+  if (!d || d.type !== "als-progress") return;
+  if (!currentLessonOwned || !currentArtifactId) return; // only the user's own lessons
+  const lessonId = currentArtifactId;
+  // Persist (authed; the host has the token, the iframe doesn't).
+  fetch("/api/progress", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ lessonId, percent: d.percent || 0, visited: d.visited || 0, total: d.total || 0 }) }).catch(() => {});
+  // After two modules, offer the share-and-save once (unless already shared).
+  if ((d.visited || 0) >= 2 && !offeredShare[lessonId] && !isShared(lessonId)) {
+    offeredShare[lessonId] = 1;
+    openShareModal(lessonId);
+  }
+});
 
 // ============================================================================
 // Background generation jobs — start, poll, show progress on the dashboard,
@@ -956,6 +1133,7 @@ function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "
 // ============================================================================
 let sb = null;
 let accessToken = null;
+let currentUserEmail = "";
 let authMode = "signin";
 let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
@@ -994,6 +1172,7 @@ function setAuthMode(mode) {
 function applySession(session) {
   accessToken = (session && session.access_token) || null;
   const email = (session && session.user && session.user.email) || "";
+  currentUserEmail = email;
   const signedIn = !!accessToken;
   if (logoutBtn) logoutBtn.hidden = !signedIn;
   if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }

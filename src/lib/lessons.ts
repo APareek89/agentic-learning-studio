@@ -21,6 +21,8 @@ export interface LessonCard {
   industry: string | null;
   courseId: string | null;
   courseTotal: number | null;
+  /** % of the lesson's modules the user has opened (server-persisted; 0 when none). */
+  percent: number;
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -34,16 +36,19 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
   const rows = await query<{
     id: string; title: string | null; prompt: string | null;
     created_at: Date; expires_at: Date; rating: number | null; profile: { industry?: string } | null;
-    course_id: string | null; course_total: number | null;
+    course_id: string | null; course_total: number | null; percent: number | null;
   }>(
     // Match by user id OR email, so a learner's lessons follow their email across
     // sign-ins / a project migration (their auth user id can change; email is stable).
-    `select id, title, prompt, created_at, expires_at, rating, profile, course_id, course_total
-       from lessons
-      where (user_id = $1 or ($2 <> '' and user_email = $2)) and expires_at > now()
-        and kind = 'learning-artifact'
-        and (course_id is null or course_index = 1)
-      order by created_at desc
+    // Left-join lesson_progress for the % completed bar (0 when never opened).
+    `select l.id, l.title, l.prompt, l.created_at, l.expires_at, l.rating, l.profile,
+            l.course_id, l.course_total, p.percent
+       from lessons l
+       left join lesson_progress p on p.lesson_id = l.id and p.user_id = $1
+      where (l.user_id = $1 or ($2 <> '' and l.user_email = $2)) and l.expires_at > now()
+        and l.kind = 'learning-artifact'
+        and (l.course_id is null or l.course_index = 1)
+      order by l.created_at desc
       limit 100`,
     [userId, email]
   ).catch(() => []);
@@ -59,7 +64,25 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     industry: r.profile?.industry ?? null,
     courseId: r.course_id,
     courseTotal: r.course_total,
+    percent: Math.max(0, Math.min(100, r.percent ?? 0)),
   }));
+}
+
+/** Upsert a user's % completed for a lesson (relayed by the host from the artifact iframe). */
+export async function saveProgress(
+  userId: string, email: string | undefined, lessonId: string, percent: number, visited: number, total: number
+): Promise<void> {
+  if (!dbEnabled() || !userId || !lessonId) return;
+  const pct = Math.max(0, Math.min(100, Math.round(percent || 0)));
+  await query(
+    `insert into lesson_progress (lesson_id, user_id, user_email, percent, visited, total, updated_at)
+     values ($1,$2,$3,$4,$5,$6, now())
+     on conflict (lesson_id, user_id) do update set
+       percent = greatest(lesson_progress.percent, excluded.percent),
+       visited = greatest(lesson_progress.visited, excluded.visited),
+       total = excluded.total, user_email = excluded.user_email, updated_at = now()`,
+    [lessonId, userId, email ?? null, pct, Math.max(0, visited || 0), Math.max(0, total || 0)]
+  ).catch((e) => console.warn("[progress] save failed:", (e as Error).message));
 }
 
 /** The lessons of one course, ordered — drives the lesson-tab strip when reopened. */
