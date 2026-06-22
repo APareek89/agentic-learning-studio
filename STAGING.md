@@ -63,11 +63,19 @@ Get these from your **staging** Supabase project:
 
 ## Step 2 (optional) — populate staging
 A fresh staging DB has no Library and an empty knowledge base. For most testing that's fine
-(generation still works from Claude's own knowledge). If you want the Library populated:
+(generation still works from Claude's own knowledge). To populate:
 ```bash
-NODE_EXTRA_CA_CERTS=".../system-ca-bundle.pem" npx tsx scripts/seed-library.ts   # ~free, from prebuilt/*.json
+# Library (deterministic, ~free, from prebuilt/*.json):
+NODE_EXTRA_CA_CERTS=".../system-ca-bundle.pem" npx tsx scripts/seed-library.ts
+
+# RAG knowledge base — copy it from PROD (reference data; exact, no re-embedding).
+# TARGET = your .env (staging); SRC = prod. Read-only on prod, idempotent on staging:
+SRC_DATABASE_URL="<PROD session-pooler URI>" \
+  NODE_EXTRA_CA_CERTS=".../system-ca-bundle.pem" node scripts/copy-kb.mjs
+# …or re-ingest from the source docs instead: npm run ingest -- "/path/to/KB"
 ```
-(The RAG knowledge base stays empty unless you run an ingest — optional for staging.)
+The KB is reference data (not user data), so copying prod→staging is safe; refresh occasionally
+if the KB changes. Without it, staging lessons are simply less "grounded".
 
 ## Step 3 — create the staging Render service
 In **dashboard.render.com → New + → Web Service**:
