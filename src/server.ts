@@ -31,7 +31,7 @@ import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
-import { listCommunity, getCommunityHtml, likeCommunity, shareLesson } from "./lib/community";
+import { listCommunity, getCommunityHtml, likeCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { createJob, getJob, lessonPercent } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
@@ -667,14 +667,55 @@ app.post("/api/community/like", async (req, res) => {
 });
 
 // POST /api/community/share — snapshot the learner's lesson public + mint a discount code.
+// With { contributor: true } it publishes as a contributor (credited name, no discount).
 app.post("/api/community/share", requireAuth, async (req, res) => {
-  const { lessonId, displayName } = (req.body ?? {}) as { lessonId?: string; displayName?: string };
+  const { lessonId, displayName, contributor } = (req.body ?? {}) as { lessonId?: string; displayName?: string; contributor?: boolean };
   const user = await getUser(req.headers.authorization);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
-  const result = await shareLesson(lessonId, { id: user.id, email: user.email ?? "" }, displayName);
+  const result = await shareLesson(lessonId, { id: user.id, email: user.email ?? "" }, displayName, { contributor: !!contributor });
   if (!result.ok) { res.status(400).json({ error: result.error || "Couldn't share." }); return; }
-  res.json({ ok: true, slug: result.slug, code: result.code });
+  res.json({ ok: true, slug: result.slug, code: result.code, already: result.already });
+});
+
+// ----------------------------------------------------------------------------
+// Contributors — one-time registration to BUILD courses for the Community, plus
+// the public "Community Drivers" directory + profile pages.
+// ----------------------------------------------------------------------------
+app.get("/api/contributor/me", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  res.json({ registered: !!(await getContributor(user.id)) });
+});
+
+app.post("/api/contributor/register", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  try {
+    const result = await registerContributor(
+      { id: user.id, email: user.email ?? "" },
+      { fullName: String(b.fullName ?? ""), bio: String(b.bio ?? ""), expertise: String(b.expertise ?? ""),
+        motivation: b.motivation ? String(b.motivation) : undefined, motivationOther: String(b.motivationOther ?? ""),
+        link: String(b.link ?? ""), agreed: !!b.agreed }
+    );
+    if (!result.ok) { res.status(400).json({ error: result.error }); return; }
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message?.slice(0, 120) || "Registration failed." });
+  }
+});
+
+// Public directory of contributors + their course counts/likes.
+app.get("/api/community/drivers", async (_req, res) => {
+  res.json({ drivers: await listDrivers() });
+});
+
+// Public profile of one contributor + the courses they've published.
+app.get("/api/community/driver/:userId", async (req, res) => {
+  const d = await getDriver(req.params.userId);
+  if (!d) { res.status(404).json({ error: "Contributor not found." }); return; }
+  res.json(d);
 });
 
 // ----------------------------------------------------------------------------

@@ -76,6 +76,8 @@ let currentCourse = null; // { courseId, lessons:[{index,title,artifactId,status
 let overviewArtifactId = null; // the free overview draft currently under review (gate)
 let lastOverviewPayload = null; // the payload used to build it (so "Edit overview" can re-run)
 let currentLessonOwned = false; // is the open Trainer lesson the user's own (eligible for progress + share)?
+let contribBuild = false; // is the active overview/build a "Build for Community" contributor course?
+let contribPublishId = null; // artifactId to auto-publish to Community once its build finishes
 const lessonTabsEl = document.getElementById("lesson-tabs");
 
 // Friendly labels for the dropdown summary.
@@ -515,7 +517,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", dashboard: "tab-dashboard" };
+const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", "build-community": "tab-build-community", about: "tab-about", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -530,6 +532,7 @@ function switchTab(name) {
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
+  if (name === "build-community") loadBuildCommunity();
 }
 
 // ---- Dashboard tab ----
@@ -861,6 +864,177 @@ window.addEventListener("message", (e) => {
 });
 
 // ============================================================================
+// Community sub-tabs (Courses | Drivers) + the Community Drivers directory.
+// ============================================================================
+let driversLoaded = false;
+document.querySelectorAll(".comm-subtab").forEach((b) => b.addEventListener("click", () => setCommSub(b.dataset.comm)));
+function setCommSub(which) {
+  document.querySelectorAll(".comm-subtab").forEach((b) => b.classList.toggle("active", b.dataset.comm === which));
+  document.getElementById("comm-sub-courses").hidden = which !== "courses";
+  document.getElementById("comm-sub-drivers").hidden = which !== "drivers";
+  if (which === "courses") { if (!commLoaded) loadCommunity(); }
+  else { document.getElementById("driver-profile").hidden = true; loadDrivers(); }
+}
+
+const driversGrid = document.getElementById("drivers-grid");
+const driversEmpty = document.getElementById("drivers-empty");
+const driverProfile = document.getElementById("driver-profile");
+
+async function loadDrivers() {
+  try {
+    const res = await fetch("/api/community/drivers");
+    const { drivers } = await res.json();
+    driversLoaded = true;
+    driversGrid.innerHTML = "";
+    driversGrid.hidden = false;
+    if (!drivers || !drivers.length) { driversEmpty.hidden = false; return; }
+    driversEmpty.hidden = true;
+    drivers.forEach((d) => driversGrid.appendChild(driverCard(d)));
+  } catch { driversEmpty.hidden = false; driversEmpty.textContent = "Couldn't load contributors."; }
+}
+function initials(name) { return (name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
+function driverCard(d) {
+  const el = document.createElement("button");
+  el.className = "driver-card"; el.type = "button";
+  el.innerHTML =
+    `<div class="dc-top"><span class="dc-avatar">${escapeHtml(initials(d.name))}</span>` +
+      `<div class="dc-id"><span class="dc-name">${escapeHtml(d.name)}</span>` +
+      (d.expertise ? `<span class="dc-exp">${escapeHtml(d.expertise)}</span>` : "") + `</div></div>` +
+    (d.headline ? `<p class="dc-bio">${escapeHtml(d.headline)}</p>` : "") +
+    `<div class="dc-stats"><span>${d.courses} course${d.courses === 1 ? "" : "s"}</span><span class="lib-dot">·</span><span>♥ ${d.likes}</span></div>`;
+  el.addEventListener("click", () => openDriver(d.userId));
+  return el;
+}
+async function openDriver(userId) {
+  try {
+    const res = await fetch("/api/community/driver/" + encodeURIComponent(userId));
+    if (!res.ok) return;
+    const { profile, courses } = await res.json();
+    driversGrid.hidden = true; driversEmpty.hidden = true;
+    driverProfile.hidden = false;
+    const motiv = profile.motivation === "other" ? (profile.motivation_other || "Other") :
+      (profile.motivation ? { money: "Earning", knowledge: "Sharing knowledge", recognition: "Recognition" }[profile.motivation] || profile.motivation : "");
+    driverProfile.innerHTML =
+      `<button class="ghost dp-back" type="button">← All contributors</button>` +
+      `<div class="dp-head"><span class="dc-avatar lg">${escapeHtml(initials(profile.full_name))}</span>` +
+        `<div><h2 class="dp-name">${escapeHtml(profile.full_name)}</h2>` +
+        (profile.expertise ? `<div class="dp-exp">${escapeHtml(profile.expertise)}</div>` : "") +
+        (profile.link ? `<a class="dp-link" href="${escapeHtml(profile.link)}" target="_blank" rel="noopener">${escapeHtml(profile.link)}</a>` : "") +
+        `</div></div>` +
+      (profile.bio ? `<p class="dp-bio">${escapeHtml(profile.bio)}</p>` : "") +
+      (motiv ? `<div class="dp-motiv">Contributes for: <strong>${escapeHtml(motiv)}</strong></div>` : "") +
+      `<h3 class="comm-all-h" style="display:block">Published courses (${courses.length})</h3>` +
+      `<div class="lib-grid" id="dp-courses"></div>`;
+    driverProfile.querySelector(".dp-back").addEventListener("click", () => { driverProfile.hidden = true; driversGrid.hidden = false; });
+    const cg = driverProfile.querySelector("#dp-courses");
+    if (courses.length) courses.forEach((c) => cg.appendChild(communityTile(c)));
+    else cg.innerHTML = '<p class="lib-empty" style="display:block">No published courses yet.</p>';
+  } catch { /* ignore */ }
+}
+
+// ============================================================================
+// Build for Community — one-time contributor registration, then build a course
+// (reuses the Configurator overview→build flow with the contributor's content).
+// ============================================================================
+const bcRegister = document.getElementById("bc-register");
+const bcBuild = document.getElementById("bc-build");
+const bcSignedout = document.getElementById("bc-signedout");
+let contributorChecked = false;
+let isContributor = false;
+
+async function loadBuildCommunity() {
+  if (authRequiredAndOut()) { showBcState("signedout"); return; }
+  try {
+    const res = await fetch("/api/contributor/me", { headers: authHeaders() });
+    if (res.status === 401) { showBcState("signedout"); return; }
+    const data = await res.json();
+    isContributor = !!data.registered; contributorChecked = true;
+    showBcState(isContributor ? "build" : "register");
+  } catch { showBcState("register"); }
+}
+function showBcState(s) {
+  bcRegister.hidden = s !== "register";
+  bcBuild.hidden = s !== "build";
+  bcSignedout.hidden = s !== "signedout";
+}
+document.getElementById("bc-signin").addEventListener("click", () => openAuth("signin"));
+
+// --- registration form ---
+const bcMotivOther = document.getElementById("bc-motiv-other");
+document.getElementById("bc-motiv").addEventListener("change", (e) => {
+  if (e.target.name === "bc-motivation") bcMotivOther.hidden = e.target.value !== "other";
+});
+document.getElementById("bc-register-go").addEventListener("click", async () => {
+  const msg = document.getElementById("bc-msg");
+  const fullName = document.getElementById("bc-name").value.trim();
+  const bio = document.getElementById("bc-bio").value.trim();
+  const expertise = document.getElementById("bc-expertise").value.trim();
+  const motivationEl = document.querySelector('input[name="bc-motivation"]:checked');
+  const agreed = document.getElementById("bc-agree").checked;
+  if (!fullName || !bio || !expertise || !motivationEl || !agreed) {
+    msg.hidden = false; msg.className = "bc-msg err"; msg.textContent = "Please fill name, background, areas, a reason, and accept the guidelines.";
+    return;
+  }
+  const body = { fullName, bio, expertise, motivation: motivationEl.value, motivationOther: document.getElementById("bc-motiv-other").value.trim(), link: document.getElementById("bc-link").value.trim(), agreed: true };
+  try {
+    const res = await fetch("/api/contributor/register", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(body) });
+    if (res.status === 401) { openAuth("signin"); return; }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Registration failed.");
+    isContributor = true; showBcState("build");
+  } catch (e) { msg.hidden = false; msg.className = "bc-msg err"; msg.textContent = "⚠️ " + e.message; }
+});
+
+// --- course content uploads (own store, separate from the Configurator's) ---
+const bcDocs = [];
+const bcFileInput = document.getElementById("bc-file-input");
+const bcChips = document.getElementById("bc-chips");
+document.getElementById("bc-add-docs").addEventListener("click", () => bcFileInput.click());
+bcFileInput.addEventListener("change", async () => {
+  for (const file of Array.from(bcFileInput.files)) {
+    const chip = bcAddChip(file.name, "uploading…");
+    try {
+      const dataBase64 = await fileToBase64(file);
+      const res = await fetch("/api/upload", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ filename: file.name, dataBase64 }) });
+      if (res.status === 401) { openAuth("signin"); throw new Error("Sign in to upload."); }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "upload failed");
+      bcDocs.push({ docId: data.docId, title: data.title });
+      chip.dataset.docId = data.docId; chip.classList.remove("uploading");
+      chip.querySelector(".chip-meta").textContent = data.chunkCount + (data.chunkCount === 1 ? " chunk" : " chunks");
+    } catch (e) { chip.classList.add("failed"); chip.querySelector(".chip-meta").textContent = "✕ " + e.message; }
+  }
+  bcFileInput.value = "";
+});
+function bcAddChip(name, meta) {
+  const chip = document.createElement("span");
+  chip.className = "chip uploading";
+  chip.innerHTML = `<span class="chip-name"></span><span class="chip-meta"></span>`;
+  chip.querySelector(".chip-name").textContent = name;
+  chip.querySelector(".chip-meta").textContent = meta;
+  bcChips.appendChild(chip);
+  return chip;
+}
+
+// --- build a contributor course: reuse the overview→build flow, then auto-publish ---
+document.getElementById("bc-generate").addEventListener("click", () => {
+  const msg = document.getElementById("bc-build-msg");
+  const title = document.getElementById("bc-title").value.trim();
+  const desc = document.getElementById("bc-desc").value.trim();
+  if (!title || !desc) { msg.hidden = false; msg.className = "bc-msg err"; msg.textContent = "Please add a title and description."; return; }
+  if (!bcDocs.length) { msg.hidden = false; msg.className = "bc-msg err"; msg.textContent = "Please upload at least one document — the course is built from your content."; return; }
+  msg.hidden = true;
+  const level = document.getElementById("bc-level").value;
+  const extra = document.getElementById("bc-prompt").value.trim();
+  const prompt = `${title}. ${desc}${extra ? "\n\nAuthor guidance: " + extra : ""}`;
+  contribBuild = true; // mark this overview/build as a contributor course → auto-publish on build
+  startOverview({
+    prompt, cards: {}, levels: [level], lessonTypes: ["content"], framework: "", readingMode: "vertical",
+    industry: "", buildGoal: "", uploadIds: bcDocs.map((d) => d.docId), referOnly: true, threadId: null,
+  });
+});
+
+// ============================================================================
 // Background generation jobs — start, poll, show progress on the dashboard,
 // open as soon as the overview exists. Handles single lessons AND courses.
 // ============================================================================
@@ -937,12 +1111,21 @@ async function startBuild(artifactId) {
     jobId = data.jobId;
   } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
   activeJobId = jobId;
+  if (contribBuild) contribPublishId = artifactId; // auto-publish this one to Community when built
   overviewArtifactId = null;
   setOverviewMode(false);
   // Send the learner to My Lessons, where the build progresses and opens when ready.
   updateGenStatus(true);
   switchTab("dashboard");
   pollJob(jobId);
+}
+
+// Auto-publish a finished contributor course to the Community (no discount popup).
+async function autoPublishContributor(lessonId) {
+  try {
+    const res = await fetch("/api/community/share", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ lessonId, contributor: true }) });
+    if (res.ok) { markShared(lessonId); commLoaded = false; driversLoaded = false; }
+  } catch { /* ignore — the lesson is still in My Lessons; they can share manually */ }
 }
 
 // CTA wiring for the overview gate.
@@ -977,8 +1160,13 @@ function pollJob(jobId) {
     if (currentCourse && job.courseId && currentCourse.courseId === job.courseId) refreshCourseTabs(job.lessons);
     if (job.status === "done" || job.status === "error") {
       activeJobId = null; dashActive.innerHTML = ""; updateGenStatus(false);
-      // If the Trainer is still on the generating empty-state (nothing opened), nudge the user.
-      if (!currentArtifactId) {
+      // Contributor course finished → auto-publish it to the Community (credited to them).
+      if (job.status === "done" && contribBuild && contribPublishId) {
+        const lid = contribPublishId; contribBuild = false; contribPublishId = null;
+        autoPublishContributor(lid);
+        if (!currentArtifactId) viewerEmpty.innerHTML = "✓ Your course is built and published to <strong>Community Courses</strong> — also saved in <strong>My Lessons</strong>.";
+      } else if (!currentArtifactId) {
+        // If the Trainer is still on the generating empty-state (nothing opened), nudge the user.
         viewerEmpty.innerHTML = job.status === "done"
           ? "✓ Your lesson is ready — open it from <strong>My Lessons</strong>."
           : "⚠️ Generation failed — see <strong>My Lessons</strong>.";

@@ -92,11 +92,16 @@ export async function likeCommunity(slug: string): Promise<number | null> {
   return rows.length ? rows[0].likes : null;
 }
 
-export interface ShareResult { ok: boolean; slug?: string; code?: string; error?: string }
+export interface ShareResult { ok: boolean; slug?: string; code?: string; error?: string; already?: boolean }
 
-/** Snapshot a learner's lesson into the community pool + mint a discount code. */
+/**
+ * Snapshot a learner's lesson into the community pool.
+ * - Regular share (default): mints a 30%-off discount code for the sharer.
+ * - Contributor publish (`opts.contributor`): credits the contributor's registered
+ *   name and does NOT mint a discount (they publish as their role, not for the incentive).
+ */
 export async function shareLesson(
-  lessonId: string, user: { id: string; email: string }, displayName?: string
+  lessonId: string, user: { id: string; email: string }, displayName?: string, opts: { contributor?: boolean } = {}
 ): Promise<ShareResult> {
   if (!dbEnabled()) return { ok: false, error: "Sharing is unavailable right now." };
   const art = await getArtifact(lessonId);
@@ -105,13 +110,26 @@ export async function shareLesson(
   const owns = (art.userId && art.userId === user.id) || (art.userEmail && art.userEmail === user.email);
   if (!owns) return { ok: false, error: "You can only share your own lessons." };
 
+  // Don't double-publish the same source lesson.
+  const existing = await query<{ slug: string }>(
+    `select slug from community_lessons where source_lesson_id = $1 limit 1`, [lessonId]
+  ).catch(() => []);
+  if (existing.length) return { ok: true, slug: existing[0].slug, already: true };
+
   const bp = art.blueprint;
   const title = bp.meta.title || art.title || "Untitled lesson";
   const description = bp.meta.thesis ?? null;
   const level = bp.learnerProfile?.level ?? null;
   const estMinutes = bp.meta.estTotalMinutes ?? null;
   const category = deriveCategory(`${bp.meta.topic ?? ""} ${title}`);
-  const name = (displayName || "").trim().slice(0, 60) || (user.email ? user.email.split("@")[0] : "A learner");
+  // Contributor publish credits their registered name; regular share uses the given name / email handle.
+  let name = (displayName || "").trim().slice(0, 60);
+  if (opts.contributor) {
+    const c = await getContributor(user.id);
+    name = (c?.full_name || name || "").trim() || (user.email ? user.email.split("@")[0] : "A contributor");
+  } else if (!name) {
+    name = user.email ? user.email.split("@")[0] : "A learner";
+  }
   const slug = `${slugify(title)}-${randomBytes(3).toString("hex")}`;
   const html = renderArtifact(bp); // fully-built (an approved lesson) → safe to browse statically
 
@@ -128,6 +146,9 @@ export async function shareLesson(
     return { ok: false, error: "Couldn't share this lesson. " + ((e as Error).message?.slice(0, 80) ?? "") };
   }
 
+  // Contributor publishes don't carry the discount incentive.
+  if (opts.contributor) return { ok: true, slug };
+
   const code = discountCode();
   await query(
     `insert into discount_codes (code, user_id, user_email, lesson_id, percent, source)
@@ -136,4 +157,77 @@ export async function shareLesson(
   ).catch(() => { /* code is best-effort; the share already succeeded */ });
 
   return { ok: true, slug, code };
+}
+
+// ============================================================================
+// Contributors — one-time registration + the Community Drivers directory.
+// ============================================================================
+
+export interface Contributor {
+  user_id: string; full_name: string; bio: string | null; expertise: string | null;
+  motivation: string | null; motivation_other: string | null; link: string | null;
+}
+export interface ContributorInput {
+  fullName: string; bio?: string; expertise?: string; motivation?: string; motivationOther?: string; link?: string; agreed?: boolean;
+}
+
+/** Read a contributor profile (null if not registered). */
+export async function getContributor(userId: string): Promise<Contributor | null> {
+  if (!dbEnabled() || !userId) return null;
+  const rows = await query<Contributor>(
+    `select user_id, full_name, bio, expertise, motivation, motivation_other, link from contributors where user_id = $1`, [userId]
+  ).catch(() => []);
+  return rows[0] ?? null;
+}
+
+/** Register (or update) a contributor. fullName + agreed are required. */
+export async function registerContributor(user: { id: string; email: string }, input: ContributorInput): Promise<{ ok: boolean; error?: string }> {
+  if (!dbEnabled()) return { ok: false, error: "Registration is unavailable right now." };
+  const fullName = (input.fullName || "").trim().slice(0, 80);
+  if (!fullName) return { ok: false, error: "Please enter your full name." };
+  if (!input.agreed) return { ok: false, error: "Please accept the contributor guidelines." };
+  await query(
+    `insert into contributors (user_id, user_email, full_name, bio, expertise, motivation, motivation_other, link, agreed_at, updated_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8, now(), now())
+     on conflict (user_id) do update set
+       user_email = excluded.user_email, full_name = excluded.full_name, bio = excluded.bio,
+       expertise = excluded.expertise, motivation = excluded.motivation, motivation_other = excluded.motivation_other,
+       link = excluded.link, agreed_at = now(), updated_at = now()`,
+    [user.id, user.email, fullName, (input.bio || "").trim() || null, (input.expertise || "").trim() || null,
+     input.motivation || null, (input.motivationOther || "").trim() || null, (input.link || "").trim() || null]
+  ).catch((e) => { throw e; });
+  return { ok: true };
+}
+
+export interface DriverCard { userId: string; name: string; headline: string | null; expertise: string | null; courses: number; likes: number; }
+
+/** Community Drivers directory: every contributor + their published-course count & total likes. */
+export async function listDrivers(): Promise<DriverCard[]> {
+  if (!dbEnabled()) return [];
+  const rows = await query<{ user_id: string; full_name: string; bio: string | null; expertise: string | null; courses: string; likes: string }>(
+    `select c.user_id, c.full_name, c.bio, c.expertise,
+            count(cl.id)::text as courses, coalesce(sum(cl.likes),0)::text as likes
+       from contributors c
+       left join community_lessons cl on cl.submitter_user_id = c.user_id
+      group by c.user_id, c.full_name, c.bio, c.expertise
+      order by count(cl.id) desc, coalesce(sum(cl.likes),0) desc, c.created_at desc
+      limit 300`
+  ).catch(() => []);
+  return rows.map((r) => ({ userId: r.user_id, name: r.full_name, headline: r.bio, expertise: r.expertise, courses: Number(r.courses) || 0, likes: Number(r.likes) || 0 }));
+}
+
+/** One contributor's profile + the courses they've published. */
+export async function getDriver(userId: string): Promise<{ profile: Contributor; courses: CommunityCard[] } | null> {
+  if (!dbEnabled() || !userId) return null;
+  const profile = await getContributor(userId);
+  if (!profile) return null;
+  const rows = await query<CommunityRow>(
+    `select slug, title, description, category, level, est_minutes, submitter_name, likes
+       from community_lessons where submitter_user_id = $1 order by created_at desc`, [userId]
+  ).catch(() => []);
+  const courses = rows.map((r) => ({
+    slug: r.slug, title: r.title, description: r.description, category: r.category,
+    level: r.level, estMinutes: r.est_minutes, submitter: r.submitter_name, likes: r.likes ?? 0,
+  }));
+  return { profile, courses };
 }

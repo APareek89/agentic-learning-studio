@@ -50,6 +50,7 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [ ] **`[TODO]` Dependency + supply-chain audit.** `npm audit`, pin versions, enable Dependabot; the artifact runs inline JS so XSS in lesson content must stay impossible (renderer escapes — keep it that way; never interpolate unescaped model text).
 - [ ] **`[TODO]` PII minimization.** You store email + lesson prompts (may contain user context). Document what's stored, encrypt at rest (Supabase does), and set retention (§5).
 - [ ] **`[TODO]` Content moderation.** Users type free-text prompts and upload docs → run prompts/outputs through a moderation check (Anthropic's safety + your own policy) so the product can't be used to generate disallowed content; log + block.
+- [ ] **`[TODO]` Contributor course moderation + abuse.** "Build for Community" courses **auto-publish to Community Courses with no review** (v1). Add: (1) a review/approval queue (or post-publish moderation) before a contributor course goes public, (2) a "report this course" path, (3) abuse limits on contributor publishing (rate-limit, account age / verified email), (4) IP/originality check on uploaded course content (ties to §9), (5) a way to unpublish/ban. Contributor profiles (`contributors` table → **Community Drivers**) are public — review the originality/AI-disclosure agreement copy with legal.
 
 ## 5. Compliance & legal `[TODO]` (lawyer-reviewed)
 - [ ] **Terms of Service** (incl. acceptable use, no-warranty on AI output, liability cap).

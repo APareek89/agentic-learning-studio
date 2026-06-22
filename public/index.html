@@ -95,9 +95,11 @@
         <button class="tab" role="tab" aria-selected="false" data-tab="dashboard" id="tab-btn-dashboard" hidden>My Lessons</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="library" id="tab-btn-library">Library</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="community" id="tab-btn-community">Community</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="build-community" id="tab-btn-build-community">Build for Community</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="build" disabled>
           Build a project <span class="soon">soon</span>
         </button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="about" id="tab-btn-about">About</button>
       </nav>
       <div class="topbar-spacer"></div>
       <div class="auth-actions" id="auth-actions" hidden>
@@ -333,23 +335,167 @@
     <!-- ===== TAB: Community (learner-shared lessons; public, no sign-in to browse) ===== -->
     <section class="tabpanel lib-panel" id="tab-community" role="tabpanel" hidden>
       <div class="lib-wrap">
-        <div class="lib-head">
-          <div>
-            <h2>Community courses</h2>
-            <p class="lib-sub">Lessons shared by other learners — open any one instantly, no sign-in needed.</p>
+        <div class="comm-subtabs" role="tablist">
+          <button class="comm-subtab active" type="button" data-comm="courses">Community Courses</button>
+          <button class="comm-subtab" type="button" data-comm="drivers">Community Drivers</button>
+        </div>
+
+        <!-- Sub-view: Community Courses -->
+        <div id="comm-sub-courses">
+          <div class="lib-head">
+            <div>
+              <h2>Community courses</h2>
+              <p class="lib-sub">Lessons shared by other learners — open any one instantly, no sign-in needed.</p>
+            </div>
+            <div class="lib-search">
+              <svg viewBox="0 0 24 24" class="lib-search-ico"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input id="comm-search" type="search" placeholder="Search community…" autocomplete="off" />
+            </div>
           </div>
-          <div class="lib-search">
-            <svg viewBox="0 0 24 24" class="lib-search-ico"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            <input id="comm-search" type="search" placeholder="Search community…" autocomplete="off" />
+          <div class="comm-featured" id="comm-featured" hidden>
+            <h3 class="comm-feat-h">★ Featured · most liked</h3>
+            <div class="lib-grid" id="comm-feat-grid"></div>
+          </div>
+          <h3 class="comm-all-h" id="comm-all-h" hidden>All community courses</h3>
+          <div class="lib-grid" id="comm-grid"></div>
+          <div class="lib-empty" id="comm-empty" hidden>No community courses yet — share one of yours from <strong>My Lessons</strong>!</div>
+        </div>
+
+        <!-- Sub-view: Community Drivers (contributor directory + profile) -->
+        <div id="comm-sub-drivers" hidden>
+          <div class="lib-head">
+            <div>
+              <h2>Community drivers</h2>
+              <p class="lib-sub">Learners who build &amp; share courses here. Open a profile to see who they are and what they've published.</p>
+            </div>
+          </div>
+          <div class="lib-grid" id="drivers-grid"></div>
+          <div class="lib-empty" id="drivers-empty" hidden>No contributors yet — be the first via <strong>Build for Community</strong>!</div>
+          <div id="driver-profile" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TAB: Build for Community (register once → build a course for the Community) ===== -->
+    <section class="tabpanel lib-panel" id="tab-build-community" role="tabpanel" hidden>
+      <div class="bc-wrap">
+        <!-- State A: not registered → registration form -->
+        <div id="bc-register" hidden>
+          <div class="lib-head"><div>
+            <h2>Become a contributor</h2>
+            <p class="lib-sub">Build courses for the Community. A one-time profile — it's shown on your <strong>Community Drivers</strong> page and credits every course you publish.</p>
+          </div></div>
+          <div class="bc-form">
+            <label class="bc-label">Full name <span class="bc-req">*</span></label>
+            <input id="bc-name" type="text" placeholder="Jane Doe" autocomplete="name" />
+
+            <label class="bc-label">What's your relevant background or expertise? <span class="bc-req">*</span></label>
+            <textarea id="bc-bio" rows="3" placeholder="What have you built, taught, or worked on that qualifies you to teach this? (shown on your profile)"></textarea>
+
+            <label class="bc-label">Areas you can teach <span class="bc-req">*</span></label>
+            <input id="bc-expertise" type="text" placeholder="e.g. RAG, LangGraph, evaluation, agent memory" />
+
+            <label class="bc-label">Why do you want to contribute? <span class="bc-req">*</span></label>
+            <div class="bc-motiv" id="bc-motiv">
+              <label><input type="radio" name="bc-motivation" value="knowledge" /> Share knowledge</label>
+              <label><input type="radio" name="bc-motivation" value="money" /> Earn money</label>
+              <label><input type="radio" name="bc-motivation" value="recognition" /> Recognition</label>
+              <label><input type="radio" name="bc-motivation" value="other" /> Other</label>
+            </div>
+            <input id="bc-motiv-other" type="text" placeholder="Tell us why…" hidden />
+
+            <label class="bc-label">Profile link <span class="bc-opt">(optional)</span></label>
+            <input id="bc-link" type="url" placeholder="LinkedIn / GitHub / your site" autocomplete="url" />
+
+            <label class="bc-agree"><input id="bc-agree" type="checkbox" /> I confirm my courses will be original / properly sourced, and I understand they're published as AI-generated and may be reviewed.</label>
+
+            <div class="bc-msg" id="bc-msg" hidden></div>
+            <button class="generate" id="bc-register-go" type="button">Register as a contributor →</button>
           </div>
         </div>
-        <div class="comm-featured" id="comm-featured" hidden>
-          <h3 class="comm-feat-h">★ Featured · most liked</h3>
-          <div class="lib-grid" id="comm-feat-grid"></div>
+
+        <!-- State B: registered → build a course -->
+        <div id="bc-build" hidden>
+          <div class="lib-head"><div>
+            <h2>Build a course for the Community</h2>
+            <p class="lib-sub">Your uploaded content is the <strong>only</strong> source. Generate a free overview first, then build the full course — it lands in your <strong>My Lessons</strong> and publishes to <strong>Community Courses</strong>.</p>
+          </div></div>
+          <div class="bc-form">
+            <div class="bc-row">
+              <div><label class="bc-label">Course title <span class="bc-req">*</span></label><input id="bc-title" type="text" placeholder="e.g. Production RAG over Support Docs" /></div>
+              <div><label class="bc-label">Level</label>
+                <select id="bc-level"><option value="beginner">Beginner</option><option value="intermediate" selected>Intermediate</option><option value="advanced">Advanced</option></select>
+              </div>
+            </div>
+            <label class="bc-label">Course description <span class="bc-req">*</span></label>
+            <textarea id="bc-desc" rows="2" placeholder="One or two sentences on what this course teaches."></textarea>
+
+            <label class="bc-label">Course content <span class="bc-req">*</span></label>
+            <div class="bc-uploads">
+              <input type="file" id="bc-file-input" multiple hidden accept=".pdf,.docx,.md,.markdown,.txt,.html,.json,.js,.ts" />
+              <button class="ghost" id="bc-add-docs" type="button">📎 Upload PDF, DOCX, MD…</button>
+              <div class="upload-chips" id="bc-chips"></div>
+            </div>
+
+            <label class="bc-label">Instructions for the builder <span class="bc-opt">(optional)</span></label>
+            <textarea id="bc-prompt" rows="2" placeholder="Any guidance for how to structure or emphasize the course (optional)."></textarea>
+
+            <div class="bc-msg" id="bc-build-msg" hidden></div>
+            <button class="generate" id="bc-generate" type="button">Generate Overview — Free</button>
+          </div>
         </div>
-        <h3 class="comm-all-h" id="comm-all-h" hidden>All community courses</h3>
-        <div class="lib-grid" id="comm-grid"></div>
-        <div class="lib-empty" id="comm-empty" hidden>No community courses yet — share one of yours from <strong>My Lessons</strong>!</div>
+
+        <!-- State: signed out -->
+        <div id="bc-signedout" hidden>
+          <div class="lib-head"><div>
+            <h2>Build for Community</h2>
+            <p class="lib-sub">Sign in to register as a contributor and build courses for the Community.</p>
+          </div></div>
+          <button class="generate" id="bc-signin" type="button">Sign in to continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TAB: About (the platform's mission + how it works) ===== -->
+    <section class="tabpanel about-panel" id="tab-about" role="tabpanel" hidden>
+      <div class="about-wrap">
+        <header class="about-hero">
+          <div class="eyebrow">About</div>
+          <h1>Learn AI in <em>your</em> context — without the expensive course.</h1>
+          <p class="about-lede">Agentic Learning Studio turns what you actually want to learn into a structured, interactive lesson — built on the spot from freely available knowledge, shaped to your level, your industry, and what you're trying to build.</p>
+        </header>
+
+        <section class="about-sec">
+          <h2>Why we built this</h2>
+          <p>Good AI courses are expensive, generic, and out of date the month they ship. Most learners don't need a 40-hour video bootcamp — they need a clear, accurate answer to <em>their</em> question, at <em>their</em> level, with examples from <em>their</em> world. Quality information about AI is already out there for free; what's missing is something that curates and shapes it into a lesson made for you.</p>
+          <p>So we built a studio that does exactly that: you describe what you want to learn, and it generates an interactive lesson — a concept map, worked examples, failure modes, self-checks — instead of a wall of text or a video you scrub through.</p>
+        </section>
+
+        <section class="about-sec">
+          <h2>How it works</h2>
+          <div class="about-cards">
+            <div class="about-card"><div class="ac-n">1</div><h3>You set the brief</h3><p>Topic, level, depth, and what you're building. Optionally ground it in your own docs or a GitHub repo.</p></div>
+            <div class="about-card"><div class="ac-n">2</div><h3>AI designs the lesson</h3><p>A model emits a structured <em>blueprint</em> — never raw HTML — so every lesson is consistent, interactive, and grounded in retrieved sources.</p></div>
+            <div class="about-card"><div class="ac-n">3</div><h3>You learn by doing</h3><p>A mental-map overview, click-to-deepen modules, definitions on every term, and self-checks — reading that replaces watching.</p></div>
+          </div>
+        </section>
+
+        <section class="about-sec">
+          <h2>Our principles</h2>
+          <ul class="about-principles">
+            <li><strong>Personalized, not generic.</strong> Every lesson is shaped to your level, context, and goal — not a one-size-fits-all curriculum.</li>
+            <li><strong>Built on free knowledge.</strong> We curate and structure freely available information so learning doesn't have to be paywalled.</li>
+            <li><strong>Honest about AI.</strong> Lessons are AI-generated and may contain errors; we build in verification and self-checks, and we say so plainly.</li>
+            <li><strong>Interactive over passive.</strong> Structured reading, concept maps, and recall beat hours of video you forget.</li>
+          </ul>
+        </section>
+
+        <section class="about-sec about-contrib">
+          <h2>Built with our community</h2>
+          <p>Learning gets better when practitioners share what they know. Contributors can publish their own lessons to the <strong>Community</strong> — credited to them — so others can learn from real, lived expertise alongside the AI-generated catalog. (Contributor tools are rolling out in <em>Build for Community</em>.)</p>
+        </section>
+
+        <p class="about-foot">Not financial, legal, or professional advice. AI-generated lessons can be wrong — verify anything you'll act on.</p>
       </div>
     </section>
 
