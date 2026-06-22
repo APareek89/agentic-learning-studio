@@ -599,9 +599,27 @@ const libEmpty = document.getElementById("lib-empty");
 let libAll = [];
 let libCat = "All";
 let libLoaded = false;
-const CAT_ICONS = { Foundations: "🧱", LLMs: "🧠", RAG: "🔎", Agents: "🤖", Frameworks: "🧩", Generative: "🎨", Evaluation: "📊", Safety: "🛡️", Infrastructure: "⚙️", "Build Projects": "🛠️" };
-function catHue(cat) { let h = 0; for (let i = 0; i < cat.length; i++) h = (h * 31 + cat.charCodeAt(i)) % 360; return h; }
-function catTint(cat) { return `hsl(${catHue(cat)} 52% 97.5%)`; } // very light category wash
+// Image-free "course tile" covers: a flat category-colored fill + a faint watermark icon.
+// Icons are inline line-SVGs (no icon-font dependency); stroke=currentColor so each picks up
+// its category's mid color. Two stops per family: light `bg` fill, dark `text` (title); the
+// `icon` mid color is the watermark, and the description blends text↔bg in CSS.
+function svgIcon(inner) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
+const CATEGORY_STYLE = {
+  "Agents":          { bg: "#EEEDFE", icon: "#7F77DD", text: "#3C3489", svg: svgIcon(`<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9.5" cy="13" r="1.1"/><circle cx="14.5" cy="13" r="1.1"/><path d="M9.5 16.5h5"/>`) },
+  "RAG":             { bg: "#E1F5EE", icon: "#1D9E75", text: "#0F6E56", svg: svgIcon(`<circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/>`) },
+  "LLMs":            { bg: "#E6F1FB", icon: "#378ADD", text: "#0C447C", svg: svgIcon(`<rect x="7" y="7" width="10" height="10" rx="1.5"/><rect x="10" y="10" width="4" height="4"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/>`) },
+  "Frameworks":      { bg: "#EEF0FE", icon: "#6366F1", text: "#3730A3", svg: svgIcon(`<rect x="4" y="4" width="10" height="10" rx="1.5"/><rect x="10.5" y="10.5" width="9.5" height="9.5" rx="1.5"/>`) },
+  "Generative":      { bg: "#FBEAF0", icon: "#D4537E", text: "#993556", svg: svgIcon(`<path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7z"/><path d="M18 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>`) },
+  "Evaluation":      { bg: "#FAEEDA", icon: "#BA7517", text: "#633806", svg: svgIcon(`<path d="M4 20h16"/><rect x="6" y="11" width="3" height="6"/><rect x="11" y="7" width="3" height="10"/><rect x="16" y="13" width="3" height="4"/>`) },
+  "Infrastructure":  { bg: "#EEF2F6", icon: "#64748B", text: "#334155", svg: svgIcon(`<rect x="4" y="5" width="16" height="6" rx="1.5"/><rect x="4" y="13" width="16" height="6" rx="1.5"/><path d="M8 8h.01M8 16h.01"/>`) },
+  "Safety":          { bg: "#FCEBEB", icon: "#E24B4A", text: "#791F1F", svg: svgIcon(`<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/>`) },
+  "Foundations":     { bg: "#EAF3DE", icon: "#639922", text: "#27500A", svg: svgIcon(`<path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M18 16H7a2 2 0 0 0-2 2"/>`) },
+  "Build Projects":  { bg: "#FAECE7", icon: "#D85A30", text: "#712B13", svg: svgIcon(`<path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.4l-5.6 5.6 1.5 1.5 5.6-5.6a3.6 3.6 0 0 0 4.4-4.9l-2.1 2.1-1.6-.4-.4-1.6z"/>`) },
+};
+const DEFAULT_STYLE = { bg: "#EEF2F6", icon: "#64748B", text: "#334155", svg: svgIcon(`<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>`) };
+function catStyle(cat) { return CATEGORY_STYLE[cat] || DEFAULT_STYLE; }
 async function loadLibrary() {
   if (libLoaded) { renderLibrary(); return; }
   try {
@@ -632,11 +650,19 @@ function renderLibrary() {
   for (const l of items) {
     const el = document.createElement("button");
     el.className = "lib-card"; el.type = "button";
-    el.style.setProperty("--cover-h", String(catHue(l.category)));
+    const s = catStyle(l.category);
+    el.style.setProperty("--cov-bg", s.bg);
+    el.style.setProperty("--cov-icon", s.icon);
+    el.style.setProperty("--cov-text", s.text);
     el.innerHTML =
-      `<div class="lib-cover"><span class="lib-title">${escapeHtml(l.title)}</span></div>` +
-      `<div class="lib-body"><div class="lib-desc">${escapeHtml(l.description || "")}</div>` +
-      `<div class="lib-foot"><span class="lib-cat-tag">${escapeHtml(l.category)}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div></div>`;
+      `<div class="lib-cover">` +
+        `<span class="lib-ico" aria-hidden="true">${s.svg}</span>` +
+        `<div class="lib-cover-text">` +
+          `<span class="lib-title">${escapeHtml(l.title)}</span>` +
+          (l.description ? `<span class="lib-desc">${escapeHtml(l.description)}</span>` : "") +
+        `</div>` +
+      `</div>` +
+      `<div class="lib-foot"><span class="lib-pill">${escapeHtml(l.category)}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div>`;
     el.addEventListener("click", () => openLibraryLesson(l.slug, l.title));
     libGrid.appendChild(el);
   }
