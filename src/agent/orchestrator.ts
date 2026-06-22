@@ -20,6 +20,7 @@ import { profiler, retriever, architect, runDeepDive } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
+import { makeLangfuseHandler } from "../lib/langfuse";
 import type { Blueprint } from "../render/schema";
 
 /** Drafts (un-approved overviews) carry this kind so My Lessons can hide them. */
@@ -49,6 +50,15 @@ export interface GenerateInput {
  */
 export async function runOverviewJob(job: Job, input: GenerateInput): Promise<void> {
   job.stage = "overview";
+  // Per-job Langfuse handler (null when keys absent → tracing skipped). Wires the
+  // LIVE path into Langfuse so real lesson generations are traced (the legacy
+  // /api/learn SSE route has its own handler).
+  const langfuse = makeLangfuseHandler();
+  const config = {
+    callbacks: langfuse ? [langfuse] : [],
+    runName: `lesson:${input.userPrompt?.slice(0, 60) ?? ""}`,
+    metadata: { langfuseTags: ["live-generation"], stage: "overview" },
+  };
   try {
     const st: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
@@ -56,7 +66,7 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
       framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await profiler(st as any, {} as any));
+    Object.assign(st, await profiler(st as any, config as any));
     job.status = "running";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = st.profile as any;
@@ -66,9 +76,9 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await retriever(st as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await architect(st as any, {} as any));
+    Object.assign(st, await architect(st as any, config as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, {} as any));
+    if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
@@ -87,6 +97,8 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     console.error("[runOverviewJob]", e);
   } finally {
     releaseGenSlot();
+    // Background jobs can exit before traces flush — force the flush.
+    if (langfuse) await langfuse.flushAsync().catch(() => {});
   }
 }
 
@@ -97,10 +109,19 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
  */
 export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
   job.stage = "build";
+  // Per-job Langfuse handler (null when keys absent → tracing skipped). Traces
+  // the LIVE build path so each module body's model calls appear in Langfuse.
+  const langfuse = makeLangfuseHandler();
   try {
     const art = await getArtifact(artifactId);
     const bp = art?.blueprint;
     if (!art || !bp) { job.status = "error"; job.error = "That overview wasn't found (it may have expired)."; return; }
+
+    const config = {
+      callbacks: langfuse ? [langfuse] : [],
+      runName: `lesson:${bp.meta.title?.slice(0, 60) ?? ""}`,
+      metadata: { langfuseTags: ["live-generation"], stage: "build" },
+    };
 
     // Promote draft → real lesson so it appears in My Lessons from now on.
     if (art.kind !== LESSON_KIND) await updateArtifact(artifactId, { kind: LESSON_KIND });
@@ -112,7 +133,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
 
     for (const m of bp.modules) {
       if (m.loadState === "full" && m.blocks.length > 0) { jl.builtModules++; jl.percent = lessonPercent(jl); continue; }
-      await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly });
+      await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config });
       jl.builtModules++; jl.percent = lessonPercent(jl);
       await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) });
     }
@@ -124,5 +145,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     console.error("[runBuildJob]", e);
   } finally {
     releaseGenSlot();
+    // Background jobs can exit before traces flush — force the flush.
+    if (langfuse) await langfuse.flushAsync().catch(() => {});
   }
 }

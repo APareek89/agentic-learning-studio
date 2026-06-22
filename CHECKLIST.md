@@ -75,7 +75,7 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 
 ## 7. Observability & ops `[TODO]`
 - [ ] **Error tracking** (Sentry or similar) on server + client.
-- [ ] **`[PARTIAL]` LLM tracing (Langfuse).** Wired ONLY into the legacy `/api/learn` SSE route — the LIVE generate path (`/api/overview`+`/api/build` → `orchestrator.ts`) is **not** traced, so setting `LANGFUSE_*` keys alone won't capture real lessons. TODO: create a handler per job in `orchestrator.ts`, pass `{callbacks:[handler],runName,metadata}` to profiler/retriever/architect/runDeepDive (they already forward `config`), `flushAsync()` in `finally`; then set keys in Render.
+- [x] **`[DONE]` LLM tracing (Langfuse) — live path.** Wired into BOTH `runOverviewJob` and `runBuildJob` in `orchestrator.ts`: per-job `makeLangfuseHandler()` → `config = {callbacks, runName:"lesson:…", metadata:{langfuseTags,stage}}` passed to `profiler`/`architect`/`runDeepDive` (`retriever` takes no config), `flushAsync()` in each `finally`. Legacy `/api/learn` unchanged. Verified live: traces named `lesson:…` with `ChatAnthropic` GENERATION observations (model + tokens) land in Langfuse. CAVEAT: `langfuseTags` doesn't populate trace `tags` in the installed lib version (filter by `name`). **Set `LANGFUSE_PUBLIC_KEY`/`LANGFUSE_SECRET_KEY`(+`LANGFUSE_BASEURL`) in Render to trace prod.**
 - [ ] **Product analytics** (signups, activation = first lesson, conversion to paid, churn).
 - [ ] **Logging + alerting** on error rate, spend spikes, job failures.
 - [ ] **Status page / incident runbook** (what to do when Anthropic is down, DB is down, spend spikes).
