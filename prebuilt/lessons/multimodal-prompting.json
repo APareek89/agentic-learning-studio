@@ -31,8 +31,9 @@
       {
         "id": "n_m1",
         "label": "Mental model",
-        "sub": "Build the simplest useful picture of Multimodal Prompting.",
+        "sub": "What multimodal prompting is and why one-shot text prompts fall short.",
         "what": "Mental model turns Multimodal Prompting into a usable mental model.",
+        "orient": "What multimodal prompting is, the problem it solves, and when you reach for it.",
         "relevance": "It matters because the learner needs to apply Multimodal Prompting, not just recognize the words.",
         "moduleId": "m1",
         "layer": "Path",
@@ -41,8 +42,9 @@
       {
         "id": "n_m2",
         "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
+        "sub": "How image, audio, and text get fused into one prompt the model reads.",
         "what": "Mechanism turns Multimodal Prompting into a usable mental model.",
+        "orient": "How VLMs and ASR encode each modality into shared tokens the model can attend over.",
         "relevance": "It matters because the learner needs to apply Multimodal Prompting, not just recognize the words.",
         "moduleId": "m2",
         "layer": "Path",
@@ -51,8 +53,9 @@
       {
         "id": "n_m3",
         "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
+        "sub": "The choices that change quality, cost, or risk in a multimodal prompt.",
         "what": "Design choices turns Multimodal Prompting into a usable mental model.",
+        "orient": "Which modalities to send, where to place them, and how much rigor each task needs.",
         "relevance": "It matters because the learner needs to apply Multimodal Prompting, not just recognize the words.",
         "moduleId": "m3",
         "layer": "Path",
@@ -61,8 +64,9 @@
       {
         "id": "n_m4",
         "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
+        "sub": "A minimal code shape that assembles a multimodal prompt end to end.",
         "what": "Tiny implementation sketch turns Multimodal Prompting into a usable mental model.",
+        "orient": "A small runnable sketch that orders modalities and gates on evidence before answering.",
         "relevance": "It matters because the learner needs to apply Multimodal Prompting, not just recognize the words.",
         "moduleId": "m4",
         "layer": "Path",
@@ -71,14 +75,16 @@
       {
         "id": "n_m5",
         "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
+        "sub": "How multimodal prompts break and the checks that make answers trustworthy.",
         "what": "Check and apply turns Multimodal Prompting into a usable mental model.",
+        "orient": "Where multimodal prompts silently fail, plus recall and a checklist to make it stick.",
         "relevance": "It matters because the learner needs to apply Multimodal Prompting, not just recognize the words.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine"
       }
     ],
+    "structureType": "conceptual",
     "edges": [
       {
         "from": "n_m1",
@@ -107,7 +113,7 @@
       "id": "m1",
       "order": 1,
       "title": "Mental model",
-      "sub": "Build the simplest useful picture of Multimodal Prompting.",
+      "sub": "Start of the spine: what multimodal prompting is and the problem it solves.",
       "summary": "Build the simplest useful picture of Multimodal Prompting. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of mental model in Multimodal Prompting.",
@@ -127,20 +133,18 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "What multimodal prompting is — and the problem it solves",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, predict: "
                 },
                 {
-                  "text": "Multimodal Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "you have a photo of a broken appliance and want repair steps. What can you tell a text-only model that you can't, and what would adding the image change?",
+                  "em": true
                 }
               ]
             },
@@ -148,14 +152,41 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Multimodal Prompting",
+                  "strong": true
+                },
+                {
+                  "text": " means giving a model more than one kind of input in the same request — text plus an image, audio, or a document — so it can reason over all of them together."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "It exists because a text-only prompt forces the user to describe what they could just show. Describing a chart, a UI bug, a receipt, or a spoken complaint in words is lossy and slow. Reach for multimodal prompting when the evidence the model needs already lives in a "
+                },
+                {
+                  "text": "pixel",
+                  "strong": true
+                },
+                {
+                  "text": " or a waveform, not in a sentence — a "
                 },
                 {
                   "text": "diffusion",
                   "term": "diffusion"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "-generated image to critique, a screenshot to debug, or audio to transcribe and act on."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The mental model: each modality is an input channel that gets turned into the same internal representation the model already reasons over. Your job as the prompt author is to decide which channels to open and how to point the model's attention across them."
                 }
               ]
             },
@@ -164,22 +195,23 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Multimodal Prompting."
+                    "text": "Name the modalities you are sending and what each one contributes."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Separate what the model can read from the media from what you must state in text."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Keep one measurable success signal — did the answer actually use the image or audio?"
                   }
                 ]
               ]
             }
           ],
+          "analogy": "A text-only prompt is like describing a rash to a doctor over the phone; a multimodal prompt is like showing up and letting them see it.",
           "termIds": [
             "diffusion",
             "latent_space",

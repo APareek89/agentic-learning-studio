@@ -146,6 +146,49 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **Library content enhancement (IN PROGRESS Jun 2026 — "the hook for new users"):** the 98 prebuilt
+  lessons were authored on the OLD prompts and are pedagogically weak (no `mentalMap.structureType`, no
+  node `orient` hooks, thin on failure-modes/verify-AI/recall). We're bringing them to the SAME bar a
+  freshly-generated lesson hits. **The app Anthropic balance is EMPTY** (the pipeline route
+  `rebuild-library.ts` 400s with "credit balance too low" — and that ALSO breaks live generation on
+  prod until topped up). So we enhance via **agents** (a Workflow of subagents using the session model —
+  ZERO app-API cost), editing each `prebuilt/lessons/<slug>.json` Blueprint in place, then `seed-library.ts`
+  validates+renders+upserts. Invariant holds (agents emit Blueprint JSON, renderer makes HTML).
+  - **Infra (committed-able, reusable):** `prebuilt/ENHANCE_SPEC.md` (the quality bar + 8 schema gates +
+    per-lesson procedure — the agent brief), `scripts/validate-lesson.ts` (validates ONE file: Zod +
+    validateBlueprint + render smoke-test; agents self-check with it), `prebuilt/_exemplar.json`
+    (`the-agent-loop`, an already-enhanced lesson = the target; throwaway ref, don't seed), `prebuilt/ENHANCED.json`
+    (durable progress manifest — `done[]` slugs).
+  - **Workflow:** `enhance-library-batch` (run id `wf_4fcea690-47d`) — one agent per lesson, parallel,
+    edit-in-place + self-validate loop. Persisted script under the session `workflows/scripts/`.
+  - **Batch 1 (this session) = 20 slugs, 2 per category:** ai-vs-ml-vs-deep-learning,
+    embeddings-learned-representations, prompt-engineering-foundations, tokenization-context-windows,
+    what-is-rag, embeddings-vector-search, tool-use-action-boundaries, planning-and-reflection,
+    crewai-role-based-agents, claude-tool-use-agent-patterns, ai-evaluation-foundations, llm-as-judge,
+    image-generation-workflows, multimodal-prompting, deployment-patterns-ai-apps, model-gateways-litellm,
+    hallucinations-grounding, guardrails-validators, build-document-qa-bot, build-tool-calling-chatbot.
+  - **After a batch:** `npx tsx scripts/seed-library.ts` (to `.env`=STAGING; invalid files are skipped +
+    logged to `prebuilt/INVALID.md`, old DB row kept) → add slugs to `prebuilt/ENHANCED.json` →
+    `update prebuilt_lessons set content_version='v3-agent-2026-06' where slug = any(...)` → verify a few
+    render → **promote staging→prod when the user approves** (copy `prebuilt_lessons` staging→prod, same as
+    the KB copy pattern). `.env`/local repo currently point at STAGING (`ydgiysthvxhlfpzxyrmy`).
+  - **STATUS: 22 done / 78 pending.** Batch 1 = the 20 above, enhanced + **seeded to staging** + tagged
+    `content_version='v3-agent-2026-06'` + recorded in `prebuilt/ENHANCED.json done[]`. Plus the 2 prior v2.
+    All 100 currently seed valid (no `INVALID.md`). NOT promoted to prod yet (awaits user OK).
+  - **⭐ RICHER BAR (v4-rich-2026-06) is now the standard** — after user feedback, `ENHANCE_SPEC.md` gained a
+    "CONTENT RICHNESS" section: a concrete problem-statement anchor, a BIG fully-worked example (esp.
+    beginner), real code examples, a case study, two framings per idea, substantial bodies. The hook must be
+    genuinely rich, not just structurally sound. **Batch 1's 20 are at the LIGHTER v3-agent bar** (structure +
+    hooks + a predict-then-reveal + failure/verify notes) — they likely want a rich top-up pass to v4-rich for
+    uniform quality; user to decide after reviewing staging.
+  - **RATE-LIMIT lesson (important):** a 20-wide agent fan-out tripped the SHARED model rate limit
+    ("Server is temporarily limiting requests — not your usage limit"); 6 agents never started. **Throttle
+    every enhancement workflow to ~3 concurrent** (loop slugs in chunks of 3, `parallel()` each chunk).
+    Do NOT run multiple enhancement sessions in parallel — single-session, sequential, throttled.
+  - **REMAINING: 78 lessons** (stale, NOT in `ENHANCED.json done[]`). Continue ONE session at a time at the
+    v4-rich bar — see the self-contained continuation prompt the user was given (it selects the next ~12,
+    enhances throttled, seeds, marks `v4-rich-2026-06`, and emits the next prompt). `scripts/validate-lesson.ts`
+    + `scripts/_render-sample.ts` are the per-lesson check + eyeball tools.
 - **Prebuilt diagram component library (⚠️ INCOMPLETE — IN PROGRESS, NOT COMMITTED, branch `feature/diagram-component-library`):**
   - DONE so far: `src/render/diagrams.ts` (**9 templates**: neuralNetwork · pipeline · agentLoop · graph · sequence · layeredArchitecture · **tree** (hierarchy, tidy top-down layout) · **matrix** (labelled grid/heatmap, intensity-coloured) · **barProportion** (stacked proportion bar + legend) — all data-only → static inline SVG, theme-aware, escaped, `fitText` auto-wrap+auto-shrink that prefers shrinking over mid-word breaks so labels never spill); `diagram` block in schema.ts (discriminated `template` + flexible all-optional `data`, incl. recursive `tree`, `matrix{rows,cols,cells}`, `segments[]`); wired into components.ts (`diagramBlock`) + tokens.ts (`.diagram`, `.hmodal .diagram`); prompts.ts archetype→template mapping (MODULE_SYSTEM "INTERACTIVE VISUALS & DIAGRAMS" + moduleUserPrompt) covers all 9. Verified: tsc clean, fixtures 6/6 both modes, **0 overflows across 22 stress cases** (geometry-checked live), XSS-safe, dark OK. Review gallery: `scripts/diagram-gallery.ts` → `diagram-gallery.html` (throwaway, not committed).
   - **STILL TODO before commit/push:** (1) ONE real lesson generation with Visuals ON to confirm the model actually emits the right template on-topic (USES CREDITS — user runs it); (2) optional minor GAPs still open (see below) — decide if worth it; (3) Mermaid/Kroki fallback (deliverable 5, deferred). Do NOT push until the user approves the gallery + the live generation.

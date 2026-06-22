@@ -25,15 +25,19 @@
   },
   "mentalMap": {
     "title": "LLM-as-Judge: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use LLM-as-Judge by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "An ordered path: build the model, see the mechanism, make the design calls, write the judge, then validate it.",
+    "oneLineThesis": "Use an LLM to score outputs against a rubric, then prove the judge agrees with humans before you trust its numbers.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
         "label": "Mental model",
         "sub": "Build the simplest useful picture of LLM-as-Judge.",
-        "what": "Mental model turns LLM-as-Judge into a usable mental model.",
+        "orient": "Start here: what an LLM judge is and the problem it solves.",
+        "what": "An LLM judge scores or compares outputs against a rubric instead of a human grader.",
         "relevance": "It matters because the learner needs to apply LLM-as-Judge, not just recognize the words.",
+        "order": 1,
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine"
@@ -42,8 +46,10 @@
         "id": "n_m2",
         "label": "Mechanism",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns LLM-as-Judge into a usable mental model.",
+        "orient": "How a judge call works: rubric, inputs, prompt, and the score it returns.",
+        "what": "The judge takes a rubric plus the output, prompts an LLM, and parses a verdict.",
         "relevance": "It matters because the learner needs to apply LLM-as-Judge, not just recognize the words.",
+        "order": 2,
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal"
@@ -52,8 +58,10 @@
         "id": "n_m3",
         "label": "Design choices",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns LLM-as-Judge into a usable mental model.",
+        "orient": "The calls that shape reliability: scoring scale, reference, pairwise vs pointwise.",
+        "what": "Design choices set the scoring scale, whether you use a reference, and the judge model.",
         "relevance": "It matters because the learner needs to apply LLM-as-Judge, not just recognize the words.",
+        "order": 3,
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine"
@@ -62,8 +70,10 @@
         "id": "n_m4",
         "label": "Tiny implementation sketch",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns LLM-as-Judge into a usable mental model.",
+        "orient": "Write a minimal judge function: rubric in, parsed score out.",
+        "what": "A small function that sends rubric and output to an LLM and returns a structured score.",
         "relevance": "It matters because the learner needs to apply LLM-as-Judge, not just recognize the words.",
+        "order": 4,
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal"
@@ -71,9 +81,11 @@
       {
         "id": "n_m5",
         "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns LLM-as-Judge into a usable mental model.",
+        "sub": "Validate the judge against humans before you trust it.",
+        "orient": "When judges break, and how to verify agreement with human labels first.",
+        "what": "Validation measures whether the judge agrees with human labels before you rely on it.",
         "relevance": "It matters because the learner needs to apply LLM-as-Judge, not just recognize the words.",
+        "order": 5,
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine"
@@ -107,12 +119,12 @@
       "id": "m1",
       "order": 1,
       "title": "Mental model",
-      "sub": "Build the simplest useful picture of LLM-as-Judge.",
-      "summary": "Build the simplest useful picture of LLM-as-Judge. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Starts the spine: the grading problem an LLM judge solves.",
+      "summary": "You can't read 10,000 model outputs by hand, and exact-match scoring fails on open-ended text. An LLM-as-Judge grades outputs against a rubric at scale. This module frames why it exists before we open up how it works.",
       "objectives": [
-        "Explain the role of mental model in LLM-as-Judge.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why LLM-as-Judge exists: scoring open-ended output at scale.",
+        "State the core risk: a judge can be confidently wrong, so it must itself be validated.",
+        "Name one rubric criterion you could grade against for a real task."
       ],
       "termIds": [
         "eval",
@@ -127,20 +139,18 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "What LLM-as-Judge is — and the problem it solves",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, predict: "
                 },
                 {
-                  "text": "LLM-as-Judge",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "em": true,
+                  "text": "you have 10,000 chatbot answers and want to know which are \"helpful.\" Why can't a simple string-match or keyword check tell you that?"
                 }
               ]
             },
@@ -148,14 +158,37 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "When you build something with an "
                 },
                 {
                   "text": "eval",
                   "term": "eval"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " loop, you constantly need to score outputs: is this summary accurate? is this answer helpful? For open-ended text there is no exact answer to match against, and reading every output by hand does not scale. "
+                },
+                {
+                  "text": "LLM-as-Judge",
+                  "term": "judge",
+                  "strong": true
+                },
+                {
+                  "text": " solves this: you use a second LLM to grade outputs against a written "
+                },
+                {
+                  "text": "rubric",
+                  "term": "rubric"
+                },
+                {
+                  "text": ", cheaply and at scale."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The mental model is simple. A judge takes three things in and returns one thing out:"
                 }
               ]
             },
@@ -164,26 +197,27 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of LLM-as-Judge."
+                    "text": "In: the rubric (what \"good\" means), the model output to grade, and optionally a reference answer."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Out: a verdict — a score, a label, or a pick between two outputs — plus a short rationale."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "The catch: the judge is itself an LLM, so it can be confidently wrong. A judge you have not validated is just an opinion."
                   }
                 ]
               ]
             }
           ],
+          "analogy": "An LLM judge is like a grading TA handed a rubric: fast and consistent on clear criteria, but you still spot-check their grades against the professor's before trusting the whole stack.",
           "termIds": [
             "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1"
@@ -399,12 +433,12 @@
       "id": "m2",
       "order": 2,
       "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the model: how a single judge call actually runs.",
+      "summary": "Now that you know why judges exist, open up one judge call: a rubric and an output go into a prompt, the LLM returns a verdict, and you parse a score out. This module traces those moving parts end to end.",
       "objectives": [
-        "Explain the role of mechanism in LLM-as-Judge.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Trace the four parts of a judge call: rubric, inputs, prompt, parsed verdict.",
+        "Explain why the judge must return structured output, not free prose.",
+        "Identify where in the call the score is produced and where it can drift."
       ],
       "termIds": [
         "eval",
@@ -419,63 +453,86 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "The four parts of one judge call",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "A "
                 },
                 {
-                  "text": "LLM-as-Judge",
-                  "strong": true
+                  "text": "judge",
+                  "term": "judge"
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": " is not magic — it is one structured LLM call. Every call has the same four parts, in order:"
                 }
               ]
             },
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of LLM-as-Judge."
+                    "text": "Rubric",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the written criteria for \"good,\" baked into the system prompt (e.g. \"score 1–5 on factual accuracy against the reference\")."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Inputs",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the output being graded, plus optionally a reference answer and the original question."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Prompt",
+                    "strong": true
+                  },
+                  {
+                    "text": " — rubric and inputs assembled into one message that asks the judge model for a verdict and a rationale."
+                  }
+                ],
+                [
+                  {
+                    "text": "Parsed verdict",
+                    "strong": true
+                  },
+                  {
+                    "text": " — you extract a structured score or label from the reply. This is where you record the result for the "
+                  },
+                  {
+                    "text": "eval",
+                    "term": "eval"
+                  },
+                  {
+                    "text": " run."
                   }
                 ]
               ]
+            },
+            {
+              "t": "callout",
+              "tone": "good",
+              "spans": [
+                {
+                  "text": "Ask the judge for structured output (JSON with a score field), not free prose. Prose is unparseable at scale and lets the score drift mid-sentence."
+                }
+              ]
             }
           ],
+          "analogy": "It's an assembly line: rubric defines the spec, the output is the part on the belt, the prompt is the inspector's checklist, and the parsed verdict is the pass/fail stamp.",
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric",
+            "eval"
           ],
           "sources": [
             "kb1"
@@ -484,42 +541,49 @@
         {
           "id": "m2_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Walk one judge call: grading a summary",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "1. Fix the rubric",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For LLM-as-Judge, write one sentence that says what this part owns and what it does not own."
+                      "text": "\"Score the summary 1–5 on faithfulness to the source. 5 = no claims unsupported by the source; 1 = mostly fabricated.\" Write it once; reuse it for every output."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "2. Assemble the inputs",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Pass the source document and the candidate summary. Faithfulness needs the source as a reference, so include it — without it the judge has nothing to check claims against."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "3. Read the verdict",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "The judge returns "
+                    },
+                    {
+                      "code": true,
+                      "text": "{\"score\": 2, \"rationale\": \"claims a 2024 date the source never states\"}"
+                    },
+                    {
+                      "text": ". Parse the score; keep the rationale so a human can audit disputed grades later."
                     }
                   ]
                 }
@@ -527,8 +591,8 @@
             }
           ],
           "termIds": [
-            "eval",
-            "trace"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1",
@@ -538,13 +602,13 @@
         {
           "id": "m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: pointwise vs pairwise",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for llm-as-judge help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Two outputs of the same mechanism. Pointwise: the judge scores one answer in isolation against the rubric (\"rate this answer 1–5\"). Pairwise: the judge sees two answers and picks the better one (\"which response is more helpful, A or B?\")."
                 }
               ]
             },
@@ -552,16 +616,15 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Pairwise is usually more reliable, because relative judgments are easier than absolute ones — but it costs more calls and only ranks, it does not give you an absolute quality number."
                 }
               ]
             }
           ],
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1"
@@ -570,13 +633,20 @@
         {
           "id": "m2_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: log the rationale, not just the score",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Record every judge call as a "
+                },
+                {
+                  "text": "trace",
+                  "term": "trace"
+                },
+                {
+                  "text": ": the rubric version, the inputs, the raw reply, and the parsed score. When a grade looks wrong, the rationale is what lets you tell a judge error from a real model failure."
                 }
               ]
             },
@@ -585,15 +655,14 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Pin the judge model and temperature. A judge run at temperature 0 with a fixed model is reproducible; bump either and last week's scores stop being comparable."
                 }
               ]
             }
           ],
           "termIds": [
-            "eval",
             "trace",
-            "dataset"
+            "judge"
           ],
           "sources": [
             "kb1",
@@ -603,26 +672,26 @@
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in LLM-as-Judge?",
+          "prompt": "Why should a judge return a structured score (e.g. JSON) rather than a free-text paragraph?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Because JSON is the only format LLMs can produce.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Because a structured score is reliably parseable at scale and pins the verdict to a field instead of letting it drift through prose.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Because free text always costs more tokens than JSON.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "You run a judge over thousands of outputs. A score field can be parsed and aggregated deterministically; prose has to be re-interpreted and can contradict itself within the same reply.",
           "termIds": [
-            "eval",
-            "trace"
+            "judge",
+            "eval"
           ],
           "sources": [
             "kb1"
@@ -640,12 +709,12 @@
       "id": "m3",
       "order": 3,
       "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the mechanism: the calls that decide whether the judge is trustworthy.",
+      "summary": "The mechanism is fixed; the design is where quality is won or lost. Here you choose the scoring scale, whether to give the judge a reference, and pointwise vs pairwise — each trades reliability against cost.",
       "objectives": [
-        "Explain the role of design choices in LLM-as-Judge.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Choose a scoring scale and justify it against rubric clarity.",
+        "Decide when a reference answer is required vs optional.",
+        "Pick pointwise vs pairwise scoring for a given goal."
       ],
       "termIds": [
         "eval",
@@ -658,22 +727,26 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m3_concept",
-          "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "id": "m3_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "LLM-as-Judge",
+                  "text": "Quick recall from module 2: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "what were the four parts of a single "
+                },
+                {
+                  "text": "judge",
+                  "term": "judge"
+                },
+                {
+                  "text": " call? Try to name them before reading on."
                 }
               ]
             },
@@ -681,14 +754,36 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "em": true,
+                  "text": "(Rubric, inputs, prompt, parsed verdict.) The design choices below all live inside the rubric and inputs — they change what you feed the call, not its shape."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "judge"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m3_concept",
+          "kind": "conceptual",
+          "title": "The three design choices that move reliability",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Three choices decide whether your "
                 },
                 {
-                  "text": "eval",
-                  "term": "eval"
+                  "text": "judge",
+                  "term": "judge"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " is trustworthy. None has a universal right answer — each is a tradeoff."
                 }
               ]
             },
@@ -697,170 +792,140 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of LLM-as-Judge."
+                    "text": "Scoring scale.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Binary (pass/fail) is robust and easy to validate; a 1–5 scale is more informative but judges anchor and cluster scores in the middle."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Reference answer.",
+                    "strong": true
+                  },
+                  {
+                    "text": " A gold reference makes grading far more reliable (the judge checks against a known-good answer) but requires you to author references — expensive, and impossible for truly open-ended tasks."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Pointwise vs pairwise.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Pairwise comparison is more reliable but only ranks; pointwise gives an absolute number you can track over time."
                   }
                 ]
               ]
+            },
+            {
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "em": true,
+                  "text": "if a 1–5 judge keeps returning 3 and 4 for everything, which design choice would you change first?"
+                }
+              ]
             }
           ],
+          "analogy": "Like designing a survey: yes/no questions are easy to tally but lose nuance; a 1–5 Likert scale captures nuance but everyone hugs the middle. Same tradeoff, same fix — anchor the scale with concrete examples.",
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For LLM-as-Judge, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
           "id": "m3_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Which scoring design for your judge?",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Reliability",
+            "Information per score",
+            "Cost"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Binary pointwise (pass/fail)",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "criterion": "Reliability",
+                  "text": "Highest — a clear threshold is easy for a judge to apply consistently.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "criterion": "Information per score",
+                  "text": "Low — you only learn pass or fail, not how good or bad.",
+                  "rating": "bad"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
+                  "criterion": "Cost",
+                  "text": "One call per output.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Use when the rubric has a crisp acceptance bar (e.g. \"is it factually correct, yes or no?\").",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "1–5 pointwise scale",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "criterion": "Reliability",
+                  "text": "Medium — judges anchor and cluster mid-scale unless you give per-point examples.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Information per score",
+                  "text": "High — gives a tracked quality number over time.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
+                  "criterion": "Cost",
+                  "text": "One call per output.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
+              "whenToUse": "Use when you need a trend line and can anchor each point with a concrete example.",
+              "cost": "Low",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Pairwise comparison",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "criterion": "Reliability",
+                  "text": "High — relative judgments are easier than absolute ones.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Information per score",
+                  "text": "Medium — ranks A vs B but gives no absolute quality level.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
+                  "criterion": "Cost",
+                  "text": "Many calls — every pair, and you may swap order to cancel position bias.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use when comparing two systems or prompt versions head-to-head.",
               "cost": "High",
-              "complexity": "High"
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Pick the smallest-cost option whose reliability and information meet your goal: binary for a clear bar, 1–5 for a trend, pairwise for head-to-head A/B.",
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1",
@@ -870,13 +935,20 @@
         {
           "id": "m3_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: anchor the scale to beat mid-clustering",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "If a 1–5 judge clusters at 3 and 4, the fix is rarely a bigger model — it is a clearer "
+                },
+                {
+                  "text": "rubric",
+                  "term": "rubric"
+                },
+                {
+                  "text": ". Give the judge a concrete example for each point on the scale and tell it to pick the closest match."
                 }
               ]
             },
@@ -885,15 +957,14 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Also randomize the order of A and B in pairwise judging. Judges have a measurable position bias — they favor whichever answer comes first — and swapping order across runs cancels it."
                 }
               ]
             }
           ],
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "rubric",
+            "judge"
           ],
           "sources": [
             "kb1",
@@ -903,26 +974,26 @@
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in LLM-as-Judge?",
+          "prompt": "You need an absolute quality number you can plot week over week. Which scoring design fits best?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Pairwise comparison, because it is the most reliable.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A 1–5 pointwise scale, because pairwise only ranks and gives no absolute level to track.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Whichever uses the largest judge model.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Pairwise tells you A beat B but not how good either is, so it can't be plotted as an absolute trend. A pointwise scale yields the number you can track over time.",
           "termIds": [
-            "eval",
-            "trace"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1"
@@ -935,18 +1006,18 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for LLM-as-Judge: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the judge's scoring design: binary pass/fail, a 1–5 pointwise scale, or pairwise comparison."
     },
     {
       "id": "m4",
       "order": 4,
       "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the design: turn the chosen design into a minimal judge function.",
+      "summary": "Now write it. A judge is a small function: build the rubric prompt, call the model, parse a structured score. We start from a worked sketch, then you complete the parsing line — and check the AI-generated version before trusting it.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in LLM-as-Judge.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write a minimal judge function: prompt in, parsed score out.",
+        "Complete the score-parsing step from a partial sketch.",
+        "Verify an AI-generated judge against a known-bad case before trusting it."
       ],
       "termIds": [
         "eval",
@@ -961,35 +1032,83 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "The shape of a judge function",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Every "
                 },
                 {
-                  "text": "LLM-as-Judge",
-                  "strong": true
+                  "text": "judge",
+                  "term": "judge"
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": " function — in any language — has the same three steps mapped straight from the mechanism in module 2:"
                 }
               ]
             },
             {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Build the prompt",
+                    "strong": true
+                  },
+                  {
+                    "text": ": insert the "
+                  },
+                  {
+                    "text": "rubric",
+                    "term": "rubric"
+                  },
+                  {
+                    "text": ", the output to grade, and any reference into a template that asks for JSON."
+                  }
+                ],
+                [
+                  {
+                    "text": "Call the model",
+                    "strong": true
+                  },
+                  {
+                    "text": " at temperature 0 with a pinned judge model so runs are reproducible."
+                  }
+                ],
+                [
+                  {
+                    "text": "Parse the verdict",
+                    "strong": true
+                  },
+                  {
+                    "text": ": pull the score out of the reply and fail loudly if it is missing or out of range."
+                  }
+                ]
+              ]
+            }
+          ],
+          "analogy": "It's the same shape as a unit test: arrange the inputs, run the thing under test, assert on the result — except the 'assertion' is an LLM applying a rubric.",
+          "termIds": [
+            "judge",
+            "rubric"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "If you let an AI assistant generate a judge for you, verify it before trusting a single score:",
+                  "strong": true
                 }
               ]
             },
@@ -998,79 +1117,30 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of LLM-as-Judge."
+                    "text": "Feed it a known-bad output. A judge that scores a deliberately wrong answer as \"good\" is broken — this is the fastest smoke test."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Check the parser handles a malformed reply (missing score field) without silently defaulting to 0 or 5."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Confirm temperature is 0 and the model is pinned, or your scores aren't reproducible."
+                  }
+                ],
+                [
+                  {
+                    "text": "Confirm the rubric is in the prompt verbatim — assistants love to paraphrase it into something vaguer."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For LLM-as-Judge, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "kb1",
@@ -1078,75 +1148,49 @@
           ]
         },
         {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for llm-as-judge help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "A minimal judge function (completion problem)",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
+          "code": "RUBRIC = \"Score the answer 1-5 for factual accuracy vs the reference. Reply ONLY as JSON: {\\\"score\\\": int, \\\"rationale\\\": str}.\"\n\ndef judge(answer, reference):\n    prompt = f\"{RUBRIC}\\n\\nREFERENCE:\\n{reference}\\n\\nANSWER:\\n{answer}\"\n    reply = call_llm(prompt, model=\"judge-v1\", temperature=0)\n    verdict = json.loads(reply)\n    score = verdict[\"score\"]\n    if not 1 <= score <= 5:          # fail loud on out-of-range scores\n        raise ValueError(f\"score {score} outside 1-5\")\n    return score, verdict[\"rationale\"]",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "The rubric is pinned in the prompt and demands JSON. The "
+                },
+                {
+                  "code": true,
+                  "text": "temperature=0"
+                },
+                {
+                  "text": " call makes the score reproducible, and the range check turns a malformed verdict into a loud error instead of a silently wrong number."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "The range check raises on a score outside 1–5. Before reading the next line: why fail loudly here instead of clamping the value to the nearest valid score (e.g. forcing a 7 down to 5)?",
+            "answer": "An out-of-range score means the judge didn't follow the rubric — clamping hides that and pollutes your eval with a fabricated 5. Failing loud surfaces a broken judge prompt so you fix the cause, not the symptom."
           },
           "syntax": [
             {
-              "part": "def",
-              "explains": "Defines a function."
+              "part": "json.loads",
+              "explains": "Parses the model's JSON reply into a dict so you can read the score field."
             },
             {
-              "part": "if",
-              "explains": "Branches on readiness."
+              "part": "temperature=0",
+              "explains": "Makes the judge deterministic so the same input yields the same score."
             },
             {
-              "part": "return",
-              "explains": "Hands back the result."
+              "part": "raise ValueError",
+              "explains": "Fails loudly when the verdict is out of range, instead of recording a bad score."
             }
           ],
           "termIds": [
-            "eval",
-            "trace",
-            "dataset"
+            "judge",
+            "rubric"
           ],
           "sources": [
             "canon1",
@@ -1156,26 +1200,25 @@
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in LLM-as-Judge?",
+          "prompt": "Why does the judge function call the model with temperature=0?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To make the judge cheaper to run.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "So the same input yields the same score — scores stay reproducible and comparable across runs.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Because judges cannot run at any other temperature.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "A non-zero temperature makes the judge stochastic, so the same output could score 3 one run and 4 the next. Temperature 0 pins the verdict, which is what lets you compare today's eval to last week's.",
           "termIds": [
-            "eval",
-            "trace"
+            "judge"
           ],
           "sources": [
             "kb1"
@@ -1193,12 +1236,12 @@
       "id": "m5",
       "order": 5,
       "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Closes the spine: validate the judge against humans before trusting it.",
+      "summary": "A judge you haven't validated is just an opinion. This module covers how judges break in practice — bias, mid-clustering, gaming — and the one check that makes a judge trustworthy: agreement with human labels on a held-out set.",
       "objectives": [
-        "Explain the role of check and apply in LLM-as-Judge.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name the three most common ways an LLM judge fails in production.",
+        "Validate a judge by measuring agreement with human labels before relying on it.",
+        "Decide whether a judge is ready to deploy, needs the rubric fixed, or needs a human in the loop."
       ],
       "termIds": [
         "eval",

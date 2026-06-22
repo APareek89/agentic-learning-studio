@@ -25,56 +25,68 @@
   },
   "mentalMap": {
     "title": "CrewAI and Role-based Agents: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use CrewAI and Role-based Agents by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Follow the build path: define roles, give them tasks, wire a crew, then harden it.",
+    "oneLineThesis": "CrewAI lets you build a multi-agent system by defining specialist agents (role + goal + backstory), assigning tasks, and running them as a crew under a process.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place CrewAI and Role-based Agents in the system map.",
-        "what": "What the tool owns turns CrewAI and Role-based Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply CrewAI and Role-based Agents, not just recognize the words.",
+        "label": "Why role-based agents",
+        "sub": "The problem a crew of specialists solves.",
+        "orient": "Why split work across role-defined agents instead of one do-everything prompt.",
+        "what": "Frames the problem CrewAI solves: a single generalist agent gets vague; specialists with clear roles stay focused.",
+        "relevance": "It matters because the whole framework only pays off once you can say what decision splitting into roles changes.",
         "moduleId": "m1",
+        "order": 1,
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow turns CrewAI and Role-based Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply CrewAI and Role-based Agents, not just recognize the words.",
+        "label": "Agent + Task + Crew",
+        "sub": "The three objects and how they connect.",
+        "orient": "How Agent, Task, and Crew objects form one runnable workflow with inputs and outputs.",
+        "what": "Traces the lifecycle: agents declare capability, tasks declare work, the crew runs them under a process.",
+        "relevance": "It matters because you cannot debug or extend a crew until you know which object owns which responsibility.",
         "moduleId": "m2",
+        "order": 2,
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives turns CrewAI and Role-based Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply CrewAI and Role-based Agents, not just recognize the words.",
+        "label": "Sequential vs hierarchical",
+        "sub": "Choosing the crew process for the job.",
+        "orient": "When a fixed sequential pipeline beats a manager-led hierarchical crew, and the cost of each.",
+        "what": "Compares the two process options CrewAI offers and the tradeoffs in control, cost, and flexibility.",
+        "relevance": "It matters because picking the wrong process is the most common early CrewAI mistake.",
         "moduleId": "m3",
+        "order": 3,
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch turns CrewAI and Role-based Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply CrewAI and Role-based Agents, not just recognize the words.",
+        "label": "Build a minimal crew",
+        "sub": "The smallest two-agent crew that runs.",
+        "orient": "The smallest working pattern: two agents, two tasks, a sequential crew, kickoff.",
+        "what": "Shows the smallest runnable CrewAI program and how task outputs flow into the next agent's context.",
+        "relevance": "It matters because the build pattern is what you copy and grow; everything else is variation on it.",
         "moduleId": "m4",
+        "order": 4,
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist turns CrewAI and Role-based Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply CrewAI and Role-based Agents, not just recognize the words.",
+        "label": "Where crews break",
+        "sub": "Failure modes and the production checklist.",
+        "orient": "How crews fail in practice and the checks that catch role drift, loops, and runaway cost.",
+        "what": "Names the realistic failure modes of multi-agent crews and the validation habits that contain them.",
+        "relevance": "It matters because a crew that runs in a demo can still loop, drift, or burn tokens in production.",
         "moduleId": "m5",
+        "order": 5,
         "layer": "Path",
         "emphasis": "spine"
       }
@@ -106,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Place CrewAI and Role-based Agents in the system map.",
-      "summary": "Place CrewAI and Role-based Agents in the system map. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Why role-based agents exist",
+      "sub": "Starts the spine: the problem a crew of specialists solves.",
+      "summary": "One generalist agent given a big, fuzzy goal tends to wander. CrewAI's answer is to split the work across agents that each have a narrow role, goal, and backstory. This module frames why that split is worth the extra moving parts before we open up the pieces.",
       "objectives": [
-        "Explain the role of what the tool owns in CrewAI and Role-based Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain the problem role-based agents solve that a single prompt does not.",
+        "Name what an agent's role, goal, and backstory each control.",
+        "Choose one validation check that would catch a role-confusion failure."
       ],
       "termIds": [
         "framework",
@@ -127,20 +139,18 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "What the tool owns: the core idea",
+          "title": "Why one agent isn't enough",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, predict: "
                 },
                 {
-                  "text": "CrewAI and Role-based Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "em": true,
+                  "text": "if you asked a single agent to \"research a topic, then write a polished article about it,\" what tends to go wrong as the task gets bigger?"
                 }
               ]
             },
@@ -148,14 +158,44 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Hand one agent a broad goal — research, then write, then fact-check — and it blurs the jobs together: it stops researching too early, edits while it drafts, and loses track of which step it is on. "
+                },
+                {
+                  "text": "CrewAI",
+                  "strong": true
+                },
+                {
+                  "text": " exists to fix this by splitting the work across several agents, each with a narrow identity."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "It is a multi-agent "
                 },
                 {
                   "text": "framework",
                   "term": "framework"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ": a library that defines agents by a role, gives each a task, and runs them together as a crew. The reusable idea is "
+                },
+                {
+                  "text": "role-based design",
+                  "strong": true
+                },
+                {
+                  "text": " — a focused agent makes better decisions than a generalist with the same model."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Each agent is configured with three fields that do real work:"
                 }
               ]
             },
@@ -164,17 +204,29 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of CrewAI and Role-based Agents."
+                    "text": "role",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the job title (\"Senior Researcher\"); it scopes what the agent should and should not do."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "goal",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the outcome the agent is optimizing for, in one sentence."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "backstory",
+                    "strong": true
+                  },
+                  {
+                    "text": " — context that biases tone and judgement (\"You value primary sources over blogs\")."
                   }
                 ]
               ]
@@ -182,8 +234,7 @@
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -192,49 +243,30 @@
         {
           "id": "m1_visual",
           "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for CrewAI and Role-based Agents.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
+          "title": "How sharp is the agent's role?",
+          "caption": "Slide from a vague generalist to a sharply scoped specialist and watch the behavior change.",
           "min": 1,
-          "max": 5,
-          "unit": "level",
+          "max": 3,
+          "unit": "role sharpness",
           "stops": [
             {
               "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
+              "label": "No role (\"Assistant\")",
+              "note": "Generic identity. The agent does a bit of everything, mixes research with writing, and stops when it feels done."
+            },
+            {
+              "at": 2,
+              "label": "Role + goal",
+              "note": "\"Researcher\" with the goal \"gather verifiable facts.\" Behavior tightens — it now knows it is researching, not drafting."
             },
             {
               "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "label": "Role + goal + backstory",
+              "note": "Adds \"You distrust unsourced claims.\" The agent now prefers primary sources and flags weak evidence — judgement, not just scope."
             }
           ],
           "termIds": [
-            "framework",
-            "graph"
+            "framework"
           ],
           "sources": [
             "kb1"
@@ -243,42 +275,42 @@
         {
           "id": "m1_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How to design a role from a goal",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Name one job",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For CrewAI and Role-based Agents, write one sentence that says what this part owns and what it does not own."
+                      "text": "Write the role as a job title an org would actually post — \"Travel Researcher,\" not \"Helpful AI.\" If you can't fit it in a title, the scope is too broad and should be split into two agents."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "State the goal as an outcome",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "The goal is what this agent is optimizing for, not the steps. \"Find the three cheapest flights with their constraints\" — measurable, and clearly different from the writer's goal."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Add a backstory that biases judgement",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Backstory is where you encode taste and guardrails: \"You always confirm price against a primary source before reporting it.\" This shapes how the agent decides, not just what it is allowed to touch."
                     }
                   ]
                 }
@@ -286,8 +318,7 @@
             }
           ],
           "termIds": [
-            "framework",
-            "graph"
+            "framework"
           ],
           "sources": [
             "kb1",
@@ -297,21 +328,44 @@
         {
           "id": "m1_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: a research-and-write crew",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for crewai and role-based agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Say you want a short market brief on electric scooters. Instead of one agent, you define two:"
                 }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Researcher",
+                    "strong": true
+                  },
+                  {
+                    "text": " — role \"Market Researcher,\" goal \"collect verifiable facts and figures,\" backstory \"you cite sources and never guess numbers.\""
+                  }
+                ],
+                [
+                  {
+                    "text": "Writer",
+                    "strong": true
+                  },
+                  {
+                    "text": " — role \"Tech Editor,\" goal \"turn research into a tight 200-word brief,\" backstory \"you write plainly and never add facts the researcher didn't provide.\""
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Neither agent does the other's job. The Writer cannot invent statistics because its backstory forbids it, and the Researcher won't ramble because its goal is facts, not prose. That separation is the whole point of role-based design."
                 }
               ]
             }
@@ -319,8 +373,7 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -329,13 +382,13 @@
         {
           "id": "m1_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: roles are prompt scaffolding, not enforcement",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Under the hood, role, goal, and backstory are assembled into the system prompt CrewAI sends to the model. They strongly steer behavior, but they do not hard-enforce it — a Writer agent can still hallucinate a number if the model slips."
                 }
               ]
             },
@@ -344,15 +397,14 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Treat the role as guidance, and put real constraints (allowed tools, output schema, a validation step) where they can be checked — not only in the backstory text."
                 }
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -362,26 +414,25 @@
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"What the tool owns\" in CrewAI and Role-based Agents?",
+          "prompt": "What is the main reason CrewAI splits work across role-defined agents instead of using one agent?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Multiple agents are always cheaper to run than one.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A narrowly scoped agent stays focused and makes better decisions than a generalist on the same model.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "CrewAI requires at least two agents to function.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Role-based design works because a focused identity (role + goal + backstory) keeps each agent from blurring jobs together. It is about decision quality, not a hard requirement or a cost saving — more agents usually cost more.",
           "termIds": [
-            "framework",
-            "graph"
+            "framework"
           ],
           "sources": [
             "kb1"
@@ -398,13 +449,13 @@
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the inputs, outputs, and lifecycle.",
-      "summary": "Trace the inputs, outputs, and lifecycle. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Agent, Task, and Crew: the three pieces",
+      "sub": "Names the three objects from module 1's split and how they connect.",
+      "summary": "Module 1 said CrewAI splits work across roles. This module names the three objects that make that real — Agent, Task, and Crew — and traces how a request flows through them from input to output.",
       "objectives": [
-        "Explain the role of core workflow in CrewAI and Role-based Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name what an Agent, a Task, and a Crew each own.",
+        "Trace how a task's output becomes the next agent's context.",
+        "Explain why tasks, not agents, carry the actual work description."
       ],
       "termIds": [
         "framework",
@@ -419,35 +470,13 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the core idea",
+          "title": "Three objects: Agent, Task, Crew",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "CrewAI and Role-based Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "framework",
-                  "term": "framework"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "A CrewAI program is built from three objects. Keeping their jobs separate is what makes a crew debuggable."
                 }
               ]
             },
@@ -456,26 +485,80 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of CrewAI and Role-based Agents."
+                    "text": "Agent",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a worker defined by role, goal, and backstory (from module 1), plus the tools it may use. It describes "
+                  },
+                  {
+                    "em": true,
+                    "text": "who"
+                  },
+                  {
+                    "text": " can do work."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Task",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a unit of work: a description, an expected output, and the agent assigned to it. It describes "
+                  },
+                  {
+                    "em": true,
+                    "text": "what"
+                  },
+                  {
+                    "text": " must be done."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Crew",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the container that holds the agents and tasks and runs them under a "
+                  },
+                  {
+                    "text": "process",
+                    "term": "orchestration"
+                  },
+                  {
+                    "text": ". It describes "
+                  },
+                  {
+                    "em": true,
+                    "text": "how and in what order"
+                  },
+                  {
+                    "text": " they run."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A common surprise: the work description lives on the "
+                },
+                {
+                  "text": "Task",
+                  "strong": true
+                },
+                {
+                  "text": ", not the Agent. An agent is a reusable specialist; a task is the specific assignment you hand it. The same Researcher agent can run many different research tasks."
+                }
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -484,42 +567,42 @@
         {
           "id": "m2_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How a request flows through a crew",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Crew receives inputs",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For CrewAI and Role-based Agents, write one sentence that says what this part owns and what it does not own."
+                      "text": "You call crew.kickoff(inputs={...}). The crew interpolates those inputs into each task's description (for example a {topic} placeholder)."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Each task runs on its agent",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "The crew gives task 1 to its assigned agent. The agent runs its own internal loop — reasoning and optionally calling tools — until it produces the task's expected output."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Output becomes the next task's context",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "In a sequential crew, task 1's output is passed into task 2 as context. So the Writer sees the Researcher's findings without you wiring anything by hand."
                     }
                   ]
                 }
@@ -528,7 +611,7 @@
           ],
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -538,21 +621,62 @@
         {
           "id": "m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: tracing the brief through the crew",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for crewai and role-based agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Reusing the research-and-write crew from module 1, here is what each object holds at run time:"
                 }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Agents",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Researcher and Writer — defined once, no task text inside them."
+                  }
+                ],
+                [
+                  {
+                    "text": "Task A",
+                    "strong": true
+                  },
+                  {
+                    "text": ": \"Research {topic}; output 5 sourced facts.\" Assigned to Researcher."
+                  }
+                ],
+                [
+                  {
+                    "text": "Task B",
+                    "strong": true
+                  },
+                  {
+                    "text": ": \"Write a 200-word brief.\" Assigned to Writer; receives Task A's output as context."
+                  }
+                ],
+                [
+                  {
+                    "text": "Crew",
+                    "strong": true
+                  },
+                  {
+                    "text": ": holds [Researcher, Writer] and [Task A, Task B], runs them sequentially."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Calling kickoff(inputs={\"topic\": \"electric scooters\"}) fills the {topic} slot, runs Task A, then hands its sourced facts to Task B. The final answer is Task B's output."
                 }
               ]
             }
@@ -560,8 +684,7 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -570,41 +693,45 @@
         {
           "id": "m2_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Defining the three objects in code",
           "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
+          "code": "from crewai import Agent, Task, Crew, Process\n\nresearcher = Agent(\n    role=\"Market Researcher\",\n    goal=\"Collect 5 verifiable facts about {topic}\",\n    backstory=\"You cite sources and never guess numbers.\",\n)\nwriter = Agent(\n    role=\"Tech Editor\",\n    goal=\"Turn research into a tight 200-word brief\",\n    backstory=\"You write plainly and add no facts the researcher didn't provide.\",\n)\n\nresearch = Task(\n    description=\"Research {topic}. Output 5 sourced facts.\",\n    expected_output=\"A bulleted list of 5 facts, each with a source.\",\n    agent=researcher,\n)\nwrite = Task(\n    description=\"Write a 200-word brief from the research.\",\n    expected_output=\"A single 200-word paragraph.\",\n    agent=writer,\n)\n\ncrew = Crew(\n    agents=[researcher, writer],\n    tasks=[research, write],\n    process=Process.sequential,\n)\nresult = crew.kickoff(inputs={\"topic\": \"electric scooters\"})",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Notice the work lives on the Task (description + expected_output), the identity lives on the Agent, and order lives on the Crew. The {topic} placeholder is filled by the kickoff inputs."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "In a sequential crew, where does the writer get the researcher's facts from? Predict before reading.",
+            "answer": "CrewAI automatically passes the previous task's output as context to the next task — so the write task sees the research task's output without you wiring it explicitly. (You can also pass context=[research] to be explicit.)"
           },
           "syntax": [
             {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
+              "part": "Agent(role, goal, backstory)",
+              "explains": "Defines a specialist's identity."
             },
             {
-              "part": "add_node",
-              "explains": "Adds a step."
+              "part": "Task(description, expected_output, agent)",
+              "explains": "Defines a unit of work and who does it."
             },
             {
-              "part": "compile()",
-              "explains": "Makes it runnable."
+              "part": "Process.sequential",
+              "explains": "Runs tasks in list order, piping each output to the next."
+            },
+            {
+              "part": "crew.kickoff(inputs=...)",
+              "explains": "Fills placeholders and runs the crew."
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration",
+            "sdk"
           ],
           "sources": [
             "canon1",
@@ -614,26 +741,26 @@
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core workflow\" in CrewAI and Role-based Agents?",
+          "prompt": "In CrewAI, which object carries the description of the actual work to be done?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The Agent — it holds the work instructions.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The Task — the agent is a reusable specialist; the task is the specific assignment.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The Crew — it stores all instructions centrally.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The Task holds the description and expected_output. The Agent supplies identity and tools and can be reused across many tasks; the Crew only sets composition and order.",
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -650,13 +777,13 @@
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Compare when this tool is right or wrong.",
-      "summary": "Compare when this tool is right or wrong. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Sequential vs hierarchical process",
+      "sub": "With the pieces in hand, choose how the crew runs them.",
+      "summary": "You now have agents and tasks. The crew's process decides how they execute. CrewAI offers two: sequential (a fixed pipeline) and hierarchical (a manager agent delegates). This module is the decision — pick the right one and name what each costs.",
       "objectives": [
-        "Explain the role of fit and alternatives in CrewAI and Role-based Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Contrast the sequential and hierarchical crew processes.",
+        "Choose a process given control, cost, and flexibility needs.",
+        "Explain why hierarchical adds an extra LLM call per delegation."
       ],
       "termIds": [
         "framework",
@@ -669,22 +796,19 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m3_concept",
-          "kind": "conceptual",
-          "title": "Fit and alternatives: the core idea",
+          "id": "m3_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "CrewAI and Role-based Agents",
+                  "text": "Before reading on, recall from module 1: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "what three fields define an agent's identity, and why does a sharper role lead to better decisions?"
                 }
               ]
             },
@@ -692,14 +816,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "em": true,
+                  "text": "(The answer: role, goal, and backstory. A sharper role narrows scope and biases judgement, so the agent stops blurring jobs together.) Hold that in mind — the process you pick next decides how much of that focus the framework will protect."
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m3_concept",
+          "kind": "conceptual",
+          "title": "Two ways a crew can run",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The crew's "
                 },
                 {
-                  "text": "framework",
-                  "term": "framework"
+                  "text": "process",
+                  "term": "orchestration"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " sets how tasks execute. CrewAI gives you two built-in options."
                 }
               ]
             },
@@ -708,26 +851,36 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of CrewAI and Role-based Agents."
+                    "text": "Sequential",
+                    "strong": true
+                  },
+                  {
+                    "text": " — tasks run in list order; each output feeds the next. You control the flow exactly. Predictable, cheap, easy to debug."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
+                    "text": "Hierarchical",
+                    "strong": true
+                  },
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": " — a manager agent (you supply a manager_llm) decides which agent gets which task, delegates, and reviews results. Flexible, but it adds extra LLM calls and unpredictability."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Rule of thumb: if you already know the order of steps, sequential is almost always the right starting point. Reach for hierarchical only when the order genuinely depends on intermediate results."
+                }
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -736,42 +889,42 @@
         {
           "id": "m3_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How to choose the process",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Is the step order fixed?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For CrewAI and Role-based Agents, write one sentence that says what this part owns and what it does not own."
+                      "text": "If you can write the steps as a numbered list before running anything (research, then write, then edit), the order is fixed — use sequential."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Does routing depend on results?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "If the next agent depends on what an earlier one found (\"if the data is incomplete, send it back to research\"), a manager needs to decide at run time — that's hierarchical."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Can you afford the manager's overhead?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Each delegation in a hierarchical crew is an extra LLM call by the manager. Budget for more tokens and slower runs before choosing it."
                     }
                   ]
                 }
@@ -780,7 +933,7 @@
           ],
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -790,88 +943,64 @@
         {
           "id": "m3_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Sequential vs hierarchical",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Control over order",
+            "Cost / latency",
+            "Best fit"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Sequential process",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "criterion": "Control over order",
+                  "text": "You set the exact order in the task list.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "criterion": "Cost / latency",
+                  "text": "One LLM run per task; no manager overhead.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
+                  "criterion": "Best fit",
+                  "text": "Pipelines where steps are known up front.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Use when the step order is fixed and known before running.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "Hierarchical process",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "criterion": "Control over order",
+                  "text": "A manager agent decides routing at run time.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Cost / latency",
+                  "text": "Extra manager LLM calls per delegation.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "Branching work where routing depends on results.",
                   "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use when the next step genuinely depends on intermediate results.",
               "cost": "High",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Default to sequential. Move to hierarchical only when a manager has to make routing decisions you can't write down in advance.",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -881,30 +1010,29 @@
         {
           "id": "m3_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: the manager is itself an agent",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "In a hierarchical crew you pass a manager_llm. CrewAI spins up an internal manager agent that reads each task, picks a worker, delegates, and judges the result. Every one of those steps is a model call you don't see in the task list."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "warn",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "If your token bill or latency jumps unexpectedly after switching to hierarchical, the manager's hidden delegation calls are usually the cause."
                 }
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -914,26 +1042,26 @@
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Fit and alternatives\" in CrewAI and Role-based Agents?",
+          "prompt": "When should you reach for a hierarchical crew instead of a sequential one?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Whenever you have more than two agents.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "When the routing between agents depends on intermediate results and can't be fixed in advance.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Whenever you want the crew to run faster and cheaper.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Hierarchical exists for run-time routing decisions a manager must make. It is slower and more expensive (extra manager calls), so it is not the choice for speed or for a simple count of agents.",
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -946,18 +1074,18 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for CrewAI and Role-based Agents: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the crew process for CrewAI and Role-based Agents: a fixed sequential pipeline or a manager-led hierarchical crew."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "See the smallest working pattern.",
-      "summary": "See the smallest working pattern. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Build a minimal crew",
+      "sub": "Turn the pieces and the process choice into running code.",
+      "summary": "Modules 2 and 3 gave you the objects and the process. Here you assemble the smallest crew that actually runs, finish a completion problem where the key line is left as a TODO, and learn how to check AI-generated crew code before trusting it.",
       "objectives": [
-        "Explain the role of implementation sketch in CrewAI and Role-based Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Assemble a two-agent sequential crew that runs end to end.",
+        "Complete a crew where one wiring line is missing.",
+        "Verify AI-generated CrewAI code against a short checklist."
       ],
       "termIds": [
         "framework",
@@ -972,20 +1100,13 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: the core idea",
+          "title": "The smallest crew that runs",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "CrewAI and Role-based Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A minimal working crew needs only four things: at least one Agent, at least one Task assigned to an agent, a Crew that lists both, and a kickoff call. Module 2's code was exactly this shape — here you make it run and then extend it."
                 }
               ]
             },
@@ -993,42 +1114,21 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "The pattern to internalize: define specialists once, describe work as tasks, wire them with a "
                 },
                 {
-                  "text": "framework",
-                  "term": "framework"
+                  "text": "process",
+                  "term": "orchestration"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ", and let CrewAI pipe each task's output forward. Everything bigger is a variation on this skeleton."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of CrewAI and Role-based Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -1037,42 +1137,42 @@
         {
           "id": "m4_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Assembling the crew, step by step",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Define the agents",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For CrewAI and Role-based Agents, write one sentence that says what this part owns and what it does not own."
+                      "text": "Create each Agent with role, goal, and backstory. No task text here — keep them reusable."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Write the tasks",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Each Task gets a description, an expected_output, and an agent=. The expected_output is what tells the agent when it is done."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Build and kick off the crew",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Pass the agents and tasks to Crew(...), set process=Process.sequential, and call kickoff(inputs=...). The return value is the last task's output."
                     }
                   ]
                 }
@@ -1081,7 +1181,7 @@
           ],
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -1091,21 +1191,41 @@
         {
           "id": "m4_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: what running it looks like",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for crewai and role-based agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "When you call kickoff on the research-and-write crew, the run unfolds like this:"
                 }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "The Researcher runs its task, possibly calling a search tool, and returns 5 sourced facts."
+                  }
+                ],
+                [
+                  {
+                    "text": "CrewAI passes those facts as context into the Writer's task."
+                  }
+                ],
+                [
+                  {
+                    "text": "The Writer produces the 200-word brief, which is returned as the crew's result."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "You wrote no glue code between the two steps — the sequential process handled the handoff."
                 }
               ]
             }
@@ -1113,8 +1233,7 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -1123,41 +1242,41 @@
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Completion problem: finish the crew",
           "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
+          "code": "from crewai import Agent, Task, Crew, Process\n\nplanner = Agent(\n    role=\"Trip Planner\",\n    goal=\"Draft a 3-day {city} itinerary\",\n    backstory=\"You build realistic, walkable day plans.\",\n)\nbudgeter = Agent(\n    role=\"Budget Reviewer\",\n    goal=\"Add a cost estimate to each day\",\n    backstory=\"You flag any day over $150.\",\n)\n\nplan = Task(\n    description=\"Plan 3 days in {city}.\",\n    expected_output=\"A day-by-day itinerary.\",\n    agent=planner,\n)\nreview = Task(\n    description=\"Add per-day cost estimates and flags.\",\n    expected_output=\"The itinerary with costs.\",\n    agent=budgeter,\n)\n\ncrew = Crew(\n    agents=[planner, budgeter],\n    tasks=[plan, review],\n    process=Process.sequential,\n)\n# TODO: run the crew for city=\"Lisbon\" and capture the result\nresult = ___",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Everything is wired except the final line. Decide what call fills the TODO so the crew actually runs with the city supplied, then reveal the answer."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "What should replace the ___ on the last line so the crew runs for Lisbon?",
+            "answer": "result = crew.kickoff(inputs={\"city\": \"Lisbon\"})  — kickoff fills the {city} placeholder in both task descriptions and runs the tasks in order, returning the final (review) task's output."
           },
           "syntax": [
             {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
+              "part": "expected_output",
+              "explains": "Tells each agent what 'done' looks like."
             },
             {
-              "part": "add_node",
-              "explains": "Adds a step."
+              "part": "Process.sequential",
+              "explains": "Runs plan, then review, piping output forward."
             },
             {
-              "part": "compile()",
-              "explains": "Makes it runnable."
+              "part": "kickoff(inputs={...})",
+              "explains": "Fills {city} and starts the run."
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration",
+            "sdk"
           ],
           "sources": [
             "canon1",
@@ -1165,28 +1284,92 @@
           ]
         },
         {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If an AI assistant writes a CrewAI script for you, check these before running it:"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Every Task has an agent= assigned",
+                    "strong": true
+                  },
+                  {
+                    "text": " — an unassigned task silently has no one to run it."
+                  }
+                ],
+                [
+                  {
+                    "text": "Each Task has a concrete expected_output",
+                    "strong": true
+                  },
+                  {
+                    "text": " — without it agents tend to over-run or stop early."
+                  }
+                ],
+                [
+                  {
+                    "text": "The process matches the task order",
+                    "strong": true
+                  },
+                  {
+                    "text": " — sequential assumes the list is in execution order; check that it is."
+                  }
+                ],
+                [
+                  {
+                    "text": "Placeholders match the kickoff inputs",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a {topic} in a description with no \"topic\" key passed in will not interpolate."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "framework",
+            "orchestration"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Implementation sketch\" in CrewAI and Role-based Agents?",
+          "prompt": "What is the minimum a CrewAI program needs to run?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A manager LLM and at least three agents.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "At least one agent, at least one task assigned to it, a crew listing them, and a kickoff call.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A LangGraph state object and a compiled graph.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "A minimal crew is one Agent, one Task assigned to it, a Crew holding both, and crew.kickoff(). A manager LLM is only for the hierarchical process, and CrewAI does not use LangGraph graphs.",
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -1203,13 +1386,13 @@
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Harden versioning, evals, and operations.",
-      "summary": "Harden versioning, evals, and operations. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Where crews break, and how to harden them",
+      "sub": "Closes the spine: the failure modes a running crew still hits.",
+      "summary": "A crew that works in a demo can still loop, drift off-role, or burn tokens in production. This module names the realistic failure modes of multi-agent crews and the checks that contain them, then forces the decision: ship the simple crew, or invest in hardening.",
       "objectives": [
-        "Explain the role of production checklist in CrewAI and Role-based Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Recognize the common ways a multi-agent crew fails in practice.",
+        "Map each failure mode to a concrete guardrail.",
+        "Decide when a crew is ready to ship versus needing more rigor."
       ],
       "termIds": [
         "framework",
@@ -1222,22 +1405,19 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Production checklist: the core idea",
+          "id": "m5_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "CrewAI and Role-based Agents",
+                  "text": "Before reading on, recall from module 3: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "why does the hierarchical process cost more than sequential?"
                 }
               ]
             },
@@ -1245,14 +1425,26 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "em": true,
+                  "text": "(The answer: the manager agent makes extra LLM calls to decide routing and review results.) Keep that in mind — runaway manager calls are one of the failure modes below."
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "How crews break in practice",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": "framework",
-                  "term": "framework"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Knowing the happy path isn't enough. These are the failure modes that show up once a crew leaves the demo."
                 }
               ]
             },
@@ -1261,17 +1453,38 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of CrewAI and Role-based Agents."
+                    "text": "Role drift / job blur.",
+                    "strong": true
+                  },
+                  {
+                    "text": " An agent with a fuzzy role starts doing a neighboring agent's job — the Writer invents facts, the Researcher starts editing. The fix is sharper roles and an output schema, not a longer backstory."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Delegation loops.",
+                    "strong": true
+                  },
+                  {
+                    "text": " In a hierarchical crew the manager keeps re-delegating because no task ever satisfies it. Set a max_iter and clear expected_output so 'done' is recognizable."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Runaway token cost.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Long backstories, full task outputs passed forward, and manager calls compound. Watch the bill and trim context that the next agent doesn't need."
+                  }
+                ],
+                [
+                  {
+                    "text": "Silent context loss.",
+                    "strong": true
+                  },
+                  {
+                    "text": " A late task assumes information an earlier task never actually put in its output. Pin dependencies explicitly with context=[...] rather than trusting order alone."
                   }
                 ]
               ]
@@ -1279,8 +1492,7 @@
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -1289,42 +1501,42 @@
         {
           "id": "m5_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Turning a failure mode into a guardrail",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Spot the symptom",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For CrewAI and Role-based Agents, write one sentence that says what this part owns and what it does not own."
+                      "text": "Read the trace. Repeated tool calls, the manager re-delegating, or an agent producing the wrong kind of output each point to a specific failure mode above."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Attach a check",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Add the matching guardrail: tighter expected_output for job blur, max_iter for loops, explicit context for silent loss, a token budget for cost."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Re-run and confirm",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Run the same input again and confirm the symptom is gone in the trace before declaring it fixed — not just that the final answer looks right."
                     }
                   ]
                 }
@@ -1333,7 +1545,7 @@
           ],
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1",
