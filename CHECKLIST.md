@@ -75,7 +75,7 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 
 ## 7. Observability & ops `[TODO]`
 - [ ] **Error tracking** (Sentry or similar) on server + client.
-- [ ] **LLM tracing** — Langfuse is already wired (optional keys); turn it on in prod to watch cost/latency/failures per generation.
+- [ ] **`[PARTIAL]` LLM tracing (Langfuse).** Wired ONLY into the legacy `/api/learn` SSE route — the LIVE generate path (`/api/overview`+`/api/build` → `orchestrator.ts`) is **not** traced, so setting `LANGFUSE_*` keys alone won't capture real lessons. TODO: create a handler per job in `orchestrator.ts`, pass `{callbacks:[handler],runName,metadata}` to profiler/retriever/architect/runDeepDive (they already forward `config`), `flushAsync()` in `finally`; then set keys in Render.
 - [ ] **Product analytics** (signups, activation = first lesson, conversion to paid, churn).
 - [ ] **Logging + alerting** on error rate, spend spikes, job failures.
 - [ ] **Status page / incident runbook** (what to do when Anthropic is down, DB is down, spend spikes).
