@@ -34,7 +34,7 @@ import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
-import { listCommunity, getCommunityHtml, likeCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
+import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
@@ -222,6 +222,7 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
   if (!prompt.trim()) { res.status(400).json({ error: "Missing 'prompt'." }); return; }
+  if (prompt.length > 5000) { res.status(400).json({ error: "That request is too long (max 5000 characters)." }); return; }
   const cards = (body.cards as Record<string, string>) ?? {};
   const user = await getUser(req.headers.authorization);
   let userProfile: Record<string, unknown> = {};
@@ -628,6 +629,8 @@ app.post("/api/upload", heavyLimiter, async (req, res) => {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
     return;
   }
+  // Per-file cap (~10MB): base64 is ~1.33× the byte size, so ~14M chars ≈ 10MB.
+  if (dataBase64.length > 14_000_000) { res.status(413).json({ error: "That file is too large (max ~10MB)." }); return; }
   const ext = extname(filename).toLowerCase();
   const tmp = `${tmpdir()}/als-upload-${randomUUID()}${ext}`;
   try {
@@ -703,6 +706,16 @@ app.post("/api/community/like", async (req, res) => {
   const likes = await likeCommunity(slug);
   if (likes == null) { res.status(404).json({ error: "Lesson not found." }); return; }
   res.json({ ok: true, likes });
+});
+
+// POST /api/community/report — flag a community lesson. Auto-hides it past a threshold
+// (pending manual review). Public + rate-limited by the global /api limiter.
+app.post("/api/community/report", async (req, res) => {
+  const slug = typeof req.body?.slug === "string" ? req.body.slug : "";
+  if (!slug) { res.status(400).json({ error: "Missing slug." }); return; }
+  const r = await reportCommunity(slug);
+  if (!r.ok) { res.status(404).json({ error: "Lesson not found." }); return; }
+  res.json({ ok: true, hidden: r.hidden });
 });
 
 // POST /api/community/share — snapshot the learner's lesson public + mint a discount code.

@@ -61,7 +61,7 @@ export async function listCommunity(): Promise<CommunityCard[]> {
   if (!dbEnabled()) return [];
   const rows = await query<CommunityRow>(
     `select slug, title, description, category, level, est_minutes, submitter_name, likes
-       from community_lessons order by created_at desc limit 300`
+       from community_lessons where hidden = false order by created_at desc limit 300`
   ).catch(() => []);
   return rows.map((r) => ({
     slug: r.slug, title: r.title, description: r.description, category: r.category,
@@ -82,6 +82,21 @@ export async function getCommunityHtml(slug: string): Promise<string | null> {
   return rows[0].html;
 }
 function safeParse(s: string): unknown { try { return JSON.parse(s); } catch { return null; } }
+
+/** Anonymous report (+1) on a community lesson. Auto-hides it past a threshold (pending review). */
+export async function reportCommunity(slug: string): Promise<{ ok: boolean; hidden: boolean }> {
+  if (!dbEnabled()) return { ok: false, hidden: false };
+  const rows = await query<{ reports: number }>(
+    `update community_lessons set reports = reports + 1 where slug = $1 returning reports`, [slug]
+  ).catch(() => []);
+  if (!rows.length) return { ok: false, hidden: false };
+  const REPORTS_TO_HIDE = 3;
+  if ((rows[0].reports ?? 0) >= REPORTS_TO_HIDE) {
+    await query(`update community_lessons set hidden = true where slug = $1`, [slug]).catch(() => {});
+    return { ok: true, hidden: true };
+  }
+  return { ok: true, hidden: false };
+}
 
 /** Anonymous like (+1). Per-browser dedupe is done client-side. Returns the new count. */
 export async function likeCommunity(slug: string): Promise<number | null> {
@@ -149,6 +164,14 @@ export async function shareLesson(
   // Contributor publishes don't carry the discount incentive.
   if (opts.contributor) return { ok: true, slug };
 
+  // Anti-farm: at most ONE unredeemed share code per user — if they already have one,
+  // return it instead of minting another (stops sharing many lessons to farm codes).
+  const existingCode = await query<{ code: string }>(
+    `select code from discount_codes where user_id = $1 and source = 'community_share' and redeemed = false order by created_at desc limit 1`,
+    [user.id]
+  ).catch(() => []);
+  if (existingCode.length) return { ok: true, slug, code: existingCode[0].code };
+
   const code = discountCode();
   await query(
     `insert into discount_codes (code, user_id, user_email, lesson_id, percent, source)
@@ -208,7 +231,7 @@ export async function listDrivers(): Promise<DriverCard[]> {
     `select c.user_id, c.full_name, c.bio, c.expertise,
             count(cl.id)::text as courses, coalesce(sum(cl.likes),0)::text as likes
        from contributors c
-       left join community_lessons cl on cl.submitter_user_id = c.user_id
+       left join community_lessons cl on cl.submitter_user_id = c.user_id and cl.hidden = false
       group by c.user_id, c.full_name, c.bio, c.expertise
       order by count(cl.id) desc, coalesce(sum(cl.likes),0) desc, c.created_at desc
       limit 300`
@@ -223,7 +246,7 @@ export async function getDriver(userId: string): Promise<{ profile: Contributor;
   if (!profile) return null;
   const rows = await query<CommunityRow>(
     `select slug, title, description, category, level, est_minutes, submitter_name, likes
-       from community_lessons where submitter_user_id = $1 order by created_at desc`, [userId]
+       from community_lessons where submitter_user_id = $1 and hidden = false order by created_at desc`, [userId]
   ).catch(() => []);
   const courses = rows.map((r) => ({
     slug: r.slug, title: r.title, description: r.description, category: r.category,

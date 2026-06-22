@@ -4,6 +4,11 @@ Everything needed to take the app public so users can **sign up → pay → gene
 Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing · `[TODO]` not built.
 > Not legal advice. The Compliance/Legal items need a real lawyer — this lists *what* you need, not a substitute for counsel.
 
+> **NEXT UP (deferred by decision, Jun 2026 — the big remaining build items):**
+> 1. **Billing + per-user credit metering** (§0 credit cap + §1) — gate `/api/overview`+`/api/build` on a paid/granted credit balance; wire Paddle. *This is the #1 money risk still open.*
+> 2. **Account basics** (§3) — enforce email-verified before generating, password-reset page, account deletion + data export.
+> Hardening shipped this round: RLS (§0/§4), rate-limits + global gen-cap (§0/§2), CORS + helmet + iframe-sandbox (§4), Claude retry + UI retry (§6), input caps (§2), community report/auto-hide + discount anti-farm (§1/§3-community), lesson retention 30d→1yr (§5). Still on the user: Anthropic spend cap (§2), Render=Standard 2GB, (Supabase Pro + confirm-email + prod env — DONE).
+
 ---
 
 ## 0. CRITICAL BLOCKERS — do these first, nothing else matters until they're green
@@ -23,19 +28,19 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [ ] **Webhooks → entitlement sync.** Subscription created/updated/cancelled/payment-failed webhooks update the user's plan + credit balance in your DB. Verify webhook signatures. Handle dunning (failed payment → grace period → downgrade).
 - [ ] **Gate generation by entitlement.** `/api/generate` checks the user's remaining credits/plan BEFORE kicking off a job; decrement on success; surface "out of credits → upgrade" in the UI.
 - [ ] **Free trial / freemium boundary.** Decide what's free (browse Library? 1–2 generations?) and where the paywall sits. The Library is already public; generation should be the paid action.
-- [ ] **`[PARTIAL]` Discount codes (Community Share → 30% off).** When a learner shares a lesson to **Community courses** (My Lessons row or the Trainer 2-module popup), the server mints a 30%-off code into the `discount_codes` table (`code, user_id, lesson_id, percent=30, source='community_share', redeemed=false`) and shows it in a popup. **Built: code generation + storage + UI.** `[TODO]` to wire at billing: (1) validate/apply the code at checkout, (2) enforce one-use (`redeemed`) + per-user limits + expiry, (3) guard against share-spam farming codes (rate-limit shares; maybe require the lesson be ≥X% complete or de-dupe per lesson — currently the UI hides re-share via localStorage only, not server-enforced), (4) decide the discount's scope (next purchase only) and stacking rules.
+- [ ] **`[PARTIAL]` Discount codes (Community Share → 30% off).** When a learner shares a lesson to **Community courses** (My Lessons row or the Trainer 2-module popup), the server mints a 30%-off code into the `discount_codes` table (`code, user_id, lesson_id, percent=30, source='community_share', redeemed=false`) and shows it in a popup. **Built: code generation + storage + UI + anti-farm** (server now caps to **one unredeemed code per user** and won't re-publish the same source lesson). `[TODO]` to wire at billing: (1) validate/apply the code at checkout, (2) enforce one-use (`redeemed`) + expiry, (3) decide the discount's scope (next purchase only) and stacking rules.
 
 ## 2. Cost control & abuse prevention `[TODO]`
 - [ ] **Hard budget alarms on the Anthropic key.** Set spend alerts/limits in the Anthropic console; consider separate keys per environment.
 - [ ] **Per-user generation quota** (ties to §1 credits) enforced server-side, not just in the UI.
 - [x] **`[DONE, global]` Throttle background jobs.** Global concurrent-generation cap (`MAX_CONCURRENT_GENERATIONS`, default 4) in `jobs.ts`; `/api/overview` + `/api/build` take a slot (429 if full), released in the job's `finally`. Per-**user** cap still TODO (ties to credits).
 - [ ] **Abuse bounds on uploads/repo clone** (already: ≤400 files / ≤4MB / 90s) — keep, and add per-user/day limits.
-- [ ] **Input caps.** Max prompt length, max uploads per session, max repo size — reject early with a clear message.
+- [x] **`[PARTIAL]` Input caps.** Prompt capped at 5000 chars (`/api/overview`); per-file upload cap ~10MB (`/api/upload`, 413); repo clone already bounded (≤400 files/≤4MB/90s). Remaining: max uploads-per-session cap.
 - [ ] **Bot/signup abuse.** CAPTCHA or email-verification gate on signup so bots can't farm free generations.
 
 ## 3. Auth & account management
 - [ ] **`[DONE]` Email/password auth** (Supabase, on-demand modal).
-- [ ] **`[PARTIAL]` Email verification ON** (Supabase → Auth → confirm email) so the verify-email flow + link work; required before granting credits.
+- [x] **`[PARTIAL]` Email verification.** Supabase "confirm email" toggle is **ON** (done by user). Remaining (B2): enforce *in code* — block generation / credit grants until `email_confirmed`, and surface "please verify your email."
 - [ ] **`[TODO]` Password reset** (Supabase reset email + a reset page).
 - [ ] **`[TODO]` Account deletion + data export** (GDPR/CCPA "right to erasure / portability"): a user can delete their account and download their data.
 - [ ] **`[TODO]` Session/security basics.** Token expiry handling in the UI (re-auth on 401), sign-out everywhere.
@@ -44,13 +49,13 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 ## 4. Security & data protection
 - [ ] **`[DONE]` Secrets out of git** (`.env` git-ignored; Render env `sync:false`). Add a **key-rotation** plan + least-privilege keys (anon key is public by design; never ship the service-role key).
 - [x] **`[DONE]` RLS on all tables** (migration `0008`, see §0) — the load-bearing one.
-- [x] **`[PARTIAL]` HTTPS + secure headers.** `helmet` added (HSTS, X-Content-Type-Options, X-Frame-Options SAMEORIGIN, Referrer-Policy). Render provides TLS. **CSP is deliberately OFF** for now because lessons + the host page inline `<script>`/`<style>`; remaining: a tight CSP (nonces) or an iframe `sandbox` for the artifact.
+- [x] **`[PARTIAL]` HTTPS + secure headers.** `helmet` added (HSTS, X-Content-Type-Options, X-Frame-Options SAMEORIGIN, Referrer-Policy); Render provides TLS. The lesson **iframe is sandboxed** (`allow-scripts allow-same-origin allow-popups allow-downloads` — blocks top-nav/forms; verified the runtime still works). **CSP still OFF** (lessons + host inline JS/CSS); remaining: a tight CSP with nonces.
 - [x] **`[DONE]` CORS lockdown.** `/api/*` restricted to `prathibhax.com` / `www.prathibhax.com` / the onrender URL / localhost (+ `EXTRA_ORIGINS`); foreign origins blocked, same-origin/no-origin allowed.
 - [ ] **`[TODO]` Input validation everywhere** (already partial via Zod on the Blueprint; validate all request bodies — filenames, repoUrl already regex-checked, base64 size, etc.).
-- [ ] **`[TODO]` Dependency + supply-chain audit.** `npm audit`, pin versions, enable Dependabot; the artifact runs inline JS so XSS in lesson content must stay impossible (renderer escapes — keep it that way; never interpolate unescaped model text).
+- [ ] **`[PARTIAL]` Dependency + supply-chain audit.** Reviewed Jun 2026: `npm audit fix` (non-breaking) resolves nothing; the **12 remaining (11 moderate, 1 high) are all langchain-ecosystem transitive** (`@langchain/*`, `langchain`, `langsmith`, `fast-xml-parser`, `uuid`) and need a **breaking** upgrade → **deferred** (force-upgrading risks the generation pipeline; do it deliberately + re-run a full generation test). Still TODO: enable Dependabot. (XSS stays impossible — renderer escapes all model text.)
 - [ ] **`[TODO]` PII minimization.** You store email + lesson prompts (may contain user context). Document what's stored, encrypt at rest (Supabase does), and set retention (§5).
 - [ ] **`[TODO]` Content moderation.** Users type free-text prompts and upload docs → run prompts/outputs through a moderation check (Anthropic's safety + your own policy) so the product can't be used to generate disallowed content; log + block.
-- [ ] **`[TODO]` Contributor course moderation + abuse.** "Build for Community" courses **auto-publish to Community Courses with no review** (v1). Add: (1) a review/approval queue (or post-publish moderation) before a contributor course goes public, (2) a "report this course" path, (3) abuse limits on contributor publishing (rate-limit, account age / verified email), (4) IP/originality check on uploaded course content (ties to §9), (5) a way to unpublish/ban. Contributor profiles (`contributors` table → **Community Drivers**) are public — review the originality/AI-disclosure agreement copy with legal.
+- [x] **`[PARTIAL]` Contributor course moderation + abuse.** DONE: a **"report" path** on every community tile (`/api/community/report`) that **auto-hides** a lesson after ≥3 reports (`hidden` column, migration `0009`, filtered from all listings). Contributor courses still **auto-publish with no pre-review** (v1). Remaining: (1) an admin review/approval queue + manual unpublish/ban UI, (2) publish rate-limits / require verified email, (3) IP/originality check on uploaded content (§9), (4) legal review of the contributor agreement copy.
 
 ## 5. Compliance & legal `[TODO]` (lawyer-reviewed)
 - [ ] **Terms of Service** (incl. acceptable use, no-warranty on AI output, liability cap).
@@ -59,13 +64,13 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [ ] **DPA / sub-processor list** (Anthropic, Supabase, Render, Paddle/Stripe). Anthropic API data is not trained on by default — cite that in your privacy stance.
 - [ ] **GDPR/CCPA**: consent for analytics/cookies, data-subject request process, deletion/export (§3).
 - [ ] **Refund/cancellation policy** (your MoR may mandate one).
-- [ ] **Data retention policy** — the app already keeps generated lessons 30 days; document it and apply consistently (uploads are in-memory/session — note that).
+- [x] **`[PARTIAL]` Data retention policy** — lesson expiry extended **30 days → 1 year** (migration `0009`; "Saved · Download to keep a permanent copy" wording; the countdown badge only shows when ≤30 days remain). Remaining: tie retention to plan (paid = keep while active) once billing lands; uploads stay in-memory/session — document it.
 
 ## 6. Infrastructure & reliability
 - [ ] **`[PARTIAL]` Hosting plan sized right.** Render `standard` (2GB) — the local ONNX embedding model (~128MB) loads in memory; `starter` (512MB) may OOM. Confirm the plan + a persistent disk for `TRANSFORMERS_CACHE` so the model doesn't re-download each cold start.
 - [ ] **`[TODO]` DB backups + restore drill.** Confirm Supabase automated backups for your plan; do one test restore.
 - [ ] **`[TODO]` Health checks + auto-restart** (`/healthz` exists — wire Render's health check + an external uptime monitor).
-- [x] **`[PARTIAL]` Graceful degradation.** Anthropic 429/529/5xx now **auto-retry with backoff** (`maxRetries` in `llm.ts`); background jobs isolate failures. Remaining: surface a clear "AI busy, retry" state in the UI on final failure.
+- [x] **`[DONE]` Graceful degradation.** Anthropic 429/529/5xx **auto-retry with backoff** (`maxRetries` in `llm.ts`); background jobs isolate failures; and the UI now shows a **"⚠️ the AI was busy — Try again"** button on a final overview/build failure (`showGenError` in `app.js`).
 - [ ] **`[TODO]` Scaling note.** Artifacts + uploads use in-memory caches/Maps; a second instance won't share them. Either pin to one instance or move that state to the DB/Redis before scaling horizontally.
 
 ## 7. Observability & ops `[TODO]`

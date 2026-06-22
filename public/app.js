@@ -78,6 +78,7 @@ let lastOverviewPayload = null; // the payload used to build it (so "Edit overvi
 let currentLessonOwned = false; // is the open Trainer lesson the user's own (eligible for progress + share)?
 let contribBuild = false; // is the active overview/build a "Build for Community" contributor course?
 let contribPublishId = null; // artifactId to auto-publish to Community once its build finishes
+let lastBuildArtifactId = null; // last lesson we tried to build (so a failed build can be retried)
 const lessonTabsEl = document.getElementById("lesson-tabs");
 
 // Friendly labels for the dropdown summary.
@@ -551,7 +552,7 @@ async function loadDashboard() {
     if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
     dashEmpty.hidden = true;
     for (const l of lessons) dashGrid.appendChild(lessonCard(l));
-    dashNote.textContent = `${lessons.length} saved · kept for 30 days`;
+    dashNote.textContent = `${lessons.length} saved · Download to keep a permanent copy`;
   } catch { /* ignore */ }
 }
 function lessonCard(l) {
@@ -559,6 +560,8 @@ function lessonCard(l) {
   el.className = "lesson-row";
   const days = l.daysRemaining;
   const warn = days <= 5 ? " warn" : "";
+  // Only show a countdown when expiry is actually near (≤30 days); otherwise it just reads "Saved".
+  const expiryBadge = days <= 30 ? `<span class="lc-badge${warn}">${days}d left</span>` : `<span class="lc-badge">Saved</span>`;
   const isCourse = l.courseId && (l.courseTotal || 0) > 1;
   const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
   const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
@@ -568,7 +571,7 @@ function lessonCard(l) {
   el.innerHTML = `
     <div class="lr-main">
       <div class="lr-title">${escapeHtml(l.title)}</div>
-      <div class="lr-meta"><span class="lc-badge${warn}">${days}d left</span>${courseBadge}${industry}${ratingHtml}</div>
+      <div class="lr-meta">${expiryBadge}${courseBadge}${industry}${ratingHtml}</div>
       <div class="lr-prog"><div class="lr-bar"><i style="width:${pct}%"></i></div><span class="lr-pct">${pct}% complete</span></div>
     </div>
     <div class="lr-actions">
@@ -746,9 +749,11 @@ function communityTile(l) {
       `<span class="lib-pill">${escapeHtml(l.category || "Community")}</span>` +
       `<span class="comm-by">by ${escapeHtml(l.submitter || "a learner")}</span>` +
       `<button class="comm-like${liked ? " liked" : ""}" type="button" aria-pressed="${liked}" title="Like this lesson">♥ <b class="comm-likes">${l.likes || 0}</b></button>` +
+      `<button class="comm-report" type="button" title="Report this lesson">⚐</button>` +
     `</div>`;
   el.querySelector(".lib-open").addEventListener("click", () => openCommunityLesson(l.slug, l.title));
   el.querySelector(".comm-like").addEventListener("click", (e) => { e.stopPropagation(); likeCommunityCard(l, el.querySelector(".comm-like")); });
+  el.querySelector(".comm-report").addEventListener("click", (e) => { e.stopPropagation(); reportCommunityCard(l, el); });
   return el;
 }
 
@@ -763,6 +768,17 @@ async function likeCommunityCard(l, btn) {
     set.add(l.slug); saveLiked(set);
     btn.classList.add("liked"); btn.setAttribute("aria-pressed", "true");
     const c = btn.querySelector(".comm-likes"); if (c) c.textContent = data.likes;
+  } catch { /* ignore */ }
+}
+
+async function reportCommunityCard(l, cardEl) {
+  if (!confirm("Report this lesson as inappropriate, inaccurate, or infringing? Our team will review it.")) return;
+  try {
+    const res = await fetch("/api/community/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: l.slug }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return;
+    if (data.hidden) { cardEl.remove(); } // pulled pending review
+    else { const b = cardEl.querySelector(".comm-report"); if (b) { b.textContent = "⚐ reported"; b.disabled = true; } }
   } catch { /* ignore */ }
 }
 
@@ -1065,6 +1081,14 @@ async function startOverview(payload) {
   pollOverview(jobId);
 }
 
+// Show a generation failure in the viewer with a one-click "Try again".
+function showGenError(msg, retryFn) {
+  genOverlay.hidden = true; viewerFrame.hidden = true; viewerEmpty.hidden = false;
+  viewerEmpty.innerHTML = `⚠️ ${escapeHtml(msg)} <button class="ghost" id="gen-retry" style="margin-left:8px">Try again</button>`;
+  const b = document.getElementById("gen-retry");
+  if (b && retryFn) b.addEventListener("click", retryFn);
+}
+
 function pollOverview(jobId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);
   const tick = async () => {
@@ -1073,7 +1097,7 @@ function pollOverview(jobId) {
     try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) throw new Error("lost"); job = await r.json(); }
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
     const l = job.lessons && job.lessons[0];
-    if (job.status === "error") { activeJobId = null; genOverlay.hidden = true; viewerEmpty.hidden = false; viewerEmpty.innerHTML = "⚠️ " + escapeHtml(job.error || "Overview generation failed."); return; }
+    if (job.status === "error") { activeJobId = null; showGenError(job.error || "The AI was busy — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); }); return; }
     if (job.status === "done" && l && l.artifactId) { activeJobId = null; openOverviewDraft(l.artifactId, l.title); return; }
     genLabel.textContent = l && l.status === "designing" ? "Designing the lesson outline…" : "Generating your overview…";
     activeJobTimer = setTimeout(tick, 2000);
@@ -1111,6 +1135,7 @@ async function startBuild(artifactId) {
     jobId = data.jobId;
   } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
   activeJobId = jobId;
+  lastBuildArtifactId = artifactId; // remember for a retry if the build fails
   if (contribBuild) contribPublishId = artifactId; // auto-publish this one to Community when built
   overviewArtifactId = null;
   setOverviewMode(false);
@@ -1167,9 +1192,11 @@ function pollJob(jobId) {
         if (!currentArtifactId) viewerEmpty.innerHTML = "✓ Your course is built and published to <strong>Community Courses</strong> — also saved in <strong>My Lessons</strong>.";
       } else if (!currentArtifactId) {
         // If the Trainer is still on the generating empty-state (nothing opened), nudge the user.
-        viewerEmpty.innerHTML = job.status === "done"
-          ? "✓ Your lesson is ready — open it from <strong>My Lessons</strong>."
-          : "⚠️ Generation failed — see <strong>My Lessons</strong>.";
+        if (job.status === "done") {
+          viewerEmpty.innerHTML = "✓ Your lesson is ready — open it from <strong>My Lessons</strong>.";
+        } else {
+          showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
+        }
       }
       loadDashboard(); loadSuggestions(); return;
     }
