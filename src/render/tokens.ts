@@ -13,6 +13,11 @@
  */
 
 export const ARTIFACT_CSS = String.raw`
+/* ---- Wizbit theme: SAME blue palette as the host app (styles.css) + Plus Jakarta
+   Sans, so lessons match the rest of the app. Only token VALUES + font families
+   change vs the original theme; every component rule, the 27-combo gates,
+   horizontal mode and diagrams are untouched. Fonts have system fallbacks so an
+   OFFLINE lesson still renders without the CDN. ---- */
 :root{
   --accent:#2563eb; --accent-2:#1d4ed8; --accent-weak:#e8efff;
   --ink:#0f1729; --ink-soft:#27324a; --muted:#56607a; --faint:#8893ab;
@@ -22,8 +27,8 @@ export const ARTIFACT_CSS = String.raw`
   --danger:#d2433a; --danger-weak:#fcebea; --info:#2563eb; --info-weak:#e8efff;
   --code-bg:#0b1228; --code-ink:#e7ecff;
   --radius:14px; --radius-sm:9px; --measure:780px;
-  --font-body:Lexend,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --font-head:"Space Grotesk",Lexend,system-ui,sans-serif;
+  --font-body:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-head:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   --shadow:0 1px 2px rgba(15,23,41,.05),0 10px 30px rgba(37,99,235,.08);
 }

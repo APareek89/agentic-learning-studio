@@ -45,7 +45,7 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean } = 
 <title>${escAttr(bp.meta.title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>${ARTIFACT_CSS}</style>${accentStyle}
 </head>
 <body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="light">

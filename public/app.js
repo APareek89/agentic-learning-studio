@@ -518,7 +518,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", "build-community": "tab-build-community", about: "tab-about", dashboard: "tab-dashboard" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -535,6 +535,26 @@ function switchTab(name) {
   if (name === "community") loadCommunity();
   if (name === "build-community") loadBuildCommunity();
 }
+
+// ---- Home tab (Halo landing) interactions ----
+// Every "Generate / Browse / Meet" CTA just routes to an existing tab via data-goto.
+document.querySelectorAll("#tab-home [data-goto]").forEach((el) => {
+  el.addEventListener("click", () => { switchTab(el.dataset.goto); window.scrollTo(0, 0); });
+});
+// "Quick look" preview tabs: toggle the .on pane (purely illustrative, no network).
+const ptabs = document.getElementById("ptabs");
+if (ptabs) {
+  ptabs.addEventListener("click", (e) => {
+    const b = e.target.closest(".ptab");
+    if (!b) return;
+    ptabs.querySelectorAll(".ptab").forEach((x) => x.classList.toggle("on", x === b));
+    document.querySelectorAll("#tab-home .pv").forEach((p) => p.classList.toggle("on", p.dataset.p === b.dataset.p));
+  });
+}
+// Sample knowledge-check options highlight on click (demo only).
+document.querySelectorAll("#tab-home .kc .opt").forEach((o) => {
+  o.addEventListener("click", () => o.classList.toggle("correct"));
+});
 
 // ---- Dashboard tab ----
 const dashGrid = document.getElementById("dash-grid");
@@ -623,6 +643,9 @@ let libLoaded = false;
 function svgIcon(inner) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 }
+// Per-category card covers: light tints with a faint top-right icon (category color-
+// coding, unchanged from the blue app). The app's BASE theme (chrome, buttons, links,
+// gradient, lessons) is uniformly blue; these swatches just differentiate categories.
 const CATEGORY_STYLE = {
   "Agents":          { bg: "#EEEDFE", icon: "#7F77DD", text: "#3C3489", svg: svgIcon(`<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9.5" cy="13" r="1.1"/><circle cx="14.5" cy="13" r="1.1"/><path d="M9.5 16.5h5"/>`) },
   "RAG":             { bg: "#E1F5EE", icon: "#1D9E75", text: "#0F6E56", svg: svgIcon(`<circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/>`) },
