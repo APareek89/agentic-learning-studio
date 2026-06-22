@@ -213,6 +213,67 @@ export const MatrixOptionSchema = z.object({
   recommendedFor: z.string().optional(),
 });
 
+/**
+ * The flexible DATA payload for a `diagram` block. The model fills ONLY the fields its
+ * chosen `template` needs; everything is optional so a partial/odd payload can never fail
+ * the whole-module parse — the renderer reads what it needs and ignores the rest:
+ *   - neuralNetwork      → layers (node count per layer), optional labels (one per layer)
+ *   - pipeline           → stages [{label, sub?}] (a static left→right flow)
+ *   - agentLoop          → steps  [{label, sub?}] (a cycle: last loops back to first)
+ *   - graph              → nodes [{id,label,col,row}] on a COARSE grid + edges [{from,to,label?,kind?}]
+ *   - sequence           → actors [names] + messages [{from,to,label}] (lifelines + arrows)
+ *   - layeredArchitecture→ tiers [{name, items[]}] (stacked bands, top → bottom)
+ * Layout is DETERMINISTIC: for `graph` the model supplies coarse col/row coords — the
+ * renderer places boxes on that grid and routes arrows (no force/auto-layout engine).
+ */
+export const DiagramStepSchema = z.object({ label: z.string(), sub: z.string().optional() });
+/** A recursive node for the `tree` template (task decomposition, trace-span nesting, taxonomy). */
+export type DiagramTreeNode = { label: string; sub?: string; children?: DiagramTreeNode[] };
+export const DiagramTreeNodeSchema: z.ZodType<DiagramTreeNode> = z.lazy(() =>
+  z.object({ label: z.string(), sub: z.string().optional(), children: z.array(DiagramTreeNodeSchema).optional() })
+);
+export const DiagramNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  /** coarse grid column (0-based, left→right). */
+  col: z.number(),
+  /** coarse grid row (0-based, top→bottom). */
+  row: z.number(),
+});
+export const DiagramEdgeSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  label: z.string().optional(),
+  /** "conditional"/"dashed" render as a dashed arrow (e.g. a LangGraph conditional edge). */
+  kind: z.enum(["solid", "conditional", "dashed"]).optional(),
+});
+export const DiagramDataSchema = z.object({
+  layers: z.array(z.number()).optional(),
+  labels: z.array(z.string()).optional(),
+  stages: z.array(DiagramStepSchema).optional(),
+  steps: z.array(DiagramStepSchema).optional(),
+  nodes: z.array(DiagramNodeSchema).optional(),
+  edges: z.array(DiagramEdgeSchema).optional(),
+  actors: z.array(z.string()).optional(),
+  messages: z.array(z.object({ from: z.string(), to: z.string(), label: z.string() })).optional(),
+  tiers: z.array(z.object({ name: z.string(), items: z.array(z.string()) })).optional(),
+  // tree → a single recursive root (parent → children, top-down hierarchy).
+  tree: DiagramTreeNodeSchema.optional(),
+  // matrix → a labelled grid / heatmap: rows×cols header labels + a `cells` value grid
+  // (numbers; coloured by intensity — attention weights, a confusion matrix, a similarity grid).
+  matrix: z
+    .object({
+      rows: z.array(z.string()),
+      cols: z.array(z.string()),
+      cells: z.array(z.array(z.number())),
+      valueLabels: z.boolean().optional(),
+    })
+    .optional(),
+  // barProportion → one stacked horizontal bar of proportions (token/context budget, cost split).
+  segments: z.array(z.object({ label: z.string(), value: z.number(), sub: z.string().optional() })).optional(),
+});
+export type DiagramData = z.infer<typeof DiagramDataSchema>;
+
 export const BlockSchema = z.discriminatedUnion("kind", [
   z.object({ ...blockBase, kind: z.literal("conceptual"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
   z.object({ ...blockBase, kind: z.literal("technical"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
@@ -252,13 +313,22 @@ export const BlockSchema = z.discriminatedUnion("kind", [
     howToRead: z.string().optional(),
   }),
   z.object({ ...blockBase, kind: z.literal("decisionTree"), title: z.string().optional(), root: TreeNodeSchema }),
+  // diagram — a PREBUILT diagram component the model USES (it picks a `template` and supplies
+  // DATA ONLY). The renderer (render/diagrams.ts) owns every SVG tag, so the model can never
+  // emit raw SVG/HTML and a bad payload renders a smaller/empty diagram, never a broken page.
+  // Same data-only discipline as the interactive* viz blocks — but STATIC inline SVG (no JS),
+  // so it shows identically in vertical, horizontal, and inside the horizontal modal.
+  // Use this when a beginner can't picture the idea from code/prose: an agent loop, a RAG/
+  // LangChain pipeline, a LangGraph/multi-agent topology, a Langfuse trace, a neural net, a
+  // layered architecture. The `template` discriminates the SHAPE; `data` is a small, flexible
+  // bag whose relevant fields each template reads (and ignores the rest).
   z.object({
     ...blockBase,
     kind: z.literal("diagram"),
+    template: z.enum(["neuralNetwork", "pipeline", "agentLoop", "graph", "sequence", "layeredArchitecture", "tree", "matrix", "barProportion"]),
     title: z.string().optional(),
-    layout: z.enum(["stack", "flow", "tree", "grid"]),
-    nodes: z.array(MapNodeSchema).min(1),
-    edges: z.array(MapEdgeSchema),
+    caption: z.string().optional(),
+    data: DiagramDataSchema,
   }),
   z.object({ ...blockBase, kind: z.literal("scenario"), ask: z.string(), implies: z.string(), personalizedFor: z.string().optional() }),
   z.object({

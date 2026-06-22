@@ -294,6 +294,14 @@ body.show-syntax .syntax-panel{display:block}
 .viz-step-detail h4{margin:0 0 5px;font-size:15px;color:var(--ink)}
 @media(max-width:560px){.viz-scatter-grid{grid-template-columns:1fr}}
 
+/* ---- prebuilt diagram block (static inline SVG; render/diagrams.ts owns the SVG) ---- */
+.diagram{margin:16px 0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);padding:16px}
+.diagram .dgm-scroll{overflow-x:auto;overflow-y:hidden} /* wide diagrams scroll rather than overflow the card */
+.diagram .dgm-svg{display:block;width:100%;height:auto}
+.diagram figcaption{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.5}
+/* inside the horizontal modal the card chrome is redundant — let the SVG fill the modal */
+.hmodal .diagram{border:0;box-shadow:none;padding:0;margin:0;background:transparent}
+
 /* ---- provenance banner (shown when the learner uploaded documents) ---- */
 .provenance{display:flex;gap:11px;align-items:flex-start;margin:18px 0;padding:13px 16px;border:1px solid var(--accent);background:var(--accent-weak);border-radius:var(--radius-sm);font-size:13.5px;color:var(--ink-soft)}
 .provenance .prov-star{color:var(--accent);font-size:16px;line-height:1.3;flex:none}

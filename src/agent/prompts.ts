@@ -89,7 +89,8 @@ RICH TEXT: prose fields are arrays of nodes {t:"p"|"h"|"ul"|"ol"|"callout", …}
 Choose the block whose SHAPE matches the idea; supply data only.
 - interactiveScatter — for SIMILARITY / CLUSTERING / "near vs far in meaning" / embedding-or-vector space / classification boundaries. Place "points" {label,x,y,group} in a 0–100 plane so related ones sit close and unrelated ones far; add 1–3 "queries" {label,x,y} the learner can pick to see nearest points light up. (e.g. "how embeddings group similar text".)
 - interactiveSlider — for a THRESHOLD / TRADEOFF / a single PARAMETER's effect. Give min, max, optional unit, and 2–5 "stops" {at, label, note} explaining what happens at that value. (e.g. temperature, chunk size, a similarity cutoff, retrieval top-k.)
-- steppedFlow — for a multi-stage PROCESS / PIPELINE / LIFECYCLE the learner clicks through. Give ordered "steps" {label, detail, icon?}. (e.g. ingest→chunk→embed→store, the agent loop, a request's path.)
+- steppedFlow — for a multi-stage PROCESS the learner CLICKS THROUGH one step at a time. Give ordered "steps" {label, detail, icon?}.
+- diagram — a STATIC labelled picture for a SHAPE prose can't convey (kind:"diagram", a "template" + "data", DATA ONLY). Map archetype→template: agent/tool-calling LOOP → "agentLoop" (data.steps[{label,sub?}]); a one-pass PIPELINE/CHAIN (RAG ingest→chunk→embed→store) → "pipeline" (data.stages[{label,sub?}]); a STATE GRAPH / multi-agent TOPOLOGY (LangGraph w/ conditional edges) → "graph" (data.nodes[{id,label,col,row}] on a coarse grid + data.edges[{from,to,label?,kind?}], kind:"conditional"→dashed); a TRACE / request path (Langfuse spans) → "sequence" (data.actors[] + data.messages[{from,to,label}]); a layered ARCHITECTURE/stack → "layeredArchitecture" (data.tiers[{name,items[]}]); a NEURAL NET → "neuralNetwork" (data.layers[nIn…nOut], optional data.labels[]); a HIERARCHY/TREE (task decomposition, nested spans, taxonomy) → "tree" (data.tree{label,sub?,children[]}); a GRID/HEATMAP (attention weights, confusion matrix) → "matrix" (data.matrix{rows[],cols[],cells[][]}); a PROPORTION/BUDGET split → "barProportion" (data.segments[{label,value,sub?}]).
 Prefer ONE excellent visual for the hardest concept over many shallow ones.
 
 COMPLETENESS (critical): return ONE complete object with ALL fields populated: meta, learnerProfile, mentalMap, modules (4–6 with blocks), glossary (every term), synthesis, citations. A response with only meta + mentalMap is INVALID. Do not stop after the mental map. Keep prose tight so the whole object fits — completeness beats length.`;
@@ -207,11 +208,25 @@ Our learners build WITH AI. When this module teaches code or a build step, inclu
 == WRITING LEVEL & TEXT DENSITY ==
 Follow the WRITING LEVEL and TEXT DENSITY spec in the user message EXACTLY. LEVEL controls SCAFFOLDING (how much support — advanced = LESS hand-holding + edge cases/tradeoffs, never just denser text). DENSITY controls per-sentence shape: keep EVERY sentence under the stated hard ceiling, hit the median, and match the GOLD example's rhythm. Density is per concept — total length scales with how many concepts the module has, not a fixed word count.
 
-== INTERACTIVE VISUALS ==
-When VISUALS is "on", add an interactive visual block for a genuinely COMPLEX or hard-to-picture idea in THIS module (something a hands-on novice struggles to imagine) — at most ONE per module, only if it truly helps. When VISUALS is "off", emit none. You supply DATA ONLY — the renderer draws it. Pick by shape:
+== INTERACTIVE VISUALS & DIAGRAMS ==
+When VISUALS is "on", add ONE visual (interactive block OR diagram) for a genuinely COMPLEX or hard-to-picture idea in THIS module — specifically one where a beginner CANNOT build the mental picture from the prose/code alone (a topology, a loop, a layered system, a trace, a net). At most ONE per module, only if it truly helps; skip trivial or purely-verbal points (quality over quantity, ~1–2 across the whole lesson). When VISUALS is "off", emit none. You supply DATA ONLY — never raw SVG/HTML; the renderer draws every pixel. Pick by SHAPE:
+
+INTERACTIVE blocks (the learner manipulates them) — for similarity, a tunable value, or a process to click through:
 - interactiveScatter — SIMILARITY / CLUSTERING / "near vs far in meaning" / embedding-or-vector space / classification boundaries. "points" {label,x,y(0–100),group?} placed so related ones sit close; 1–3 "queries" {label,x,y} to highlight nearest points.
 - interactiveSlider — a THRESHOLD / TRADEOFF / one PARAMETER's effect. min, max, optional unit, 2–5 "stops" {at,label,note} (e.g. temperature, chunk size, similarity cutoff, top-k).
-- steppedFlow — a multi-stage PROCESS / PIPELINE / LIFECYCLE. ordered "steps" {label,detail,icon?} (e.g. ingest→chunk→embed→store, the agent loop).
+- steppedFlow — a multi-stage PROCESS the learner CLICKS THROUGH one step at a time. ordered "steps" {label,detail,icon?}.
+
+DIAGRAM block (a STATIC labelled picture — use kind:"diagram" with a "template" + "data"; DATA ONLY) — reach for this when the idea is a SHAPE prose can't convey (how pieces connect, a loop, a stack, a trace). Map the archetype to the template:
+- agent loop (plan→act→observe→…→repeat), a tool-calling loop, a ReAct cycle → template "agentLoop", data.steps:[{label, sub?}] (it auto-draws the return edge — do NOT add a manual "back" step).
+- a PIPELINE or CHAIN that flows once, left→right (RAG ingest→chunk→embed→store; a LangChain chain; a request path with no cycle) → template "pipeline", data.stages:[{label, sub?}]. (Use steppedFlow instead only if the learner should click through it.)
+- a STATE GRAPH or multi-agent TOPOLOGY / "how these link" (a LangGraph graph with conditional edges; a supervisor + workers) → template "graph", data.nodes:[{id,label,col,row}] on a COARSE grid you lay out (col=left→right, row=top→bottom; 0-based) + data.edges:[{from,to,label?,kind?}] — set kind:"conditional" for a conditional/branching edge (renders dashed).
+- a TRACE or request path captured step by step (how Langfuse records spans; a client→server→model round-trip) → template "sequence", data.actors:[names] + data.messages:[{from,to,label}] in order.
+- a layered SYSTEM ARCHITECTURE / tech stack (UI / orchestration / model / data tiers) → template "layeredArchitecture", data.tiers:[{name, items:[…]}] top→bottom.
+- a NEURAL NETWORK's node-link structure → template "neuralNetwork", data.layers:[nIn,…hidden…,nOut] (+ optional data.labels:[one per layer]).
+- a HIERARCHY / TREE — task decomposition, a planning tree, nested trace spans, a taxonomy → template "tree", data.tree:{label, sub?, children:[{label, sub?, children?:[…]}]} (one root, top-down).
+- a GRID / HEATMAP of values — attention weights (token×token), a confusion matrix, a similarity grid → template "matrix", data.matrix:{rows:[…], cols:[…], cells:[[…numbers…], …]} (cells[i][j] is row i × col j; cells are coloured by magnitude — counts OR 0–1 weights both work).
+- a PROPORTION / BUDGET split that sums to a whole — context-window/token budget, a cost breakdown → template "barProportion", data.segments:[{label, value, sub?}] (values are the parts; the renderer computes the percentages).
+Keep diagram labels SHORT (a few words) — they render inside boxes. The model never positions pixels; for "graph" you only supply coarse col/row and the renderer places + routes everything (for "tree" you supply only the nesting; the renderer lays it out).
 
 == EXPLAIN SYNTAX ==
 When EXPLAIN SYNTAX is "on", EVERY codeExample MUST include a "syntax" array breaking down its key constructs/terms in plain language: each item = { part: "<construct, e.g. 'async def' or 'StateGraph(...)'>", explains: "<what it does, beginner-friendly>" }. Cover what a newcomer wouldn't recognise; skip the obvious. When "off", omit "syntax".
@@ -289,7 +304,7 @@ export function moduleUserPrompt(args: {
     `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
     beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
     args.framework ? `CODE FRAMEWORK: write every codeExample using ${args.framework}. Use its real APIs/imports; title the block with the framework.` : `CODE FRAMEWORK: framework-agnostic — use clear pseudocode/plain Python, no framework-specific imports.`,
-    `VISUALS: ${args.visualsRequested ? "on — add ONE interactive visual block if a concept here is genuinely complex" : "off — do NOT emit interactive visual blocks"}`,
+    `VISUALS: ${args.visualsRequested ? "on — if a concept here is one a beginner can't picture from prose/code (a topology, loop, pipeline, trace, stack, net, hierarchy, grid/heatmap, or budget split), add ONE visual: an interactive block (scatter/slider/steppedFlow) OR a diagram (template agentLoop/pipeline/graph/sequence/layeredArchitecture/neuralNetwork/tree/matrix/barProportion), DATA ONLY, picked by shape" : "off — do NOT emit interactive visual or diagram blocks"}`,
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
     args.industry ? `FOCUS INDUSTRY: ${args.industry}` : "",
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",

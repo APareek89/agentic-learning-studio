@@ -12,6 +12,7 @@
  */
 
 import type { Blueprint, Block, Module } from "./schema";
+import { renderDiagram, type DiagramTemplate } from "./diagrams";
 
 // ---- escaping ----
 export function esc(s: string): string {
@@ -128,6 +129,21 @@ function vizBlock(kind: string, title: string | undefined, caption: string | und
     (title ? `<h3>${esc(title)}</h3>` : "") +
     `<div class="viz" data-viz="${kind}">${caption ? `<p class="viz-cap">${esc(caption)}</p>` : ""}<div class="viz-body"></div>` +
     `<script type="application/json" class="viz-data">${json}</script></div>`
+  );
+}
+
+// ---- prebuilt diagram block (data-only → STATIC inline SVG; no hydration needed) ----
+// The model picks a `template` and supplies DATA; render/diagrams.ts owns every SVG tag, so
+// it's self-contained, theme-aware, offline-safe, and renders identically in vertical mode,
+// horizontal mode, and inside the horizontal "heavy block" modal (no JS to re-run).
+function diagramBlock(b: Extract<Block, { kind: "diagram" }>): string {
+  const svg = renderDiagram(b.template as DiagramTemplate, b.data, b.id);
+  return (
+    (b.title ? `<h3>${esc(b.title)}</h3>` : "") +
+    `<figure class="diagram" data-template="${escAttr(b.template)}">` +
+    `<div class="dgm-scroll">${svg}</div>` +
+    (b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : "") +
+    `</figure>`
   );
 }
 
@@ -248,7 +264,7 @@ function block(b: Block, bp: Blueprint): string {
       inner = (b.title ? `<h3>${esc(b.title)}</h3>` : "") + `<ul class="tree">${tree(b.root)}</ul>`;
       break;
     case "diagram":
-      inner = (b.title ? `<h3>${esc(b.title)}</h3>` : "") + miniMap(b.nodes, b.edges);
+      inner = diagramBlock(b);
       break;
     case "scenario":
       inner = `<div class="scn"><div class="ask">${esc(b.ask)}</div><div class="imp">${esc(b.implies)}</div></div>`;
