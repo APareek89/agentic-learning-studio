@@ -41,7 +41,7 @@ function modelIdFor(tier: ModelTier): string {
 export function makeLLM(
   tier: ModelTier = "sonnet",
   temperature = 0,
-  opts: { maxTokens?: number; streaming?: boolean } = {}
+  opts: { maxTokens?: number; streaming?: boolean; maxRetries?: number } = {}
 ): ChatAnthropic {
   // Fail fast with a clear message if the one required key is missing.
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -58,6 +58,9 @@ export function makeLLM(
     temperature,
     // Blueprints/modules are large, so default the cap generously (callers override).
     maxTokens: opts.maxTokens ?? 4096,
+    // Auto-retry with exponential backoff on Anthropic 429 (rate limit) / 529 (overloaded)
+    // / transient 5xx, so a busy API retries instead of failing the lesson.
+    maxRetries: opts.maxRetries ?? 4,
     // Streaming is REQUIRED by the Anthropic SDK once max_tokens is large enough that
     // a request could exceed 10 minutes (otherwise it throws "Streaming is required…").
     // The big Architect call streams the tool-call under the hood; withStructuredOutput

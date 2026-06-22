@@ -9,8 +9,8 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 ## 0. CRITICAL BLOCKERS — do these first, nothing else matters until they're green
 - [ ] **`[PARTIAL]` Fix prod env on Render.** `DATABASE_URL` + `SUPABASE_URL`/`SUPABASE_ANON_KEY` must be the **new** project `kdgtlbnlyscdldogxorb`, password `@`→`%40`. A wrong/old value = empty dashboard, failed downloads, 401s on every gated route. Verify: `GET /healthz` → `db:true`. (See HANDOFF §2.)
 - [ ] **`[TODO]` Per-user spend cap / credit metering (THE money risk).** One lesson = an Opus skeleton + ~5 Sonnet module builds = a meaningful Anthropic bill. With open signups and no cap, a handful of users (or one abuser) can run your API spend to the moon. **Do not open signups until generation is metered and gated by a credit/quota the user has paid for or been granted.** (See §2 + §3.)
-- [ ] **`[TODO]` Lock down the database surface.** The app talks to Postgres via a server pool, but Supabase also auto-exposes a PostgREST API on the **anon key** (which is shipped to the browser). Enable **Row-Level Security on every table** (`lessons`, `user_preferences`, `prebuilt_lessons`, `chunks`, `module_cache`, `documents`, …) or confirm PostgREST is disabled — otherwise anyone with the public anon key can read/modify rows. This is the single most common Supabase leak.
-- [ ] **`[TODO]` Rate-limit the public + expensive routes.** `/api/generate` (spend), `/api/upload` + `/api/upload-repo` (now public; CPU + repo-clone), `/api/module` + `/api/check` (public). Add per-IP + per-user rate limits and a global concurrency cap so one client can't fan out.
+- [x] **`[DONE]` Lock down the database surface.** Migration `0008_rls_lockdown.sql` enables **Row-Level Security on all 13 public tables** with no public policies → the anon/browser key is denied all rows; the server (role `postgres`, `rolbypassrls=true`) is unaffected and the browser uses Supabase only for auth. Verified RLS on 13/13 + app still reads.
+- [x] **`[PARTIAL→mostly DONE]` Rate-limit the public + expensive routes.** `express-rate-limit` per-IP: 600/15min on all `/api/*`, **40/hr** on `/api/overview` `/api/build` `/api/upload` `/api/upload-repo`; plus a **global concurrent-generation cap** (`MAX_CONCURRENT_GENERATIONS`, default 4) → over-cap returns 429. `trust proxy` set so limits key on the real client IP. Remaining: per-**user** (not just per-IP) limits once billing/quota lands.
 - [ ] **`[TODO]` Legal pages live + linked.** Terms of Service, Privacy Policy, Acceptable Use, AI-content disclosure, Refund policy. You cannot legally take payments or PII without these.
 
 ---
@@ -28,7 +28,7 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 ## 2. Cost control & abuse prevention `[TODO]`
 - [ ] **Hard budget alarms on the Anthropic key.** Set spend alerts/limits in the Anthropic console; consider separate keys per environment.
 - [ ] **Per-user generation quota** (ties to §1 credits) enforced server-side, not just in the UI.
-- [ ] **Throttle background jobs.** Cap concurrent `runJob`s globally and per user (a course can be 5 lessons × 6 model calls).
+- [x] **`[DONE, global]` Throttle background jobs.** Global concurrent-generation cap (`MAX_CONCURRENT_GENERATIONS`, default 4) in `jobs.ts`; `/api/overview` + `/api/build` take a slot (429 if full), released in the job's `finally`. Per-**user** cap still TODO (ties to credits).
 - [ ] **Abuse bounds on uploads/repo clone** (already: ≤400 files / ≤4MB / 90s) — keep, and add per-user/day limits.
 - [ ] **Input caps.** Max prompt length, max uploads per session, max repo size — reject early with a clear message.
 - [ ] **Bot/signup abuse.** CAPTCHA or email-verification gate on signup so bots can't farm free generations.
@@ -43,9 +43,9 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 
 ## 4. Security & data protection
 - [ ] **`[DONE]` Secrets out of git** (`.env` git-ignored; Render env `sync:false`). Add a **key-rotation** plan + least-privilege keys (anon key is public by design; never ship the service-role key).
-- [ ] **`[TODO]` RLS on all tables** (see §0) — the load-bearing one.
-- [ ] **`[TODO]` HTTPS + secure headers.** Render gives TLS; add `helmet` (CSP, HSTS, X-Frame-Options) on the Express app. Note generated lessons inline JS — set a CSP that still allows the artifact runtime, or sandbox the iframe.
-- [ ] **`[TODO]` CORS lockdown.** Restrict `/api/*` to your own origin (currently open).
+- [x] **`[DONE]` RLS on all tables** (migration `0008`, see §0) — the load-bearing one.
+- [x] **`[PARTIAL]` HTTPS + secure headers.** `helmet` added (HSTS, X-Content-Type-Options, X-Frame-Options SAMEORIGIN, Referrer-Policy). Render provides TLS. **CSP is deliberately OFF** for now because lessons + the host page inline `<script>`/`<style>`; remaining: a tight CSP (nonces) or an iframe `sandbox` for the artifact.
+- [x] **`[DONE]` CORS lockdown.** `/api/*` restricted to `prathibhax.com` / `www.prathibhax.com` / the onrender URL / localhost (+ `EXTRA_ORIGINS`); foreign origins blocked, same-origin/no-origin allowed.
 - [ ] **`[TODO]` Input validation everywhere** (already partial via Zod on the Blueprint; validate all request bodies — filenames, repoUrl already regex-checked, base64 size, etc.).
 - [ ] **`[TODO]` Dependency + supply-chain audit.** `npm audit`, pin versions, enable Dependabot; the artifact runs inline JS so XSS in lesson content must stay impossible (renderer escapes — keep it that way; never interpolate unescaped model text).
 - [ ] **`[TODO]` PII minimization.** You store email + lesson prompts (may contain user context). Document what's stored, encrypt at rest (Supabase does), and set retention (§5).
@@ -65,7 +65,7 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [ ] **`[PARTIAL]` Hosting plan sized right.** Render `standard` (2GB) — the local ONNX embedding model (~128MB) loads in memory; `starter` (512MB) may OOM. Confirm the plan + a persistent disk for `TRANSFORMERS_CACHE` so the model doesn't re-download each cold start.
 - [ ] **`[TODO]` DB backups + restore drill.** Confirm Supabase automated backups for your plan; do one test restore.
 - [ ] **`[TODO]` Health checks + auto-restart** (`/healthz` exists — wire Render's health check + an external uptime monitor).
-- [ ] **`[TODO]` Graceful degradation.** Anthropic 429/529 and timeouts → user-facing retry, not a hang; background jobs already isolate failures — verify the UI surfaces them.
+- [x] **`[PARTIAL]` Graceful degradation.** Anthropic 429/529/5xx now **auto-retry with backoff** (`maxRetries` in `llm.ts`); background jobs isolate failures. Remaining: surface a clear "AI busy, retry" state in the UI on final failure.
 - [ ] **`[TODO]` Scaling note.** Artifacts + uploads use in-memory caches/Maps; a second instance won't share them. Either pin to one instance or move that state to the DB/Redis before scaling horizontally.
 
 ## 7. Observability & ops `[TODO]`

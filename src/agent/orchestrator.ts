@@ -19,7 +19,7 @@
 import { profiler, retriever, architect, runDeepDive } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
-import { lessonPercent, type Job, type JobLesson } from "../lib/jobs";
+import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
 import type { Blueprint } from "../render/schema";
 
 /** Drafts (un-approved overviews) carry this kind so My Lessons can hide them. */
@@ -85,6 +85,8 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);
     console.error("[runOverviewJob]", e);
+  } finally {
+    releaseGenSlot();
   }
 }
 
@@ -120,5 +122,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);
     console.error("[runBuildJob]", e);
+  } finally {
+    releaseGenSlot();
   }
 }

@@ -18,6 +18,9 @@
 
 import "dotenv/config"; // load .env before anything reads process.env
 import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { writeFile, unlink, readdir, readFile, rm, stat } from "node:fs/promises";
@@ -32,7 +35,7 @@ import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
-import { createJob, getJob, lessonPercent } from "./lib/jobs";
+import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { makeLangfuseHandler } from "./lib/langfuse";
@@ -58,8 +61,41 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "..", "public");
 
 const app = express();
+
+// Behind Render's proxy: trust X-Forwarded-* so req.ip is the real client (rate-limit keys on it).
+app.set("trust proxy", 1);
+
+// Security headers (HSTS, nosniff, X-Frame-Options SAMEORIGIN, Referrer-Policy, …). CSP is left
+// OFF deliberately: generated lessons + the host page inline their own <script>/<style>, and a
+// strict CSP would break them. (A tight CSP + iframe sandbox is a follow-up — see CHECKLIST §4.)
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+// CORS: allow ONLY our own origins to call /api from a browser. Same-origin requests (the app
+// itself, the artifact iframe) send no Origin and are always allowed; this blocks OTHER sites'
+// JS from using the API with a visitor's session. Server-to-server / curl (no Origin) pass too.
+const ALLOWED_ORIGINS = new Set([
+  "https://prathibhax.com",
+  "https://www.prathibhax.com",
+  "https://agentic-learning-studio.onrender.com",
+  "http://localhost:5070",
+  ...(process.env.EXTRA_ORIGINS ? process.env.EXTRA_ORIGINS.split(",").map((s) => s.trim()) : []),
+]);
+app.use(cors({
+  origin(origin, cb) { cb(null, !origin || ALLOWED_ORIGINS.has(origin)); },
+  credentials: true,
+}));
+
 app.use(express.json({ limit: "30mb" })); // base64-encoded uploads ride in the JSON body
 app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js, styles.css)
+
+// ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
+const ipKey = (req: express.Request) => req.ip || "unknown";
+// Expensive: generation + uploads (CPU, model spend, repo clone).
+const heavyLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
+  message: { error: "You're going a bit fast — please wait a few minutes and try again." } });
+// General API guard (a wide net so one client can't hammer any endpoint).
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 600, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey });
+app.use("/api/", apiLimiter);
 
 /** Write one named SSE event with a JSON payload onto a response stream. */
 function sseSend(res: express.Response, event: string, data: unknown): void {
@@ -182,7 +218,7 @@ app.post("/api/progress", requireAuth, async (req, res) => {
 // jobId immediately. No module bodies are written (free); the learner reviews the
 // overview, then clicks "Generate Lesson" (→ /api/build) to commit.
 // ----------------------------------------------------------------------------
-app.post("/api/overview", requireAuth, async (req, res) => {
+app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
   if (!prompt.trim()) { res.status(400).json({ error: "Missing 'prompt'." }); return; }
@@ -200,6 +236,8 @@ app.post("/api/overview", requireAuth, async (req, res) => {
       readingMode: (body.readingMode as string) ?? "",
     }).catch(() => {});
   }
+  // Take a generation slot LAST (so a failure above can't leak it); the job releases it in its finally.
+  if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
   const job = createJob(user?.id ?? "anon");
   // Fire-and-forget: the job runs in the background, surviving this response.
   void runOverviewJob(job, {
@@ -216,12 +254,13 @@ app.post("/api/overview", requireAuth, async (req, res) => {
 // draft; promote it to a real lesson and write every module body. Returns a jobId;
 // the dashboard (My Lessons) polls GET /api/job/:id and opens it as bodies fill in.
 // ----------------------------------------------------------------------------
-app.post("/api/build", requireAuth, async (req, res) => {
+app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
   const artifactId = typeof req.body?.artifactId === "string" ? req.body.artifactId : "";
   if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
   const art = await getArtifact(artifactId);
   if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
   const user = await getUser(req.headers.authorization);
+  if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
   const job = createJob(user?.id ?? "anon");
   void runBuildJob(job, artifactId);
   res.json({ jobId: job.id });
@@ -583,7 +622,7 @@ app.post("/api/check", async (req, res) => {
 // signing in (the auth wall is at Generate). Uploads go to the session-scoped in-memory
 // store (random docIds, not user data) and generation stays gated, so the real wall holds.
 // ----------------------------------------------------------------------------
-app.post("/api/upload", async (req, res) => {
+app.post("/api/upload", heavyLimiter, async (req, res) => {
   const { filename, dataBase64 } = (req.body ?? {}) as { filename?: string; dataBase64?: string };
   if (!filename || !dataBase64) {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
@@ -729,7 +768,7 @@ const execFileP = promisify(execFile);
 const REPO_EXT = new Set([".md", ".mdx", ".txt", ".rst", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".py", ".java", ".go", ".rb", ".rs", ".c", ".cpp", ".h", ".cs", ".php", ".kt", ".swift", ".scala", ".sql", ".sh", ".yaml", ".yml", ".json", ".toml", ".html", ".css", ".scss"]);
 const REPO_SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", "vendor", "__pycache__", ".next", "target", "out", ".venv", "venv", "coverage", ".turbo"]);
 
-app.post("/api/upload-repo", async (req, res) => {
+app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
   const repoUrl = typeof req.body?.repoUrl === "string" ? req.body.repoUrl.trim() : "";
   if (!/^https:\/\/(www\.)?(github|gitlab|bitbucket)\.(com|org)\/[\w.-]+\/[\w.-]+/i.test(repoUrl)) {
     res.status(400).json({ error: "Paste a public https GitHub / GitLab / Bitbucket repo URL." });
