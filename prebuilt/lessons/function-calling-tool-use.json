@@ -4,8 +4,8 @@
     "topic": "Function Calling and Tool Use",
     "title": "Function Calling and Tool Use",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 40,
-    "thesis": "Function Calling and Tool Use is practical when learners can apply it to this concrete case: A customer agent needs to look up orders, issue refunds, and stop before risky actions. By the end, they should be able to build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and catch the failure where the model calls refund_user without required approval data."
+    "estTotalMinutes": 42,
+    "thesis": "Function calling and tool use connect models to APIs through typed tool declarations; the model proposes a call, while the runtime validates, authorizes, executes, and returns the result."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -24,64 +24,69 @@
     ]
   },
   "mentalMap": {
-    "title": "Function Calling and Tool Use: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Function Calling and Tool Use is useful when you can apply it to a customer agent needs to look up orders, issue refunds, and stop before risky actions, choose a design, and verify valid tool calls with safe stop behavior.",
+    "title": "Function calling — model proposes, code executes",
+    "caption": "The flow separates tool schema, model-selected arguments, runtime execution, and result handling.",
+    "oneLineThesis": "Function calling lets a model request external capabilities, but application code owns validation, authorization, execution, and side effects.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Tool boundary",
         "sub": "Build the simplest useful picture of Function Calling and Tool Use.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
+        "what": "A tool boundary says what the model may ask code to do.",
+        "relevance": "It prevents confusing generated text with authorized execution.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Function Calling and Tool Use to the running artifact and failure test."
+        "orient": "Why tools are explicit action boundaries rather than hidden model powers.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "Schema and arguments",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
+        "what": "Tool schemas define callable names and typed arguments.",
+        "relevance": "Good schemas reduce missing arguments and wrong-tool calls.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Function Calling and Tool Use to the running artifact and failure test."
+        "orient": "How names, descriptions, and input schemas shape tool selection.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "Runtime executor",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
+        "what": "The runtime is the owner of real-world action.",
+        "relevance": "It keeps credentials, side effects, and retries out of model control.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Function Calling and Tool Use to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "Why code validates, authorizes, and runs calls outside the model.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "Tool result loop",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
+        "what": "Results become new evidence for the next model turn.",
+        "relevance": "It explains multi-step tool workflows and stale-result risks.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Function Calling and Tool Use to the running artifact and failure test."
+        "orient": "How tool outputs re-enter context for the model’s next decision.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Unsafe calls",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
+        "what": "Tool failures are product and security failures, not just model errors.",
+        "relevance": "It teaches the checks required before shipping tool use.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Function Calling and Tool Use to the running artifact and failure test."
+        "orient": "How wrong tools, bad arguments, and side effects break agent systems.",
+        "order": 5
       }
     ],
     "edges": [
@@ -106,40 +111,38 @@
         "label": "then"
       }
     ],
-    "structureType": "conceptual"
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Function Calling and Tool Use to function-calling contract with tool schemas and confirmation rules, with examples and checks tied to valid tool calls with safe stop behavior.",
+      "title": "A tool is an action boundary",
+      "sub": "Start by separating model text from application action.",
+      "summary": "Function calling does not let a model magically access systems. It lets the model request a named action that code may accept or reject.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model calls refund_user without required approval data."
+        "Explain why tools are boundaries.",
+        "Distinguish model proposal from code execution.",
+        "Name safe and risky tool categories."
       ],
       "termIds": [
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "tool_call"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "fc_m1",
           "kind": "conceptual",
-          "title": "Why Function Calling and Tool Use matters here",
+          "title": "The model asks; code decides",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A customer agent needs to look up orders, issue refunds, and stop before risky actions. The learner's job is not to memorize Function Calling and Tool Use; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved valid tool calls with safe stop behavior."
+                  "text": "A tool call is a structured request: a name plus arguments. The model can propose `lookup_order(order_id=\"A123\")`, but it does not hold credentials or execute the database query itself."
                 }
               ]
             },
@@ -147,7 +150,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: function-calling contract with tool schemas and confirmation rules. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Problem anchor: a support bot needs order status and refund actions. Looking up an order is mostly read-only; issuing a refund changes money and needs stronger authorization."
                 }
               ]
             },
@@ -156,15 +159,31 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if the model calls refund_user without required approval data, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
+                  "text": "Before reading on, predict: which tool needs stricter checks, `lookup_order` or `issue_refund`? Why?"
                 }
               ]
-            },
+            }
+          ],
+          "termIds": [
+            "llm",
+            "tool_call"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ],
+          "analogy": "A tool call is like a purchase request: filling the form is not the same as approving the spend."
+        },
+        {
+          "id": "fc_m1_case",
+          "kind": "functionalExample",
+          "title": "Case study: order lookup versus refund",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
+                  "text": "The support assistant receives: “Where is order A123, and refund it if late.” It should call `lookup_order` first. It should not call `issue_refund` until policy and user confirmation are checked."
                 }
               ]
             },
@@ -173,1013 +192,282 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Function Calling and Tool Use matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Read-only tool: lower risk but still validates order ID."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Function Calling and Tool Use matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Side-effecting tool: requires policy, confirmation, and audit log."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure valid tool calls with safe stop behavior on examples that resemble the real workload."
+                    "text": "Final answer: explains what happened and what still needs approval."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Function Calling and Tool Use.",
-          "steps": [
+          "id": "fc_m1_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check the boundary",
+          "prompt": "Who actually runs the tool?",
+          "format": "mcq",
+          "options": [
             {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
+              "text": "The model weights directly.",
+              "correct": false
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
+              "text": "Application runtime code after validation and authorization.",
+              "correct": true
             },
             {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
+              "text": "The user’s prompt text.",
+              "correct": false
             }
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
+          "explanation": "The model proposes calls; code owns execution.",
+          "termIds": [
+            "tool_call"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m2",
+      "order": 2,
+      "title": "Tool schemas shape model choices",
+      "sub": "After the boundary, define names and arguments precisely.",
+      "summary": "The model chooses tools from declarations. Clear names, descriptions, and input schemas reduce wrong-tool and missing-argument failures.",
+      "objectives": [
+        "Write a useful tool description.",
+        "Use required arguments and enums.",
+        "Avoid overexposing tools."
+      ],
+      "termIds": [
+        "schema",
+        "tool_call",
+        "validator"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "fc_m2",
+          "kind": "conceptual",
+          "title": "Names and descriptions are model-facing UX",
+          "body": [
             {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Tool declarations include a name, description, and input schema. The model reads those declarations as part of context, so vague names and overlapping descriptions make selection harder."
+                }
+              ]
             },
             {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A good tool schema says what the tool does, when to use it, what arguments are required, and what the tool does not do."
+                }
+              ]
             }
           ],
           "termIds": [
-            "llm",
-            "token"
+            "schema",
+            "tool_call"
+          ],
+          "sources": [
+            "kb1"
+          ],
+          "analogy": "Tool descriptions are labels on drawers; confusing labels make the model open the wrong drawer."
+        },
+        {
+          "id": "fc_m2_worked",
+          "kind": "functionalExample",
+          "title": "Worked schema: lookup_order",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Tool name: `lookup_order`. Description: “Fetch shipping and payment status for one order ID. Does not issue refunds.” Input schema: `{order_id: string}` required. Output: status, delivery date, refundable flag."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "That “does not issue refunds” sentence matters. It tells the model not to treat a lookup tool as an action tool."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "schema",
+            "tool_call"
+          ],
+          "sources": [
+            "kb1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
+        },
+        {
+          "id": "fc_m2_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check schemas",
+          "prompt": "Why include “does not issue refunds” in lookup_order?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "To make the database query faster.",
+              "correct": false
+            },
+            {
+              "text": "To prevent wrong-tool selection when the user asks for a refund.",
+              "correct": true
+            },
+            {
+              "text": "To hide the refund tool from code.",
+              "correct": false
+            }
+          ],
+          "explanation": "Tool descriptions guide model selection; boundaries should be explicit.",
+          "termIds": [
+            "schema",
+            "tool_call"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m3",
+      "order": 3,
+      "title": "Validate and execute outside the model",
+      "sub": "A proposed call becomes real only after code checks it.",
+      "summary": "Runtime code validates arguments, checks authorization, executes the function, handles errors, and records the action.",
+      "objectives": [
+        "Implement a minimal executor.",
+        "Reject unknown tools and missing arguments.",
+        "Explain why authorization lives in code."
+      ],
+      "termIds": [
+        "tool_call",
+        "validator",
+        "schema"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "fc_m3",
+          "kind": "conceptual",
+          "title": "Execution is runtime responsibility",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The application should treat tool calls as untrusted input. It validates the tool name against an allowed registry, checks arguments against schema, enforces policy, then executes."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This division is what makes tool use safe enough to ship: the model can reason about actions, but code owns permissions and side effects."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "tool_call",
+            "validator"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ],
+          "analogy": "The runtime is the cashier who checks the form, not the person who casually suggested buying something."
+        },
+        {
+          "id": "fc_m3_code",
+          "kind": "codeExample",
+          "title": "Execute only known safe tools",
+          "language": "python",
+          "code": "def lookup_order(order_id):\n    return {\"order_id\": order_id, \"status\": \"late\", \"refundable\": True}\n\ntools = {\"lookup_order\": lookup_order}\ncall = {\"name\": \"lookup_order\", \"arguments\": {\"order_id\": \"A123\"}}\n\ndef execute(call):\n    if call[\"name\"] not in tools:\n        raise ValueError(\"unknown tool\")\n    if \"order_id\" not in call[\"arguments\"]:\n        raise ValueError(\"missing order_id\")\n    return tools[call[\"name\"]](**call[\"arguments\"])\n\nresult = execute(call)\nprint(result[\"status\"])\nprint(result[\"refundable\"])",
+          "explain": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
+                }
+              ]
+            }
+          ],
+          "predictThenReveal": {
+            "prompt": "Predict the two printed values.",
+            "answer": "It prints:\nlate\nTrue\n\nThe runtime accepts a known tool with the required argument and returns structured data."
+          },
+          "syntax": [
+            {
+              "part": "input data",
+              "explains": "The small concrete case the example operates on."
+            },
+            {
+              "part": "decision rule",
+              "explains": "The line or function that turns the inputs into behavior."
+            },
+            {
+              "part": "print(...)",
+              "explains": "A visible result so you can check your prediction."
+            }
+          ],
+          "termIds": [
+            "tool_call",
+            "validator"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A customer agent needs to look up orders, issue refunds, and stop before risky actions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review function-calling contract with tool schemas and confirmation rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model calls refund_user without required approval data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A customer agent needs to look up orders, issue refunds, and stop before risky actions. This module asks what mental model changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve valid tool calls with safe stop behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the model calls refund_user without required approval data."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For function-calling contract with tool schemas and confirmation rules, log or test the fields needed to debug valid tool calls with safe stop behavior. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: function-calling contract with tool schemas and confirmation rules",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A customer agent needs to look up orders, issue refunds, and stop before risky actions. The team wants to improve valid tool calls with safe stop behavior, but it has already seen this failure: the model calls refund_user without required approval data."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Debug case: a long customer request includes the JSON rules near the beginning, then thousands of tokens of detail. The model returns prose instead of valid JSON because the relevant instruction is weak, crowded, or outside useful context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: function-calling contract with tool schemas and confirmation rules. It contains the prompt layout, important tokens, context-window risk, output schema, validator, and a repair or escalation rule for valid tool calls with safe stop behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: put the schema next to the final instruction, keep examples short, validate the returned JSON, and fail closed when required fields are missing."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: LLM debugger. Context: A customer agent needs to look up orders, issue refunds, and stop before risky actions. Task: diagnose why the output violated the contract. Inspect prompt placement, context length, examples, schema, validator, and repair path. Output: {root_cause, prompt_change, validation_rule, test_cases, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Function Calling and Tool Use to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Function Calling and Tool Use to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and test the failure: the model calls refund_user without required approval data.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m2",
-      "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Function Calling and Tool Use to function-calling contract with tool schemas and confirmation rules, with examples and checks tied to valid tool calls with safe stop behavior.",
-      "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model calls refund_user without required approval data."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m2_concept",
-          "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Mechanism opens the machinery behind Function Calling and Tool Use. In the running case, the important question is: what exactly changes between the user's request and the final output?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Mechanism means following tokens through the context window into next-token prediction, then checking whether the output contract survived."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is function-calling contract with tool schemas and confirmation rules. Which single field, trace, or test would show whether valid tool calls with safe stop behavior improved?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A customer agent needs to look up orders, issue refunds, and stop before risky actions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review function-calling contract with tool schemas and confirmation rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model calls refund_user without required approval data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A customer agent needs to look up orders, issue refunds, and stop before risky actions. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve valid tool calls with safe stop behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the model calls refund_user without required approval data."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For function-calling contract with tool schemas and confirmation rules, log or test the fields needed to debug valid tool calls with safe stop behavior. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the model calls refund_user without required approval data. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to function-calling contract with tool schemas and confirmation rules: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: valid tool calls with safe stop behavior becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Function Calling and Tool Use design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Function Calling and Tool Use to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and test the failure: the model calls refund_user without required approval data.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m3",
-      "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Function Calling and Tool Use to function-calling contract with tool schemas and confirmation rules, with examples and checks tied to valid tool calls with safe stop behavior.",
-      "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model calls refund_user without required approval data."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m3_concept",
-          "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is where Function Calling and Tool Use becomes a decision. The team must choose how much rigor function-calling contract with tool schemas and confirmation rules needs before it can be trusted."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves valid tool calls with safe stop behavior while making this failure visible: the model calls refund_user without required approval data."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A customer agent needs to look up orders, issue refunds, and stop before risky actions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review function-calling contract with tool schemas and confirmation rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model calls refund_user without required approval data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Function Calling and Tool Use on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the model calls refund_user without required approval data.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on valid tool calls with safe stop behavior.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves valid tool calls with safe stop behavior and catches: the model calls refund_user without required approval data.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For function-calling contract with tool schemas and confirmation rules, log or test the fields needed to debug valid tool calls with safe stop behavior. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
+          "id": "fc_m3_verify",
           "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
+          "title": "Verify AI-generated tool executors",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The failure mode to keep in view is concrete: the model calls refund_user without required approval data. Use it as a diagnostic lens while reading every design choice."
+                  "text": "When an AI writes tool-calling code, check the dangerous boundary."
                 }
               ]
             },
@@ -1188,138 +476,69 @@
               "items": [
                 [
                   {
-                    "text": "The prompt is correct in isolation but buried outside the useful context of a long request."
+                    "text": "Does it reject unknown tool names?"
                   }
                 ],
                 [
                   {
-                    "text": "The model returns JSON-shaped text that violates required fields or allowed values."
+                    "text": "Does it validate required arguments before execution?"
                   }
                 ],
                 [
                   {
-                    "text": "A repair loop hides the underlying prompt/schema problem instead of surfacing it."
+                    "text": "Does it separate read-only and side-effecting permissions?"
                   }
                 ],
                 [
                   {
-                    "text": "The broad warning sign: valid tool calls with safe stop behavior gets worse even though the final answer or artifact still looks polished."
+                    "text": "Does it log tool name, arguments, result, and errors?"
                   }
                 ]
               ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call",
+            "validator"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when valid tool calls with safe stop behavior affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the model calls refund_user without required approval data.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Function Calling and Tool Use to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and test the failure: the model calls refund_user without required approval data.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Function Calling and Tool Use: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Function Calling and Tool Use to function-calling contract with tool schemas and confirmation rules, with examples and checks tied to valid tool calls with safe stop behavior.",
+      "title": "Return results for the next decision",
+      "sub": "Once code runs, the model needs the result as new evidence.",
+      "summary": "Tool results should be tied to the original call and treated as untrusted context. The model uses them to continue or answer.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model calls refund_user without required approval data."
+        "Explain tool-result messages.",
+        "Avoid dropping or confusing results.",
+        "Treat tool output as data, not instructions."
       ],
       "termIds": [
+        "tool_call",
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "prompt"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
+          "id": "fc_m4",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "Tool output re-enters context as evidence",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Function Calling and Tool Use should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "After execution, the application sends the tool result back to the model, usually tied to the tool-call ID. The model can then decide whether to answer, call another tool, or ask for approval."
                 }
               ]
             },
@@ -1327,697 +546,206 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For function-calling contract with tool schemas and confirmation rules, the sketch should prove one thing: the system can improve valid tool calls with safe stop behavior without hiding the failure where the model calls refund_user without required approval data."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Tool output is not privileged instruction. A web page, database note, or document can contain malicious text. Label it as data and keep higher-priority instructions separate."
                 }
               ]
             }
           ],
           "termIds": [
+            "tool_call",
             "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "prompt"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "analogy": "A tool result is a receipt; useful evidence, not a new boss."
         },
         {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A customer agent needs to look up orders, issue refunds, and stop before risky actions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review function-calling contract with tool schemas and confirmation rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model calls refund_user without required approval data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
+          "id": "fc_m4_case",
           "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
+          "title": "Case study: late order refund flow",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A customer agent needs to look up orders, issue refunds, and stop before risky actions. This module asks what tiny implementation sketch changes in the artifact."
+                  "text": "Turn 1: model calls `lookup_order(A123)`. Runtime returns status late, refundable true. Turn 2: model wants `issue_refund`, but runtime requires confirmation and policy check. The assistant asks the user to confirm instead of silently refunding."
                 }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve valid tool calls with safe stop behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the model calls refund_user without required approval data."
-                  }
-                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
+                  "text": "The important handoff is that the lookup result becomes evidence, not permission."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Runnable check: validate structured output",
-          "language": "python",
-          "code": "# Function Calling and Tool Use: structured output validator.\nimport json\nraw = '{\"decision\": \"escalate\", \"confidence\": 0.82, \"reason\": \"missing invoice id\"}'\nrequired = {\"decision\", \"confidence\", \"reason\"}\nallowed = {\"answer\", \"escalate\", \"refuse\"}\nobj = json.loads(raw)\nvalid = required.issubset(obj) and obj[\"decision\"] in allowed and 0 <= obj[\"confidence\"] <= 1\nprint(obj[\"decision\"])\nprint(\"valid\" if valid else \"invalid\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the model calls refund_user without required approval data."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the decision and validation result.",
-            "answer": "It prints:\nescalate\nvalid\n\nThe output is not trusted because it looks like JSON. The validator checks fields, allowed values, and ranges before downstream code uses it."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Function Calling and Tool Use, review it against the running case before accepting it."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: function-calling contract with tool schemas and confirmation rules?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: the model calls refund_user without required approval data?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug valid tool calls with safe stop behavior?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
+          "id": "fc_m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Function Calling and Tool Use to the running case?",
+          "title": "Check results",
+          "prompt": "How should the app treat tool output text?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and test the failure: the model calls refund_user without required approval data.",
+              "text": "As higher-priority instructions than system policy.",
+              "correct": false
+            },
+            {
+              "text": "As untrusted data that can inform the next step.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "As proof that the final action is authorized.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Tool outputs can contain useful facts or malicious text; code and policy still govern.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call",
+            "prompt"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Function Calling and Tool Use to function-calling contract with tool schemas and confirmation rules, with examples and checks tied to valid tool calls with safe stop behavior.",
+      "title": "Failure modes and safe tool use",
+      "sub": "End with how tool loops break in practice.",
+      "summary": "Tool systems fail through wrong tools, malformed arguments, unsafe side effects, stale results, and prompt injection in tool output.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model calls refund_user without required approval data."
+        "Name common tool-use failures.",
+        "Choose safeguards for side effects.",
+        "Reconstruct a safe tool-call loop."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
+        "tool_call",
+        "validator",
         "schema"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "fc_m5_fail",
           "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
+          "title": "How function calling breaks",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Function calling failures often look like normal agent behavior until a real system is changed. The model may choose the wrong tool, omit arguments, retry blindly, or trust malicious tool output."
                 }
               ]
             },
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how function-calling contract with tool schemas and confirmation rules improves valid tool calls with safe stop behavior and catches the model calls refund_user without required approval data, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A customer agent needs to look up orders, issue refunds, and stop before risky actions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review function-calling contract with tool schemas and confirmation rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model calls refund_user without required approval data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Function Calling and Tool Use on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the model calls refund_user without required approval data.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on valid tool calls with safe stop behavior.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves valid tool calls with safe stop behavior and catches: the model calls refund_user without required approval data.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For function-calling contract with tool schemas and confirmation rules, log or test the fields needed to debug valid tool calls with safe stop behavior. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Function Calling and Tool Use: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Function Calling and Tool Use without copying the worked example. Keep the same running case - A customer agent needs to look up orders, issue refunds, and stop before risky actions - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
+              "t": "ul",
               "items": [
                 [
                   {
-                    "text": "Write the problem statement in one sentence and name the success metric: valid tool calls with safe stop behavior."
+                    "text": "Wrong tool: search instead of order lookup, or refund instead of lookup."
                   }
                 ],
                 [
                   {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
+                    "text": "Malformed arguments: missing ID, wrong enum, bad date."
                   }
                 ],
                 [
                   {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
+                    "text": "Unauthorized side effect: sending, deleting, charging, or refunding without approval."
                   }
                 ],
                 [
                   {
-                    "text": "Add one test that reproduces this failure: the model calls refund_user without required approval data."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
+                    "text": "Tool-output injection: retrieved text tells the model to ignore policy."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call",
+            "validator"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
+          ],
+          "analogy": "Tool failure is like giving a helpful intern access to the company credit card without purchase controls."
+        },
+        {
+          "id": "fc_m5_decision",
+          "kind": "decisionCallout",
+          "useWhen": "Let the model call a tool when it lacks live data or needs a deterministic capability that code can validate.",
+          "avoidWhen": "Do not execute side-effecting tools when arguments are incomplete, approval is missing, output is untrusted, or policy is ambiguous.",
+          "ruleOfThumb": "The model may choose; code must verify; humans approve irreversible actions.",
+          "termIds": [
+            "tool_call",
+            "validator"
+          ],
+          "sources": [
+            "kb1"
           ]
         },
         {
-          "id": "m5_quiz",
+          "id": "fc_m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Function Calling and Tool Use to the running case?",
+          "title": "Check safe tool use",
+          "prompt": "What is the safest rule for irreversible tools?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review function-calling contract with tool schemas and confirmation rules, measure valid tool calls with safe stop behavior, and test the failure: the model calls refund_user without required approval data.",
+              "text": "Let the model decide based on confidence.",
+              "correct": false
+            },
+            {
+              "text": "Require explicit policy checks and confirmation in code before execution.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Hide tool results from the model.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Irreversible actions need authorization outside the model.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "tool_call",
+            "validator"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Function Calling and Tool Use: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
+      "laymanDefinition": "A model that predicts and generates token sequences from context.",
       "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2048,7 +776,7 @@
     "prompt": {
       "id": "prompt",
       "label": "Prompt",
-      "laymanDefinition": "Prompt is a core building block in this lesson.",
+      "laymanDefinition": "The instructions, task, examples, and context sent to the model.",
       "technicalNote": "In this lesson, Prompt is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2058,7 +786,7 @@
     "schema": {
       "id": "schema",
       "label": "Schema",
-      "laymanDefinition": "Schema is a core building block in this lesson.",
+      "laymanDefinition": "A machine-readable contract describing fields, types, and required values.",
       "technicalNote": "In this lesson, Schema is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2068,29 +796,37 @@
     "tool_call": {
       "id": "tool_call",
       "label": "Tool call",
-      "laymanDefinition": "Tool call is a core building block in this lesson.",
+      "laymanDefinition": "A structured request for application code to run a named capability with arguments.",
       "technicalNote": "In this lesson, Tool call is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "validator": {
+      "id": "validator",
+      "label": "Validator",
+      "laymanDefinition": "Code that checks whether output satisfies schema and business rules.",
       "sources": [
         "kb1"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts for Function Calling and Tool Use",
+    "title": "Decision prompts",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Adoption check",
         "questions": [
           {
-            "q": "What decision does Function Calling and Tool Use change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships function-calling contract with tool schemas and confirmation rules.",
+            "q": "What decision does Function Calling and Tool Use change in your build?",
+            "why": "A lesson is useful only when it changes what you do next.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Use now",
+              "Prototype first",
+              "Defer"
             ],
-            "rot": "Choose the smallest option that catches: the model calls refund_user without required approval data."
+            "rot": "Prefer the smallest testable version."
           }
         ]
       }
@@ -2102,150 +838,67 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Function Calling and Tool Use using the running case: A customer agent needs to look up orders, issue refunds, and stop before risky actions. Name the artifact (function-calling contract with tool schemas and confirmation rules), explain the mechanism, choose a design level, write the check for the model calls refund_user without required approval data, and say how you would measure valid tool calls with safe stop behavior."
+            "text": "From memory, trace a tool call: declaration, model-selected name and arguments, validation, authorization, execution, tool result, and final answer. Then name two places code must not delegate trust to the model."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path through the lesson",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Function Calling and Tool Use.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Function Calling and Tool Use to the running artifact and failure test."
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Function Calling and Tool Use to the running artifact and failure test."
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Function Calling and Tool Use to the running artifact and failure test."
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Function Calling and Tool Use to the running artifact and failure test."
-        },
-        {
-          "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with safe stop behavior while avoiding the failure: the model calls refund_user without required approval data.",
-          "moduleId": "m5",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Function Calling and Tool Use to the running artifact and failure test."
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        },
-        {
-          "from": "n_m4",
-          "to": "n_m5",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "A tool is an action boundary",
+        "detail": "Start by separating model text from application action."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Tool schemas shape model choices",
+        "detail": "After the boundary, define names and arguments precisely."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Validate and execute outside the model",
+        "detail": "A proposed call becomes real only after code checks it."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Return results for the next decision",
+        "detail": "Once code runs, the model needs the result as new evidence."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Failure modes and safe tool use",
+        "detail": "End with how tool loops break in practice."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_1",
+        "label": "Is each tool narrow and named clearly?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_2",
+        "label": "Are required arguments typed and validated?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure valid tool calls with safe stop behavior on realistic cases?",
+        "id": "chk_3",
+        "label": "Does code authorize side effects before execution?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the model calls refund_user without required approval data?",
+        "id": "chk_4",
+        "label": "Are tool outputs treated as untrusted data?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_5",
+        "label": "What should I learn next: MCP, agent loops, or sandboxing?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for function-calling contract with tool schemas and confirmation rules. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (valid tool calls with safe stop behavior), failure case (the model calls refund_user without required approval data), owner, and the next rung after this lesson.",
+      "prompt": "Design one safe `lookup_order` and one risky `issue_refund` tool. Write their schemas, validation rules, authorization checks, and failure behavior. Next rung: secure tool-using agents and MCP.",
       "scopedTo": "Function Calling and Tool Use"
     }
   },
@@ -2253,30 +906,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Structured Outputs and Function Calling",
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Tool and Plugin Standards",
+      "url": "https://spec.openapis.org/oas/latest.html",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "OpenAI function calling guide",
+      "url": "https://developers.openai.com/api/docs/guides/function-calling",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Gemini structured output docs",
+      "url": "https://ai.google.dev/gemini-api/docs/structured-output",
+      "asOfDate": "2026-06-22"
     }
   }
 }

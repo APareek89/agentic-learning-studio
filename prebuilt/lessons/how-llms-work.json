@@ -4,8 +4,8 @@
     "topic": "How Large Language Models Work",
     "title": "How Large Language Models Work",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 42,
-    "thesis": "How Large Language Models Work is practical when learners can apply it to this concrete case: A product manager needs to debug why an LLM ignores a JSON schema on long user requests. By the end, they should be able to build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and catch the failure where the prompt asks for structure but the relevant instruction is outside the model context."
+    "estTotalMinutes": 44,
+    "thesis": "A large language model works by tokenizing visible text, building contextual vectors with transformer attention, scoring possible next tokens, and decoding one token at a time until the response stops."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -24,68 +24,68 @@
     ]
   },
   "mentalMap": {
-    "title": "How Large Language Models Work: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "How Large Language Models Work is useful when you can apply it to a product manager needs to debug why an LLM ignores a JSON schema on long user requests, choose a design, and verify ability to predict failures from prompt and context limits.",
+    "title": "How LLMs Work — from text to next token",
+    "caption": "Each step explains one mechanism a beginner needs before debugging model behavior.",
+    "oneLineThesis": "An LLM repeatedly turns visible tokens into next-token probabilities; everything else is packaging, decoding, and validation around that loop.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Text becomes tokens",
         "sub": "Build the simplest useful picture of How Large Language Models Work.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+        "what": "Tokenization is the boundary where human text becomes model input IDs.",
+        "relevance": "It explains why long prompts, code, and non-English text can consume context unexpectedly.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects How Large Language Models Work to the running artifact and failure test.",
+        "orient": "How raw text is split into model-specific pieces before any reasoning happens.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "Tokens enter context",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+        "what": "Embeddings and context windows are the model’s visible workspace.",
+        "relevance": "They explain why missing or truncated evidence cannot influence the answer.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects How Large Language Models Work to the running artifact and failure test.",
+        "orient": "How token vectors and the context window define what the model can use.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "Attention mixes evidence",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+        "what": "Attention builds contextual token states from the visible sequence.",
+        "relevance": "It explains why wording and position change model behavior.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects How Large Language Models Work to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "How transformer layers let each position use nearby and distant token information.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "Logits become words",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+        "what": "Decoding turns raw scores into the next visible token.",
+        "relevance": "It explains variability, repetition, and why low temperature is not truth.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects How Large Language Models Work to the running artifact and failure test.",
+        "orient": "How next-token scores, temperature, and sampling produce the response stream.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Fluent can be false",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+        "what": "Failure modes follow directly from the prediction loop.",
+        "relevance": "It tells learners what to check before trusting an answer.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects How Large Language Models Work to the running artifact and failure test.",
+        "orient": "Why next-token prediction can sound confident without grounding or validation.",
         "order": 5
       }
     ],
@@ -118,34 +118,32 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies How Large Language Models Work to LLM mental model using tokens, context window, prompt, and output schema, with examples and checks tied to ability to predict failures from prompt and context limits.",
+      "title": "Text becomes tokens",
+      "sub": "Start with the boundary between human text and model input.",
+      "summary": "A model does not see words; it sees token IDs produced by a tokenizer. This module makes tokenization concrete before introducing any transformer machinery.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the prompt asks for structure but the relevant instruction is outside the model context."
+        "Explain why tokens are not the same as words.",
+        "Predict why code, tables, or multilingual text can fill context quickly.",
+        "Use tokenization to debug a prompt that unexpectedly truncates."
       ],
       "termIds": [
         "llm",
         "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "context_window"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why How Large Language Models Work matters here",
+          "title": "The model reads token IDs, not sentences",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A product manager needs to debug why an LLM ignores a JSON schema on long user requests. The learner's job is not to memorize How Large Language Models Work; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved the ability to predict failures from prompt and context limits."
+                  "text": "A large language model begins with a tokenizer. The tokenizer maps text into token IDs, and the model operates on those IDs. Some tokens are whole words, some are word pieces, and some are whitespace or punctuation."
                 }
               ]
             },
@@ -153,7 +151,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: LLM mental model using tokens, context window, prompt, and output schema. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Problem anchor: a product manager asks why a long support ticket ignored the JSON instruction at the top. The first check is not “is the model smart?” It is “what tokens actually reached the model?”"
                 }
               ]
             },
@@ -162,143 +160,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if the prompt asks for structure but the relevant instruction is outside the model context, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson keeps concrete objects on the page: a real request, the information the system can see, the decision it makes, the output it returns, and the check that catches a wrong answer."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: How Large Language Models Work matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: How Large Language Models Work matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure the ability to predict failures from prompt and context limits on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for How Large Language Models Work.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product manager needs to debug why an LLM ignores a JSON schema on long user requests"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LLM mental model using tokens, context window, prompt, and output schema: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the prompt asks for structure but the relevant instruction is outside the model context. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Before reading on, predict: which usually costs more tokens, a short English sentence or a dense code snippet with punctuation and indentation?"
                 }
               ]
             }
@@ -306,25 +168,24 @@
           "termIds": [
             "llm",
             "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "context_window"
           ],
           "sources": [
             "kb1",
-            "kb2"
-          ]
+            "canon2"
+          ],
+          "analogy": "Tokenization is like cutting a document into puzzle pieces before handing it to a reader; odd cuts change what fits in the box."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Worked token budget: the refund ticket",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product manager needs to debug why an LLM ignores a JSON schema on long user requests. This module asks what mental model changes in the artifact."
+                  "text": "Imagine a prompt with system rules, a 4,000-word support ticket, and a JSON schema at the top. The model can only condition on the packed context window."
                 }
               ]
             },
@@ -333,22 +194,22 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "The app builds the prompt: rules first, ticket second, schema third."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "The tokenizer splits the ticket, timestamps, invoice IDs, and quoted emails into many small pieces."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve ability to predict failures from prompt and context limits."
+                    "text": "If the request is over budget, the packer drops or summarizes older content."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: the prompt asks for structure but the relevant instruction is outside the model context."
+                    "text": "If the schema is dropped or buried, the model may answer fluently but miss the required shape."
                   }
                 ]
               ]
@@ -357,236 +218,85 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LLM mental model using tokens, context window, prompt, and output schema, log or test the fields needed to debug ability to predict failures from prompt and context limits. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "The fix is mechanical: measure token budget, keep durable instructions near the final task, and validate the output rather than trusting the prose."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
             "token",
             "context_window",
-            "prompt",
             "schema"
           ],
           "sources": [
             "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: LLM mental model using tokens, context window, prompt, and output schema",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A product manager needs to debug why an LLM ignores a JSON schema on long user requests. The team wants to improve ability to predict failures from prompt and context limits, but it has already seen this failure: the prompt asks for structure but the relevant instruction is outside the model context."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the whole worked artifact in one place. Read it as a complete example, not as disconnected tips."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Debug case: a long customer request includes the JSON rules near the beginning, then thousands of tokens of detail. The model returns prose instead of valid JSON because the relevant instruction is weak, crowded, or outside useful context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: LLM mental model using tokens, context window, prompt, and output schema. It contains the prompt layout, important tokens, context-window risk, output schema, validator, and a repair or escalation rule for ability to predict failures from prompt and context limits."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: put the schema next to the final instruction, keep examples short, validate the returned JSON, and fail closed when required fields are missing."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: LLM debugger. Context: A product manager needs to debug why an LLM ignores a JSON schema on long user requests. Task: diagnose why the output violated the contract. Inspect prompt placement, context length, examples, schema, validator, and repair path. Output: {root_cause, prompt_change, validation_rule, test_cases, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties How Large Language Models Work to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "canon2"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies How Large Language Models Work to the running case?",
+          "title": "Check tokenization",
+          "prompt": "Why can a prompt lose an important instruction even when the user pasted it?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and test the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+              "text": "Because LLMs ignore all instructions before user text.",
+              "correct": false
+            },
+            {
+              "text": "Because the instruction may be outside the packed context or buried behind too many tokens.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Because tokenization converts every word into a fixed one-word token.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The model only conditions on what fits in the current token window; token boundaries and packing decide what survives.",
           "termIds": [
-            "llm",
             "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "context_window"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies How Large Language Models Work to LLM mental model using tokens, context window, prompt, and output schema, with examples and checks tied to ability to predict failures from prompt and context limits.",
+      "title": "Embeddings and the context window",
+      "sub": "After text is tokenized, the model embeds only the visible tokens.",
+      "summary": "Token IDs become vectors, and the context window is the model’s working input, not durable memory.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the prompt asks for structure but the relevant instruction is outside the model context."
+        "Describe what an embedding does at inference time.",
+        "Distinguish context from memory or knowledge.",
+        "Spot when missing context explains a bad answer."
       ],
       "termIds": [
-        "llm",
-        "token",
+        "embedding",
         "context_window",
-        "prompt",
-        "schema"
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Token IDs become vectors in a limited workspace",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind How Large Language Models Work. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Each token ID is mapped to a learned vector before transformer layers process it. The vector itself is not a fact database. It is the starting representation the network will update using surrounding context."
                 }
               ]
             },
@@ -594,32 +304,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means following tokens through the context window into next-token prediction, then checking whether the output contract survived."
+                  "text": "The context window is the visible workspace for one request. If a customer policy, tool result, or schema is not in that workspace, the model cannot directly attend to it."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,201 +313,31 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is LLM mental model using tokens, context window, prompt, and output schema. Which single field, trace, or test would show whether the team can predict prompt and context-limit failures more reliably?"
+                  "text": "Recall from module 1: if a schema disappears from the packed prompt, what kind of failure should you expect?"
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
+            "embedding",
             "context_window",
-            "prompt",
-            "schema"
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "analogy": "Embeddings are like name tags that give each token a starting position before the room starts a discussion."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product manager needs to debug why an LLM ignores a JSON schema on long user requests"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LLM mental model using tokens, context window, prompt, and output schema: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the prompt asks for structure but the relevant instruction is outside the model context. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_case",
           "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
+          "title": "Case study: the missing policy paragraph",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product manager needs to debug why an LLM ignores a JSON schema on long user requests. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve ability to predict failures from prompt and context limits."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the prompt asks for structure but the relevant instruction is outside the model context."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LLM mental model using tokens, context window, prompt, and output schema, log or test the fields needed to debug ability to predict failures from prompt and context limits. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the prompt asks for structure but the relevant instruction is outside the model context. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to LLM mental model using tokens, context window, prompt, and output schema: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
+                  "text": "A support assistant answers: “Refunds after 35 days are allowed.” The real policy says refunds must arrive within 30 days, but that paragraph was summarized away."
                 }
               ]
             },
@@ -830,114 +346,93 @@
               "items": [
                 [
                   {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
+                    "text": "What did not fail: the model produced fluent text."
                   }
                 ],
                 [
                   {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
+                    "text": "What failed: the relevant evidence was absent from the context window."
                   }
                 ],
                 [
                   {
-                    "text": "Metric promoted: ability to predict failures from prompt and context limits becomes part of the release gate instead of a dashboard someone checks later."
+                    "text": "Decision: fix packing or retrieval before changing model temperature or fine-tuning."
                   }
                 ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful How Large Language Models Work design makes the wrong answer inspectable before it reaches users."
-                }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
             "context_window",
-            "prompt",
-            "schema"
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies How Large Language Models Work to the running case?",
+          "title": "Check context",
+          "prompt": "What is the safest interpretation of “the model forgot the policy”?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and test the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+              "text": "The model deleted the policy from its weights.",
+              "correct": false
+            },
+            {
+              "text": "The policy probably was not in the current context, or it was compressed badly.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The tokenizer refused to encode policy text.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "For a single request, “forgetting” usually means missing, stale, or poorly packed context.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "context_window"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies How Large Language Models Work to LLM mental model using tokens, context window, prompt, and output schema, with examples and checks tied to ability to predict failures from prompt and context limits.",
+      "title": "Attention builds contextual states",
+      "sub": "Visible token vectors then exchange information through attention layers.",
+      "summary": "Attention lets token positions weight other visible positions, creating context-aware states used for prediction.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the prompt asks for structure but the relevant instruction is outside the model context."
+        "Explain attention without mystifying it.",
+        "Connect position and wording to model behavior.",
+        "Predict why long contexts can still miss the salient fact."
       ],
       "termIds": [
-        "llm",
+        "attention",
         "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "context_window"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Attention asks which visible tokens matter now",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where How Large Language Models Work becomes a decision. The team must choose how much rigor LLM mental model using tokens, context window, prompt, and output schema needs before it can be trusted."
+                  "text": "Inside transformer layers, each token position compares with other visible positions. Attention weights decide how much information to mix from those positions into the current state."
                 }
               ]
             },
@@ -945,309 +440,56 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves ability to predict failures from prompt and context limits while making this failure visible: the prompt asks for structure but the relevant instruction is outside the model context."
+                  "text": "This is why the same fact can matter more or less depending on where it appears, how clearly it is labeled, and what the current token is trying to predict."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Attention is powerful, but it is not a guarantee of faithful evidence use. It can connect tokens; it cannot make absent evidence present."
+                }
               ]
             }
           ],
           "termIds": [
-            "llm",
+            "attention",
             "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "context_window"
           ],
           "sources": [
-            "kb1",
             "kb2"
-          ]
+          ],
+          "analogy": "Attention is like highlighting parts of an open notebook while writing the next word; closed pages cannot be highlighted."
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
+          "id": "m3_flow",
+          "kind": "steppedFlow",
+          "title": "One prediction pass through the model",
+          "caption": "Click through the mechanism that turns visible tokens into a next-token state.",
           "steps": [
             {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product manager needs to debug why an LLM ignores a JSON schema on long user requests"
-                    }
-                  ]
-                }
-              ]
+              "label": "Embed tokens",
+              "detail": "Token IDs become vectors."
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LLM mental model using tokens, context window, prompt, and output schema: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
+              "label": "Compare positions",
+              "detail": "Queries and keys produce attention scores."
             },
             {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the prompt asks for structure but the relevant instruction is outside the model context. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
+              "label": "Mix values",
+              "detail": "Weighted values update each token state."
+            },
+            {
+              "label": "Project logits",
+              "detail": "The final state scores possible next tokens."
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of How Large Language Models Work on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on ability to predict failures from prompt and context limits.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves ability to predict failures from prompt and context limits and catches: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LLM mental model using tokens, context window, prompt, and output schema, log or test the fields needed to debug ability to predict failures from prompt and context limits. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: the prompt asks for structure but the relevant instruction is outside the model context. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The prompt is correct in isolation but buried outside the useful context of a long request."
-                  }
-                ],
-                [
-                  {
-                    "text": "The model returns JSON-shaped text that violates required fields or allowed values."
-                  }
-                ],
-                [
-                  {
-                    "text": "A repair loop hides the underlying prompt/schema problem instead of surfacing it."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: ability to predict failures from prompt and context limits gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when ability to predict failures from prompt and context limits affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "embedding",
+            "attention",
+            "logits"
           ],
           "sources": [
             "kb1",
@@ -1257,75 +499,67 @@
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies How Large Language Models Work to the running case?",
+          "title": "Check attention",
+          "prompt": "What can attention do?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and test the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+              "text": "It can retrieve facts that were never sent to the model.",
+              "correct": false
+            },
+            {
+              "text": "It can weight and mix information from visible tokens when building contextual states.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "It can prove that the model used the best evidence faithfully.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Attention works over visible context; it does not guarantee truth or retrieval.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "attention",
+            "context_window"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for How Large Language Models Work: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies How Large Language Models Work to LLM mental model using tokens, context window, prompt, and output schema, with examples and checks tied to ability to predict failures from prompt and context limits.",
+      "title": "Logits, sampling, and stopping",
+      "sub": "The contextual state becomes scores, and decoding chooses the next token.",
+      "summary": "The model scores possible next tokens; decoding settings choose one and repeat the loop.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the prompt asks for structure but the relevant instruction is outside the model context."
+        "Define logits and decoding in plain language.",
+        "Explain what temperature changes and what it does not.",
+        "Read a tiny next-token loop as runnable code."
       ],
       "termIds": [
-        "llm",
+        "logits",
+        "temperature",
         "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "Generation is a loop, not a paragraph lookup",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for How Large Language Models Work should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "At each step, the model projects its final token state into logits: raw scores for every token in the vocabulary. Decoding converts those scores into the next token, appends it, and runs the process again."
                 }
               ]
             },
@@ -1333,206 +567,75 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For LLM mental model using tokens, context window, prompt, and output schema, the sketch should prove one thing: the system can improve ability to predict failures from prompt and context limits without hiding the failure where the prompt asks for structure but the relevant instruction is outside the model context."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Temperature and top-p change how the model chooses among likely continuations. Lower temperature can reduce variety, but it does not verify facts or enforce a schema by itself."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "logits",
+            "temperature",
+            "token"
           ],
           "sources": [
             "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product manager needs to debug why an LLM ignores a JSON schema on long user requests"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LLM mental model using tokens, context window, prompt, and output schema: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the prompt asks for structure but the relevant instruction is outside the model context. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+            "canon1"
           ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A product manager needs to debug why an LLM ignores a JSON schema on long user requests. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve ability to predict failures from prompt and context limits."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the prompt asks for structure but the relevant instruction is outside the model context."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "analogy": "Decoding is like choosing the next tile from a weighted bag, placing it, then recalculating the bag for the next move."
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: validate structured output",
+          "title": "Predict a tiny decoder",
           "language": "python",
-          "code": "# How Large Language Models Work: structured output validator.\nimport json\nraw = '{\"decision\": \"escalate\", \"confidence\": 0.82, \"reason\": \"missing invoice id\"}'\nrequired = {\"decision\", \"confidence\", \"reason\"}\nallowed = {\"answer\", \"escalate\", \"refuse\"}\nobj = json.loads(raw)\nvalid = required.issubset(obj) and obj[\"decision\"] in allowed and 0 <= obj[\"confidence\"] <= 1\nprint(obj[\"decision\"])\nprint(\"valid\" if valid else \"invalid\")",
+          "code": "vocab = [\"refund\", \"invoice\", \"banana\"]\nlogits = {\"refund\": 5.0, \"invoice\": 3.0, \"banana\": -2.0}\n\ndef greedy_next(logits):\n    return max(logits, key=logits.get)\n\nprint(greedy_next(logits))\nlogits[\"invoice\"] = 6.0\nprint(greedy_next(logits))",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the prompt asks for structure but the relevant instruction is outside the model context."
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the decision and validation result.",
-            "answer": "It prints:\nescalate\nvalid\n\nThe output is not trusted because it looks like JSON. The validator checks fields, allowed values, and ranges before downstream code uses it."
+            "prompt": "Predict the two printed tokens before revealing.",
+            "answer": "It prints:\nrefund\ninvoice\n\nGreedy decoding picks the highest-scoring token each time. Real sampling can be less deterministic, but it still starts from next-token scores."
           },
           "syntax": [
             {
               "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
+              "explains": "The small concrete case the example operates on."
             },
             {
               "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "explains": "The line or function that turns the inputs into behavior."
             },
             {
               "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "explains": "A visible result so you can check your prediction."
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "logits",
+            "token"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
+          "id": "m4_verify",
           "kind": "note",
+          "title": "How to verify an AI-generated LLM explanation",
           "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for How Large Language Models Work, review it against the running case before accepting it."
+                  "text": "When an AI explains LLMs or writes a toy decoder, check the mechanism rather than the polish."
                 }
               ]
             },
@@ -1541,70 +644,31 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: LLM mental model using tokens, context window, prompt, and output schema?"
+                    "text": "Does it show tokenization before attention and decoding?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Does it distinguish context from durable memory?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: the prompt asks for structure but the relevant instruction is outside the model context?"
+                    "text": "Does it say temperature changes randomness, not truth?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug ability to predict failures from prompt and context limits?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Does any code actually compute a visible next-token decision?"
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
             "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies How Large Language Models Work to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and test the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "attention",
+            "temperature"
           ],
           "sources": [
             "kb1",
@@ -1613,315 +677,89 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies How Large Language Models Work to LLM mental model using tokens, context window, prompt, and output schema, with examples and checks tied to ability to predict failures from prompt and context limits.",
+      "title": "Why fluent answers can be wrong",
+      "sub": "Finally connect the mechanism to hallucination, truncation, and validation.",
+      "summary": "A next-token model can produce fluent unsupported text, especially when evidence is missing or decoding rewards plausible continuation.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the prompt asks for structure but the relevant instruction is outside the model context."
+        "Name topic-specific failure modes of LLM generation.",
+        "Choose the right fix for missing facts versus malformed output.",
+        "Reconstruct the full mechanism from memory."
       ],
       "termIds": [
         "llm",
-        "token",
         "context_window",
-        "prompt",
-        "schema"
+        "schema",
+        "tool_call"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_fail",
           "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
+          "title": "How the mechanism breaks in practice",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Fluency is a product of the next-token objective. It is not proof that the answer is grounded. A model can continue in a plausible style even when context is stale, missing, or ambiguous."
                 }
               ]
             },
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how LLM mental model using tokens, context window, prompt, and output schema improves ability to predict failures from prompt and context limits and catches the prompt asks for structure but the relevant instruction is outside the model context, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Unsupported claims: the model fills gaps with likely continuations."
+                  }
+                ],
+                [
+                  {
+                    "text": "Hidden truncation: the instruction or source was outside the packed context."
+                  }
+                ],
+                [
+                  {
+                    "text": "Schema drift: the response sounds right but violates required fields."
+                  }
+                ],
+                [
+                  {
+                    "text": "False confidence: low temperature makes wording steadier, not more factual."
+                  }
+                ]
               ]
             }
           ],
           "termIds": [
             "llm",
-            "token",
             "context_window",
-            "prompt",
             "schema"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
+          ],
+          "analogy": "A fluent LLM answer is like a well-spoken witness; you still need evidence."
         },
         {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product manager needs to debug why an LLM ignores a JSON schema on long user requests"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LLM mental model using tokens, context window, prompt, and output schema: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the prompt asks for structure but the relevant instruction is outside the model context. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of How Large Language Models Work on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on ability to predict failures from prompt and context limits.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves ability to predict failures from prompt and context limits and catches: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LLM mental model using tokens, context window, prompt, and output schema, log or test the fields needed to debug ability to predict failures from prompt and context limits. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct How Large Language Models Work: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "m5_completion",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Completion problem: choose the fix",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Now apply How Large Language Models Work without copying the worked example. Keep the same running case - A product manager needs to debug why an LLM ignores a JSON schema on long user requests - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
+                  "text": "A JSON extraction prompt fails on long support tickets. The output is prose, not JSON, and the answer includes a policy not present in the ticket."
                 }
               ]
             },
@@ -1930,100 +768,79 @@
               "items": [
                 [
                   {
-                    "text": "Write the problem statement in one sentence and name the success metric: ability to predict failures from prompt and context limits."
+                    "text": "If the schema is missing from context: repack the prompt and validate output."
                   }
                 ],
                 [
                   {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
+                    "text": "If the policy is missing: use retrieval or a tool, not fine-tuning."
                   }
                 ],
                 [
                   {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
+                    "text": "If JSON is malformed: use structured outputs plus a validator."
                   }
                 ],
                 [
                   {
-                    "text": "Add one test that reproduces this failure: the prompt asks for structure but the relevant instruction is outside the model context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
+                    "text": "If the answer is unsupported: require citations or claim-level checks."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "llm",
-            "token",
             "context_window",
-            "prompt",
-            "schema"
+            "schema",
+            "tool_call"
           ],
           "sources": [
             "kb1",
-            "kb2"
-          ]
+            "canon1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies How Large Language Models Work to the running case?",
+          "title": "Check the full mechanism",
+          "prompt": "Which statement best summarizes how an LLM works?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LLM mental model using tokens, context window, prompt, and output schema, measure the ability to predict failures from prompt and context limits, and test the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
+              "text": "It retrieves complete answers from a database inside the model.",
+              "correct": false
+            },
+            {
+              "text": "It predicts one token at a time from visible context, then repeats until stopping.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "It checks every claim against the internet before responding.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The core interface is next-token prediction conditioned on packed context; grounding and validation must be added around it.",
           "termIds": [
             "llm",
             "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "context_window"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for How Large Language Models Work: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
+      "laymanDefinition": "A model that predicts and generates token sequences from context.",
       "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2034,7 +851,7 @@
     "token": {
       "id": "token",
       "label": "Token",
-      "laymanDefinition": "Token is a core building block in this lesson.",
+      "laymanDefinition": "A chunk of text, code, or whitespace that the model reads and generates.",
       "technicalNote": "In this lesson, Token is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2044,7 +861,7 @@
     "context_window": {
       "id": "context_window",
       "label": "Context window",
-      "laymanDefinition": "Context window is a core building block in this lesson.",
+      "laymanDefinition": "The limited set of input and generated tokens the model can condition on.",
       "technicalNote": "In this lesson, Context window is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2064,7 +881,7 @@
     "schema": {
       "id": "schema",
       "label": "Schema",
-      "laymanDefinition": "Schema is a core building block in this lesson.",
+      "laymanDefinition": "A machine-readable contract describing fields, types, and required values.",
       "technicalNote": "In this lesson, Schema is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2080,23 +897,55 @@
       "sources": [
         "kb1"
       ]
+    },
+    "embedding": {
+      "id": "embedding",
+      "label": "Embedding",
+      "laymanDefinition": "A learned vector representation of a token or text item.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "attention": {
+      "id": "attention",
+      "label": "Attention",
+      "laymanDefinition": "The transformer operation that lets token positions weight information from other positions.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "logits": {
+      "id": "logits",
+      "label": "Logits",
+      "laymanDefinition": "Raw model scores over possible next tokens before decoding.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "temperature": {
+      "id": "temperature",
+      "label": "Temperature",
+      "laymanDefinition": "A generation setting that sharpens or flattens next-token probabilities.",
+      "sources": [
+        "kb1"
+      ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts for How Large Language Models Work",
+    "title": "Decision prompts",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Adoption check",
         "questions": [
           {
-            "q": "What decision does How Large Language Models Work change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships LLM mental model using tokens, context window, prompt, and output schema.",
+            "q": "What decision does How Large Language Models Work change in your build?",
+            "why": "A lesson is useful only when it changes what you do next.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Use now",
+              "Prototype first",
+              "Defer"
             ],
-            "rot": "Choose the smallest option that catches: the prompt asks for structure but the relevant instruction is outside the model context."
+            "rot": "Prefer the smallest testable version."
           }
         ]
       }
@@ -2108,155 +957,67 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct How Large Language Models Work using the running case: A product manager needs to debug why an LLM ignores a JSON schema on long user requests. Name the artifact (LLM mental model using tokens, context window, prompt, and output schema), explain the mechanism, choose a design level, write the check for the prompt asks for structure but the relevant instruction is outside the model context, and say how you would measure the ability to predict failures from prompt and context limits."
+            "text": "From memory, reconstruct the LLM loop: text becomes tokens, tokens become vectors, attention builds contextual states, logits score next tokens, and decoding repeats. Then name two reasons a fluent answer can still be wrong."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path through the lesson",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of How Large Language Models Work.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects How Large Language Models Work to the running artifact and failure test.",
-          "order": 1
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects How Large Language Models Work to the running artifact and failure test.",
-          "order": 2
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects How Large Language Models Work to the running artifact and failure test.",
-          "order": 3
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects How Large Language Models Work to the running artifact and failure test.",
-          "order": 4
-        },
-        {
-          "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve ability to predict failures from prompt and context limits while avoiding the failure: the prompt asks for structure but the relevant instruction is outside the model context.",
-          "moduleId": "m5",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects How Large Language Models Work to the running artifact and failure test.",
-          "order": 5
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        },
-        {
-          "from": "n_m4",
-          "to": "n_m5",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Text becomes tokens",
+        "detail": "Start with the boundary between human text and model input."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Embeddings and the context window",
+        "detail": "After text is tokenized, the model embeds only the visible tokens."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Attention builds contextual states",
+        "detail": "Visible token vectors then exchange information through attention layers."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Logits, sampling, and stopping",
+        "detail": "The contextual state becomes scores, and decoding chooses the next token."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Why fluent answers can be wrong",
+        "detail": "Finally connect the mechanism to hallucination, truncation, and validation."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_1",
+        "label": "Can I identify the tokenizer and approximate token budget?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_2",
+        "label": "Is the needed evidence inside the current context?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure the ability to predict failures from prompt and context limits on realistic cases?",
+        "id": "chk_3",
+        "label": "Do decoding settings match the task risk?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the prompt asks for structure but the relevant instruction is outside the model context?",
+        "id": "chk_4",
+        "label": "Can every factual claim be grounded outside model fluency?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_5",
+        "label": "What should I learn next: prompting, RAG, or tool use?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for LLM mental model using tokens, context window, prompt, and output schema. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (ability to predict failures from prompt and context limits), failure case (the prompt asks for structure but the relevant instruction is outside the model context), owner, and the next rung after this lesson.",
+      "prompt": "Take a long customer request that asks for JSON. Mark the likely token-heavy sections, move the schema near the final instruction, set a validation rule, and explain why the model might still produce prose instead of valid JSON. Next rung: learn structured outputs and RAG grounding.",
       "scopedTo": "How Large Language Models Work"
     }
   },
@@ -2264,30 +1025,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "How LLMs Work",
+      "url": "https://huggingface.co/docs/transformers/en/llm_tutorial",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Transformers, Attention, and KV Cache",
+      "url": "https://huggingface.co/docs/transformers/en/kv_cache",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face text generation docs",
+      "url": "https://huggingface.co/docs/transformers/en/main_classes/text_generation",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face tokenizers docs",
+      "url": "https://huggingface.co/docs/tokenizers/index",
+      "asOfDate": "2026-06-22"
     }
   }
 }

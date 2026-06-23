@@ -4,8 +4,8 @@
     "topic": "Quantization, Distillation, and Inference Optimization",
     "title": "Quantization, Distillation, and Inference Optimization",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 38,
-    "thesis": "Quantization, Distillation, and Inference Optimization is practical when learners can apply it to this concrete case: An app must reduce inference cost while preserving answer quality for support summaries. By the end, they should be able to build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and catch the failure where a smaller model passes generic tests but drops critical details in production cases."
+    "estTotalMinutes": 42,
+    "thesis": "Quantization, distillation, and inference optimization reduce cost or latency in different ways, so the right choice depends on whether the bottleneck is memory, model size, serving throughput, or quality retention."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -24,64 +24,64 @@
     ]
   },
   "mentalMap": {
-    "title": "Quantization, Distillation, and Inference Optimization: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Quantization, Distillation, and Inference Optimization is useful when you can apply it to an app must reduce inference cost while preserving answer quality for support summaries, choose a design, and verify quality retained per dollar saved.",
+    "title": "Inference optimization — memory, model, and serving levers",
+    "caption": "The map compares quantization, distillation, and runtime tactics by what bottleneck they solve.",
+    "oneLineThesis": "Optimize only after quality works: quantization reduces representation cost, distillation changes the model, and serving tactics improve throughput.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Measure first",
         "sub": "Build the simplest useful picture of Quantization, Distillation, and Inference Optimization.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
+        "what": "Measurement identifies whether memory, compute, or routing is the problem.",
+        "relevance": "It prevents making a cheaper system that silently gets worse.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
+        "orient": "Why optimization starts with a quality baseline and bottleneck diagnosis."
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "Quantization",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
+        "what": "Quantization stores model values with fewer bits.",
+        "relevance": "It is the first lever when the same model fits poorly or costs too much.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
+        "orient": "How lower-bit weights reduce memory while risking task quality."
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "Distillation",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
+        "what": "Distillation transfers behavior into a different model.",
+        "relevance": "It is useful when repeated internal tasks do not need the largest model.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "How a smaller student learns a teacher’s behavior on known workloads."
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "Serving tactics",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
+        "what": "Serving optimization changes how requests flow through the system.",
+        "relevance": "It can reduce latency without altering model weights.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
+        "orient": "How batching, cache, routing, and token limits change runtime behavior."
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Quality per dollar",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
+        "what": "The final metric combines quality, latency, and cost.",
+        "relevance": "Advanced systems need evidence that savings did not break the product.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
+        "orient": "How to decide ship/no-ship with held-out evals and cost targets."
       }
     ],
     "edges": [
@@ -106,40 +106,36 @@
         "label": "then"
       }
     ],
-    "structureType": "conceptual"
+    "structureType": "comparative"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Quantization, Distillation, and Inference Optimization to optimization experiment plan for quantization, distillation, and batching, with examples and checks tied to quality retained per dollar saved.",
+      "title": "Start with the bottleneck, not the trick",
+      "sub": "Before optimizing, establish quality and runtime baselines.",
+      "summary": "Optimization is only useful if you know what you are optimizing and what quality must be preserved.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a smaller model passes generic tests but drops critical details in production cases."
+        "Name baseline metrics for inference optimization.",
+        "Separate memory, latency, throughput, and quality issues.",
+        "Avoid optimizing before evals exist."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "qdi_m1",
           "kind": "conceptual",
-          "title": "Why Quantization, Distillation, and Inference Optimization matters here",
+          "title": "Optimization without evals is guesswork",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: An app must reduce inference cost while preserving answer quality for support summaries. The learner's job is not to memorize Quantization, Distillation, and Inference Optimization; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved quality retained per dollar saved."
+                  "text": "The first step is a baseline: task quality, p50/p95 latency, tokens per second, memory use, cost per request, and failure slices. Without that, a cheaper model can quietly damage the product."
                 }
               ]
             },
@@ -147,791 +143,245 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: optimization experiment plan for quantization, distillation, and batching. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Problem anchor: a support summarizer is accurate with a 13B model but too slow for live chat. The team must reduce latency without losing escalation details."
                 }
               ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if a smaller model passes generic tests but drops critical details in production cases, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson skips definition-drilling and spends its effort on edge cases: state boundaries, hidden coupling, observability gaps, and the evidence that would change a production decision."
-                }
-              ]
-            },
+            }
+          ],
+          "termIds": [
+            "llm"
+          ],
+          "sources": [
+            "kb1",
+            "kb2"
+          ],
+          "analogy": "Optimization is like tightening bolts on a machine; first find which part is actually rattling."
+        },
+        {
+          "id": "qdi_m1_case",
+          "kind": "functionalExample",
+          "title": "Baseline card for the support summarizer",
+          "body": [
             {
               "t": "ul",
               "items": [
                 [
                   {
-                    "text": "Product framing: Quantization, Distillation, and Inference Optimization matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Quality: 91% rubric pass on held-out chats."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Quantization, Distillation, and Inference Optimization matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Latency: p95 is 5.8 seconds; target is 2.5 seconds."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure quality retained per dollar saved on examples that resemble the real workload."
+                    "text": "Memory: full-precision model consumes too much VRAM for desired batch size."
+                  }
+                ],
+                [
+                  {
+                    "text": "Risk: summaries must preserve refund amounts and escalation reason."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "llm"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Quantization, Distillation, and Inference Optimization.",
-          "steps": [
+          "id": "qdi_m1_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check baseline",
+          "prompt": "What must exist before optimization?",
+          "format": "mcq",
+          "options": [
             {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
+              "text": "A 4-bit model download.",
+              "correct": false
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
+              "text": "A quality and runtime baseline on realistic examples.",
+              "correct": true
             },
             {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
+              "text": "A promise that smaller is always faster.",
+              "correct": false
             }
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
+          "explanation": "Optimization decisions need measured bottlenecks and quality tolerance.",
+          "termIds": [
+            "llm"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m2",
+      "order": 2,
+      "title": "Quantization: fewer bits for the same model",
+      "sub": "If memory or bandwidth is the bottleneck, reduce representation size.",
+      "summary": "Quantization can lower VRAM and bandwidth by representing weights or activations with fewer bits, but quality and speed depend on method and hardware.",
+      "objectives": [
+        "Define quantization.",
+        "Name common low-bit failure modes.",
+        "Evaluate quantized quality against full precision."
+      ],
+      "termIds": [
+        "quantization",
+        "llm"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "qdi_m2",
+          "kind": "conceptual",
+          "title": "Quantization compresses numeric representation",
+          "body": [
             {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Quantization maps high-precision values into lower-bit formats such as 8-bit or 4-bit representations. The common LLM goal is to fit a model into less memory or increase batch capacity while preserving enough quality."
+                }
+              ]
             },
             {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The KB verdict is practical: use quantization when a model already works but needs lower memory, lower bandwidth, or cheaper inference."
+                }
+              ]
             }
           ],
           "termIds": [
-            "llm",
-            "token"
+            "quantization",
+            "llm"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ],
+          "analogy": "Quantization is like using a smaller measuring cup; faster to store, but you may lose fine detail."
+        },
+        {
+          "id": "qdi_m2_code",
+          "kind": "codeExample",
+          "title": "Estimate weight memory from bit width",
+          "language": "python",
+          "code": "params_billions = 7\nfor bits in [16, 8, 4]:\n    gb = params_billions * 1_000_000_000 * bits / 8 / 1_000_000_000\n    print(bits, \"bit ->\", round(gb, 1), \"GB\")",
+          "explain": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
+                }
+              ]
+            }
+          ],
+          "predictThenReveal": {
+            "prompt": "Predict the three approximate memory numbers.",
+            "answer": "It prints about 14.0 GB, 7.0 GB, and 3.5 GB. Real systems add overhead, activations, and KV cache, but bit width directly changes weight storage."
+          },
+          "syntax": [
+            {
+              "part": "input data",
+              "explains": "The small concrete case the example operates on."
+            },
+            {
+              "part": "decision rule",
+              "explains": "The line or function that turns the inputs into behavior."
+            },
+            {
+              "part": "print(...)",
+              "explains": "A visible result so you can check your prediction."
+            }
+          ],
+          "termIds": [
+            "quantization"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An app must reduce inference cost while preserving answer quality for support summaries"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review optimization experiment plan for quantization, distillation, and batching: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a smaller model passes generic tests but drops critical details in production cases. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, An app must reduce inference cost while preserving answer quality for support summaries. This module asks what mental model changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve quality retained per dollar saved."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: a smaller model passes generic tests but drops critical details in production cases."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For optimization experiment plan for quantization, distillation, and batching, log or test the fields needed to debug quality retained per dollar saved. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: optimization experiment plan for quantization, distillation, and batching",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: An app must reduce inference cost while preserving answer quality for support summaries. The team wants to improve quality retained per dollar saved, but it has already seen this failure: a smaller model passes generic tests but drops critical details in production cases."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Debug case: a long customer request includes the JSON rules near the beginning, then thousands of tokens of detail. The model returns prose instead of valid JSON because the relevant instruction is weak, crowded, or outside useful context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: optimization experiment plan for quantization, distillation, and batching. It contains the prompt layout, important tokens, context-window risk, output schema, validator, and a repair or escalation rule for quality retained per dollar saved."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: put the schema next to the final instruction, keep examples short, validate the returned JSON, and fail closed when required fields are missing."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: LLM debugger. Context: An app must reduce inference cost while preserving answer quality for support summaries. Task: diagnose why the output violated the contract. Inspect prompt placement, context length, examples, schema, validator, and repair path. Output: {root_cause, prompt_change, validation_rule, test_cases, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Quantization, Distillation, and Inference Optimization to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_quiz",
+          "id": "qdi_m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Quantization, Distillation, and Inference Optimization to the running case?",
+          "title": "Check quantization",
+          "prompt": "When is quantization a good first lever?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and test the failure: a smaller model passes generic tests but drops critical details in production cases.",
+              "text": "When the model lacks current facts.",
+              "correct": false
+            },
+            {
+              "text": "When model behavior is acceptable but memory or bandwidth is the bottleneck.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "When no evaluation set exists.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Quantization optimizes deployment constraints, not missing knowledge.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "quantization"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m2",
-      "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Quantization, Distillation, and Inference Optimization to optimization experiment plan for quantization, distillation, and batching, with examples and checks tied to quality retained per dollar saved.",
-      "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a smaller model passes generic tests but drops critical details in production cases."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m2_concept",
-          "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Mechanism opens the machinery behind Quantization, Distillation, and Inference Optimization. In the running case, the important question is: what exactly changes between the user's request and the final output?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Mechanism means following tokens through the context window into next-token prediction, then checking whether the output contract survived."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is optimization experiment plan for quantization, distillation, and batching. Which single field, trace, or test would show whether quality retained per dollar saved improved?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An app must reduce inference cost while preserving answer quality for support summaries"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review optimization experiment plan for quantization, distillation, and batching: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a smaller model passes generic tests but drops critical details in production cases. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, An app must reduce inference cost while preserving answer quality for support summaries. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve quality retained per dollar saved."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: a smaller model passes generic tests but drops critical details in production cases."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For optimization experiment plan for quantization, distillation, and batching, log or test the fields needed to debug quality retained per dollar saved. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: a smaller model passes generic tests but drops critical details in production cases. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to optimization experiment plan for quantization, distillation, and batching: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: quality retained per dollar saved becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Quantization, Distillation, and Inference Optimization design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Quantization, Distillation, and Inference Optimization to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and test the failure: a smaller model passes generic tests but drops critical details in production cases.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Quantization, Distillation, and Inference Optimization to optimization experiment plan for quantization, distillation, and batching, with examples and checks tied to quality retained per dollar saved.",
+      "title": "Distillation: train a smaller student",
+      "sub": "If repeated workload is known, transfer behavior into a cheaper model.",
+      "summary": "Distillation uses a teacher model or workflow to train a smaller student for a known task distribution.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a smaller model passes generic tests but drops critical details in production cases."
+        "Define teacher and student.",
+        "Know when distillation beats quantization.",
+        "Identify student regression risks."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "distillation",
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m3_concept",
+          "id": "qdi_m3",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Distillation changes the model, not just its bits",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Quantization, Distillation, and Inference Optimization becomes a decision. The team must choose how much rigor optimization experiment plan for quantization, distillation, and batching needs before it can be trusted."
+                  "text": "Distillation trains a student model to imitate a stronger teacher on a known workload. The student may be smaller, faster, or easier to deploy, but it must be evaluated against both teacher and baseline."
                 }
               ]
             },
@@ -939,387 +389,104 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves quality retained per dollar saved while making this failure visible: a smaller model passes generic tests but drops critical details in production cases."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An app must reduce inference cost while preserving answer quality for support summaries"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review optimization experiment plan for quantization, distillation, and batching: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a smaller model passes generic tests but drops critical details in production cases. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Use distillation when you repeatedly run a capability such as routing, summarization, extraction, or grading and can collect realistic teacher outputs."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "distillation",
+            "llm"
           ],
           "sources": [
-            "kb1",
             "kb2"
-          ]
+          ],
+          "analogy": "Distillation is like training an apprentice on examples from an expert until the apprentice handles routine jobs."
         },
         {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Quantization, Distillation, and Inference Optimization on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: a smaller model passes generic tests but drops critical details in production cases.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on quality retained per dollar saved.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves quality retained per dollar saved and catches: a smaller model passes generic tests but drops critical details in production cases.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
+          "id": "qdi_m3_case",
+          "kind": "functionalExample",
+          "title": "Case study: summary student for support chats",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For optimization experiment plan for quantization, distillation, and batching, log or test the fields needed to debug quality retained per dollar saved. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "The teacher produces high-quality summaries but costs too much for every chat. The team samples real chats, filters sensitive data, generates teacher summaries, trains a smaller student, then compares escalation-detail recall on held-out chats."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "distillation",
+            "llm"
           ],
           "sources": [
-            "kb1",
             "kb2"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: a smaller model passes generic tests but drops critical details in production cases. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The prompt is correct in isolation but buried outside the useful context of a long request."
-                  }
-                ],
-                [
-                  {
-                    "text": "The model returns JSON-shaped text that violates required fields or allowed values."
-                  }
-                ],
-                [
-                  {
-                    "text": "A repair loop hides the underlying prompt/schema problem instead of surfacing it."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: quality retained per dollar saved gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when quality retained per dollar saved affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: a smaller model passes generic tests but drops critical details in production cases.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
+          "id": "qdi_m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Quantization, Distillation, and Inference Optimization to the running case?",
+          "title": "Check distillation",
+          "prompt": "What is a major distillation risk?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and test the failure: a smaller model passes generic tests but drops critical details in production cases.",
+              "text": "The original teacher disappears from memory.",
+              "correct": false
+            },
+            {
+              "text": "The student inherits teacher errors and may fail on production variation.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The tokenizer stops working.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Students must be tested on held-out edge cases, not only teacher-like demos.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "distillation"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Quantization, Distillation, and Inference Optimization: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Quantization, Distillation, and Inference Optimization to optimization experiment plan for quantization, distillation, and batching, with examples and checks tied to quality retained per dollar saved.",
+      "title": "Serving tactics: batch, cache, route, cap",
+      "sub": "Some bottlenecks live in runtime orchestration rather than model weights.",
+      "summary": "Batching, KV-cache management, request routing, token caps, and caching can improve cost/latency without retraining.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a smaller model passes generic tests but drops critical details in production cases."
+        "Name runtime optimization levers.",
+        "Connect KV cache to serving memory.",
+        "Choose routing before changing models when possible."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "kv_cache",
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
+          "id": "qdi_m4",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "Runtime can be the bottleneck",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Quantization, Distillation, and Inference Optimization should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "If quality is good and the model fits, serving tactics may be enough: continuous batching, prompt or semantic caching, shorter max output, routing simple requests to smaller models, or separating online and background work."
                 }
               ]
             },
@@ -1327,206 +494,72 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For optimization experiment plan for quantization, distillation, and batching, the sketch should prove one thing: the system can improve quality retained per dollar saved without hiding the failure where a smaller model passes generic tests but drops critical details in production cases."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "KV cache matters because decode stores keys and values for active sequences. Long contexts and many concurrent users can make memory scheduling the bottleneck."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "kv_cache",
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb1"
+          ],
+          "analogy": "Serving tactics are traffic engineering; sometimes you need better lanes, not a different car."
         },
         {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An app must reduce inference cost while preserving answer quality for support summaries"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review optimization experiment plan for quantization, distillation, and batching: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a smaller model passes generic tests but drops critical details in production cases. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
+          "id": "qdi_m4_example",
           "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
+          "title": "Routing policy for the summarizer",
           "body": [
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, An app must reduce inference cost while preserving answer quality for support summaries. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
+              "t": "ul",
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Short chat under 1,000 tokens: small distilled model."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Long chat with refund escalation: original model, lower concurrency."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve quality retained per dollar saved."
+                    "text": "Repeated internal test prompt: cached response."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: a smaller model passes generic tests but drops critical details in production cases."
+                    "text": "Background weekly digest: batch job, not live endpoint."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Runnable check: validate structured output",
-          "language": "python",
-          "code": "# Quantization Distillation and Inference Optimization: structured output validator.\nimport json\nraw = '{\"decision\": \"escalate\", \"confidence\": 0.82, \"reason\": \"missing invoice id\"}'\nrequired = {\"decision\", \"confidence\", \"reason\"}\nallowed = {\"answer\", \"escalate\", \"refuse\"}\nobj = json.loads(raw)\nvalid = required.issubset(obj) and obj[\"decision\"] in allowed and 0 <= obj[\"confidence\"] <= 1\nprint(obj[\"decision\"])\nprint(\"valid\" if valid else \"invalid\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to a smaller model passes generic tests but drops critical details in production cases."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the decision and validation result.",
-            "answer": "It prints:\nescalate\nvalid\n\nThe output is not trusted because it looks like JSON. The validator checks fields, allowed values, and ranges before downstream code uses it."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
             }
           ],
           "termIds": [
             "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "kv_cache"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "rich_m4_verify_ai_output",
+          "id": "qdi_m4_verify",
           "kind": "note",
+          "title": "Verify AI-generated optimization code",
           "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Quantization, Distillation, and Inference Optimization, review it against the running case before accepting it."
+                  "text": "When an AI proposes inference optimization, inspect the bottleneck and the guardrails."
                 }
               ]
             },
@@ -1535,335 +568,160 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: optimization experiment plan for quantization, distillation, and batching?"
+                    "text": "Does it measure p95 latency and quality before/after?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Does it include KV-cache or context-length memory in estimates?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: a smaller model passes generic tests but drops critical details in production cases?"
+                    "text": "Does routing preserve high-risk cases for the stronger path?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug quality retained per dollar saved?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Does it define rollback when quality drops?"
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "kv_cache",
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Quantization, Distillation, and Inference Optimization to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and test the failure: a smaller model passes generic tests but drops critical details in production cases.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Quantization, Distillation, and Inference Optimization to optimization experiment plan for quantization, distillation, and batching, with examples and checks tied to quality retained per dollar saved.",
+      "title": "Ship by quality per dollar",
+      "sub": "End by comparing options on the same release metric.",
+      "summary": "The winning optimization is the one that meets quality tolerance at lower cost or latency, with provenance and rollback.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a smaller model passes generic tests but drops critical details in production cases."
+        "Compare quantization, distillation, and serving tactics.",
+        "Define quality tolerance.",
+        "Make a ship/no-ship decision."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "quantization",
+        "distillation",
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how optimization experiment plan for quantization, distillation, and batching improves quality retained per dollar saved and catches a smaller model passes generic tests but drops critical details in production cases, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An app must reduce inference cost while preserving answer quality for support summaries"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review optimization experiment plan for quantization, distillation, and batching: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a smaller model passes generic tests but drops critical details in production cases. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
+          "id": "qdi_m5_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "Optimization options head-to-head",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Best when",
+            "Quality risk",
+            "Cost/complexity",
+            "When to choose"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Quantization",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Quantization, Distillation, and Inference Optimization on one realistic case.",
+                  "criterion": "Best when",
+                  "text": "Same model works but memory or bandwidth is too high.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: a smaller model passes generic tests but drops critical details in production cases.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on quality retained per dollar saved.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Quality risk",
+                  "text": "Math, code, rare tokens, or long context may regress.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
+                  "criterion": "Cost/complexity",
+                  "text": "Medium; method and kernels matter.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "When to choose",
+                  "text": "Use after full-precision quality is acceptable.",
                   "rating": "good"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Choose for VRAM or bandwidth pressure with acceptable quality loss.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Distillation",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
+                  "criterion": "Best when",
+                  "text": "Known repeated workload can be imitated by a smaller model.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Quality risk",
+                  "text": "Student misses rare cases or inherits teacher errors.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Cost/complexity",
+                  "text": "High; needs data generation, training, evals.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
+                  "criterion": "When to choose",
+                  "text": "Use for high-volume narrow tasks with teacher labels.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
+              "whenToUse": "Choose when a smaller specialized model can preserve needed behavior.",
               "cost": "High",
               "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves quality retained per dollar saved and catches: a smaller model passes generic tests but drops critical details in production cases.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
             },
             {
-              "t": "p",
-              "spans": [
+              "name": "Serving tactics",
+              "cells": [
                 {
-                  "text": "For optimization experiment plan for quantization, distillation, and batching, log or test the fields needed to debug quality retained per dollar saved. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
+                  "criterion": "Best when",
+                  "text": "Runtime scheduling, caching, or routing is the bottleneck.",
+                  "rating": "good"
+                },
                 {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "criterion": "Quality risk",
+                  "text": "Routing can send hard cases to weak paths.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Cost/complexity",
+                  "text": "Medium; infra complexity rises.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "When to choose",
+                  "text": "Use before changing weights if orchestration can solve it.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Choose when better request handling meets the target.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
+          "howToRead": "Pick the lever that solves the measured bottleneck while staying inside quality tolerance.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "quantization",
+            "distillation",
+            "llm"
           ],
           "sources": [
             "kb1",
@@ -1871,153 +729,69 @@
           ]
         },
         {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Quantization, Distillation, and Inference Optimization: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "qdi_m5_completion",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Completion problem: choose the experiment order",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Now apply Quantization, Distillation, and Inference Optimization without copying the worked example. Keep the same running case - An app must reduce inference cost while preserving answer quality for support summaries - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: quality retained per dollar saved."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: a smaller model passes generic tests but drops critical details in production cases."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
+                  "text": "The 13B summarizer is accurate but p95 latency is too high and memory limits batch size. Start with quantized loading and serving changes. Try distillation only if the workload is stable and repeated enough to justify training."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "quantization",
+            "distillation"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m5_quiz",
+          "id": "qdi_m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Quantization, Distillation, and Inference Optimization to the running case?",
+          "title": "Check optimization",
+          "prompt": "What makes an optimization ship-ready?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review optimization experiment plan for quantization, distillation, and batching, measure quality retained per dollar saved, and test the failure: a smaller model passes generic tests but drops critical details in production cases.",
+              "text": "It uses the lowest bit width possible.",
+              "correct": false
+            },
+            {
+              "text": "It meets latency or cost goals while held-out quality stays within tolerance.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "It removes all expensive model calls regardless of quality.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Optimization is a product tradeoff, not a compression contest.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window",
-            "prompt",
-            "schema"
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ],
-      "decisionItForces": "Choose the right level of rigor for Quantization, Distillation, and Inference Optimization: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose quantization, distillation, serving optimization, or no ship."
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
+      "laymanDefinition": "A model that predicts and generates token sequences from context.",
       "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
@@ -2074,23 +848,47 @@
       "sources": [
         "kb1"
       ]
+    },
+    "quantization": {
+      "id": "quantization",
+      "label": "Quantization",
+      "laymanDefinition": "Representing model values with fewer bits to reduce memory or bandwidth.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "distillation": {
+      "id": "distillation",
+      "label": "Distillation",
+      "laymanDefinition": "Training a smaller student model to imitate a stronger teacher.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "kv_cache": {
+      "id": "kv_cache",
+      "label": "KV cache",
+      "laymanDefinition": "Stored keys and values reused during autoregressive decoding.",
+      "sources": [
+        "kb1"
+      ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts for Quantization, Distillation, and Inference Optimization",
+    "title": "Decision prompts",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Adoption check",
         "questions": [
           {
-            "q": "What decision does Quantization, Distillation, and Inference Optimization change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships optimization experiment plan for quantization, distillation, and batching.",
+            "q": "What decision does Quantization, Distillation, and Inference Optimization change in your build?",
+            "why": "A lesson is useful only when it changes what you do next.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Use now",
+              "Prototype first",
+              "Defer"
             ],
-            "rot": "Choose the smallest option that catches: a smaller model passes generic tests but drops critical details in production cases."
+            "rot": "Prefer the smallest testable version."
           }
         ]
       }
@@ -2102,150 +900,67 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Quantization, Distillation, and Inference Optimization using the running case: An app must reduce inference cost while preserving answer quality for support summaries. Name the artifact (optimization experiment plan for quantization, distillation, and batching), explain the mechanism, choose a design level, write the check for a smaller model passes generic tests but drops critical details in production cases, and say how you would measure quality retained per dollar saved."
+            "text": "From memory, classify each optimization: quantization changes numeric representation, distillation changes the model, serving tactics change request execution. Then name the eval that prevents a cheaper-but-worse launch."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path through the lesson",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Quantization, Distillation, and Inference Optimization.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
-        },
-        {
-          "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve quality retained per dollar saved while avoiding the failure: a smaller model passes generic tests but drops critical details in production cases.",
-          "moduleId": "m5",
-          "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Quantization, Distillation, and Inference Optimization to the running artifact and failure test."
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        },
-        {
-          "from": "n_m4",
-          "to": "n_m5",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Start with the bottleneck, not the trick",
+        "detail": "Before optimizing, establish quality and runtime baselines."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Quantization: fewer bits for the same model",
+        "detail": "If memory or bandwidth is the bottleneck, reduce representation size."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Distillation: train a smaller student",
+        "detail": "If repeated workload is known, transfer behavior into a cheaper model."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Serving tactics: batch, cache, route, cap",
+        "detail": "Some bottlenecks live in runtime orchestration rather than model weights."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Ship by quality per dollar",
+        "detail": "End by comparing options on the same release metric."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_1",
+        "label": "Do I know the current quality, latency, memory, and cost baseline?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_2",
+        "label": "Is quantization being evaluated on the real workload?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure quality retained per dollar saved on realistic cases?",
+        "id": "chk_3",
+        "label": "Would a distilled student preserve the needed behavior?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: a smaller model passes generic tests but drops critical details in production cases?",
+        "id": "chk_4",
+        "label": "Can serving tactics solve the bottleneck without model changes?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_5",
+        "label": "What should I learn next: vLLM, model routing, or eval harnesses?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for optimization experiment plan for quantization, distillation, and batching. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (quality retained per dollar saved), failure case (a smaller model passes generic tests but drops critical details in production cases), owner, and the next rung after this lesson.",
+      "prompt": "Given a support summarizer that is accurate but too expensive, design a three-stage optimization experiment: quantized load, distilled student, and serving/router changes. Define the quality tolerance and rollback trigger. Next rung: serving LLMs with vLLM.",
       "scopedTo": "Quantization, Distillation, and Inference Optimization"
     }
   },
@@ -2253,30 +968,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Quantization",
+      "url": "https://huggingface.co/docs/transformers/quantization",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Distillation",
+      "url": "https://huggingface.co/docs/trl/gkd_trainer",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "bitsandbytes quantization docs",
+      "url": "https://huggingface.co/docs/transformers/quantization/bitsandbytes",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "QLoRA paper",
+      "url": "https://arxiv.org/abs/2305.14314",
+      "asOfDate": "2026-06-22"
     }
   }
 }
