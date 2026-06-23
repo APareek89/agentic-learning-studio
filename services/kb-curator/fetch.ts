@@ -143,7 +143,7 @@ async function fetchPlain(url: string): Promise<string> {
     const u = new URL(url);
     await throttle(u.host);
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 25_000);
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
       if (!res.ok) return "";
@@ -168,7 +168,9 @@ async function fetchPlaywright(url: string): Promise<string> {
     const browser = await chromium.launch({ headless: true });
     try {
       const page = await (await browser.newContext({ userAgent: UA })).newPage();
-      await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
+      // "domcontentloaded" (not "networkidle") — many doc sites never reach network-idle,
+      // so networkidle would burn the full timeout on every page. 12s hard cap.
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 12_000 });
       const text = await page.evaluate(() => document.body?.innerText ?? "");
       return text.replace(/\s+/g, " ").trim();
     } finally {
