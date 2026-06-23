@@ -15,17 +15,21 @@ on `staging` and **NOT yet on `main`** — promote (cherry-pick, in order) when 
 2. `56d5a27` — **parallel module build (A1/A4/A2)** (`src/agent/orchestrator.ts` + `nodes.ts`): cap-3 parallel
    module bodies (`MAX_MODULE_CONCURRENCY`, default 3), spine-order incremental render (Module 1 in first wave),
    relaxed density-repair trigger. ~13.5 min → ~5-6 min.
-3. **deterministic overview repair (A5)** (`src/agent/orchestrator.ts`, this commit): `runOverviewJob` skips the
+3. `9bd0f51` — **deterministic overview repair (A5)** (`src/agent/orchestrator.ts`): `runOverviewJob` skips the
    2nd ~56s Opus call on gate-only validation misses (ships the `repairBlueprint`-fixed skeleton); re-gens only on a
    true parse/shape failure. Saves ~56s on gate-failing overviews.
-Already on prod: `58fabd3` (R0 529 resilience). Promote with a clean worktree off `origin/main` + `git cherry-pick`
-(the touched files are identical on both branches, so picks apply cleanly). `tsc` must stay clean.
+4. **overview 529 resilience** (`src/agent/llm.ts` + `nodes.ts`, this commit): the profiler + Opus skeleton now ride out
+   a 529/overload too (shared `withOverloadRetry` helper), so an overload DURING the overview doesn't fail it.
+Already on prod: `58fabd3` (R0 529 resilience — the module build only). Promote with a clean worktree off `origin/main`
++ `git cherry-pick` (the touched files are identical on both branches, so picks apply cleanly). `tsc` must stay clean.
 
 ## Generation latency (2026-06-23)
-- **529/overload resilience (`runDeepDive`, on staging + prod):** Anthropic `overloaded_error` (529) was failing whole
-  builds — the old 3-attempt/~3s retry burned out during a transient overload (clears in 30-90s) → 0 modules, empty lesson.
-  Now: detect overload/rate (529/429/overloaded/rate-limit) and ride it out with long JITTERED backoff
-  (2/5/12/25/40s, +0-30%), 6 attempts (~84s). Jitter also de-syncs the parallel builds below.
+- **529/overload resilience (shared `withOverloadRetry` in `src/agent/llm.ts`):** Anthropic `overloaded_error` (529) was
+  failing whole builds — the old 3-attempt/~3s retry burned out during a transient overload (clears in 30-90s) → 0 modules,
+  empty lesson. Now: detect overload/rate (529/429/overloaded/rate-limit) and ride it out with long JITTERED backoff
+  (2/5/12/25/40s, +0-30%), 6 attempts (~84s). Jitter also de-syncs the parallel builds below. Applied to the **module build**
+  (`runDeepDive`, on staging + prod) AND the **overview** profiler + Opus skeleton (`profiler`/`architect`, staging only so far).
+  (`runDeepDive` still has its own inline copy of the same loop — could adopt the helper later; constants match, no drift.)
 - **Parallel module build (`runBuildJob`, A1+A4):** module bodies build in PARALLEL (cap `MAX_MODULE_CONCURRENCY`, default
   **3**) instead of one-at-a-time, in spine order so Module 1 lands in the first wave; persists serially per-completion so the
   lesson grows monotonically as modules finish. ~13.5 min → ~5-6 min. Safe to share `bp`: each module writes only its own
