@@ -6,6 +6,18 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
+## Repo cleanup (2026-06-23)
+- **Module-cache correctness fix:** `moduleCacheKey` (`src/lib/hash.ts`) + its call site (`src/server.ts`) now include
+  `objective`/`buildGoal`/`framework`/`lessonTypes`. Before, two lessons differing only in those inputs collided on the
+  module cache and a cache hit served the wrong fragment (silently dropping those inputs). Side effect: existing
+  `module_cache` rows get new keys and regenerate once.
+- **`Stale/` quarantine (gitignored, local-only):** throwaway/leftover files from past sessions were moved into a top-level
+  `Stale/` folder (added to `.gitignore`) instead of being deleted — nothing lost, repo root tidy. Contents: throwaway
+  helper scripts (`scripts/_*.ts`), mockup HTML (`public/_*-mockup.html`, `public/_enhanced-sample.html`,
+  `public/_lesson.html`), design exploration mockups (`public/design/`), `prebuilt/REENRICH_SPEC.md`, `skipped.log`.
+  NOT moved: `kb-build/backups/` (live prod/staging DB backups), `services/project-builder/` (Codex-owned),
+  `services/kb-curator/` (curator session). Safe to delete `Stale/` once confirmed unneeded.
+
 ---
 
 ## 1. What it is
