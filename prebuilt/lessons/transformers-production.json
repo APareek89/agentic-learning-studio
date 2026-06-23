@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Hugging Face Transformers in Production: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Hugging Face Transformers in Production is useful when you can apply it to a transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back, choose a design, and verify stable extraction quality across document batches.",
+    "caption": "Package tokenizer, weights, config, preprocessing, runtime limits, and serving choice as one production contract.",
+    "oneLineThesis": "Transformers is a model library; production readiness comes from pinning the full inference contract and knowing when to hand serving to TGI, vLLM, BentoML, or another runtime.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Hugging Face Transformers in Production in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+        "label": "Know what Transformers owns",
+        "sub": "Separate model loading and inference APIs from production serving responsibilities.",
+        "what": "Transformers gives access to models, tokenizers, configs, and generation utilities; production still needs packaging, contracts, limits, and observability.",
+        "relevance": "Identify what belongs in a Transformer inference contract.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects Hugging Face Transformers in Production to the running artifact and failure test.",
+        "orient": "Separate library capabilities from production endpoint responsibilities.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+        "label": "Package the inference path, not only weights",
+        "sub": "Freeze model files, tokenizer, schema, environment, and tests into a deployable artifact.",
+        "what": "A production package makes the notebook behavior reproducible across staging, batch jobs, and services.",
+        "relevance": "List package contents for a Transformer model.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects Hugging Face Transformers in Production to the running artifact and failure test.",
+        "orient": "Freeze model, tokenizer, schema, dependencies, and tests together.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+        "label": "Choose embedded library or serving runtime",
+        "sub": "Decide when plain Transformers is enough and when TGI, vLLM, or packaging frameworks should take over.",
+        "what": "Transformers can serve low-risk workloads directly, but high-throughput or multi-tenant systems need runtime features beyond a library call.",
+        "relevance": "Compare embedded Transformers, TGI, vLLM, and BentoML-style packaging.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects Hugging Face Transformers in Production to the running artifact and failure test.",
+        "orient": "Select the serving runtime that matches traffic and operational needs.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+        "label": "Smoke test tokenizer, cache, and limits",
+        "sub": "Make the production contract executable before load testing.",
+        "what": "A small smoke test can catch tokenizer mismatch, truncation surprises, output schema drift, and missing version identity.",
+        "relevance": "Write a minimal Transformer contract test.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects Hugging Face Transformers in Production to the running artifact and failure test.",
+        "orient": "Turn tokenizer and runtime assumptions into executable contract checks.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+        "label": "Release Transformers with rollback evidence",
+        "sub": "Synthesize the contract and build a solo production readiness card.",
+        "what": "The final artifact is a release card that names the full inference contract and the serving path.",
+        "relevance": "Recall the dependency chain from memory.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects Hugging Face Transformers in Production to the running artifact and failure test.",
+        "orient": "Reconstruct the inference contract and choose the next runtime step.",
         "order": 5
       }
     ],
@@ -118,34 +118,35 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies Hugging Face Transformers in Production to production transformer deployment card with inputs, outputs, and guardrails, with examples and checks tied to stable extraction quality across document batches.",
+      "title": "Know what Transformers owns",
+      "sub": "Separate model loading and inference APIs from production serving responsibilities.",
+      "summary": "Transformers gives access to models, tokenizers, configs, and generation utilities; production still needs packaging, contracts, limits, and observability.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: tokenization changes between training and serving shift predictions."
+        "Identify what belongs in a Transformer inference contract.",
+        "Explain why tokenizer and chat template are release artifacts.",
+        "Name the responsibilities outside the library."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Hugging Face Transformers in Production matters here",
+          "title": "The library is not the whole service",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. The learner's job is not to memorize Hugging Face Transformers in Production; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved stable extraction quality across document batches."
+                  "text": "Problem anchor: a team prototypes a sentiment classifier with `pipeline()` and then exposes it directly behind an API. It works for demos, but production requests fail when a dependency floats, a label map changes, long inputs truncate silently, and one replica loads a different tokenizer revision."
                 }
               ]
             },
@@ -153,24 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: production transformer deployment card with inputs, outputs, and guardrails. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if tokenization changes between training and serving shift predictions, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
+                  "text": "Hugging Face Transformers owns model classes, tokenizers, configs, generation utilities, pipelines, and integration with model artifacts. Production owns the contract around those pieces: input schema, truncation policy, tokenizer revision, label map, device placement, batching, errors, observability, packaging, rollout, and rollback."
                 }
               ]
             },
@@ -179,17 +163,17 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Hugging Face Transformers in Production matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Product framing: users need stable behavior, not just access to a model."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Hugging Face Transformers in Production matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Engineering framing: weights, tokenizer, config, preprocessing, postprocessing, and dependency lockfile move together."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure stable extraction quality across document batches on examples that resemble the real workload."
+                    "text": "Operations framing: choose embedded library serving only when traffic and risk fit that simplicity."
                   }
                 ]
               ]
@@ -200,191 +184,24 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Hugging Face Transformers in Production.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review production transformer deployment card with inputs, outputs, and guardrails: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where tokenization changes between training and serving shift predictions. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_artifact",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Worked inference contract for a classifier",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. This module asks what what the tool owns changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve stable extraction quality across document batches."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: tokenization changes between training and serving shift predictions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
+                  "text": "Contract: `model_id=distilbert-base-uncased-finetuned-sst-2-english`, `revision=<pinned>`, `tokenizer_revision=<same>`, `max_length=256`, `truncation=true`, `labels={0:NEGATIVE,1:POSITIVE}`, `batch_max=32`, `p95_latency_target=150ms`, `error_on_empty_text=true`, `output_schema={label,score,model_version}`."
                 }
               ]
             },
@@ -392,16 +209,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For production transformer deployment card with inputs, outputs, and guardrails, log or test the fields needed to debug stable extraction quality across document batches. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "That contract is more valuable than the code snippet because it tells clients what is stable, tells reviewers what can change, and tells operators what to log."
                 }
               ]
             }
@@ -411,182 +219,87 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
+            "canon1",
             "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: production transformer deployment card with inputs, outputs, and guardrails",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. The team wants to improve stable extraction quality across document batches, but it has already seen this failure: tokenization changes between training and serving shift predictions."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Traffic plan: 1,200 requests per hour, p95 latency target under two seconds, predictable cost, and a rollback path if quality drops. A demo benchmark is not enough."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: production transformer deployment card with inputs, outputs, and guardrails. It includes workload shape, token or batch budget, model or hardware choice, fallbacks, observability, rollout plan, and the metric stable extraction quality across document batches."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: route short requests to the fast path, batch background jobs, cap output tokens, log model version and latency, and roll back if quality or cost crosses the release threshold."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: production AI engineer. Context: A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. Task: design the release runbook for production transformer deployment card with inputs, outputs, and guardrails. Include workload, latency and cost budgets, fallback, observability, rollout, and rollback trigger. Output: {slo, capacity_plan, monitoring, fallback, rollout_gate}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Hugging Face Transformers in Production to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Transformer endpoint contract"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Hugging Face Transformers in Production to the running case?",
+          "title": "What to pin",
+          "prompt": "Which artifact must be versioned with Transformer weights?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review production transformer deployment card with inputs, outputs, and guardrails, measure stable extraction quality across document batches, and test the failure: tokenization changes between training and serving shift predictions.",
+              "text": "Only the README file.",
+              "correct": false
+            },
+            {
+              "text": "Tokenizer, config, preprocessing/postprocessing, label map, and dependency/runtime assumptions.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only the GPU type.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The same weights can behave differently when tokenization, templates, labels, or dependencies change.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
+            "canon1",
             "kb2"
           ]
         }
       ],
       "citations": [
-        "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies Hugging Face Transformers in Production to production transformer deployment card with inputs, outputs, and guardrails, with examples and checks tied to stable extraction quality across document batches.",
+      "title": "Package the inference path, not only weights",
+      "sub": "Freeze model files, tokenizer, schema, environment, and tests into a deployable artifact.",
+      "summary": "A production package makes the notebook behavior reproducible across staging, batch jobs, and services.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: tokenization changes between training and serving shift predictions."
+        "List package contents for a Transformer model.",
+        "Explain schema and golden-input tests.",
+        "Describe why floating dependencies break reproducibility."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "Most production bugs are around the model",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind Hugging Face Transformers in Production. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "The production failure is often not matrix multiplication. It is a missing tokenizer file, a different `transformers` version, a CUDA mismatch, a changed chat template, a label map omitted from the image, or a caller sending inputs the notebook never saw."
                 }
               ]
             },
@@ -594,40 +307,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means connecting workload shape, model choice, serving constraints, observability, and rollback behavior."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is production transformer deployment card with inputs, outputs, and guardrails. Which single field, trace, or test would show whether stable extraction quality across document batches improved?"
+                  "text": "Package the whole inference path. Include weights or model reference, tokenizer, config, generation settings, preprocessing, postprocessing, schema, dependency lockfile, hardware assumptions, and golden examples. Then test the package before deployment by immutable tag."
                 }
               ]
             }
@@ -637,310 +317,179 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review production transformer deployment card with inputs, outputs, and guardrails: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where tokenization changes between training and serving shift predictions. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Package pieces and production checks",
+          "criteria": [
+            "Piece",
+            "Why it matters",
+            "Check"
           ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. This module asks what core workflow changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve stable extraction quality across document batches."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: tokenization changes between training and serving shift predictions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
-          "language": "python",
-          "code": "# Hugging Face Transformers in Production: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to tokenization changes between training and serving shift predictions."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: tokenization changes between training and serving shift predictions. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to production transformer deployment card with inputs, outputs, and guardrails: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: stable extraction quality across document batches becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Hugging Face Transformers in Production design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Hugging Face Transformers in Production to the running case?",
-          "format": "mcq",
           "options": [
             {
-              "text": "Build or review production transformer deployment card with inputs, outputs, and guardrails, measure stable extraction quality across document batches, and test the failure: tokenization changes between training and serving shift predictions.",
-              "correct": true
+              "name": "Tokenizer and template",
+              "cells": [
+                {
+                  "criterion": "Piece",
+                  "text": "Tokenizer files and chat template",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Why it matters",
+                  "text": "They decide token boundaries and prompt formatting",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Check",
+                  "text": "golden prompts produce expected token counts and roles",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Always package with weights.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "Schema and labels",
+              "cells": [
+                {
+                  "criterion": "Piece",
+                  "text": "Input/output schema, label map, truncation",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Why it matters",
+                  "text": "Clients rely on stable meanings",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Check",
+                  "text": "contract tests for empty, long, batch, and malformed inputs",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Before exposing an endpoint.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "Runtime image",
+              "cells": [
+                {
+                  "criterion": "Piece",
+                  "text": "Dependencies, CUDA, dtype, device map",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Why it matters",
+                  "text": "A different environment can change support or performance",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Check",
+                  "text": "image tag, smoke test, latency sample, rollback tag",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Before staging rollout.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
+          ]
+        },
+        {
+          "id": "m2_failure",
+          "kind": "functionalExample",
+          "title": "Case study: label map drift",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A model package omits `id2label`. One service maps class 1 to \"refund risk\" while another maps it to \"safe.\" Both load the same weights and pass shape checks. The production bug is semantic, not numerical. Contract tests with golden inputs catch the mismatch before rollout."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This echoes module 1: model behavior includes postprocessing. If it affects the output meaning, it belongs in the release artifact."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb2",
+            "canon1"
           ]
         }
       ],
       "citations": [
-        "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies Hugging Face Transformers in Production to production transformer deployment card with inputs, outputs, and guardrails, with examples and checks tied to stable extraction quality across document batches.",
+      "title": "Choose embedded library or serving runtime",
+      "sub": "Decide when plain Transformers is enough and when TGI, vLLM, or packaging frameworks should take over.",
+      "summary": "Transformers can serve low-risk workloads directly, but high-throughput or multi-tenant systems need runtime features beyond a library call.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: tokenization changes between training and serving shift predictions."
+        "Compare embedded Transformers, TGI, vLLM, and BentoML-style packaging.",
+        "Explain batching, streaming, metrics, and memory as runtime concerns.",
+        "Choose an endpoint shape based on traffic and operational requirements."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "Runtime choice is an operations choice",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Hugging Face Transformers in Production becomes a decision. The team must choose how much rigor production transformer deployment card with inputs, outputs, and guardrails needs before it can be trusted."
+                  "text": "For a small batch classifier, a Python service that imports Transformers may be perfect. For high-volume text generation, the endpoint needs streaming, batching, token limits, metrics, health checks, and memory management. At that point a serving runtime such as TGI, vLLM, SGLang, or a BentoML-packaged service may own the hot path better than custom glue."
                 }
               ]
             },
@@ -948,28 +497,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves stable extraction quality across document batches while making this failure visible: tokenization changes between training and serving shift predictions."
+                  "text": "The 2026 KB verdict treats TGI as important for existing Hugging Face serving flows while recommending comparison with vLLM or SGLang for new high-throughput generation. The broader lesson is stable: choose the runtime for the workload, not for brand familiarity."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
               ]
             }
           ],
@@ -978,7 +507,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -986,48 +516,83 @@
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "Serving options for Transformer models",
+          "criteria": [
+            "Option",
+            "Good fit",
+            "Watch out"
+          ],
+          "options": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "name": "Embedded Transformers service",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back"
-                    }
-                  ]
+                  "criterion": "Option",
+                  "text": "Custom API imports the library",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Good fit",
+                  "text": "Low volume, simple classifiers, controlled clients",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Watch out",
+                  "text": "You own batching, metrics, limits, and memory behavior",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use for simple, low-risk services.",
+              "cost": "Low",
+              "complexity": "Low"
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "name": "TGI or vLLM endpoint",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review production transformer deployment card with inputs, outputs, and guardrails: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
+                  "criterion": "Option",
+                  "text": "Dedicated generation server",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Good fit",
+                  "text": "Streaming, batching, token limits, GPU serving, OpenAI-compatible clients",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Watch out",
+                  "text": "Runtime flags and templates become release artifacts",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use for serious text generation traffic.",
+              "cost": "High",
+              "complexity": "Medium"
             },
             {
-              "label": "Run the failure",
-              "detail": [
+              "name": "BentoML or package framework",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where tokenization changes between training and serving shift predictions. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "criterion": "Option",
+                  "text": "Packaged service abstraction",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Good fit",
+                  "text": "Consistent APIs, images, runners, and deployment workflow",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Watch out",
+                  "text": "Framework conventions can be overkill for one tiny model",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when many models need repeatable serving.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -1035,7 +600,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1044,245 +610,17 @@
         },
         {
           "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Hugging Face Transformers in Production on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: tokenization changes between training and serving shift predictions.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on stable extraction quality across document batches.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves stable extraction quality across document batches and catches: tokenization changes between training and serving shift predictions.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For production transformer deployment card with inputs, outputs, and guardrails, log or test the fields needed to debug stable extraction quality across document batches. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: tokenization changes between training and serving shift predictions. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "A benchmark passes at low concurrency but fails at realistic traffic."
-                  }
-                ],
-                [
-                  {
-                    "text": "Cost falls per request but retries increase total spend."
-                  }
-                ],
-                [
-                  {
-                    "text": "Monitoring tracks latency but not quality, version, or fallback behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: stable extraction quality across document batches gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
           "kind": "decisionCallout",
-          "useWhen": "Use the production path when stable extraction quality across document batches affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: tokenization changes between training and serving shift predictions.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
+          "ruleOfThumb": "Keep plain Transformers when operational needs are plain.",
+          "useWhen": "Use embedded Transformers for small, predictable workloads with clear contracts and low concurrency.",
+          "avoidWhen": "Avoid hand-rolling a generation server when streaming, batching, multi-tenant quotas, GPU memory, or metrics are product requirements.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Hugging Face Transformers in Production to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review production transformer deployment card with inputs, outputs, and guardrails, measure stable extraction quality across document batches, and test the failure: tokenization changes between training and serving shift predictions.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1292,250 +630,75 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Hugging Face Transformers in Production: baseline, production design, or advanced optimization."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies Hugging Face Transformers in Production to production transformer deployment card with inputs, outputs, and guardrails, with examples and checks tied to stable extraction quality across document batches.",
+      "title": "Smoke test tokenizer, cache, and limits",
+      "sub": "Make the production contract executable before load testing.",
+      "summary": "A small smoke test can catch tokenizer mismatch, truncation surprises, output schema drift, and missing version identity.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: tokenization changes between training and serving shift predictions."
+        "Write a minimal Transformer contract test.",
+        "Predict how tokenizer drift changes behavior.",
+        "Verify AI-generated production code for omitted runtime limits."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Hugging Face Transformers in Production should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For production transformer deployment card with inputs, outputs, and guardrails, the sketch should prove one thing: the system can improve stable extraction quality across document batches without hiding the failure where tokenization changes between training and serving shift predictions."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review production transformer deployment card with inputs, outputs, and guardrails: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where tokenization changes between training and serving shift predictions. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve stable extraction quality across document batches."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: tokenization changes between training and serving shift predictions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
+          "title": "Tokenizer and output contract test",
           "language": "python",
-          "code": "# Hugging Face Transformers in Production: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
+          "code": "from transformers import AutoTokenizer, pipeline\n\nMODEL = \"distilbert-base-uncased-finetuned-sst-2-english\"\nREVISION = \"main\"  # production should pin a commit hash or approved revision\n\ntokenizer = AutoTokenizer.from_pretrained(MODEL, revision=REVISION)\nclf = pipeline(\"sentiment-analysis\", model=MODEL, tokenizer=tokenizer, truncation=True)\n\ntext = \"The refund was handled quickly and clearly.\"\ntokens = tokenizer(text, max_length=256, truncation=True)\nresult = clf(text)[0]\n\nassert len(tokens[\"input_ids\"]) <= 256\nassert set(result) >= {\"label\", \"score\"}\nprint({\"model\": MODEL, \"revision\": REVISION, \"tokens\": len(tokens[\"input_ids\"]), \"result\": result})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to tokenization changes between training and serving shift predictions."
+                  "text": "The comment is deliberate: a tutorial can use `main`, but a production release should pin an approved revision. The smoke test checks token length and output schema before latency or load testing."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
+            "prompt": "What can change if production silently pulls a different tokenizer revision?",
+            "answer": "Token counts, truncation behavior, chat formatting, and sometimes output quality can change even when the model name looks the same."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon1",
+            "canon2"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify AI-generated Transformers production code",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Hugging Face Transformers in Production, review it against the running case before accepting it."
+                  "text": "Review generated code for pinned revisions, tokenizer and config loading, max length and truncation policy, dtype and device placement, batch limits, output schema, error behavior, version logging, and runtime choice. Ask whether the code is a demo or a service contract."
                 }
               ]
             },
@@ -1544,27 +707,22 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: production transformer deployment card with inputs, outputs, and guardrails?"
+                    "text": "Does it pin model and tokenizer revisions?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Does it test long, empty, malformed, and batch inputs?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: tokenization changes between training and serving shift predictions?"
+                    "text": "Does it log model, tokenizer, package, and route version?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug stable extraction quality across document batches?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Does it explain when to switch to a serving runtime for batching or streaming?"
                   }
                 ]
               ]
@@ -1575,84 +733,86 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Hugging Face Transformers in Production to the running case?",
+          "title": "Demo versus service",
+          "prompt": "What makes a `pipeline()` snippet production-ready?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review production transformer deployment card with inputs, outputs, and guardrails, measure stable extraction quality across document batches, and test the failure: tokenization changes between training and serving shift predictions.",
+              "text": "Calling the function once without errors.",
+              "correct": false
+            },
+            {
+              "text": "A pinned contract around tokenizer, schema, limits, packaging, tests, logging, and serving behavior.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Using the largest available model by default.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Production readiness is about repeatable behavior under real inputs, not a successful notebook cell.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "canon2",
+        "kb2"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies Hugging Face Transformers in Production to production transformer deployment card with inputs, outputs, and guardrails, with examples and checks tied to stable extraction quality across document batches.",
+      "title": "Release Transformers with rollback evidence",
+      "sub": "Synthesize the contract and build a solo production readiness card.",
+      "summary": "The final artifact is a release card that names the full inference contract and the serving path.",
       "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: tokenization changes between training and serving shift predictions."
+        "Recall the dependency chain from memory.",
+        "Write a retrieval prompt for productionizing a Transformer model.",
+        "Create a capstone readiness card."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_recall",
           "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
+          "title": "Retrieval prompt for the whole lesson",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Answer this from memory: \"How do I take a Hugging Face Transformers prototype toward production?\" Include weights, tokenizer, config, preprocessing, postprocessing, schema, dependency lockfile, revision pins, runtime limits, serving choice, monitoring, and rollback."
                 }
               ]
             },
@@ -1660,16 +820,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "If you can explain how production transformer deployment card with inputs, outputs, and guardrails improves stable extraction quality across document batches and catches tokenization changes between training and serving shift predictions, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "Spaced recall: module 1 separated library ownership from service ownership. The final release card should make that boundary explicit enough that another engineer can operate it."
                 }
               ]
             }
@@ -1679,345 +830,74 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review production transformer deployment card with inputs, outputs, and guardrails: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where tokenization changes between training and serving shift predictions. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Hugging Face Transformers in Production on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: tokenization changes between training and serving shift predictions.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on stable extraction quality across document batches.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves stable extraction quality across document batches and catches: tokenization changes between training and serving shift predictions.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Promote a Transformer model only when the full inference contract is pinned.",
+          "useWhen": "Use a production release when contract tests, package image, latency sample, version logging, and rollback target are present.",
+          "avoidWhen": "Avoid shipping a notebook snippet directly to users, especially for generation workloads with streaming, batching, or long context.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
           ]
         },
         {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For production transformer deployment card with inputs, outputs, and guardrails, log or test the fields needed to debug stable extraction quality across document batches. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Hugging Face Transformers in Production: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "m5_capstone",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Capstone: production readiness card",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Now apply Hugging Face Transformers in Production without copying the worked example. Keep the same running case - A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back - but make the design decisions yourself."
+                  "text": "Pick one Transformer model. Fill out model ID, revision, tokenizer revision, config, task, input schema, output schema, max length, truncation, dtype, device target, batch limits, package image, serving runtime, metrics, golden examples, and rollback artifact. Then decide whether plain Transformers is enough or a serving runtime should own the endpoint."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: stable extraction quality across document batches."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: tokenization changes between training and serving shift predictions."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
+                  "text": "Next rung: connect this to model registries and versioning so the card becomes a registered release rather than a local checklist."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Hugging Face Transformers in Production to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review production transformer deployment card with inputs, outputs, and guardrails, measure stable extraction quality across document batches, and test the failure: tokenization changes between training and serving shift predictions.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Solo Transformers production card"
         }
       ],
       "citations": [
         "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ],
       "decisionItForces": "Choose the right level of rigor for Hugging Face Transformers in Production: baseline, production design, or advanced optimization."
     }
@@ -2026,8 +906,8 @@
     "gpu": {
       "id": "gpu",
       "label": "GPU",
-      "laymanDefinition": "A parallel accelerator for tensor computation.",
-      "technicalNote": "In this lesson, GPU is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The accelerator used for larger transformer inference or batching.",
+      "technicalNote": "GPU use in Transformers production depends on model size, dtype, device mapping, batch shape, and whether a serving runtime manages memory more efficiently.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2037,8 +917,8 @@
     "serving": {
       "id": "serving",
       "label": "Serving",
-      "laymanDefinition": "Serving is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Serving is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Exposing a transformer model through a reliable prediction interface.",
+      "technicalNote": "Serving may be an embedded Transformers pipeline for simple cases or a dedicated runtime such as TGI, vLLM, or BentoML for operational control.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2047,8 +927,8 @@
     "gateway": {
       "id": "gateway",
       "label": "Gateway",
-      "laymanDefinition": "Gateway is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Gateway is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The layer that routes clients to the packaged model endpoint.",
+      "technicalNote": "A gateway can hide provider or runtime differences, but it must preserve model aliases, tokenizer assumptions, and trace identity.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2057,8 +937,8 @@
     "latency": {
       "id": "latency",
       "label": "Latency",
-      "laymanDefinition": "Latency is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latency is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The delay caused by tokenization, model execution, decoding, and transport.",
+      "technicalNote": "Production latency depends on prompt length, batch size, KV cache behavior, device placement, and streaming design.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2067,8 +947,8 @@
     "throughput": {
       "id": "throughput",
       "label": "Throughput",
-      "laymanDefinition": "Throughput is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Throughput is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "How many requests or tokens the endpoint can complete over time.",
+      "technicalNote": "Transformers library code can be fine for low volume; high throughput often needs a server runtime with batching and metrics.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2077,8 +957,8 @@
     "versioning": {
       "id": "versioning",
       "label": "Versioning",
-      "laymanDefinition": "Versioning is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Versioning is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Pinning weights, tokenizer, config, chat template, dependencies, and serving flags.",
+      "technicalNote": "A production Transformer release should never version weights alone because tokenizer or template drift can change behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2111,73 +991,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Hugging Face Transformers in Production using the running case: A transformer powers extraction in a document workflow and must be packaged, monitored, and rolled back. Name the artifact (production transformer deployment card with inputs, outputs, and guardrails), explain the mechanism, choose a design level, write the check for tokenization changes between training and serving shift predictions, and say how you would measure stable extraction quality across document batches."
+            "text": "From memory, reconstruct the Transformers production contract: pin weights, tokenizer, config, schema, dependencies, runtime limits, serving choice, smoke tests, logs, and rollback evidence."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Hugging Face Transformers in Production operating path",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Hugging Face Transformers in Production in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+          "label": "Know what Transformers owns",
+          "sub": "Separate model loading and inference APIs from production serving responsibilities.",
+          "what": "Transformers gives access to models, tokenizers, configs, and generation utilities; production still needs packaging, contracts, limits, and observability.",
+          "relevance": "Identify what belongs in a Transformer inference contract.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects Hugging Face Transformers in Production to the running artifact and failure test.",
+          "orient": "Separate library capabilities from production endpoint responsibilities.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+          "label": "Package the inference path, not only weights",
+          "sub": "Freeze model files, tokenizer, schema, environment, and tests into a deployable artifact.",
+          "what": "A production package makes the notebook behavior reproducible across staging, batch jobs, and services.",
+          "relevance": "List package contents for a Transformer model.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects Hugging Face Transformers in Production to the running artifact and failure test.",
+          "orient": "Freeze model, tokenizer, schema, dependencies, and tests together.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+          "label": "Choose embedded library or serving runtime",
+          "sub": "Decide when plain Transformers is enough and when TGI, vLLM, or packaging frameworks should take over.",
+          "what": "Transformers can serve low-risk workloads directly, but high-throughput or multi-tenant systems need runtime features beyond a library call.",
+          "relevance": "Compare embedded Transformers, TGI, vLLM, and BentoML-style packaging.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects Hugging Face Transformers in Production to the running artifact and failure test.",
+          "orient": "Select the serving runtime that matches traffic and operational needs.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+          "label": "Smoke test tokenizer, cache, and limits",
+          "sub": "Make the production contract executable before load testing.",
+          "what": "A small smoke test can catch tokenizer mismatch, truncation surprises, output schema drift, and missing version identity.",
+          "relevance": "Write a minimal Transformer contract test.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects Hugging Face Transformers in Production to the running artifact and failure test.",
+          "orient": "Turn tokenizer and runtime assumptions into executable contract checks.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve stable extraction quality across document batches while avoiding the failure: tokenization changes between training and serving shift predictions.",
+          "label": "Release Transformers with rollback evidence",
+          "sub": "Synthesize the contract and build a solo production readiness card.",
+          "what": "The final artifact is a release card that names the full inference contract and the serving path.",
+          "relevance": "Recall the dependency chain from memory.",
           "moduleId": "m5",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects Hugging Face Transformers in Production to the running artifact and failure test.",
+          "orient": "Reconstruct the inference contract and choose the next runtime step.",
           "order": 5
         }
       ],
@@ -2207,54 +1087,54 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Know what Transformers owns",
+        "detail": "Separate model loading and inference APIs from production serving responsibilities."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Package the inference path, not only weights",
+        "detail": "Freeze model files, tokenizer, schema, environment, and tests into a deployable artifact."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Choose embedded library or serving runtime",
+        "detail": "Decide when plain Transformers is enough and when TGI, vLLM, or packaging frameworks should take over."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Smoke test tokenizer, cache, and limits",
+        "detail": "Make the production contract executable before load testing."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Release Transformers with rollback evidence",
+        "detail": "Synthesize the contract and build a solo production readiness card."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_contract",
+        "label": "Are weights, tokenizer, config, labels, schema, preprocessing, and dependencies pinned together?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_flow",
+        "label": "Does the package include golden-input contract tests and a rollback artifact?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure stable extraction quality across document batches on realistic cases?",
+        "id": "chk_choice",
+        "label": "Is the serving choice justified by volume, batching, streaming, metrics, and memory needs?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: tokenization changes between training and serving shift predictions?",
+        "id": "chk_verify",
+        "label": "Do smoke tests check tokenization, truncation, output schema, and version logging?",
         "fromModuleId": "m4"
       },
       {
         "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "label": "Can another engineer operate the endpoint from the release card alone?",
         "fromModuleId": "m5"
       }
     ],
@@ -2267,30 +1147,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Text Generation Inference (TGI)",
+      "url": "https://huggingface.co/docs/text-generation-inference/index",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Model Packaging and Containerization",
+      "url": "https://docs.bentoml.com/",
+      "asOfDate": "2026-06-23"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "vLLM documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face Transformers documentation",
+      "url": "https://huggingface.co/docs/transformers/index",
+      "asOfDate": "2026-06-23"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face KV cache documentation",
+      "url": "https://huggingface.co/docs/transformers/en/kv_cache",
+      "asOfDate": "2026-06-23"
     }
   }
 }

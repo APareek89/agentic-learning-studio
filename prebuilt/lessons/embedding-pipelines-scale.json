@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Embedding Pipelines at Scale: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Embedding Pipelines at Scale is useful when you can apply it to a docs platform embeds thousands of changed pages nightly without serving stale search results, choose a design, and verify fresh searchable chunks after docs updates.",
+    "caption": "Move from source changes to versioned vectors, filtered retrieval, backfills, and migration checks.",
+    "oneLineThesis": "An embedding pipeline is a data product: every vector must be reproducible, query-compatible, filterable, monitored, and replaceable during model migrations.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Embedding Pipelines at Scale.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+        "label": "Define the vector contract before the queue",
+        "sub": "Specify chunk IDs, metadata, dimensions, and freshness rules before scaling workers.",
+        "what": "A scalable embedding pipeline starts with stable identities and metadata, because retries and migrations depend on them.",
+        "relevance": "Define a stable chunk identity and content hash.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Embedding Pipelines at Scale to the running artifact and failure test.",
+        "orient": "Specify vector identity, metadata, and freshness before scaling workers.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+        "label": "Run ingestion as an idempotent state machine",
+        "sub": "Convert source events into chunk, embed, upsert, verify, and activate stages.",
+        "what": "A reliable pipeline can retry each stage without duplicating chunks or exposing half-built indexes.",
+        "relevance": "Describe the ingestion stages in order.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Embedding Pipelines at Scale to the running artifact and failure test.",
+        "orient": "Turn source changes into retryable chunk, embed, upsert, and activate stages.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+        "label": "Choose storage around filters and migrations",
+        "sub": "Pick vector storage by operational boundary, metadata filters, recall tests, and rebuild cost.",
+        "what": "The vector store is part of the pipeline contract; it decides how filtering, snapshots, and re-embedding will be operated.",
+        "relevance": "Compare pgvector, Qdrant, managed stores, and distributed stores by job.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Embedding Pipelines at Scale to the running artifact and failure test.",
+        "orient": "Select vector storage by filters, operations, and migration cost.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+        "label": "Build a migration smoke test",
+        "sub": "Make embedding changes runnable, comparable, and reversible before touching production retrieval.",
+        "what": "The practical implementation checks model compatibility, upsert idempotence, filter behavior, and recall before activation.",
+        "relevance": "Write a small migration manifest and check script.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Embedding Pipelines at Scale to the running artifact and failure test.",
+        "orient": "Test model compatibility, filters, and recall before activating new vectors.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+        "label": "Operate freshness, recall, and rollback",
+        "sub": "Close the loop with monitoring, active retrieval checks, and a solo re-embedding plan.",
+        "what": "A scaled embedding pipeline remains healthy when freshness, filter correctness, recall, and rollback are continuously visible.",
+        "relevance": "Recall the pipeline lifecycle from memory.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Embedding Pipelines at Scale to the running artifact and failure test.",
+        "orient": "Monitor freshness and recall, then rehearse a reversible migration.",
         "order": 5
       }
     ],
@@ -118,34 +118,35 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Embedding Pipelines at Scale to scaled embedding pipeline with queue, dedupe, and freshness checks, with examples and checks tied to fresh searchable chunks after docs updates.",
+      "title": "Define the vector contract before the queue",
+      "sub": "Specify chunk IDs, metadata, dimensions, and freshness rules before scaling workers.",
+      "summary": "A scalable embedding pipeline starts with stable identities and metadata, because retries and migrations depend on them.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: partial failures leave old and new embeddings mixed together."
+        "Define a stable chunk identity and content hash.",
+        "Explain why dimensions and distance metric belong in the contract.",
+        "Name freshness and deletion rules before backfill starts."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Embedding Pipelines at Scale matters here",
+          "title": "The vector is not the source of truth",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A docs platform embeds thousands of changed pages nightly without serving stale search results. The learner's job is not to memorize Embedding Pipelines at Scale; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved fresh searchable chunks after docs updates."
+                  "text": "Problem anchor: Agentic Learning Studio adds 8,000 KB chunks, updates 400 of them, and deletes 50 outdated notes. Search quality drops because old and new embeddings mix in the same collection, some deleted chunks still retrieve, and no one can tell which embedding model produced a result."
                 }
               ]
             },
@@ -153,24 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: scaled embedding pipeline with queue, dedupe, and freshness checks. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if partial failures leave old and new embeddings mixed together, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson skips definition-drilling and spends its effort on edge cases: state boundaries, hidden coupling, observability gaps, and the evidence that would change a production decision."
+                  "text": "The pipeline contract fixes that. Each vector row needs a stable chunk ID, source URL, tenant or category, content hash, embedding model ID, vector dimension, distance metric, chunker version, created time, and active/deleted status. The source document remains authoritative; vectors are derived artifacts that can be rebuilt."
                 }
               ]
             },
@@ -179,17 +163,17 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Embedding Pipelines at Scale matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Product framing: freshness means learners retrieve current approved notes, not stale drafts."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Embedding Pipelines at Scale matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Engineering framing: idempotent upserts, tombstones, and versioned collections make retries safe."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure fresh searchable chunks after docs updates on examples that resemble the real workload."
+                    "text": "Evaluation framing: a model migration is allowed only after recall tests compare old and new indexes on the same queries."
                   }
                 ]
               ]
@@ -200,191 +184,25 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Embedding Pipelines at Scale.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs platform embeds thousands of changed pages nightly without serving stale search results"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review scaled embedding pipeline with queue, dedupe, and freshness checks: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where partial failures leave old and new embeddings mixed together. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_artifact",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Worked artifact: chunk-vector manifest",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A docs platform embeds thousands of changed pages nightly without serving stale search results. This module asks what mental model changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve fresh searchable chunks after docs updates."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: partial failures leave old and new embeddings mixed together."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
+                  "text": "A useful manifest row reads: `chunk_id=rag-fundamentals:00042`, `content_hash=sha256:...`, `embedding_model=BAAI/bge-small-en-v1.5`, `dimension=384`, `distance=cosine`, `chunker=markdown-v2`, `collection=kb_bge_v1`, `source_status=approved`, `valid_from=2026-06-23`, `deleted_at=null`."
                 }
               ]
             },
@@ -392,16 +210,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For scaled embedding pipeline with queue, dedupe, and freshness checks, log or test the fields needed to debug fresh searchable chunks after docs updates. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "That row gives every downstream system something to check. The worker can skip unchanged content hashes. The vector store can reject wrong dimensions. The retriever can filter to approved sources. The migration job can create `kb_bge_v2` without corrupting active retrieval."
                 }
               ]
             }
@@ -411,182 +220,87 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: scaled embedding pipeline with queue, dedupe, and freshness checks",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A docs platform embeds thousands of changed pages nightly without serving stale search results. The team wants to improve fresh searchable chunks after docs updates, but it has already seen this failure: partial failures leave old and new embeddings mixed together."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Traffic plan: 1,200 requests per hour, p95 latency target under two seconds, predictable cost, and a rollback path if quality drops. A demo benchmark is not enough."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: scaled embedding pipeline with queue, dedupe, and freshness checks. It includes workload shape, token or batch budget, model or hardware choice, fallbacks, observability, rollout plan, and the metric fresh searchable chunks after docs updates."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: route short requests to the fast path, batch background jobs, cap output tokens, log model version and latency, and roll back if quality or cost crosses the release threshold."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: production AI engineer. Context: A docs platform embeds thousands of changed pages nightly without serving stale search results. Task: design the release runbook for scaled embedding pipeline with queue, dedupe, and freshness checks. Include workload, latency and cost budgets, fallback, observability, rollout, and rollback trigger. Output: {slo, capacity_plan, monitoring, fallback, rollout_gate}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Embedding Pipelines at Scale to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "KB refresh pipeline"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Embedding Pipelines at Scale to the running case?",
+          "title": "Spot the missing contract field",
+          "prompt": "Which field most directly prevents mixing embeddings from two model families?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review scaled embedding pipeline with queue, dedupe, and freshness checks, measure fresh searchable chunks after docs updates, and test the failure: partial failures leave old and new embeddings mixed together.",
+              "text": "The document title alone.",
+              "correct": false
+            },
+            {
+              "text": "The embedding model version and vector dimension.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The worker host name.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Titles help humans, but compatibility is determined by model, dimension, normalization, and distance metric.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
         "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Embedding Pipelines at Scale to scaled embedding pipeline with queue, dedupe, and freshness checks, with examples and checks tied to fresh searchable chunks after docs updates.",
+      "title": "Run ingestion as an idempotent state machine",
+      "sub": "Convert source events into chunk, embed, upsert, verify, and activate stages.",
+      "summary": "A reliable pipeline can retry each stage without duplicating chunks or exposing half-built indexes.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: partial failures leave old and new embeddings mixed together."
+        "Describe the ingestion stages in order.",
+        "Explain how dedupe and content hashes avoid wasted embeddings.",
+        "Separate backfill collections from the active retrieval path."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Queues scale only when retries are safe",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind Embedding Pipelines at Scale. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Embedding work fails in ordinary ways: rate limits, GPU memory pressure, malformed documents, vector-store timeouts, and schema mismatches. If a retry creates a second ID or activates a partial collection, search quality becomes a data consistency problem."
                 }
               ]
             },
@@ -594,40 +308,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means connecting workload shape, model choice, serving constraints, observability, and rollback behavior."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is scaled embedding pipeline with queue, dedupe, and freshness checks. Which single field, trace, or test would show whether fresh searchable chunks after docs updates improved?"
+                  "text": "Treat ingestion as a state machine. Source changed, chunked, embedded, upserted, verified, activated, and tombstoned are separate states with owners. A failed worker should resume from the last durable state, not guess which chunks it already wrote."
                 }
               ]
             }
@@ -637,7 +318,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -645,254 +327,128 @@
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs platform embeds thousands of changed pages nightly without serving stale search results"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review scaled embedding pipeline with queue, dedupe, and freshness checks: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where partial failures leave old and new embeddings mixed together. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Pipeline stages and their evidence",
+          "criteria": [
+            "Stage",
+            "Evidence to store",
+            "Common break"
           ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A docs platform embeds thousands of changed pages nightly without serving stale search results. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve fresh searchable chunks after docs updates."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: partial failures leave old and new embeddings mixed together."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For scaled embedding pipeline with queue, dedupe, and freshness checks, log or test the fields needed to debug fresh searchable chunks after docs updates. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: partial failures leave old and new embeddings mixed together. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to scaled embedding pipeline with queue, dedupe, and freshness checks: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: fresh searchable chunks after docs updates becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Embedding Pipelines at Scale design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Embedding Pipelines at Scale to the running case?",
-          "format": "mcq",
           "options": [
             {
-              "text": "Build or review scaled embedding pipeline with queue, dedupe, and freshness checks, measure fresh searchable chunks after docs updates, and test the failure: partial failures leave old and new embeddings mixed together.",
-              "correct": true
+              "name": "Chunk",
+              "cells": [
+                {
+                  "criterion": "Stage",
+                  "text": "Split approved source into stable chunks",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Evidence to store",
+                  "text": "chunker version, content hash, source offset",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common break",
+                  "text": "new chunker changes IDs and loses delete mapping",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Before embedding workers start.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "Embed",
+              "cells": [
+                {
+                  "criterion": "Stage",
+                  "text": "Batch chunks through one encoder contract",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Evidence to store",
+                  "text": "model ID, dimension, normalization, worker version",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common break",
+                  "text": "query encoder uses a different instruction or model",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "When content hash is new or model version changes.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "Activate",
+              "cells": [
+                {
+                  "criterion": "Stage",
+                  "text": "Move verified collection or rows into retrieval",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Evidence to store",
+                  "text": "recall test report and rollback collection",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common break",
+                  "text": "half the corpus uses the new model and half the old one",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "After backfill and retrieval checks pass.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1",
+            "kb2",
+            "canon2"
+          ]
+        },
+        {
+          "id": "m2_failure",
+          "kind": "functionalExample",
+          "title": "Case study: the half-migrated index",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A team swaps from a 384-dimensional model to a 768-dimensional model. New chunks go into a new collection, but query-time code still embeds with the old model for one endpoint. The system passes insert tests and fails user search in subtle ways: similar-looking chunks rank oddly, filters still work, and only evaluation catches recall loss."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The fix is procedural: activate model, query encoder, collection, distance metric, and eval report as one versioned bundle. Do not let document updates silently choose the new model before the query path does."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -903,41 +459,41 @@
       "citations": [
         "kb1",
         "kb2",
-        "canon1",
         "canon2"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Embedding Pipelines at Scale to scaled embedding pipeline with queue, dedupe, and freshness checks, with examples and checks tied to fresh searchable chunks after docs updates.",
+      "title": "Choose storage around filters and migrations",
+      "sub": "Pick vector storage by operational boundary, metadata filters, recall tests, and rebuild cost.",
+      "summary": "The vector store is part of the pipeline contract; it decides how filtering, snapshots, and re-embedding will be operated.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: partial failures leave old and new embeddings mixed together."
+        "Compare pgvector, Qdrant, managed stores, and distributed stores by job.",
+        "Explain why metadata filters are not optional in RAG.",
+        "Plan a recall test against exact or trusted retrieval."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Storage choice changes pipeline shape",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Embedding Pipelines at Scale becomes a decision. The team must choose how much rigor scaled embedding pipeline with queue, dedupe, and freshness checks needs before it can be trusted."
+                  "text": "A small Postgres-native corpus can start in pgvector because SQL filters, backups, and app data live together. A dedicated retrieval service such as Qdrant makes sense when filtered vector search is its own scaling boundary. Managed services reduce operations but still require IDs, metadata, snapshots, and migration plans."
                 }
               ]
             },
@@ -945,28 +501,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves fresh searchable chunks after docs updates while making this failure visible: partial failures leave old and new embeddings mixed together."
+                  "text": "Two framings keep the choice honest. The product framing asks whether retrieval can respect tenant, freshness, and approved-source filters. The platform framing asks who owns snapshots, index build time, payload schema, recall testing, and rollback when a model changes."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
               ]
             }
           ],
@@ -975,56 +511,92 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon2"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "Vector-store fit for scaled pipelines",
+          "criteria": [
+            "Choice",
+            "Best fit",
+            "Migration risk"
+          ],
+          "options": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "name": "pgvector",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs platform embeds thousands of changed pages nightly without serving stale search results"
-                    }
-                  ]
+                  "criterion": "Choice",
+                  "text": "Postgres extension with SQL joins",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "App data and retrieval metadata belong together",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Migration risk",
+                  "text": "Large scans can hurt OLTP; dimension changes need new columns or tables",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use for simple operational boundaries.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "name": "Qdrant",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review scaled embedding pipeline with queue, dedupe, and freshness checks: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
+                  "criterion": "Choice",
+                  "text": "Dedicated vector service with payload filters",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "Filtered retrieval, snapshots, and collection boundaries matter",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Migration risk",
+                  "text": "Payload schema drift and collection cutover need discipline",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when retrieval deserves its own service.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Run the failure",
-              "detail": [
+              "name": "Milvus or managed vector DB",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where partial failures leave old and new embeddings mixed together. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "criterion": "Choice",
+                  "text": "Large or managed vector infrastructure",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "Scale, managed operations, or distributed indexing dominate",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Migration risk",
+                  "text": "Costs, backups, and recall settings can hide behind provider defaults",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when corpus scale or operations justify the boundary.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -1032,265 +604,34 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
           ]
         },
         {
           "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Embedding Pipelines at Scale on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: partial failures leave old and new embeddings mixed together.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on fresh searchable chunks after docs updates.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves fresh searchable chunks after docs updates and catches: partial failures leave old and new embeddings mixed together.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For scaled embedding pipeline with queue, dedupe, and freshness checks, log or test the fields needed to debug fresh searchable chunks after docs updates. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: partial failures leave old and new embeddings mixed together. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "A benchmark passes at low concurrency but fails at realistic traffic."
-                  }
-                ],
-                [
-                  {
-                    "text": "Cost falls per request but retries increase total spend."
-                  }
-                ],
-                [
-                  {
-                    "text": "Monitoring tracks latency but not quality, version, or fallback behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: fresh searchable chunks after docs updates gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
           "kind": "decisionCallout",
-          "useWhen": "Use the production path when fresh searchable chunks after docs updates affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: partial failures leave old and new embeddings mixed together.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
+          "ruleOfThumb": "Choose the simplest store that can enforce filters and survive re-embedding.",
+          "useWhen": "Use a dedicated vector service when retrieval volume, metadata filters, snapshots, or independent scaling are first-order needs.",
+          "avoidWhen": "Avoid changing stores to fix weak chunk IDs, missing metadata, or absent evaluation; those problems travel with the data.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Embedding Pipelines at Scale to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review scaled embedding pipeline with queue, dedupe, and freshness checks, measure fresh searchable chunks after docs updates, and test the failure: partial failures leave old and new embeddings mixed together.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
             "kb2"
           ]
         }
       ],
       "citations": [
-        "kb1",
         "kb2",
-        "canon1",
         "canon2"
       ],
       "decisionItForces": "Choose the right level of rigor for Embedding Pipelines at Scale: baseline, production design, or advanced optimization."
@@ -1298,241 +639,68 @@
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Embedding Pipelines at Scale to scaled embedding pipeline with queue, dedupe, and freshness checks, with examples and checks tied to fresh searchable chunks after docs updates.",
+      "title": "Build a migration smoke test",
+      "sub": "Make embedding changes runnable, comparable, and reversible before touching production retrieval.",
+      "summary": "The practical implementation checks model compatibility, upsert idempotence, filter behavior, and recall before activation.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: partial failures leave old and new embeddings mixed together."
+        "Write a small migration manifest and check script.",
+        "Predict what breaks when dimensions mismatch.",
+        "Verify AI-generated embedding code for lifecycle gaps."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Embedding Pipelines at Scale should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For scaled embedding pipeline with queue, dedupe, and freshness checks, the sketch should prove one thing: the system can improve fresh searchable chunks after docs updates without hiding the failure where partial failures leave old and new embeddings mixed together."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs platform embeds thousands of changed pages nightly without serving stale search results"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review scaled embedding pipeline with queue, dedupe, and freshness checks: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where partial failures leave old and new embeddings mixed together. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A docs platform embeds thousands of changed pages nightly without serving stale search results. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve fresh searchable chunks after docs updates."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: partial failures leave old and new embeddings mixed together."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
+          "title": "Check dimensions and stable upserts",
           "language": "python",
-          "code": "# Embedding Pipelines at Scale: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
+          "code": "manifest = {\n    \"collection\": \"kb_bge_v2\",\n    \"embedding_model\": \"BAAI/bge-small-en-v1.5\",\n    \"dimension\": 384,\n    \"distance\": \"cosine\",\n    \"chunker\": \"markdown-v2\",\n}\n\ndef prepare_point(chunk, vector):\n    assert len(vector) == manifest[\"dimension\"], \"wrong embedding dimension\"\n    return {\n        \"id\": chunk[\"chunk_id\"],\n        \"vector\": vector,\n        \"payload\": {\n            \"source_url\": chunk[\"source_url\"],\n            \"content_hash\": chunk[\"content_hash\"],\n            \"status\": \"approved\",\n            \"embedding_model\": manifest[\"embedding_model\"],\n        },\n    }\n\n# Upsert by stable chunk_id so a retry replaces the same point instead of duplicating it.",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to partial failures leave old and new embeddings mixed together."
+                  "text": "The check is intentionally small: it proves that dimension, model identity, payload, and stable IDs are present before the vector-store client writes anything. Production code would add batch retry, tombstone handling, and recall evaluation."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
+            "prompt": "What happens if a 768-dimensional vector reaches a collection declared for 384 dimensions?",
+            "answer": "A correct store or guard rejects the insert. If the check is missing, the failure may show up later as broken retrieval, failed upserts, or mixed collections during migration."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "canon2"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify an AI-generated embedding pipeline",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Embedding Pipelines at Scale, review it against the running case before accepting it."
+                  "text": "AI-generated ingestion code often looks plausible while omitting lifecycle details. Review for stable IDs, content hashes, model and chunker versions, vector dimensions, delete handling, backpressure, retry idempotence, payload filters, and activation gates."
                 }
               ]
             },
@@ -1541,27 +709,22 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: scaled embedding pipeline with queue, dedupe, and freshness checks?"
+                    "text": "Can the code re-run the same document without duplicating vectors?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Does it keep deleted or unapproved sources out of active retrieval?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: partial failures leave old and new embeddings mixed together?"
+                    "text": "Does query-time encoding use the same compatible contract as document-time encoding?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug fresh searchable chunks after docs updates?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Is there a recall test comparing old and new collections before cutover?"
                   }
                 ]
               ]
@@ -1572,7 +735,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1582,29 +746,31 @@
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Embedding Pipelines at Scale to the running case?",
+          "title": "Migration gate",
+          "prompt": "What is the safest way to migrate to a new embedding model?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review scaled embedding pipeline with queue, dedupe, and freshness checks, measure fresh searchable chunks after docs updates, and test the failure: partial failures leave old and new embeddings mixed together.",
+              "text": "Insert new vectors into the old collection whenever a document changes.",
+              "correct": false
+            },
+            {
+              "text": "Build a new versioned collection, test recall and filters, then switch the query path and collection together.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Change only the query encoder and leave stored vectors untouched.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Embedding model changes are corpus migrations. The document path and query path must move as a tested bundle.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1614,42 +780,42 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon2",
+        "kb2"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Embedding Pipelines at Scale to scaled embedding pipeline with queue, dedupe, and freshness checks, with examples and checks tied to fresh searchable chunks after docs updates.",
+      "title": "Operate freshness, recall, and rollback",
+      "sub": "Close the loop with monitoring, active retrieval checks, and a solo re-embedding plan.",
+      "summary": "A scaled embedding pipeline remains healthy when freshness, filter correctness, recall, and rollback are continuously visible.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: partial failures leave old and new embeddings mixed together."
+        "Recall the pipeline lifecycle from memory.",
+        "Write a retrieval prompt that summarizes the lesson.",
+        "Plan a capstone migration for one corpus."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_recall",
           "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
+          "title": "Retrieval prompt for the whole lesson",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Answer this from memory: \"How do I run embeddings as a reliable data pipeline instead of a one-off script?\" Include stable chunk IDs, metadata payloads, content hashes, model dimensions, idempotent queue states, vector-store filters, recall tests, and collection rollback."
                 }
               ]
             },
@@ -1657,16 +823,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "If you can explain how scaled embedding pipeline with queue, dedupe, and freshness checks improves fresh searchable chunks after docs updates and catches partial failures leave old and new embeddings mixed together, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "Spaced recall: the first module said the vector is a derived artifact. That idea should reappear in every operational decision: rebuildability beats clever one-time indexing."
                 }
               ]
             }
@@ -1676,64 +833,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs platform embeds thousands of changed pages nightly without serving stale search results"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review scaled embedding pipeline with queue, dedupe, and freshness checks: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where partial failures leave old and new embeddings mixed together. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1742,91 +843,17 @@
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Embedding Pipelines at Scale on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: partial failures leave old and new embeddings mixed together.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on fresh searchable chunks after docs updates.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves fresh searchable chunks after docs updates and catches: partial failures leave old and new embeddings mixed together.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Do not activate vectors until freshness, filters, and recall are proven.",
+          "useWhen": "Use a collection when it has a manifest, complete backfill, tombstone handling, filter tests, recall report, and rollback target.",
+          "avoidWhen": "Avoid treating a green upsert job as proof of search quality; inserts can succeed while retrieval gets worse.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1834,187 +861,45 @@
           ]
         },
         {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For scaled embedding pipeline with queue, dedupe, and freshness checks, log or test the fields needed to debug fresh searchable chunks after docs updates. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Embedding Pipelines at Scale: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "m5_capstone",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Capstone: migrate one KB category",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Now apply Embedding Pipelines at Scale without copying the worked example. Keep the same running case - A docs platform embeds thousands of changed pages nightly without serving stale search results - but make the design decisions yourself."
+                  "text": "Choose one category such as RAG tooling. Produce a migration manifest, sample 25 queries, build a new collection, compare top-8 recall against the current collection, verify tenant/status filters, and write the activation and rollback commands. The deliverable is a release note, not just code."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: fresh searchable chunks after docs updates."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: partial failures leave old and new embeddings mixed together."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
+                  "text": "Next rung: connect this to monitoring model drift and quality, where embeddings become one signal among live traffic, labels, and user outcomes."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Embedding Pipelines at Scale to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review scaled embedding pipeline with queue, dedupe, and freshness checks, measure fresh searchable chunks after docs updates, and test the failure: partial failures leave old and new embeddings mixed together.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Solo embedding migration"
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Embedding Pipelines at Scale: baseline, production design, or advanced optimization."
     }
@@ -2023,8 +908,8 @@
     "gpu": {
       "id": "gpu",
       "label": "GPU",
-      "laymanDefinition": "A parallel accelerator for tensor computation.",
-      "technicalNote": "In this lesson, GPU is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A parallel device that can accelerate large embedding batches.",
+      "technicalNote": "GPU use matters for offline backfills and high-volume embedding jobs, but the pipeline still needs idempotent queues and version tracking when work runs on CPU.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2034,8 +919,8 @@
     "serving": {
       "id": "serving",
       "label": "Serving",
-      "laymanDefinition": "Serving is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Serving is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Making embeddings available to retrieval and refresh jobs.",
+      "technicalNote": "Here serving includes the query-time encoder path plus vector-store reads, not only the batch job that created the document vectors.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2044,8 +929,8 @@
     "gateway": {
       "id": "gateway",
       "label": "Gateway",
-      "laymanDefinition": "Gateway is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Gateway is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The boundary between source systems, embedding workers, and vector storage.",
+      "technicalNote": "A pipeline gateway validates tenant, source status, model version, and schema before allowing records into the active retrieval collection.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2054,8 +939,8 @@
     "latency": {
       "id": "latency",
       "label": "Latency",
-      "laymanDefinition": "Latency is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latency is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The delay between a source update and a retrievable fresh vector.",
+      "technicalNote": "At scale, latency includes queue age, chunking time, model batching, vector upsert time, index refresh, and query-time filter cost.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2064,8 +949,8 @@
     "throughput": {
       "id": "throughput",
       "label": "Throughput",
-      "laymanDefinition": "Throughput is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Throughput is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "How many chunks the pipeline can embed and index per hour.",
+      "technicalNote": "Throughput is useful only when duplicate suppression, failure retries, and metadata filters keep the corpus correct.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2074,8 +959,8 @@
     "versioning": {
       "id": "versioning",
       "label": "Versioning",
-      "laymanDefinition": "Versioning is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Versioning is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Recording the embedding model, dimension, chunker, normalization, and collection used by each vector.",
+      "technicalNote": "Embedding versioning is mandatory because model swaps often require new collections or full re-embedding, not a tiny client change.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2108,73 +993,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Embedding Pipelines at Scale using the running case: A docs platform embeds thousands of changed pages nightly without serving stale search results. Name the artifact (scaled embedding pipeline with queue, dedupe, and freshness checks), explain the mechanism, choose a design level, write the check for partial failures leave old and new embeddings mixed together, and say how you would measure fresh searchable chunks after docs updates."
+            "text": "From memory, reconstruct the embedding pipeline lifecycle: source change, stable chunk identity, content hash, model and dimension contract, idempotent embed/upsert, filter tests, recall comparison, activation, and rollback."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Embedding Pipelines at Scale operating path",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Embedding Pipelines at Scale.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+          "label": "Define the vector contract before the queue",
+          "sub": "Specify chunk IDs, metadata, dimensions, and freshness rules before scaling workers.",
+          "what": "A scalable embedding pipeline starts with stable identities and metadata, because retries and migrations depend on them.",
+          "relevance": "Define a stable chunk identity and content hash.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Embedding Pipelines at Scale to the running artifact and failure test.",
+          "orient": "Specify vector identity, metadata, and freshness before scaling workers.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+          "label": "Run ingestion as an idempotent state machine",
+          "sub": "Convert source events into chunk, embed, upsert, verify, and activate stages.",
+          "what": "A reliable pipeline can retry each stage without duplicating chunks or exposing half-built indexes.",
+          "relevance": "Describe the ingestion stages in order.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Embedding Pipelines at Scale to the running artifact and failure test.",
+          "orient": "Turn source changes into retryable chunk, embed, upsert, and activate stages.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+          "label": "Choose storage around filters and migrations",
+          "sub": "Pick vector storage by operational boundary, metadata filters, recall tests, and rebuild cost.",
+          "what": "The vector store is part of the pipeline contract; it decides how filtering, snapshots, and re-embedding will be operated.",
+          "relevance": "Compare pgvector, Qdrant, managed stores, and distributed stores by job.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Embedding Pipelines at Scale to the running artifact and failure test.",
+          "orient": "Select vector storage by filters, operations, and migration cost.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+          "label": "Build a migration smoke test",
+          "sub": "Make embedding changes runnable, comparable, and reversible before touching production retrieval.",
+          "what": "The practical implementation checks model compatibility, upsert idempotence, filter behavior, and recall before activation.",
+          "relevance": "Write a small migration manifest and check script.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Embedding Pipelines at Scale to the running artifact and failure test.",
+          "orient": "Test model compatibility, filters, and recall before activating new vectors.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve fresh searchable chunks after docs updates while avoiding the failure: partial failures leave old and new embeddings mixed together.",
+          "label": "Operate freshness, recall, and rollback",
+          "sub": "Close the loop with monitoring, active retrieval checks, and a solo re-embedding plan.",
+          "what": "A scaled embedding pipeline remains healthy when freshness, filter correctness, recall, and rollback are continuously visible.",
+          "relevance": "Recall the pipeline lifecycle from memory.",
           "moduleId": "m5",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Embedding Pipelines at Scale to the running artifact and failure test.",
+          "orient": "Monitor freshness and recall, then rehearse a reversible migration.",
           "order": 5
         }
       ],
@@ -2204,54 +1089,54 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Define the vector contract before the queue",
+        "detail": "Specify chunk IDs, metadata, dimensions, and freshness rules before scaling workers."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Run ingestion as an idempotent state machine",
+        "detail": "Convert source events into chunk, embed, upsert, verify, and activate stages."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Choose storage around filters and migrations",
+        "detail": "Pick vector storage by operational boundary, metadata filters, recall tests, and rebuild cost."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Build a migration smoke test",
+        "detail": "Make embedding changes runnable, comparable, and reversible before touching production retrieval."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Operate freshness, recall, and rollback",
+        "detail": "Close the loop with monitoring, active retrieval checks, and a solo re-embedding plan."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_contract",
+        "label": "Does every vector have a stable chunk ID, content hash, source status, model version, and dimension?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_flow",
+        "label": "Can the ingestion state machine retry without duplicating chunks or activating partial work?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure fresh searchable chunks after docs updates on realistic cases?",
+        "id": "chk_choice",
+        "label": "Are metadata filters, snapshots, and recall tests part of the vector-store decision?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: partial failures leave old and new embeddings mixed together?",
+        "id": "chk_verify",
+        "label": "Can a new embedding model be tested in a separate collection before cutover?",
         "fromModuleId": "m4"
       },
       {
         "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "label": "Is there a documented rollback path to the previous query encoder and collection?",
         "fromModuleId": "m5"
       }
     ],
@@ -2264,30 +1149,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Embedding Models for RAG",
+      "url": "https://www.sbert.net/",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Qdrant vector database",
+      "url": "https://qdrant.tech/documentation/",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "vLLM documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "Sentence Transformers documentation",
+      "url": "https://www.sbert.net/",
+      "asOfDate": "2026-06-23"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "Qdrant documentation",
+      "url": "https://qdrant.tech/documentation/",
+      "asOfDate": "2026-06-23"
     }
   }
 }

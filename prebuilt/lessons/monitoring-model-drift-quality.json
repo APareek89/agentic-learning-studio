@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Monitoring Model Drift and Quality: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Monitoring Model Drift and Quality is useful when you can apply it to a deployed classifier and LLM assistant degrade as customer questions and product docs change, choose a design, and verify time from quality drop to triage.",
+    "caption": "Move from logged predictions to reference windows, drift signals, delayed labels, alerts, and playbooks.",
+    "oneLineThesis": "Model monitoring works when data, predictions, outcomes, slices, and LLM-specific traces are tied to versioned owners and response playbooks.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Monitoring Model Drift and Quality.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+        "label": "Monitor decisions, not just endpoints",
+        "sub": "Define what quality means after deployment and which evidence can arrive late.",
+        "what": "A model can be available and fast while its decisions become wrong, biased, stale, or expensive.",
+        "relevance": "Distinguish system health from model quality.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+        "orient": "Separate endpoint health from the quality of live decisions.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+        "label": "Choose reference windows and slices",
+        "sub": "Compare live traffic to a meaningful baseline and avoid aggregate blindness.",
+        "what": "Drift checks are useful only when the reference window, slice definitions, and sample sizes match the decision.",
+        "relevance": "Select a reference window for drift monitoring.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+        "orient": "Compare live windows to meaningful baselines and risky slices.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+        "label": "Add LLM quality signals to ML monitoring",
+        "sub": "Track prompts, retrieval, route policy, cost, latency, safety, and human feedback for generative systems.",
+        "what": "LLM apps need classic service and drift signals plus traces for prompts, retrieval, model routes, guardrails, and evaluations.",
+        "relevance": "Name LLM-specific monitoring dimensions.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+        "orient": "Extend monitoring to prompts, retrieval, routes, cost, and safety.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+        "label": "Write the alert and investigation loop",
+        "sub": "Make drift checks runnable and connect them to owners, thresholds, and playbooks.",
+        "what": "Monitoring becomes operational when a check produces a severity, owner, evidence bundle, and next action.",
+        "relevance": "Write a minimal monitoring check.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+        "orient": "Convert drift signals into owner-driven investigation and response loops.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+        "label": "Turn alerts into learning cycles",
+        "sub": "Finish by rehearsing the monitoring loop from signal to decision.",
+        "what": "The final skill is deciding what an alert means and which controlled action should follow.",
+        "relevance": "Recall the monitoring loop from memory.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+        "orient": "Reconstruct the monitoring loop and rehearse one drift playbook.",
         "order": 5
       }
     ],
@@ -118,34 +118,35 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Monitoring Model Drift and Quality to drift and quality monitor with alerts and review queues, with examples and checks tied to time from quality drop to triage.",
+      "title": "Monitor decisions, not just endpoints",
+      "sub": "Define what quality means after deployment and which evidence can arrive late.",
+      "summary": "A model can be available and fast while its decisions become wrong, biased, stale, or expensive.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: aggregate metrics stay flat while a high-value segment fails."
+        "Distinguish system health from model quality.",
+        "Name data drift, prediction drift, concept drift, and performance decay.",
+        "Define the owner and action for alerts."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Monitoring Model Drift and Quality matters here",
+          "title": "Healthy software can serve bad predictions",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A deployed classifier and LLM assistant degrade as customer questions and product docs change. The learner's job is not to memorize Monitoring Model Drift and Quality; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved time from quality drop to triage."
+                  "text": "Problem anchor: a loan pre-screen model returns responses in 80 ms with no server errors, yet approval quality deteriorates after a new marketing campaign changes applicant mix. Uptime dashboards are green while the model is wrong for a growing slice of traffic."
                 }
               ]
             },
@@ -153,24 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: drift and quality monitor with alerts and review queues. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if aggregate metrics stay flat while a high-value segment fails, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson skips definition-drilling and spends its effort on edge cases: state boundaries, hidden coupling, observability gaps, and the evidence that would change a production decision."
+                  "text": "Monitoring model quality means watching more than infrastructure. Data drift asks whether inputs changed. Prediction drift asks whether outputs changed. Concept drift asks whether the relationship between inputs and outcomes changed. Performance decay asks whether users or business outcomes got worse, often after labels arrive days or weeks later."
                 }
               ]
             },
@@ -179,17 +163,17 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Monitoring Model Drift and Quality matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Product framing: monitoring protects decisions and user trust."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Monitoring Model Drift and Quality matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Engineering framing: monitoring joins request logs, model version, features, predictions, labels, and latency."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure time from quality drop to triage on examples that resemble the real workload."
+                    "text": "Operations framing: every alert needs severity, owner, playbook, and rollback or investigation path."
                   }
                 ]
               ]
@@ -200,358 +184,86 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "canon1",
+            "canon2"
           ]
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Monitoring Model Drift and Quality.",
-          "steps": [
+          "id": "m1_case",
+          "kind": "functionalExample",
+          "title": "Worked monitoring target: loan pre-screen",
+          "body": [
             {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The release card says model v42 is live. The monitoring target records application channel, region, employment type, score band, decision, latency, model version, and later repayment or manual-review outcome. Reference window: last stable 14 days after v42 rollout. Alert slices: new applicants, self-employed, region, campaign source, and protected-class proxies only where policy allows."
+                }
+              ]
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The output of monitoring is not \"drift detected.\" It is a decision: investigate data pipeline, adjust thresholds, retrain, roll back, or add human review for a slice."
+                }
+              ]
             }
           ],
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A deployed classifier and LLM assistant degrade as customer questions and product docs change"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review drift and quality monitor with alerts and review queues: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where aggregate metrics stay flat while a high-value segment fails. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
           ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A deployed classifier and LLM assistant degrade as customer questions and product docs change. This module asks what mental model changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve time from quality drop to triage."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: aggregate metrics stay flat while a high-value segment fails."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For drift and quality monitor with alerts and review queues, log or test the fields needed to debug time from quality drop to triage. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: drift and quality monitor with alerts and review queues",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A deployed classifier and LLM assistant degrade as customer questions and product docs change. The team wants to improve time from quality drop to triage, but it has already seen this failure: aggregate metrics stay flat while a high-value segment fails."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Traffic plan: 1,200 requests per hour, p95 latency target under two seconds, predictable cost, and a rollback path if quality drops. A demo benchmark is not enough."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: drift and quality monitor with alerts and review queues. It includes workload shape, token or batch budget, model or hardware choice, fallbacks, observability, rollout plan, and the metric time from quality drop to triage."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: route short requests to the fast path, batch background jobs, cap output tokens, log model version and latency, and roll back if quality or cost crosses the release threshold."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: production AI engineer. Context: A deployed classifier and LLM assistant degrade as customer questions and product docs change. Task: design the release runbook for drift and quality monitor with alerts and review queues. Include workload, latency and cost budgets, fallback, observability, rollout, and rollback trigger. Output: {slo, capacity_plan, monitoring, fallback, rollout_gate}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Monitoring Model Drift and Quality to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Monitoring design review"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Monitoring Model Drift and Quality to the running case?",
+          "title": "Green service, bad model",
+          "prompt": "What can be true when uptime and latency dashboards are green?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review drift and quality monitor with alerts and review queues, measure time from quality drop to triage, and test the failure: aggregate metrics stay flat while a high-value segment fails.",
+              "text": "The model is automatically high quality.",
+              "correct": false
+            },
+            {
+              "text": "The model can still be wrong because data, labels, or user behavior shifted.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "No monitoring beyond CPU and memory is needed.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Production model quality depends on live data and outcomes, not only service health.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
         "canon2"
       ]
@@ -559,34 +271,35 @@
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Monitoring Model Drift and Quality to drift and quality monitor with alerts and review queues, with examples and checks tied to time from quality drop to triage.",
+      "title": "Choose reference windows and slices",
+      "sub": "Compare live traffic to a meaningful baseline and avoid aggregate blindness.",
+      "summary": "Drift checks are useful only when the reference window, slice definitions, and sample sizes match the decision.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: aggregate metrics stay flat while a high-value segment fails."
+        "Select a reference window for drift monitoring.",
+        "Explain why aggregate metrics hide cohort failures.",
+        "Connect delayed labels to monitoring design."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "The baseline is a decision, not a default",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind Monitoring Model Drift and Quality. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "A reference window can be training data, a recent stable production period, or an approved benchmark. Training data may be too old; yesterday may include an incident; a benchmark may miss seasonal traffic. Choose deliberately and record why."
                 }
               ]
             },
@@ -594,40 +307,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means connecting workload shape, model choice, serving constraints, observability, and rollback behavior."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is drift and quality monitor with alerts and review queues. Which single field, trace, or test would show whether time from quality drop to triage improved?"
+                  "text": "Slices matter because aggregate stability can hide harm. A recommender may look fine overall while new users fail. A fraud model may improve global precision while missing a new merchant type. A chatbot may keep average satisfaction while one language regresses."
                 }
               ]
             }
@@ -637,272 +317,144 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "canon1"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A deployed classifier and LLM assistant degrade as customer questions and product docs change"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review drift and quality monitor with alerts and review queues: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where aggregate metrics stay flat while a high-value segment fails. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Signals and what they can prove",
+          "criteria": [
+            "Signal",
+            "What it catches",
+            "What it cannot prove alone"
           ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A deployed classifier and LLM assistant degrade as customer questions and product docs change. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve time from quality drop to triage."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: aggregate metrics stay flat while a high-value segment fails."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For drift and quality monitor with alerts and review queues, log or test the fields needed to debug time from quality drop to triage. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: aggregate metrics stay flat while a high-value segment fails. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to drift and quality monitor with alerts and review queues: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: time from quality drop to triage becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Monitoring Model Drift and Quality design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Monitoring Model Drift and Quality to the running case?",
-          "format": "mcq",
           "options": [
             {
-              "text": "Build or review drift and quality monitor with alerts and review queues, measure time from quality drop to triage, and test the failure: aggregate metrics stay flat while a high-value segment fails.",
-              "correct": true
+              "name": "Data drift",
+              "cells": [
+                {
+                  "criterion": "Signal",
+                  "text": "Input distribution changed",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it catches",
+                  "text": "new traffic mix, pipeline shifts, missing values",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it cannot prove alone",
+                  "text": "that business performance is worse",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use as early warning.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "Prediction drift",
+              "cells": [
+                {
+                  "criterion": "Signal",
+                  "text": "Output distribution changed",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it catches",
+                  "text": "threshold shifts, route changes, model behavior changes",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it cannot prove alone",
+                  "text": "which input caused the change",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use with data and version slices.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "Delayed labels",
+              "cells": [
+                {
+                  "criterion": "Signal",
+                  "text": "Outcomes arrive after decisions",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it catches",
+                  "text": "true performance decay",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What it cannot prove alone",
+                  "text": "real-time cause without supporting traces",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for retraining and rollback evidence.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "canon2"
+          ]
+        },
+        {
+          "id": "m2_slice",
+          "kind": "functionalExample",
+          "title": "Case study: aggregate hides a regional failure",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Overall approval precision moves from .81 to .80, below the alert threshold. In one region, precision drops from .79 to .62 after a new data vendor starts filling missing employment length with zeros. A slice alert catches what the global metric hides."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This recalls module 1: monitoring protects decisions. If the decision affects a cohort, the monitoring view must be able to see that cohort within privacy and policy boundaries."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1"
           ]
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
         "canon2"
       ]
@@ -910,34 +462,35 @@
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Monitoring Model Drift and Quality to drift and quality monitor with alerts and review queues, with examples and checks tied to time from quality drop to triage.",
+      "title": "Add LLM quality signals to ML monitoring",
+      "sub": "Track prompts, retrieval, route policy, cost, latency, safety, and human feedback for generative systems.",
+      "summary": "LLM apps need classic service and drift signals plus traces for prompts, retrieval, model routes, guardrails, and evaluations.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: aggregate metrics stay flat while a high-value segment fails."
+        "Name LLM-specific monitoring dimensions.",
+        "Explain why route and cache status affect quality.",
+        "Design alerts that lead to action rather than noise."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Generative monitoring has more moving parts",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Monitoring Model Drift and Quality becomes a decision. The team must choose how much rigor drift and quality monitor with alerts and review queues needs before it can be trusted."
+                  "text": "For an LLM support assistant, quality can change because the prompt changed, retrieval index refreshed, model route switched, semantic cache reused stale content, a tool schema broke, or policy filters became stricter. Traditional accuracy labels may arrive slowly or not at all, so traces and eval samples become core monitoring evidence."
                 }
               ]
             },
@@ -945,28 +498,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves time from quality drop to triage while making this failure visible: aggregate metrics stay flat while a high-value segment fails."
+                  "text": "Useful dimensions include model and response model, prompt version, retrieval index version, top-k citations, tool outcome, guardrail action, refusal rate, token usage, cost, latency, route, cache hit, fallback chain, and user feedback. OpenTelemetry-style GenAI attributes give teams a shared vocabulary for many of these fields."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
               ]
             }
           ],
@@ -975,54 +508,32 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb2",
+            "canon1"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m3_llm",
+          "kind": "functionalExample",
+          "title": "Worked LLM dashboard for lesson generation",
+          "body": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A deployed classifier and LLM assistant degrade as customer questions and product docs change"
-                    }
-                  ]
+                  "text": "Dashboard rows group by prompt version, model route, retrieval index, and lesson category. Signals: validation pass rate, citation coverage, editor rejection rate, average tokens, p95 render latency, safety intervention rate, and top regression examples. A spike in cost with stable pass rate may be acceptable; a stable cost with lower citation coverage is not."
                 }
               ]
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review drift and quality monitor with alerts and review queues: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where aggregate metrics stay flat while a high-value segment fails. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "The alert message should name the owner and next action: \"RAG citation coverage for Safety lessons dropped below 92 percent after index kb_v12; run retrieval smoke set and hold enrichment releases.\""
                 }
               ]
             }
@@ -1032,254 +543,27 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
-          ]
+          ],
+          "personalizedFor": "LLMOps dashboard"
         },
         {
           "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Monitoring Model Drift and Quality on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: aggregate metrics stay flat while a high-value segment fails.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on time from quality drop to triage.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves time from quality drop to triage and catches: aggregate metrics stay flat while a high-value segment fails.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For drift and quality monitor with alerts and review queues, log or test the fields needed to debug time from quality drop to triage. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: aggregate metrics stay flat while a high-value segment fails. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "A benchmark passes at low concurrency but fails at realistic traffic."
-                  }
-                ],
-                [
-                  {
-                    "text": "Cost falls per request but retries increase total spend."
-                  }
-                ],
-                [
-                  {
-                    "text": "Monitoring tracks latency but not quality, version, or fallback behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: time from quality drop to triage gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
           "kind": "decisionCallout",
-          "useWhen": "Use the production path when time from quality drop to triage affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: aggregate metrics stay flat while a high-value segment fails.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
+          "ruleOfThumb": "Alert on product-relevant movement, not every statistical wiggle.",
+          "useWhen": "Use LLM monitoring when prompt, model, route, retrieval, or safety policy changes can affect users without code deploys.",
+          "avoidWhen": "Avoid paging humans for tiny distribution shifts without severity, sample size, slice, and playbook.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Monitoring Model Drift and Quality to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review drift and quality monitor with alerts and review queues, measure time from quality drop to triage, and test the failure: aggregate metrics stay flat while a high-value segment fails.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1288,251 +572,77 @@
         }
       ],
       "citations": [
-        "kb1",
         "kb2",
         "canon1",
-        "canon2"
+        "kb1"
       ],
       "decisionItForces": "Choose the right level of rigor for Monitoring Model Drift and Quality: baseline, production design, or advanced optimization."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Monitoring Model Drift and Quality to drift and quality monitor with alerts and review queues, with examples and checks tied to time from quality drop to triage.",
+      "title": "Write the alert and investigation loop",
+      "sub": "Make drift checks runnable and connect them to owners, thresholds, and playbooks.",
+      "summary": "Monitoring becomes operational when a check produces a severity, owner, evidence bundle, and next action.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: aggregate metrics stay flat while a high-value segment fails."
+        "Write a minimal monitoring check.",
+        "Predict why raw payload logging can create privacy risk.",
+        "Verify AI-generated monitoring plans for actionability."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Monitoring Model Drift and Quality should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For drift and quality monitor with alerts and review queues, the sketch should prove one thing: the system can improve time from quality drop to triage without hiding the failure where aggregate metrics stay flat while a high-value segment fails."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A deployed classifier and LLM assistant degrade as customer questions and product docs change"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review drift and quality monitor with alerts and review queues: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where aggregate metrics stay flat while a high-value segment fails. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A deployed classifier and LLM assistant degrade as customer questions and product docs change. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve time from quality drop to triage."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: aggregate metrics stay flat while a high-value segment fails."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
+          "title": "Minimal drift alert skeleton",
           "language": "python",
-          "code": "# Monitoring Model Drift and Quality: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
+          "code": "def alert_if_needed(live, reference):\n    report = {\n        \"missing_rate_delta\": live.missing_rate - reference.missing_rate,\n        \"approval_rate_delta\": live.approval_rate - reference.approval_rate,\n        \"p95_latency_ms\": live.p95_latency_ms,\n        \"model_version\": live.model_version,\n        \"slice\": live.slice_name,\n    }\n    high = abs(report[\"approval_rate_delta\"]) > 0.08 and live.sample_size >= 500\n    if high:\n        return {\"severity\": \"high\", \"owner\": \"risk-model-oncall\", \"report\": report}\n    return {\"severity\": \"watch\", \"report\": report}\n\n# In production, join delayed labels and link the alert to a playbook.",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to aggregate metrics stay flat while a high-value segment fails."
+                  "text": "The code deliberately combines magnitude, sample size, version, slice, and owner. A real system would use a monitoring library or platform, but the alert contract is the teaching point."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
+            "prompt": "Why is `sample_size >= 500` included before a high-severity alert?",
+            "answer": "Without a sample-size guard, tiny windows can create noisy alerts that look severe but are not reliable enough for action."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "kb2"
+            "canon1"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify an AI-generated monitoring plan",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Monitoring Model Drift and Quality, review it against the running case before accepting it."
+                  "text": "Review AI-generated monitoring advice for missing operational pieces. It should name reference windows, slices, sample-size rules, model and prompt versions, delayed-label joins, privacy limits, thresholds, owners, playbooks, and rollback or retraining criteria."
                 }
               ]
             },
@@ -1541,27 +651,22 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: drift and quality monitor with alerts and review queues?"
+                    "text": "Does the plan monitor data, predictions, outcomes, and service behavior?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Can every alert be sliced by release version and relevant cohort?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: aggregate metrics stay flat while a high-value segment fails?"
+                    "text": "Does it avoid storing raw sensitive text or features unless redaction and retention are defined?"
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug time from quality drop to triage?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Does the playbook say investigate, roll back, retrain, adjust threshold, or add human review?"
                   }
                 ]
               ]
@@ -1572,7 +677,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1582,74 +688,75 @@
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Monitoring Model Drift and Quality to the running case?",
+          "title": "Privacy in monitoring",
+          "prompt": "What is a common monitoring risk for LLM apps?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review drift and quality monitor with alerts and review queues, measure time from quality drop to triage, and test the failure: aggregate metrics stay flat while a high-value segment fails.",
+              "text": "Latency metrics always reveal private data.",
+              "correct": false
+            },
+            {
+              "text": "Trace logs can capture sensitive prompts or retrieved content without redaction and retention policy.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Monitoring eliminates the need for evals.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Monitoring payloads need governance because they may contain user text, features, or decisions.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
             "kb2"
           ]
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "kb2"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Monitoring Model Drift and Quality to drift and quality monitor with alerts and review queues, with examples and checks tied to time from quality drop to triage.",
+      "title": "Turn alerts into learning cycles",
+      "sub": "Finish by rehearsing the monitoring loop from signal to decision.",
+      "summary": "The final skill is deciding what an alert means and which controlled action should follow.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: aggregate metrics stay flat while a high-value segment fails."
+        "Recall the monitoring loop from memory.",
+        "Write a retrieval prompt that reconstructs the lesson.",
+        "Plan a capstone drift playbook for one model."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_recall",
           "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
+          "title": "Retrieval prompt for the whole lesson",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Answer this from memory: \"How do I monitor whether a deployed model is still useful?\" Include service health, data drift, prediction drift, concept drift, delayed labels, slices, reference windows, LLM traces, privacy controls, owners, and playbooks."
                 }
               ]
             },
@@ -1657,16 +764,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "If you can explain how drift and quality monitor with alerts and review queues improves time from quality drop to triage and catches aggregate metrics stay flat while a high-value segment fails, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "Spaced recall: module 1 warned that healthy software can serve bad predictions. The final monitoring loop exists to catch that gap and choose a response with evidence."
                 }
               ]
             }
@@ -1676,64 +774,8 @@
             "serving",
             "gateway",
             "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A deployed classifier and LLM assistant degrade as customer questions and product docs change"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review drift and quality monitor with alerts and review queues: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where aggregate metrics stay flat while a high-value segment fails. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1742,279 +784,62 @@
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Monitoring Model Drift and Quality on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: aggregate metrics stay flat while a high-value segment fails.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on time from quality drop to triage.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves time from quality drop to triage and catches: aggregate metrics stay flat while a high-value segment fails.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "A drift alert is a question, not an automatic retrain button.",
+          "useWhen": "Use monitoring to trigger investigation, rollback, threshold review, human review, or retraining based on evidence.",
+          "avoidWhen": "Avoid retraining blindly from every distribution shift; some shifts are expected, harmless, or caused by instrumentation changes.",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb1"
           ]
         },
         {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For drift and quality monitor with alerts and review queues, log or test the fields needed to debug time from quality drop to triage. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Monitoring Model Drift and Quality: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "m5_capstone",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Capstone: build one alert playbook",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Now apply Monitoring Model Drift and Quality without copying the worked example. Keep the same running case - A deployed classifier and LLM assistant degrade as customer questions and product docs change - but make the design decisions yourself."
+                  "text": "Choose a model or LLM feature. Define one reference window, three slices, two drift signals, one delayed-label metric, version fields, privacy limits, alert thresholds, owner, and first-response playbook. Then write the exact alert message a human should receive."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: time from quality drop to triage."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: aggregate metrics stay flat while a high-value segment fails."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
+                  "text": "Next rung: connect this to model registries and versioning, where release identity lets monitoring point to the artifact or policy that changed."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "gpu",
             "serving",
             "gateway",
             "latency",
-            "throughput"
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
             "kb2"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Monitoring Model Drift and Quality to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review drift and quality monitor with alerts and review queues, measure time from quality drop to triage, and test the failure: aggregate metrics stay flat while a high-value segment fails.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway",
-            "latency",
-            "throughput"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Solo monitoring playbook"
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Monitoring Model Drift and Quality: baseline, production design, or advanced optimization."
     }
@@ -2023,8 +848,8 @@
     "gpu": {
       "id": "gpu",
       "label": "GPU",
-      "laymanDefinition": "A parallel accelerator for tensor computation.",
-      "technicalNote": "In this lesson, GPU is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The compute layer whose health can hide or amplify model-quality problems.",
+      "technicalNote": "GPU saturation, queue time, or fallback to a different endpoint should be monitored alongside quality because infra changes can alter model behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2034,8 +859,8 @@
     "serving": {
       "id": "serving",
       "label": "Serving",
-      "laymanDefinition": "Serving is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Serving is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The production prediction path being monitored.",
+      "technicalNote": "Serving logs need model version, input summaries, prediction, decision, latency, errors, and later labels or feedback when available.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2044,8 +869,8 @@
     "gateway": {
       "id": "gateway",
       "label": "Gateway",
-      "laymanDefinition": "Gateway is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Gateway is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The policy layer that can change which model or provider answers.",
+      "technicalNote": "Gateway route, cache status, fallback chain, and model alias are monitoring dimensions for LLM and multi-model systems.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2054,8 +879,8 @@
     "latency": {
       "id": "latency",
       "label": "Latency",
-      "laymanDefinition": "Latency is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latency is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A reliability signal that can correlate with quality issues.",
+      "technicalNote": "Rising latency can indicate overload, longer prompts, fallback chains, retrieval slowdown, or a model version change.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2064,8 +889,8 @@
     "throughput": {
       "id": "throughput",
       "label": "Throughput",
-      "laymanDefinition": "Throughput is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Throughput is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The volume of predictions or requests flowing through the system.",
+      "technicalNote": "Monitoring windows must account for traffic volume because tiny samples and seasonal spikes can create false alarms.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2074,8 +899,8 @@
     "versioning": {
       "id": "versioning",
       "label": "Versioning",
-      "laymanDefinition": "Versioning is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Versioning is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The link between monitoring signals and the release that produced them.",
+      "technicalNote": "Every alert should be sliceable by model, prompt, retrieval index, feature code, route policy, and deployment version.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -2108,73 +933,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Monitoring Model Drift and Quality using the running case: A deployed classifier and LLM assistant degrade as customer questions and product docs change. Name the artifact (drift and quality monitor with alerts and review queues), explain the mechanism, choose a design level, write the check for aggregate metrics stay flat while a high-value segment fails, and say how you would measure time from quality drop to triage."
+            "text": "From memory, reconstruct the monitoring loop: log versioned predictions, choose reference windows and slices, watch data and prediction drift, join delayed labels, add LLM traces, and route alerts to playbooks."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Monitoring Model Drift and Quality operating path",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Monitoring Model Drift and Quality.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+          "label": "Monitor decisions, not just endpoints",
+          "sub": "Define what quality means after deployment and which evidence can arrive late.",
+          "what": "A model can be available and fast while its decisions become wrong, biased, stale, or expensive.",
+          "relevance": "Distinguish system health from model quality.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+          "orient": "Separate endpoint health from the quality of live decisions.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+          "label": "Choose reference windows and slices",
+          "sub": "Compare live traffic to a meaningful baseline and avoid aggregate blindness.",
+          "what": "Drift checks are useful only when the reference window, slice definitions, and sample sizes match the decision.",
+          "relevance": "Select a reference window for drift monitoring.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+          "orient": "Compare live windows to meaningful baselines and risky slices.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+          "label": "Add LLM quality signals to ML monitoring",
+          "sub": "Track prompts, retrieval, route policy, cost, latency, safety, and human feedback for generative systems.",
+          "what": "LLM apps need classic service and drift signals plus traces for prompts, retrieval, model routes, guardrails, and evaluations.",
+          "relevance": "Name LLM-specific monitoring dimensions.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+          "orient": "Extend monitoring to prompts, retrieval, routes, cost, and safety.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+          "label": "Write the alert and investigation loop",
+          "sub": "Make drift checks runnable and connect them to owners, thresholds, and playbooks.",
+          "what": "Monitoring becomes operational when a check produces a severity, owner, evidence bundle, and next action.",
+          "relevance": "Write a minimal monitoring check.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+          "orient": "Convert drift signals into owner-driven investigation and response loops.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time from quality drop to triage while avoiding the failure: aggregate metrics stay flat while a high-value segment fails.",
+          "label": "Turn alerts into learning cycles",
+          "sub": "Finish by rehearsing the monitoring loop from signal to decision.",
+          "what": "The final skill is deciding what an alert means and which controlled action should follow.",
+          "relevance": "Recall the monitoring loop from memory.",
           "moduleId": "m5",
           "layer": "Path",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Monitoring Model Drift and Quality to the running artifact and failure test.",
+          "orient": "Reconstruct the monitoring loop and rehearse one drift playbook.",
           "order": 5
         }
       ],
@@ -2204,54 +1029,54 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Monitor decisions, not just endpoints",
+        "detail": "Define what quality means after deployment and which evidence can arrive late."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Choose reference windows and slices",
+        "detail": "Compare live traffic to a meaningful baseline and avoid aggregate blindness."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Add LLM quality signals to ML monitoring",
+        "detail": "Track prompts, retrieval, route policy, cost, latency, safety, and human feedback for generative systems."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Write the alert and investigation loop",
+        "detail": "Make drift checks runnable and connect them to owners, thresholds, and playbooks."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Turn alerts into learning cycles",
+        "detail": "Finish by rehearsing the monitoring loop from signal to decision."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_contract",
+        "label": "Does monitoring define quality, not only endpoint health?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
+        "id": "chk_flow",
+        "label": "Are reference windows, slices, sample-size rules, and delayed labels explicit?",
         "fromModuleId": "m2"
       },
       {
-        "id": "chk_metric",
-        "label": "Can you measure time from quality drop to triage on realistic cases?",
+        "id": "chk_choice",
+        "label": "Do LLM traces include prompt, route, retrieval, cache, cost, latency, and safety dimensions?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: aggregate metrics stay flat while a high-value segment fails?",
+        "id": "chk_verify",
+        "label": "Does each alert name severity, owner, evidence, and first response?",
         "fromModuleId": "m4"
       },
       {
         "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "label": "Are privacy, redaction, and retention limits defined for monitoring payloads?",
         "fromModuleId": "m5"
       }
     ],
@@ -2264,30 +1089,30 @@
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Production Model Monitoring",
+      "url": "https://docs.evidentlyai.com/",
+      "asOfDate": "2026-06-23"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: LLMOps Operating Loop",
+      "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/",
+      "asOfDate": "2026-06-23"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "vLLM documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "Evidently documentation",
+      "url": "https://docs.evidentlyai.com/",
+      "asOfDate": "2026-06-23"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "NannyML documentation",
+      "url": "https://nannyml.readthedocs.io/",
+      "asOfDate": "2026-06-23"
     }
   }
 }
