@@ -495,8 +495,11 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 /* pages are fixed in the viewport, so force scroll-reveal blocks visible up front */
 [data-reading="horizontal"] .reveal{opacity:1!important;transform:none!important}
 #hworkbench{display:grid;grid-template-columns:248px 1fr;align-items:stretch}
-#hworkbench #blocknav{position:sticky;top:53px;align-self:start;max-height:calc(100vh - 53px);overflow:auto;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:3px;background:var(--surface)}
-.h-stage{position:relative;overflow:hidden;height:calc(100dvh - 55px);display:flex;flex-direction:column}
+#hworkbench #blocknav{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;border-right:1px solid var(--border);padding:14px 10px;display:flex;flex-direction:column;gap:3px;background:var(--surface)}
+.h-stage{position:relative;overflow:hidden;height:100dvh;display:flex;flex-direction:column}
+.hx-tools{display:flex;align-items:center;gap:8px}
+.hx-tools .progress{width:84px;height:6px;border-radius:999px;background:var(--bg);overflow:hidden;flex:none}
+.hx-tools .progress i{display:block;height:100%;background:var(--accent);border-radius:999px}
 .h-track{display:flex;height:100%;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform}
 @media (prefers-reduced-motion:reduce){.h-track{transition:none}}
 .h-page{flex:0 0 100%;width:100%;height:100%;display:flex;flex-direction:column;min-width:0}
