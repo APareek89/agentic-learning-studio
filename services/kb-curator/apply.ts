@@ -88,11 +88,33 @@ export async function applyNote(synth: SynthResult, verdict: IpVerdict, dryRun: 
   // sourceId is the repo-relative path — matching how ingest.ts keys documents,
   // so the curator updates the SAME `documents` row instead of creating a dupe.
   const loaded = toLoadedSource(synth, relPath);
+  const existedBefore = await documentExists(loaded.sourceId);
   const res = await upsertSource(loaded);
 
   // res.added 0 + skipped>0 means the store saw an unchanged hash (idempotent).
   if (res.added === 0 && !changed) return { outcome: "skipped", path: relPath, chunks: 0 };
+  // Stamp the new-vs-modified flag (migration 0011) so the DB shows exactly what
+  // the curator ADDED vs MODIFIED. Pre-existing documents row ⇒ modified.
+  await stampCuratorChange(loaded.sourceId, existedBefore ? "modified" : "added");
   return { outcome: "updated", path: relPath, chunks: res.added };
+}
+
+/** Did a `documents` row already exist for this source (⇒ modified, not added)? */
+async function documentExists(sourceId: string): Promise<boolean> {
+  const pool = rawPool();
+  if (!pool) return false;
+  const r = await pool.query(`select 1 from documents where source_id = $1`, [sourceId]);
+  return (r.rowCount ?? 0) > 0;
+}
+
+/** Stamp the KB-curator change flag (migration 0011) on the documents row. */
+async function stampCuratorChange(sourceId: string, kind: "added" | "modified"): Promise<void> {
+  const pool = rawPool();
+  if (!pool) return;
+  await pool.query(
+    `update documents set curator_change = $1, curator_changed_at = now() where source_id = $2`,
+    [kind, sourceId]
+  );
 }
 
 /** Build the LoadedSource the store expects from a synthesized note. */
