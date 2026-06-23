@@ -5,7 +5,7 @@
     "title": "Build a RAG App with LlamaIndex",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 44,
-    "thesis": "Build a RAG App with LlamaIndex becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Build a RAG App with LlamaIndex is practical when learners can apply it to this concrete case: A LlamaIndex onboarding assistant must answer handbook questions with page-level evidence. By the end, they should be able to build or review LlamaIndex index, query engine, and citation validation plan, measure answer groundedness and source coverage, and catch the failure where metadata is lost, so answers cannot point back to the handbook section."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Build a RAG App with LlamaIndex: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Build a RAG App with LlamaIndex by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build a LlamaIndex RAG slice around readers, nodes, indexes, retrievers, query engines, source nodes, and retrieval evaluation.",
+    "oneLineThesis": "A LlamaIndex RAG app should make the data path explicit: source documents become nodes, nodes become indexed evidence, and query engines return inspectable source nodes.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Build a RAG App with LlamaIndex.",
-        "what": "Target behavior turns Build a RAG App with LlamaIndex into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+        "label": "Pin the query-engine contract",
+        "sub": "Start with the answer behavior a LlamaIndex query engine must satisfy.",
+        "what": "Learners write the expected behavior for query, source nodes, and answer synthesis.",
+        "relevance": "This prevents agent workflows from masking weak retrieval quality.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Define cited responses and refusals before selecting index settings.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Build a RAG App with LlamaIndex into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+        "label": "Readers and node parsers create evidence units",
+        "sub": "LlamaIndex retrieval quality begins with documents becoming nodes.",
+        "what": "Learners connect LlamaIndex nodes to chunking and provenance.",
+        "relevance": "Poor node parsing leads to vague source nodes and unsupported synthesis.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Shape nodes so each can support a cited answer.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Build a RAG App with LlamaIndex into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+        "label": "Index and retriever settings shape source_nodes",
+        "sub": "Top-k, filters, and postprocessors decide what synthesis sees.",
+        "what": "Learners tune retrievers, metadata filters, and postprocessors against eval questions.",
+        "relevance": "Default settings can hide expected evidence below the synthesis cutoff.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Treat the query engine as context assembly, not a black box.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Build a RAG App with LlamaIndex into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+        "label": "Inspect source_nodes in the runnable path",
+        "sub": "The first implementation should print the evidence objects.",
+        "what": "Learners code the smallest index-to-query path with inspection.",
+        "relevance": "Source-node inspection distinguishes retrieval failures from synthesis failures.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Run a minimal query and review node text, score, and metadata.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Build a RAG App with LlamaIndex into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+        "label": "Evaluate before wrapping the query engine as a tool",
+        "sub": "Agents should use a reliable query engine, not repair it.",
+        "what": "Learners set gates before exposing the query engine to agents.",
+        "relevance": "Tool-using agents amplify bad evidence with extra steps and longer traces.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Run retrieval and faithfulness checks before adding workflow complexity.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,26 +110,29 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Build a RAG App with LlamaIndex.",
-      "summary": "Define the user-visible outcome for Build a RAG App with LlamaIndex. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Pin the query-engine contract",
+      "sub": "Start with the answer behavior a LlamaIndex query engine must satisfy.",
+      "summary": "The first LlamaIndex build target is a trustworthy query engine over a tiny corpus.",
       "objectives": [
-        "Explain the role of target behavior in Build a RAG App with LlamaIndex.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why pin the query-engine contract matters for this LlamaIndex build.",
+        "Define answer and refusal behavior.",
+        "Choose representative documents and questions."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -127,20 +140,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "The query engine is the product slice",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LlamaIndex",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a course assistant must answer from curated notes and show which LlamaIndex source nodes supported the response. The first goal is not a chat agent; it is a query engine that retrieves, cites, and refuses correctly."
                 }
               ]
             },
@@ -148,33 +154,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The contract names allowed documents, source metadata, similarity top-k, answer style, and refusal behavior when no node supports the question."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If the expected source node for each test question is unknown, the corpus is not ready for evaluation."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Build the smallest bridge you can load-test before opening the highway."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Worked query-engine acceptance card",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LlamaIndex prototype accepts a question, retrieves evidence from local Markdown notes, returns an answer with source titles, and logs retrieved chunks or nodes. It passes when four factual questions cite the expected source and the negative question refuses."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This artifact is small enough for a reviewer to inspect in one sitting, but complete enough to catch the failures that matter: missing evidence, noisy retrieval, unsupported claims, and silent fallback."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LlamaIndex."
+                    "text": "Pick three source files and record their source metadata."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Write five user-style questions with expected source titles."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Define answer, citation, and refusal requirements."
+                  }
+                ],
+                [
+                  {
+                    "text": "Run the slice before adding memory, chat history, or agents."
                   }
                 ]
               ]
@@ -183,235 +233,78 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Build a RAG App with LlamaIndex.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LlamaIndex, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with llamaindex help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Build a RAG App with LlamaIndex"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Build a RAG App with LlamaIndex?",
+          "title": "Build scope",
+          "prompt": "Why include a negative question in the first RAG app slice?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To reduce the number of citations.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "To verify the app can say there is not enough evidence instead of inventing an answer.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "To avoid building retrieval.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Refusal on missing evidence is part of grounded behavior.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Readers and node parsers create evidence units",
+      "sub": "LlamaIndex retrieval quality begins with documents becoming nodes.",
+      "summary": "Readers load data; node parsers decide the evidence units the index can retrieve.",
       "objectives": [
-        "Explain the role of architecture slice in Build a RAG App with LlamaIndex.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why readers and node parsers create evidence units matters for this LlamaIndex build.",
+        "Split or parse into evidence-sized units.",
+        "Preview units before embedding."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -419,20 +312,13 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "Nodes are the retrieval surface",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LlamaIndex",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A LlamaIndex reader loads source material, but the node parser decides what the retriever will later select. Nodes should preserve heading path, source title, URL or path, freshness date, and permission scope."
                 }
               ]
             },
@@ -440,33 +326,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Parsing should respect the source: headings for Markdown, table context for tabular data, and code boundaries for developer docs."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Print sample nodes with metadata before building the index; a node that cannot support a citation should not be embedded yet."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "The loader stamps the passport each chunk carries through the app."
+        },
+        {
+          "id": "m2_worked",
+          "kind": "functionalExample",
+          "title": "Case study: source_nodes become readable after metadata repair",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The first prototype returns citations like “Document 2,” which makes review painful. After ingestion stores human-readable titles and heading paths, the same answer becomes auditable."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "No model changed; the app simply preserved provenance."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LlamaIndex."
+                    "text": "Normalize text and remove boilerplate."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Split by source structure before token windows."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Attach title, URL/path, heading, and version metadata."
+                  }
+                ],
+                [
+                  {
+                    "text": "Print sample units and reject malformed ones."
                   }
                 ]
               ]
@@ -475,195 +405,78 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LlamaIndex, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with llamaindex help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
-            },
-            {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
-            },
-            {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
+          "personalizedFor": "Build a RAG App with LlamaIndex"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Build a RAG App with LlamaIndex?",
+          "title": "Ingestion signal",
+          "prompt": "What is the fastest way to catch bad chunking before model calls?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Raise answer temperature.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Preview the chunk or node text together with metadata.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Hide citations until production.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Inspection at ingestion catches source-shape errors early.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Index and retriever settings shape source_nodes",
+      "sub": "Top-k, filters, and postprocessors decide what synthesis sees.",
+      "summary": "LlamaIndex retrieval choices determine which nodes reach answer synthesis.",
       "objectives": [
-        "Explain the role of core implementation in Build a RAG App with LlamaIndex.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why index and retriever settings shape source_nodes matters for this LlamaIndex build.",
+        "Prompt the model with explicit evidence boundaries.",
+        "Validate citations and insufficient-evidence behavior."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -671,20 +484,13 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "A query engine assembles context from nodes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LlamaIndex",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A VectorStoreIndex plus query engine can feel automatic, but the important decisions remain explicit: which index, which retriever, which filters, how many nodes, and which postprocessors or rerankers."
                 }
               ]
             },
@@ -692,211 +498,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build a RAG App with LlamaIndex."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LlamaIndex, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "The source_nodes returned by a response are the main debugging artifact. They should show whether the expected evidence reached synthesis."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Compare expected node IDs with returned source_nodes before judging the final answer prose."
                 }
               ]
             }
@@ -904,67 +515,172 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Do not debug the whole machine when one visible gear is slipping."
+        },
+        {
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "RAG app failure surfaces",
+          "criteria": [
+            "Surface",
+            "Symptom",
+            "Fix"
+          ],
+          "options": [
+            {
+              "name": "Retrieval",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Wrong or missing evidence.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "Expected source absent from top-k.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Chunking, filters, hybrid search, reranking.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Inspect before prompt tuning.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Generation",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Evidence present but answer misreads it.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "Unsupported synthesis or overbroad claim.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Prompt, context packing, answer constraints.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Inspect with fixed evidence.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Validation",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Answer lacks citations or schema.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "UI cannot trust or render output.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Structured output, citation checks, refusal gate.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Use before returning to users.",
+              "cost": "Low",
+              "complexity": "Medium"
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Build a RAG App with LlamaIndex?",
+          "title": "Debug split",
+          "prompt": "The expected source is absent from retrieved evidence. Which stage should you fix first?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "CSS layout.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Retrieval or ingestion, before rewriting the answer prompt.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The final citation renderer only.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The model cannot cite evidence it never receives.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build a RAG App with LlamaIndex: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Inspect source_nodes in the runnable path",
+      "sub": "The first implementation should print the evidence objects.",
+      "summary": "A useful LlamaIndex demo returns an answer and the source nodes behind it.",
       "objectives": [
-        "Explain the role of validation and tracing in Build a RAG App with LlamaIndex.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why inspect source_nodes in the runnable path matters for this LlamaIndex build.",
+        "Predict which source answers a test question.",
+        "Expose traces for validation."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -972,20 +688,13 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
+          "title": "The answer is only half the response",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LlamaIndex",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "The LlamaIndex response object can expose `source_nodes`. Use them. They are the bridge between retrieval evaluation and answer review."
                 }
               ]
             },
@@ -993,230 +702,119 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Spaced recall: from faithfulness evaluation, a citation is only useful when the cited node supports the generated claim. Printing source_nodes makes that review possible."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build a RAG App with LlamaIndex."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Keep the initial corpus tiny enough that every source node can be inspected by hand."
+                }
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LlamaIndex, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with llamaindex help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "LlamaIndex query engine with source_nodes trace",
           "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
+          "code": "from llama_index.core import Document, VectorStoreIndex\n\nDOCS = [\n    Document(text=\"Reranking reorders retrieved candidates before generation.\", metadata={\"source\": \"retrieval.md\"}),\n    Document(text=\"Chunking preserves answer evidence with headings and metadata.\", metadata={\"source\": \"chunking.md\"}),\n]\n\nindex = VectorStoreIndex.from_documents(DOCS)\nquery_engine = index.as_query_engine(similarity_top_k=2)\nresponse = query_engine.query(\"What does reranking do before generation?\")\n\nprint(response)\nfor node in response.source_nodes:\n    print(\"TRACE\", node.metadata, node.score, node.text[:80])",
+          "explanation": "The LlamaIndex path builds an index and prints source nodes, which is the minimum evidence loop to review.",
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before running it with dependencies installed, predict which source node should be most relevant.",
+            "answer": "retrieval.md should be the supporting source. If not, inspect node text, metadata, top-k, and embedding behavior."
           },
-          "syntax": [
-            {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
-            },
-            {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
-            },
-            {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Build a RAG App with LlamaIndex?",
+          "title": "Runnable slice",
+          "prompt": "Why use a tiny corpus for the first implementation?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Tiny corpora prove production scalability.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It makes retrieval and citation failures easy to inspect by hand.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It removes the need for metadata.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Small slices are for correctness and observability, not scale claims.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Evaluate before wrapping the query engine as a tool",
+      "sub": "Agents should use a reliable query engine, not repair it.",
+      "summary": "LlamaIndex agents and workflows should sit on top of a tested retrieval layer.",
       "objectives": [
-        "Explain the role of hardening path in Build a RAG App with LlamaIndex.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why evaluate before wrapping the query engine as a tool matters for this LlamaIndex build.",
+        "Verify citations support generated claims.",
+        "Define the next production rung."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -1224,20 +822,13 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "Do not hide weak retrieval inside an agent",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LlamaIndex",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "If the query engine misses expected source nodes for direct questions, wrapping it in a FunctionAgent or workflow will not solve the evidence problem. It will just make the failure harder to read."
                 }
               ]
             },
@@ -1245,14 +836,44 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "The gate should include source-node hit rate, faithful answer review, negative-case refusal, and metadata/citation quality. Only then should the query engine become an agent tool."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
+                  "text": "The next complexity step is allowed only when the simple query path passes."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Release gate for a LlamaIndex query engine",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Use this checklist before calling the build complete."
                 }
               ]
             },
@@ -1261,17 +882,27 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LlamaIndex."
+                    "text": "The retrieved evidence contains the facts stated in the answer."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Each citation points to a readable source title and location."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "The negative test produces a qualified refusal or “not enough evidence.”"
+                  }
+                ],
+                [
+                  {
+                    "text": "The trace shows retrieved IDs, scores or ranks, and final packed context."
+                  }
+                ],
+                [
+                  {
+                    "text": "The acceptance test reruns after source, model, framework, or chunking changes."
                   }
                 ]
               ]
@@ -1280,234 +911,67 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LlamaIndex, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Build a RAG App with LlamaIndex?",
+          "title": "Release gate",
+          "prompt": "What should block release even if the answer sounds helpful?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The trace includes too many useful details for developers.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A factual claim that is not supported by the retrieved cited evidence.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The app has only one model provider.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Groundedness is the top-level promise of a RAG app.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build a RAG App with LlamaIndex: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A small working version used to prove the workflow and failure cases.",
+      "technicalNote": "A useful AI prototype includes representative inputs, acceptance checks, observability, and known limits rather than only a happy-path demo.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +980,8 @@
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The component that finds relevant evidence before the model answers.",
+      "technicalNote": "Retrievers need chunking, metadata filters, ranking, citation handoff, and evaluation against real questions.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +990,8 @@
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that decides whether an output or workflow step meets the contract.",
+      "technicalNote": "Validators can inspect schemas, citations, safety rules, acceptance tests, and regressions before a result reaches users.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +1000,8 @@
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A recorded path of model calls, retrieval, tools, tokens, latency, and errors.",
+      "technicalNote": "Traces make build lessons debuggable by showing which prompt, source, tool, model, and check produced a result.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1010,8 @@
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The packaged path that serves the workflow to real users or reviewers.",
+      "technicalNote": "Deployment includes environment, secrets, routing, monitoring, rollback, and data-handling policy, not just pushing code.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,8 +1020,8 @@
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A concrete test that says the feature is good enough for the intended use.",
+      "technicalNote": "Acceptance tests should cover the target scenario, expected artifact, failure mode, and evidence needed for review.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1565,20 +1029,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Build a RAG App with LlamaIndex",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "LlamaIndex build gate",
         "questions": [
           {
-            "q": "What decision does Build a RAG App with LlamaIndex change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What is the smallest app slice that proves grounded answers work end to end?",
+            "why": "A narrow slice makes loader, splitter, retriever, prompt, validator, and trace failures visible.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "One-source grounded Q&A with source inspection",
+              "Full chat product immediately",
+              "Fine-tune the model before retrieval"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Ship the first slice only when it can answer, cite, and refuse on representative cases."
           }
         ]
       }
@@ -1590,64 +1054,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Build a RAG App with LlamaIndex is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct the LlamaIndex build by naming reader, node parser, metadata fields, index, retriever settings, query engine, source_nodes inspection, and eval cases."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "LlamaIndex RAG path from readers to source nodes",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Build a RAG App with LlamaIndex.",
-          "what": "Target behavior turns Build a RAG App with LlamaIndex into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+          "label": "Pin the query-engine contract",
+          "sub": "Start with the answer behavior a LlamaIndex query engine must satisfy.",
+          "what": "Learners write the expected behavior for query, source nodes, and answer synthesis.",
+          "relevance": "This prevents agent workflows from masking weak retrieval quality.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Define cited responses and refusals before selecting index settings.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Build a RAG App with LlamaIndex into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+          "label": "Readers and node parsers create evidence units",
+          "sub": "LlamaIndex retrieval quality begins with documents becoming nodes.",
+          "what": "Learners connect LlamaIndex nodes to chunking and provenance.",
+          "relevance": "Poor node parsing leads to vague source nodes and unsupported synthesis.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Shape nodes so each can support a cited answer.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Build a RAG App with LlamaIndex into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+          "label": "Index and retriever settings shape source_nodes",
+          "sub": "Top-k, filters, and postprocessors decide what synthesis sees.",
+          "what": "Learners tune retrievers, metadata filters, and postprocessors against eval questions.",
+          "relevance": "Default settings can hide expected evidence below the synthesis cutoff.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Treat the query engine as context assembly, not a black box.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Build a RAG App with LlamaIndex into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LlamaIndex, not just recognize the words.",
+          "label": "Inspect source_nodes in the runnable path",
+          "sub": "The first implementation should print the evidence objects.",
+          "what": "Learners code the smallest index-to-query path with inspection.",
+          "relevance": "Source-node inspection distinguishes retrieval failures from synthesis failures.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Run a minimal query and review node text, score, and metadata.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Evaluate before wrapping the query engine as a tool",
+          "sub": "Agents should use a reliable query engine, not repair it.",
+          "what": "Learners set gates before exposing the query engine to agents.",
+          "relevance": "Tool-using agents amplify bad evidence with extra steps and longer traces.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Run retrieval and faithfulness checks before adding workflow complexity.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "feeds"
         },
         {
           "from": "n_m2",
@@ -1658,57 +1139,62 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "gates"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Build a LlamaIndex RAG prototype over three documents. Configure reader metadata, node parsing, VectorStoreIndex or chosen store, query engine top-k, source_nodes display, and a five-question eval with one insufficient-evidence case. Next rung: expose the query engine as an agent tool only after eval passes.",
+      "scopedTo": "Build a RAG App with LlamaIndex"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Pin the query-engine contract",
+        "detail": "The first LlamaIndex build target is a trustworthy query engine over a tiny corpus."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Readers and node parsers create evidence units",
+        "detail": "Readers load data; node parsers decide the evidence units the index can retrieve."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Index and retriever settings shape source_nodes",
+        "detail": "LlamaIndex retrieval choices determine which nodes reach answer synthesis."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Inspect source_nodes in the runnable path",
+        "detail": "A useful LlamaIndex demo returns an answer and the source nodes behind it."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Evaluate before wrapping the query engine as a tool",
+        "detail": "LlamaIndex agents and workflows should sit on top of a tested retrieval layer."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_contract",
+        "label": "Can you explain the contract in “Pin the query-engine contract”?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_trace",
+        "label": "Can a reviewer inspect evidence from “Inspect source_nodes in the runnable path”?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does “Evaluate before wrapping the query engine as a tool” block unsupported answers?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Design a one-page implementation plan for Build a RAG App with LlamaIndex: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -1738,6 +1224,34 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

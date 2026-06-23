@@ -4,8 +4,8 @@
     "topic": "Fine-tuning vs RAG vs Prompting",
     "title": "Fine-tuning vs RAG vs Prompting",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 32,
-    "thesis": "Fine-tuning vs RAG vs Prompting becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 40,
+    "thesis": "Prompting, retrieval-augmented generation, and fine-tuning solve different adaptation problems: steering behavior at request time, grounding answers in external knowledge, or changing model behavior through training examples."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -24,59 +24,64 @@
     ]
   },
   "mentalMap": {
-    "title": "Fine-tuning vs RAG vs Prompting: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Fine-tuning vs RAG vs Prompting by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "title": "Prompting, RAG, or fine-tuning?",
+    "caption": "The map compares the three adaptation levers by what kind of problem they solve.",
+    "oneLineThesis": "Prompting changes instructions, RAG supplies changing facts, and fine-tuning changes repeated behavior in the model.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Prompting",
         "sub": "Build the simplest useful picture of Fine-tuning vs RAG vs Prompting.",
-        "what": "Mental model turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
+        "what": "Prompting changes behavior by changing the visible request.",
+        "relevance": "It is the first lever when the model already has the capability.",
         "moduleId": "m1",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Best for instructions, roles, examples, output shape, and fast iteration."
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "RAG",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
+        "what": "RAG supplies evidence at request time.",
+        "relevance": "It avoids retraining when facts change or need citations.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Best for private, recent, or large knowledge that should stay external."
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "Fine-tuning",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
+        "what": "Fine-tuning updates model weights for a narrower behavior.",
+        "relevance": "It helps when prompting is too brittle and facts are not the issue.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Best for stable repeated behavior learned from representative examples."
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "Decision criteria",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
+        "what": "Criteria prevent choosing the fanciest lever by default.",
+        "relevance": "They guide beginners toward the smallest reliable change.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Compare freshness, behavior stability, cost, eval readiness, and risk."
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Recommendation",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
+        "what": "The final choice maps problem type to adaptation method.",
+        "relevance": "It turns the comparison into an actionable next step.",
         "moduleId": "m5",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Pick the smallest lever that solves the actual failure mode."
       }
     ],
     "edges": [
@@ -100,47 +105,39 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "comparative"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Fine-tuning vs RAG vs Prompting.",
-      "summary": "Build the simplest useful picture of Fine-tuning vs RAG vs Prompting. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "The three levers solve different failures",
+      "sub": "Start by diagnosing the adaptation problem before choosing a method.",
+      "summary": "A beginner mistake is using the most expensive lever first. The real question is whether the failure is instruction, knowledge, or learned behavior.",
       "objectives": [
-        "Explain the role of mental model in Fine-tuning vs RAG vs Prompting.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish the three adaptation levers.",
+        "Classify failures by root cause.",
+        "Avoid using fine-tuning for missing facts."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
         "prompt",
-        "schema"
+        "rag",
+        "fine_tuning"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "frp_m1",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Adaptation begins with failure diagnosis",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Fine-tuning vs RAG vs Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Prompting, RAG, and fine-tuning all change model behavior, but they act at different layers. Prompting changes the visible instructions. RAG changes the evidence sent with the request. Fine-tuning changes weights through training examples."
                 }
               ]
             },
@@ -148,240 +145,94 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Problem anchor: a refund assistant is polite but cites old policy, formats answers inconsistently, and sometimes misroutes escalation cases. One lever will not fix all three failures."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: which lever should handle a policy that changes every month?"
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prompt",
+            "rag",
+            "fine_tuning"
+          ],
+          "sources": [
+            "kb1",
+            "kb3",
+            "canon2"
+          ],
+          "analogy": "The three levers are like editing the recipe card, bringing the right ingredients, or retraining the cook."
+        },
+        {
+          "id": "frp_m1_case",
+          "kind": "functionalExample",
+          "title": "Worked diagnosis: three failures, three levers",
+          "body": [
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Fine-tuning vs RAG vs Prompting."
+                    "text": "Wrong tone: try prompting and examples first."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Stale refund rule: use RAG over the current policy source."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Repeated escalation-label mistake across many examples: consider fine-tuning after evals prove the pattern."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Fine-tuning vs RAG vs Prompting.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Fine-tuning vs RAG vs Prompting, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
+            "prompt",
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
             "kb1",
-            "canon1"
-          ]
+            "kb3",
+            "canon2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for fine-tuning vs rag vs prompting help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_quiz",
+          "id": "frp_m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Fine-tuning vs RAG vs Prompting?",
+          "title": "Check diagnosis",
+          "prompt": "Which lever is usually best for changing facts?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Fine-tuning, because all knowledge should live in weights.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "RAG, because facts can stay external and update without retraining.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Temperature, because it makes facts current.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Changing knowledge is a retrieval problem more often than a training problem.",
           "termIds": [
-            "llm",
-            "token"
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
             "kb1"
@@ -389,50 +240,38 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Prompting is the fastest behavior lever",
+      "sub": "First test whether better instructions and examples solve the issue.",
+      "summary": "Prompting is best for task framing, tone, format, refusal policy, and context use when the model already has the capability.",
       "objectives": [
-        "Explain the role of mechanism in Fine-tuning vs RAG vs Prompting.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name problems prompting can solve.",
+        "Write a prompt as a testable interface.",
+        "Know when prompting is too brittle."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
         "prompt",
-        "schema"
+        "schema",
+        "llm"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m2_concept",
+          "id": "frp_m2",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Prompts steer visible behavior",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Fine-tuning vs RAG vs Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A prompt can define role, task, constraints, examples, context boundaries, and output shape. It is the cheapest lever to change and the easiest to evaluate."
                 }
               ]
             },
@@ -440,111 +279,30 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Fine-tuning vs RAG vs Prompting."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Fine-tuning vs RAG vs Prompting, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "Prompting fails when the model lacks needed evidence, the behavior is too frequent and brittle, or the output requires a hard schema better enforced by structured outputs."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token"
+            "prompt",
+            "schema"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb3"
+          ],
+          "analogy": "A prompt is a checklist on the counter; it helps if the cook already knows how to cook."
         },
         {
-          "id": "m2_example",
+          "id": "frp_m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Complete prompt slice for refund tone",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for fine-tuning vs rag vs prompting help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Role: support assistant. Context: current retrieved refund policy will appear below. Task: answer in three short bullets. Constraints: do not invent policy, cite the source section, and ask for invoice ID if missing. Output: `answer`, `source_section`, `missing_info`."
                 }
               ]
             },
@@ -552,77 +310,43 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "This prompt is useful before fine-tuning because it creates an eval target. If it works reliably, training is unnecessary."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "prompt",
+            "schema"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb3"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m2_quiz",
+          "id": "frp_m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Fine-tuning vs RAG vs Prompting?",
+          "title": "Check prompting",
+          "prompt": "When should prompting be tried first?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "When the app needs private changing policy text.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "When the model has the capability and needs clearer instructions, examples, or format.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "When hundreds of labeled examples already prove a stable model-weight change is needed.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Prompting is the fastest first lever for steerable behavior.",
           "termIds": [
-            "llm",
-            "token"
+            "prompt"
           ],
           "sources": [
             "kb1"
@@ -630,50 +354,38 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "RAG keeps knowledge outside weights",
+      "sub": "Use retrieval when correctness depends on current or private sources.",
+      "summary": "RAG answers with external evidence. It is the right lever when the facts should be updated, cited, or access-controlled.",
       "objectives": [
-        "Explain the role of design choices in Fine-tuning vs RAG vs Prompting.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why RAG is not fine-tuning.",
+        "Choose RAG for changing knowledge.",
+        "Name retrieval-specific failure modes."
       ],
       "termIds": [
+        "rag",
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "prompt"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m3_concept",
+          "id": "frp_m3",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "RAG supplies evidence at request time",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Fine-tuning vs RAG vs Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "RAG loads, chunks, indexes, retrieves, and packs evidence for the model to use. The model still writes the answer, but the facts come from the retrieved source pack."
                 }
               ]
             },
@@ -681,248 +393,66 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Fine-tuning vs RAG vs Prompting."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Fine-tuning vs RAG vs Prompting, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "Use RAG for policies, product docs, customer records, internal knowledge, and other material that changes or needs provenance."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token"
+            "rag",
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "canon2"
+          ],
+          "analogy": "RAG is an open-book exam: the answer still needs reasoning, but the facts come from the book."
         },
         {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "frp_m3_case",
+          "kind": "functionalExample",
+          "title": "Case study: old refund policy",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "The bot says refunds are available for 60 days because that pattern appeared in old examples. The policy changed to 30 days. Fine-tuning would bake in another snapshot; RAG can retrieve the current policy section at answer time."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "canon2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m3_quiz",
+          "id": "frp_m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Fine-tuning vs RAG vs Prompting?",
+          "title": "Check RAG",
+          "prompt": "What is a RAG-specific failure?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The model cannot parse JSON syntax.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Retriever misses the policy paragraph, so generation answers from weak or wrong evidence.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The training learning rate is too high.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "RAG quality depends on retrieval, metadata, and grounding as well as generation.",
           "termIds": [
-            "llm",
-            "token"
+            "rag"
           ],
           "sources": [
             "kb1"
@@ -930,51 +460,38 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Fine-tuning vs RAG vs Prompting: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Fine-tuning teaches stable repeated behavior",
+      "sub": "Train only after prompting and evals reveal a durable pattern.",
+      "summary": "Fine-tuning is for frequent stable behavior, format, domain shorthand, or task patterns that prompts cannot stabilize.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Fine-tuning vs RAG vs Prompting.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name good fine-tuning use cases.",
+        "Explain why evals come before training.",
+        "Avoid training on stale or sensitive facts."
       ],
       "termIds": [
+        "fine_tuning",
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "prompt"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
+          "id": "frp_m4",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "Fine-tuning changes model weights",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Fine-tuning vs RAG vs Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Fine-tuning continues training on examples. The goal is not to add one new fact. The goal is to make a repeated behavior more likely by default: style, labels, tool-argument shape, specialist formatting, or domain shorthand."
                 }
               ]
             },
@@ -982,266 +499,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The KB verdict is direct: use fine-tuning when repeated behavior should become part of the model, not when the app only needs fresher facts."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Fine-tuning vs RAG vs Prompting."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "fine_tuning",
+            "llm"
           ],
           "sources": [
             "kb1"
-          ]
+          ],
+          "analogy": "Fine-tuning is like practice drills; it changes habit, not the current contents of the textbook."
         },
         {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Fine-tuning vs RAG vs Prompting, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for fine-tuning vs rag vs prompting help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
+          "id": "frp_m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Tiny lever recommender",
           "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
+          "code": "def choose_lever(problem):\n    if problem == \"stale facts\":\n        return \"RAG\"\n    if problem == \"tone or format\":\n        return \"Prompting\"\n    if problem == \"stable repeated label error\":\n        return \"Fine-tuning\"\n\nfor p in [\"stale facts\", \"tone or format\", \"stable repeated label error\"]:\n    print(p, \"->\", choose_lever(p))",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict the three recommendations.",
+            "answer": "It prints stale facts -> RAG, tone or format -> Prompting, and stable repeated label error -> Fine-tuning. The point is root-cause diagnosis before adaptation."
           },
           "syntax": [
             {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
+              "part": "input data",
+              "explains": "The small concrete case the example operates on."
             },
             {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
+              "part": "decision rule",
+              "explains": "The line or function that turns the inputs into behavior."
             },
             {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
+              "part": "print(...)",
+              "explains": "A visible result so you can check your prediction."
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "rag",
+            "prompt",
+            "fine_tuning"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb1",
+            "kb3",
+            "canon2"
           ]
         },
         {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Fine-tuning vs RAG vs Prompting?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Fine-tuning vs RAG vs Prompting.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "id": "frp_m4_verify",
+          "kind": "note",
+          "title": "Verify AI-generated adaptation plans",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Fine-tuning vs RAG vs Prompting",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "When an AI recommends fine-tuning, make it justify the root cause."
                 }
               ]
             },
@@ -1250,232 +577,220 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Fine-tuning vs RAG vs Prompting."
+                    "text": "Does it show a prompted baseline and eval suite first?"
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Does it avoid training on changing policy facts?"
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Does it define train/validation/test splits and rollback?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it compare against RAG and prompting honestly?"
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Fine-tuning vs RAG vs Prompting, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
+            "fine_tuning",
+            "prompt",
+            "rag"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "kb3"
           ]
-        },
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Head-to-head: choose the smallest lever",
+      "sub": "End by comparing options across the same criteria.",
+      "summary": "The final decision should choose the smallest lever that solves the actual failure with acceptable cost and risk.",
+      "objectives": [
+        "Compare prompting, RAG, and fine-tuning.",
+        "Use a decision matrix for adaptation.",
+        "Recommend a next experiment."
+      ],
+      "termIds": [
+        "prompt",
+        "rag",
+        "fine_tuning"
+      ],
+      "estMinutes": 8,
+      "loadState": "full",
+      "blocks": [
         {
-          "id": "m5_decision",
+          "id": "frp_m5_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Prompting vs RAG vs fine-tuning",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Best for",
+            "Cost/complexity",
+            "Failure to watch",
+            "When to choose"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Prompting",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "criterion": "Best for",
+                  "text": "Instructions, tone, examples, formatting, refusal policy.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
+                  "criterion": "Cost/complexity",
+                  "text": "Lowest; fast to edit and test.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "Brittle behavior under long or adversarial context.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
+                  "criterion": "When to choose",
+                  "text": "Use first when capability exists and facts are available.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Choose when clearer instructions and examples can solve the behavior.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "RAG",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "criterion": "Best for",
+                  "text": "Private, changing, cited, or large knowledge.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "criterion": "Cost/complexity",
+                  "text": "Medium; needs indexing, retrieval, metadata, evals.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
+                  "criterion": "Failure to watch",
+                  "text": "Retriever misses or citations do not support claims.",
                   "rating": "ok"
+                },
+                {
+                  "criterion": "When to choose",
+                  "text": "Use when facts should stay external and current.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Choose when the answer depends on current or source-grounded knowledge.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Fine-tuning",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "criterion": "Best for",
+                  "text": "Stable repeated behavior learned from examples.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Cost/complexity",
+                  "text": "Highest; needs data, training, registry, rollback.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Failure to watch",
+                  "text": "Overfit, stale facts, sensitive data, regressions.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "When to choose",
+                  "text": "Use after evals show prompting/RAG are insufficient.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Choose when durable behavior belongs in weights and examples are representative.",
               "cost": "High",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Read the failure first, then choose the smallest lever that addresses that failure.",
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "prompt",
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "kb3",
+            "canon2"
           ]
         },
         {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "frp_m5_completion",
+          "kind": "functionalExample",
+          "title": "Completion problem: classify the support bot failures",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Failure A: “The answer uses last quarter’s policy.” Choose RAG. Failure B: “The tone is too verbose.” Try prompting. Failure C: “The model repeatedly maps `billing_dispute` tickets to `technical_support` despite clear examples.” Consider fine-tuning after evals."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "prompt",
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
             "kb1",
-            "canon1"
-          ]
+            "kb3",
+            "canon2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m5_quiz",
+          "id": "frp_m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Fine-tuning vs RAG vs Prompting?",
+          "title": "Check the recommendation",
+          "prompt": "What is the safest default order?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Fine-tune first because it is most powerful.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Prompt and evaluate, add RAG for changing facts, fine-tune only for stable repeated behavior.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Use RAG for tone and style only.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Smallest reliable lever wins.",
           "termIds": [
-            "llm",
-            "token"
+            "prompt",
+            "rag",
+            "fine_tuning"
           ],
           "sources": [
             "kb1"
@@ -1483,20 +798,17 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ],
-      "decisionItForces": "Choose the right level of rigor for Fine-tuning vs RAG vs Prompting: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose prompting, RAG, or fine-tuning for an adaptation problem."
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
-      "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A language model that predicts and generates token sequences from context.",
+      "technicalNote": "LLM behavior depends on training data, tokenization, context, decoding, alignment, system instructions, and the application wrapper.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +818,8 @@
     "token": {
       "id": "token",
       "label": "Token",
-      "laymanDefinition": "Token is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Token is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A unit of text, code, punctuation, or whitespace that the model reads and generates.",
+      "technicalNote": "Token boundaries determine context usage, cost, latency, truncation behavior, and how the model represents text internally.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +828,8 @@
     "context_window": {
       "id": "context_window",
       "label": "Context window",
-      "laymanDefinition": "Context window is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Context window is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The limited set of input and generated tokens available to the model at one time.",
+      "technicalNote": "Context windows constrain what evidence, instructions, conversation state, and tool results can influence the next output.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +838,8 @@
     "prompt": {
       "id": "prompt",
       "label": "Prompt",
-      "laymanDefinition": "Prompt is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prompt is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The instructions, user request, examples, and context sent to the model.",
+      "technicalNote": "Prompts are release artifacts when they shape behavior, tool use, output schema, safety handling, or evaluation results.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +848,8 @@
     "schema": {
       "id": "schema",
       "label": "Schema",
-      "laymanDefinition": "Schema is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Schema is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A machine-readable contract for fields, types, required values, and allowed shapes.",
+      "technicalNote": "Schemas make model outputs and tool calls checkable, but they still need validation, refusal handling, and regression tests.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,9 +858,26 @@
     "tool_call": {
       "id": "tool_call",
       "label": "Tool call",
-      "laymanDefinition": "Tool call is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Tool call is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured request from the model to use an external capability.",
+      "technicalNote": "Tool calls should be parsed, authorized, validated, traced, and executed by trusted code rather than by free-form text.",
       "wrapPolicy": "firstOnly",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "rag": {
+      "id": "rag",
+      "label": "RAG",
+      "laymanDefinition": "A pattern where retrieved evidence supplies facts for model generation.",
+      "sources": [
+        "kb1"
+      ],
+      "acronymExpansion": "Retrieval-augmented generation"
+    },
+    "fine_tuning": {
+      "id": "fine_tuning",
+      "label": "Fine-tuning",
+      "laymanDefinition": "Continuing training so repeated behavior becomes more likely in model weights.",
       "sources": [
         "kb1"
       ]
@@ -1580,154 +909,105 @@
         "t": "p",
         "spans": [
           {
-            "text": "Fine-tuning vs RAG vs Prompting is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, compare the three levers: prompting changes the request, RAG changes the supplied evidence, and fine-tuning changes model weights. Then classify three failures: wrong tone, stale policy, and repeated malformed labels."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Fine-tuning vs RAG vs Prompting.",
-          "what": "Mental model turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal"
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Fine-tuning vs RAG vs Prompting into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Fine-tuning vs RAG vs Prompting, not just recognize the words.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal"
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "The three levers solve different failures",
+        "detail": "Start by diagnosing the adaptation problem before choosing a method."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Prompting is the fastest behavior lever",
+        "detail": "First test whether better instructions and examples solve the issue."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "RAG keeps knowledge outside weights",
+        "detail": "Use retrieval when correctness depends on current or private sources."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Fine-tuning teaches stable repeated behavior",
+        "detail": "Train only after prompting and evals reveal a durable pattern."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Head-to-head: choose the smallest lever",
+        "detail": "End by comparing options across the same criteria."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_1",
+        "label": "Is the problem instruction, knowledge, or learned behavior?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_2",
+        "label": "Can a prompt plus evals solve it first?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_3",
+        "label": "Are facts private or changing enough to need RAG?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_4",
+        "label": "Do repeated examples justify training?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_5",
+        "label": "What should I learn next: evals before adaptation.",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Fine-tuning vs RAG vs Prompting: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "LLMs"
+      "prompt": "You own a refund-policy bot that answers in the wrong tone, misses new policy text, and sometimes mislabels escalation intent. Choose which parts use prompting, RAG, or fine-tuning, and define the evals you would run first. Next rung: build golden datasets.",
+      "scopedTo": "Fine-tuning vs RAG vs Prompting"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Fine-tuning",
+      "url": "https://huggingface.co/docs/transformers/training",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "RLHF, DPO, and Preference Tuning",
+      "url": "https://huggingface.co/docs/trl/index",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face TRL DPO Trainer",
+      "url": "https://huggingface.co/docs/trl/dpo_trainer",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "Prompt Engineering",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-engineering",
+      "asOfDate": "2026-06-22"
     }
   }
 }

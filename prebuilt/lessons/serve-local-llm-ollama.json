@@ -4,8 +4,8 @@
     "topic": "Serve a Local LLM with Ollama",
     "title": "Serve a Local LLM with Ollama",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 38,
-    "thesis": "Serve a Local LLM with Ollama becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 42,
+    "thesis": "Serve a Local LLM with Ollama is practical when learners can apply it to this concrete case: A privacy-sensitive redaction assistant must run locally on developer laptops with Ollama. By the end, they should be able to build or review local serving runbook with model choice, prompt, and verification steps, measure redaction accuracy on private sample files, and catch the failure where a local model silently truncates long documents."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Serve a Local LLM with Ollama: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Serve a Local LLM with Ollama by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build a local Ollama-backed app slice: choose target behavior, pull model, create Modelfile, call API, and harden local limits.",
+    "oneLineThesis": "Serving a local LLM with Ollama is complete when the app has a tested local endpoint, stable model recipe, and honest production boundary.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Serve a Local LLM with Ollama.",
-        "what": "Target behavior turns Serve a Local LLM with Ollama into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+        "label": "Define the local model slice before installing",
+        "sub": "Choose the one local workflow the build must prove.",
+        "what": "Learners place Ollama in the local-serving landscape.",
+        "relevance": "This prevents treating a laptop demo as a production serving plan.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Anchor Ollama in a private local tutoring prototype, not a GPU fleet.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Serve a Local LLM with Ollama into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+        "label": "Pull a model and verify the local API",
+        "sub": "The developer loop is pull, run, call, inspect, repeat.",
+        "what": "Learners understand the operational pieces they will touch.",
+        "relevance": "This catches failures where the app assumes a model is running but it is not.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Walk from model pull to a localhost chat call.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Serve a Local LLM with Ollama into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+        "label": "Create a Modelfile for stable behavior",
+        "sub": "A Modelfile makes system prompts and parameters repeatable.",
+        "what": "Learners make local behavior reproducible.",
+        "relevance": "This prevents demos that depend on hidden notebook state.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Package a concise tutoring persona with context and license notes.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Serve a Local LLM with Ollama into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+        "label": "Call the local model from a tiny app",
+        "sub": "The smallest app call should check model, latency, and output shape.",
+        "what": "Learners implement the integration path.",
+        "relevance": "This makes local serving testable.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Send one chat request and assert the local response shape.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Serve a Local LLM with Ollama into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+        "label": "Harden the local demo without pretending it is production",
+        "sub": "Local success does not prove production readiness.",
+        "what": "Learners leave with realistic deployment boundaries.",
+        "relevance": "This prevents local demos from overpromising scale and governance.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Decide whether the lesson app remains local or moves to production serving.",
+        "order": 5
       }
     ],
     "edges": [
@@ -98,21 +108,23 @@
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hardens"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Serve a Local LLM with Ollama.",
-      "summary": "Define the user-visible outcome for Serve a Local LLM with Ollama. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Define the local model slice before installing",
+      "sub": "Choose the one local workflow the build must prove.",
+      "summary": "A good Ollama build starts with one runnable app path and an acceptance test.",
       "objectives": [
-        "Explain the role of target behavior in Serve a Local LLM with Ollama.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain what Ollama owns.",
+        "Choose a local use case.",
+        "Name limits before production."
       ],
       "termIds": [
         "prototype",
@@ -127,20 +139,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "Local model serving has a different job",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Serve a Local LLM with Ollama",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a teacher wants a private demo that drafts lesson explanations without sending prompts to a hosted API. Ollama is useful because a learner can pull a model, run it locally, and call a simple HTTP API on localhost."
                 }
               ]
             },
@@ -148,203 +153,34 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The KB verdict is clear: Ollama is best for local development, demos, and privacy-sensitive prototypes; it is not the default for high-concurrency production serving with autoscaling, tenant policy, and detailed routing."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Serve a Local LLM with Ollama."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
+            "kb_ollama",
+            "canon_ollama_api"
+          ],
+          "analogy": "Ollama is a workbench model server, not a factory loading dock."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Serve a Local LLM with Ollama.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Serve a Local LLM with Ollama, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked target: local lesson explainer",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for serve a local llm with ollama help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "The worked artifact is a campus helpdesk assistant that must answer from a local Ollama endpoint during a privacy review. It loads the selected model, streams a short answer, records the model tag and latency, and returns a clear setup message if the endpoint is missing. The negative test disconnects Ollama and confirms the service fails closed instead of routing the student question to an external provider."
                 }
               ]
             }
@@ -352,59 +188,63 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb_ollama"
+          ],
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Serve a Local LLM with Ollama?",
+          "title": "Ollama fit",
+          "prompt": "What is Ollama strongest for?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "High-concurrency multi-tenant GPU fleets by default.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Local development, demos, and privacy-sensitive prototypes.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Replacing evaluation and monitoring.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Ollama optimizes local ergonomics, not full production operations.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_ollama"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_ollama",
+        "canon_ollama_api"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Pull a model and verify the local API",
+      "sub": "The developer loop is pull, run, call, inspect, repeat.",
+      "summary": "Ollama manages local model availability and exposes chat/generate endpoints.",
       "objectives": [
-        "Explain the role of architecture slice in Serve a Local LLM with Ollama.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name the CLI lifecycle.",
+        "Explain local cache and server role.",
+        "Parse streaming API responses."
       ],
       "termIds": [
         "prototype",
@@ -419,244 +259,136 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "The model has to exist locally before your app can call it",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Serve a Local LLM with Ollama",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Ollama commands such as pull, run, show, ps, and create manage local model artifacts and active sessions. The local server exposes HTTP endpoints for chat, generate, embeddings, and model management. Streaming JSON is convenient, but clients must parse it deliberately."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Serve a Local LLM with Ollama."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_ollama",
+            "canon_ollama_api"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Serve a Local LLM with Ollama, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Ollama moving parts",
+          "criteria": [
+            "Part",
+            "Role",
+            "Failure to watch"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for serve a local llm with ollama help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "ollama run llama3.2\ncurl http://localhost:11434/api/generate -d '{\"model\":\"llama3.2\",\"prompt\":\"Summarize RAG\"}'",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "ollama run",
-              "explains": "Runs a local model."
-            },
-            {
-              "part": "/api/generate",
-              "explains": "Calls local generation."
-            },
-            {
-              "part": "model",
-              "explains": "Selects the model tag."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Serve a Local LLM with Ollama?",
-          "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
+              "name": "Model cache",
+              "cells": [
+                {
+                  "criterion": "Part",
+                  "text": "Model cache",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Role",
+                  "text": "keeps pulled artifacts local",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "missing model or wrong tag",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Before first run.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
+              "name": "Local server",
+              "cells": [
+                {
+                  "criterion": "Part",
+                  "text": "Local server",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Role",
+                  "text": "serves chat/generate over HTTP",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "port unavailable or service stopped",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "App integration.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
+              "name": "Streaming API",
+              "cells": [
+                {
+                  "criterion": "Part",
+                  "text": "Streaming API",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Role",
+                  "text": "returns incremental JSON chunks",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "client treats chunks as one JSON object",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Interactive UI.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_ollama_api"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_ollama",
+        "canon_ollama_api"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Create a Modelfile for stable behavior",
+      "sub": "A Modelfile makes system prompts and parameters repeatable.",
+      "summary": "Custom local models should record base model, prompt template, and context settings.",
       "objectives": [
-        "Explain the role of core implementation in Serve a Local LLM with Ollama.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain Modelfile role.",
+        "Set system prompt and context deliberately.",
+        "Recognize license and memory risks."
       ],
       "termIds": [
         "prototype",
@@ -671,232 +403,39 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "A Modelfile is a local model recipe",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Serve a Local LLM with Ollama",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A Modelfile can define the base model, system prompt, prompt template, parameters such as context length, adapters, and license metadata. It gives the local demo a stable contract instead of relying on one-off CLI flags."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Serve a Local LLM with Ollama."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_ollama_modelfile",
+            "kb_ollama"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Serve a Local LLM with Ollama, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "m3_file",
+          "kind": "functionalExample",
+          "title": "Worked Modelfile for a local tutor",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "FROM llama3.1\nPARAMETER num_ctx 8192\nSYSTEM You are a concise tutor for agentic AI concepts. Explain with one example and one check question.\n\nReview: num_ctx increases memory use, and the base model license still controls allowed use."
                 }
               ]
             }
@@ -904,60 +443,31 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Serve a Local LLM with Ollama?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_ollama_modelfile",
+            "kb_ollama"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Serve a Local LLM with Ollama: baseline, production design, or advanced optimization."
+        "canon_ollama_modelfile",
+        "kb_ollama"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Call the local model from a tiny app",
+      "sub": "The smallest app call should check model, latency, and output shape.",
+      "summary": "A smoke test proves the endpoint works before UI polish.",
       "objectives": [
-        "Explain the role of validation and tracing in Serve a Local LLM with Ollama.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Run a local API call shape.",
+        "Predict failure when stream handling is wrong.",
+        "Verify AI-generated Ollama integration."
       ],
       "termIds": [
         "prototype",
@@ -966,250 +476,82 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Serve a Local LLM with Ollama",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Serve a Local LLM with Ollama."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Serve a Local LLM with Ollama, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for serve a local llm with ollama help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "ollama run llama3.2\ncurl http://localhost:11434/api/generate -d '{\"model\":\"llama3.2\",\"prompt\":\"Summarize RAG\"}'",
-          "explain": [
+          "title": "Ollama local chat smoke test",
+          "language": "python",
+          "code": "import requests, time\n\npayload = {\n    \"model\": \"llama3.1\",\n    \"stream\": False,\n    \"messages\": [{\"role\": \"user\", \"content\": \"Explain KV cache in one paragraph.\"}],\n}\nstart = time.time()\nresp = requests.post(\"http://localhost:11434/api/chat\", json=payload, timeout=60)\nresp.raise_for_status()\ndata = resp.json()\nlatency = time.time() - start\n\nassert \"message\" in data and \"content\" in data[\"message\"]\nprint({\"latency_s\": round(latency, 2), \"preview\": data[\"message\"][\"content\"][:80]})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This smoke test disables streaming so the response is easy to assert. A streaming UI can be added after the basic endpoint contract is proven."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "What likely breaks if stream stays true but the client still calls resp.json() once?",
+            "answer": "The endpoint can return newline-delimited streaming JSON chunks, so treating the whole response as one JSON object can fail or lose partial-output handling."
           },
-          "syntax": [
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_ollama_api",
+            "kb_ollama"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify Ollama app integrations",
+          "body": [
             {
-              "part": "ollama run",
-              "explains": "Runs a local model."
-            },
-            {
-              "part": "/api/generate",
-              "explains": "Calls local generation."
-            },
-            {
-              "part": "model",
-              "explains": "Selects the model tag."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: model tag exists locally; service URL is configurable; streaming and non-streaming modes are parsed correctly; latency is logged; prompt data stays local; and the app fails clearly when the model is missing."
+                }
+              ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Serve a Local LLM with Ollama?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_ollama_api"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_ollama_api",
+        "kb_ollama"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Harden the local demo without pretending it is production",
+      "sub": "Local success does not prove production readiness.",
+      "summary": "Ollama should hand off to gateways or serving runtimes when concurrency, policy, and reliability matter.",
       "objectives": [
-        "Explain the role of hardening path in Serve a Local LLM with Ollama.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name production gaps.",
+        "Compare Ollama with vLLM and hosted APIs.",
+        "Define local-demo release gates."
       ],
       "termIds": [
         "prototype",
@@ -1224,361 +566,160 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "The local demo has honest limits",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Serve a Local LLM with Ollama",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Local performance depends on model size, quantization, VRAM, and offload behavior. Ollama does not automatically provide multi-user auth, budgets, audit logs, autoscaling, or production routing. For many users, move behind a gateway, hosted API, vLLM, or another serving stack."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Serve a Local LLM with Ollama."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Serve a Local LLM with Ollama, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_ollama"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Use Ollama to learn, prototype, and demo locally; graduate when concurrency, governance, or reliability become requirements.",
+          "useWhen": "Use it for offline demos, private prototypes, classroom exercises, and local fallback experiments.",
+          "avoidWhen": "Avoid presenting a laptop-local model as production infrastructure without auth, monitoring, rate limits, evaluation, and license review.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_ollama"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Serve a Local LLM with Ollama?",
+          "title": "Graduation signal",
+          "prompt": "When should an Ollama prototype move to another serving plan?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "As soon as the first local response works.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "When multiple users, auth, budgets, high concurrency, or reliability SLAs matter.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Never; local serving is always enough.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Production needs more than a localhost endpoint.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_ollama"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Serve a Local LLM with Ollama: baseline, production design, or advanced optimization."
+        "kb_ollama"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A narrow runnable slice that proves one infrastructure behavior.",
+      "technicalNote": "A good prototype includes setup, smoke test, failure mode, and migration boundary.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     },
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A component that fetches context or records for a request.",
+      "technicalNote": "Serving lessons track retrievers because retrieval shape affects latency, cost, and quality.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     },
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that enforces output, request, or deployment contracts.",
+      "technicalNote": "Validators protect schemas, health checks, citations, policy gates, and readiness criteria.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one request or job through serving components.",
+      "technicalNote": "Traces reveal queue time, model call latency, token counts, errors, and release metadata.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     },
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A versioned runtime configuration exposed to users or systems.",
+      "technicalNote": "A deployment includes model, serving flags, hardware, API contract, monitoring, rollback, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     },
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A test that proves the build meets its release contract.",
+      "technicalNote": "Acceptance tests should cover smoke behavior, failure modes, metrics, and rollback expectations.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_ollama"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Serve a Local LLM with Ollama",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Build acceptance",
         "questions": [
           {
-            "q": "What decision does Serve a Local LLM with Ollama change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What local app behavior proves the Ollama integration works end to end?",
+            "why": "A build project needs a runnable slice, not just a successful model pull.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Local app smoke test with fallback",
+              "Model pulled only",
+              "Production promise"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Prove one local request path, then document limits and graduation criteria."
           }
         ]
       }
@@ -1590,57 +731,74 @@
         "t": "p",
         "spans": [
           {
-            "text": "Serve a Local LLM with Ollama is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild the Ollama project by naming target behavior, pulled model, Modelfile, API call, streaming choice, latency log, missing-model error, and production graduation criteria."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Ollama build path from local target to hardened demo",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Serve a Local LLM with Ollama.",
-          "what": "Target behavior turns Serve a Local LLM with Ollama into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+          "label": "Define the local model slice before installing",
+          "sub": "Choose the one local workflow the build must prove.",
+          "what": "Learners place Ollama in the local-serving landscape.",
+          "relevance": "This prevents treating a laptop demo as a production serving plan.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Anchor Ollama in a private local tutoring prototype, not a GPU fleet.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Serve a Local LLM with Ollama into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+          "label": "Pull a model and verify the local API",
+          "sub": "The developer loop is pull, run, call, inspect, repeat.",
+          "what": "Learners understand the operational pieces they will touch.",
+          "relevance": "This catches failures where the app assumes a model is running but it is not.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Walk from model pull to a localhost chat call.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Serve a Local LLM with Ollama into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+          "label": "Create a Modelfile for stable behavior",
+          "sub": "A Modelfile makes system prompts and parameters repeatable.",
+          "what": "Learners make local behavior reproducible.",
+          "relevance": "This prevents demos that depend on hidden notebook state.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Package a concise tutoring persona with context and license notes.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Serve a Local LLM with Ollama into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Serve a Local LLM with Ollama, not just recognize the words.",
+          "label": "Call the local model from a tiny app",
+          "sub": "The smallest app call should check model, latency, and output shape.",
+          "what": "Learners implement the integration path.",
+          "relevance": "This makes local serving testable.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Send one chat request and assert the local response shape.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Harden the local demo without pretending it is production",
+          "sub": "Local success does not prove production readiness.",
+          "what": "Learners leave with realistic deployment boundaries.",
+          "relevance": "This prevents local demos from overpromising scale and governance.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Decide whether the lesson app remains local or moves to production serving.",
+          "order": 5
         }
       ],
       "edges": [
@@ -1658,86 +816,90 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "hardens"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Define the local model slice before installing",
+        "detail": "A good Ollama build starts with one runnable app path and an acceptance test."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Pull a model and verify the local API",
+        "detail": "Ollama manages local model availability and exposes chat/generate endpoints."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Create a Modelfile for stable behavior",
+        "detail": "Custom local models should record base model, prompt template, and context settings."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Call the local model from a tiny app",
+        "detail": "A smoke test proves the endpoint works before UI polish."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Harden the local demo without pretending it is production",
+        "detail": "Ollama should hand off to gateways or serving runtimes when concurrency, policy, and reliability matter."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Define the local model slice before installing\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Call the local model from a tiny app\"?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Harden the local demo without pretending it is production\" define the production or release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Serve a Local LLM with Ollama: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
+      "prompt": "Build a local app that calls Ollama for one lesson explanation. Include pull/run instructions, Modelfile, non-streaming smoke test, streaming UI note, latency logging, and a clear migration note for production. Next rung: add provider abstraction.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Runnable local API path exists.",
+        "Modelfile is versioned.",
+        "Client handles missing model/service.",
+        "Production limits are documented."
+      ]
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
+    "kb_ollama": {
+      "id": "kb_ollama",
       "kind": "kb",
-      "title": "KB: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Ollama",
+      "url": "https://github.com/ollama/ollama",
+      "asOfDate": "2026-06-22"
     },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_ollama_api": {
+      "id": "canon_ollama_api",
       "kind": "canonical",
-      "title": "LlamaIndex RAG documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "Ollama API reference",
+      "url": "https://docs.ollama.com/api",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
+    "canon_ollama_modelfile": {
+      "id": "canon_ollama_modelfile",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "Ollama Modelfile reference",
+      "url": "https://docs.ollama.com/modelfile",
+      "asOfDate": "2026-06-22"
     }
   }
 }

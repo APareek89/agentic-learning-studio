@@ -4,8 +4,8 @@
     "topic": "Function Calling and Tool Use",
     "title": "Function Calling and Tool Use",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 34,
-    "thesis": "Function Calling and Tool Use becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 42,
+    "thesis": "Function calling and tool use connect models to APIs through typed tool declarations; the model proposes a call, while the runtime validates, authorizes, executes, and returns the result."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -24,59 +24,69 @@
     ]
   },
   "mentalMap": {
-    "title": "Function Calling and Tool Use: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Function Calling and Tool Use by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "title": "Function calling — model proposes, code executes",
+    "caption": "The flow separates tool schema, model-selected arguments, runtime execution, and result handling.",
+    "oneLineThesis": "Function calling lets a model request external capabilities, but application code owns validation, authorization, execution, and side effects.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Tool boundary",
         "sub": "Build the simplest useful picture of Function Calling and Tool Use.",
-        "what": "Mental model turns Function Calling and Tool Use into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
+        "what": "A tool boundary says what the model may ask code to do.",
+        "relevance": "It prevents confusing generated text with authorized execution.",
         "moduleId": "m1",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Why tools are explicit action boundaries rather than hidden model powers.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "Schema and arguments",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Function Calling and Tool Use into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
+        "what": "Tool schemas define callable names and typed arguments.",
+        "relevance": "Good schemas reduce missing arguments and wrong-tool calls.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "How names, descriptions, and input schemas shape tool selection.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "Runtime executor",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Function Calling and Tool Use into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
+        "what": "The runtime is the owner of real-world action.",
+        "relevance": "It keeps credentials, side effects, and retries out of model control.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Why code validates, authorizes, and runs calls outside the model.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "Tool result loop",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Function Calling and Tool Use into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
+        "what": "Results become new evidence for the next model turn.",
+        "relevance": "It explains multi-step tool workflows and stale-result risks.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "How tool outputs re-enter context for the model’s next decision.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Unsafe calls",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Function Calling and Tool Use into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
+        "what": "Tool failures are product and security failures, not just model errors.",
+        "relevance": "It teaches the checks required before shipping tool use.",
         "moduleId": "m5",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "How wrong tools, bad arguments, and side effects break agent systems.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,39 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Function Calling and Tool Use.",
-      "summary": "Build the simplest useful picture of Function Calling and Tool Use. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "A tool is an action boundary",
+      "sub": "Start by separating model text from application action.",
+      "summary": "Function calling does not let a model magically access systems. It lets the model request a named action that code may accept or reject.",
       "objectives": [
-        "Explain the role of mental model in Function Calling and Tool Use.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why tools are boundaries.",
+        "Distinguish model proposal from code execution.",
+        "Name safe and risky tool categories."
       ],
       "termIds": [
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "tool_call"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "fc_m1",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "The model asks; code decides",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Function Calling and Tool Use",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A tool call is a structured request: a name plus arguments. The model can propose `lookup_order(order_id=\"A123\")`, but it does not hold credentials or execute the database query itself."
                 }
               ]
             },
@@ -148,14 +150,40 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "Problem anchor: a support bot needs order status and refund actions. Looking up an order is mostly read-only; issuing a refund changes money and needs stronger authorization."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "text": "llm",
-                  "term": "llm"
-                },
+                  "text": "Before reading on, predict: which tool needs stricter checks, `lookup_order` or `issue_refund`? Why?"
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "llm",
+            "tool_call"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ],
+          "analogy": "A tool call is like a purchase request: filling the form is not the same as approving the spend."
+        },
+        {
+          "id": "fc_m1_case",
+          "kind": "functionalExample",
+          "title": "Case study: order lookup versus refund",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The support assistant receives: “Where is order A123, and refund it if late.” It should call `lookup_order` first. It should not call `issue_refund` until policy and user confirmation are checked."
                 }
               ]
             },
@@ -164,224 +192,53 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Function Calling and Tool Use."
+                    "text": "Read-only tool: lower risk but still validates order ID."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Side-effecting tool: requires policy, confirmation, and audit log."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Final answer: explains what happened and what still needs approval."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "tool_call"
           ],
           "sources": [
             "kb1"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Function Calling and Tool Use.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Function Calling and Tool Use, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for function calling and tool use help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_quiz",
+          "id": "fc_m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Function Calling and Tool Use?",
+          "title": "Check the boundary",
+          "prompt": "Who actually runs the tool?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The model weights directly.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Application runtime code after validation and authorization.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The user’s prompt text.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The model proposes calls; code owns execution.",
           "termIds": [
-            "llm",
-            "token"
+            "tool_call"
           ],
           "sources": [
             "kb1"
@@ -389,50 +246,38 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Tool schemas shape model choices",
+      "sub": "After the boundary, define names and arguments precisely.",
+      "summary": "The model chooses tools from declarations. Clear names, descriptions, and input schemas reduce wrong-tool and missing-argument failures.",
       "objectives": [
-        "Explain the role of mechanism in Function Calling and Tool Use.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write a useful tool description.",
+        "Use required arguments and enums.",
+        "Avoid overexposing tools."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "schema",
+        "tool_call",
+        "validator"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m2_concept",
+          "id": "fc_m2",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Names and descriptions are model-facing UX",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Function Calling and Tool Use",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Tool declarations include a name, description, and input schema. The model reads those declarations as part of context, so vague names and overlapping descriptions make selection harder."
                 }
               ]
             },
@@ -440,111 +285,30 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "A good tool schema says what the tool does, when to use it, what arguments are required, and what the tool does not do."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Function Calling and Tool Use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "schema",
+            "tool_call"
           ],
           "sources": [
             "kb1"
-          ]
+          ],
+          "analogy": "Tool descriptions are labels on drawers; confusing labels make the model open the wrong drawer."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Function Calling and Tool Use, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "fc_m2_worked",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked schema: lookup_order",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for function calling and tool use help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Tool name: `lookup_order`. Description: “Fetch shipping and payment status for one order ID. Does not issue refunds.” Input schema: `{order_id: string}` required. Output: status, delivery date, refundable flag."
                 }
               ]
             },
@@ -552,77 +316,44 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "That “does not issue refunds” sentence matters. It tells the model not to treat a lookup tool as an action tool."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "schema",
+            "tool_call"
           ],
           "sources": [
             "kb1"
-          ]
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
+          "id": "fc_m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Function Calling and Tool Use?",
+          "title": "Check schemas",
+          "prompt": "Why include “does not issue refunds” in lookup_order?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To make the database query faster.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "To prevent wrong-tool selection when the user asks for a refund.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "To hide the refund tool from code.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Tool descriptions guide model selection; boundaries should be explicit.",
           "termIds": [
-            "llm",
-            "token"
+            "schema",
+            "tool_call"
           ],
           "sources": [
             "kb1"
@@ -630,50 +361,38 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Validate and execute outside the model",
+      "sub": "A proposed call becomes real only after code checks it.",
+      "summary": "Runtime code validates arguments, checks authorization, executes the function, handles errors, and records the action.",
       "objectives": [
-        "Explain the role of design choices in Function Calling and Tool Use.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Implement a minimal executor.",
+        "Reject unknown tools and missing arguments.",
+        "Explain why authorization lives in code."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
+        "tool_call",
+        "validator",
         "schema"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m3_concept",
+          "id": "fc_m3",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Execution is runtime responsibility",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Function Calling and Tool Use",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "The application should treat tool calls as untrusted input. It validates the tool name against an allowed registry, checks arguments against schema, enforces policy, then executes."
                 }
               ]
             },
@@ -681,567 +400,74 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Function Calling and Tool Use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Function Calling and Tool Use, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "This division is what makes tool use safe enough to ship: the model can reason about actions, but code owns permissions and side effects."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token"
+            "tool_call",
+            "validator"
           ],
           "sources": [
             "kb1",
             "canon1"
-          ]
+          ],
+          "analogy": "The runtime is the cashier who checks the form, not the person who casually suggested buying something."
         },
         {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Function Calling and Tool Use?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Function Calling and Tool Use: baseline, production design, or advanced optimization."
-    },
-    {
-      "id": "m4",
-      "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of tiny implementation sketch in Function Calling and Tool Use.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Function Calling and Tool Use",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Function Calling and Tool Use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Function Calling and Tool Use, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for function calling and tool use help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
+          "id": "fc_m3_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "json",
-          "code": "{\"type\":\"object\",\"properties\":{\"answer\":{\"type\":\"string\"},\"citations\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"answer\",\"citations\"],\"additionalProperties\":false}",
+          "title": "Execute only known safe tools",
+          "language": "python",
+          "code": "def lookup_order(order_id):\n    return {\"order_id\": order_id, \"status\": \"late\", \"refundable\": True}\n\ntools = {\"lookup_order\": lookup_order}\ncall = {\"name\": \"lookup_order\", \"arguments\": {\"order_id\": \"A123\"}}\n\ndef execute(call):\n    if call[\"name\"] not in tools:\n        raise ValueError(\"unknown tool\")\n    if \"order_id\" not in call[\"arguments\"]:\n        raise ValueError(\"missing order_id\")\n    return tools[call[\"name\"]](**call[\"arguments\"])\n\nresult = execute(call)\nprint(result[\"status\"])\nprint(result[\"refundable\"])",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict the two printed values.",
+            "answer": "It prints:\nlate\nTrue\n\nThe runtime accepts a known tool with the required argument and returns structured data."
           },
           "syntax": [
             {
-              "part": "type",
-              "explains": "Declares output shape."
+              "part": "input data",
+              "explains": "The small concrete case the example operates on."
             },
             {
-              "part": "required",
-              "explains": "Names required fields."
+              "part": "decision rule",
+              "explains": "The line or function that turns the inputs into behavior."
             },
             {
-              "part": "additionalProperties",
-              "explains": "Blocks surprise fields."
+              "part": "print(...)",
+              "explains": "A visible result so you can check your prediction."
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "tool_call",
+            "validator"
           ],
           "sources": [
-            "canon1",
             "kb1"
           ]
         },
         {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Function Calling and Tool Use?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Function Calling and Tool Use.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "id": "fc_m3_verify",
+          "kind": "note",
+          "title": "Verify AI-generated tool executors",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Function Calling and Tool Use",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "When an AI writes tool-calling code, check the dangerous boundary."
                 }
               ]
             },
@@ -1250,232 +476,30 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Function Calling and Tool Use."
+                    "text": "Does it reject unknown tool names?"
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Does it validate required arguments before execution?"
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Does it separate read-only and side-effecting permissions?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it log tool name, arguments, result, and errors?"
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Function Calling and Tool Use, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Function Calling and Tool Use?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
+            "tool_call",
+            "validator"
           ],
           "sources": [
             "kb1"
@@ -1483,20 +507,246 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
+      ]
+    },
+    {
+      "id": "m4",
+      "order": 4,
+      "title": "Return results for the next decision",
+      "sub": "Once code runs, the model needs the result as new evidence.",
+      "summary": "Tool results should be tied to the original call and treated as untrusted context. The model uses them to continue or answer.",
+      "objectives": [
+        "Explain tool-result messages.",
+        "Avoid dropping or confusing results.",
+        "Treat tool output as data, not instructions."
       ],
-      "decisionItForces": "Choose the right level of rigor for Function Calling and Tool Use: baseline, production design, or advanced optimization."
+      "termIds": [
+        "tool_call",
+        "llm",
+        "prompt"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "fc_m4",
+          "kind": "conceptual",
+          "title": "Tool output re-enters context as evidence",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "After execution, the application sends the tool result back to the model, usually tied to the tool-call ID. The model can then decide whether to answer, call another tool, or ask for approval."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Tool output is not privileged instruction. A web page, database note, or document can contain malicious text. Label it as data and keep higher-priority instructions separate."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "tool_call",
+            "llm",
+            "prompt"
+          ],
+          "sources": [
+            "kb1"
+          ],
+          "analogy": "A tool result is a receipt; useful evidence, not a new boss."
+        },
+        {
+          "id": "fc_m4_case",
+          "kind": "functionalExample",
+          "title": "Case study: late order refund flow",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Turn 1: model calls `lookup_order(A123)`. Runtime returns status late, refundable true. Turn 2: model wants `issue_refund`, but runtime requires confirmation and policy check. The assistant asks the user to confirm instead of silently refunding."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The important handoff is that the lookup result becomes evidence, not permission."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "tool_call"
+          ],
+          "sources": [
+            "kb1"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
+        },
+        {
+          "id": "fc_m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check results",
+          "prompt": "How should the app treat tool output text?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "As higher-priority instructions than system policy.",
+              "correct": false
+            },
+            {
+              "text": "As untrusted data that can inform the next step.",
+              "correct": true
+            },
+            {
+              "text": "As proof that the final action is authorized.",
+              "correct": false
+            }
+          ],
+          "explanation": "Tool outputs can contain useful facts or malicious text; code and policy still govern.",
+          "termIds": [
+            "tool_call",
+            "prompt"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Failure modes and safe tool use",
+      "sub": "End with how tool loops break in practice.",
+      "summary": "Tool systems fail through wrong tools, malformed arguments, unsafe side effects, stale results, and prompt injection in tool output.",
+      "objectives": [
+        "Name common tool-use failures.",
+        "Choose safeguards for side effects.",
+        "Reconstruct a safe tool-call loop."
+      ],
+      "termIds": [
+        "tool_call",
+        "validator",
+        "schema"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "fc_m5_fail",
+          "kind": "conceptual",
+          "title": "How function calling breaks",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Function calling failures often look like normal agent behavior until a real system is changed. The model may choose the wrong tool, omit arguments, retry blindly, or trust malicious tool output."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Wrong tool: search instead of order lookup, or refund instead of lookup."
+                  }
+                ],
+                [
+                  {
+                    "text": "Malformed arguments: missing ID, wrong enum, bad date."
+                  }
+                ],
+                [
+                  {
+                    "text": "Unauthorized side effect: sending, deleting, charging, or refunding without approval."
+                  }
+                ],
+                [
+                  {
+                    "text": "Tool-output injection: retrieved text tells the model to ignore policy."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "tool_call",
+            "validator"
+          ],
+          "sources": [
+            "kb1"
+          ],
+          "analogy": "Tool failure is like giving a helpful intern access to the company credit card without purchase controls."
+        },
+        {
+          "id": "fc_m5_decision",
+          "kind": "decisionCallout",
+          "useWhen": "Let the model call a tool when it lacks live data or needs a deterministic capability that code can validate.",
+          "avoidWhen": "Do not execute side-effecting tools when arguments are incomplete, approval is missing, output is untrusted, or policy is ambiguous.",
+          "ruleOfThumb": "The model may choose; code must verify; humans approve irreversible actions.",
+          "termIds": [
+            "tool_call",
+            "validator"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "fc_m5_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check safe tool use",
+          "prompt": "What is the safest rule for irreversible tools?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Let the model decide based on confidence.",
+              "correct": false
+            },
+            {
+              "text": "Require explicit policy checks and confirmation in code before execution.",
+              "correct": true
+            },
+            {
+              "text": "Hide tool results from the model.",
+              "correct": false
+            }
+          ],
+          "explanation": "Irreversible actions need authorization outside the model.",
+          "termIds": [
+            "tool_call",
+            "validator"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
-      "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A language model that predicts and generates token sequences from context.",
+      "technicalNote": "LLM behavior depends on training data, tokenization, context, decoding, alignment, system instructions, and the application wrapper.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +756,8 @@
     "token": {
       "id": "token",
       "label": "Token",
-      "laymanDefinition": "Token is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Token is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A unit of text, code, punctuation, or whitespace that the model reads and generates.",
+      "technicalNote": "Token boundaries determine context usage, cost, latency, truncation behavior, and how the model represents text internally.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +766,8 @@
     "context_window": {
       "id": "context_window",
       "label": "Context window",
-      "laymanDefinition": "Context window is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Context window is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The limited set of input and generated tokens available to the model at one time.",
+      "technicalNote": "Context windows constrain what evidence, instructions, conversation state, and tool results can influence the next output.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +776,8 @@
     "prompt": {
       "id": "prompt",
       "label": "Prompt",
-      "laymanDefinition": "Prompt is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prompt is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The instructions, user request, examples, and context sent to the model.",
+      "technicalNote": "Prompts are release artifacts when they shape behavior, tool use, output schema, safety handling, or evaluation results.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +786,8 @@
     "schema": {
       "id": "schema",
       "label": "Schema",
-      "laymanDefinition": "Schema is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Schema is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A machine-readable contract for fields, types, required values, and allowed shapes.",
+      "technicalNote": "Schemas make model outputs and tool calls checkable, but they still need validation, refusal handling, and regression tests.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,9 +796,17 @@
     "tool_call": {
       "id": "tool_call",
       "label": "Tool call",
-      "laymanDefinition": "Tool call is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Tool call is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured request from the model to use an external capability.",
+      "technicalNote": "Tool calls should be parsed, authorized, validated, traced, and executed by trusted code rather than by free-form text.",
       "wrapPolicy": "firstOnly",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "validator": {
+      "id": "validator",
+      "label": "Validator",
+      "laymanDefinition": "Code that checks whether output satisfies schema and business rules.",
       "sources": [
         "kb1"
       ]
@@ -1580,154 +838,98 @@
         "t": "p",
         "spans": [
           {
-            "text": "Function Calling and Tool Use is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, trace a tool call: declaration, model-selected name and arguments, validation, authorization, execution, tool result, and final answer. Then name two places code must not delegate trust to the model."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Function Calling and Tool Use.",
-          "what": "Mental model turns Function Calling and Tool Use into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Function Calling and Tool Use into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal"
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Function Calling and Tool Use into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Function Calling and Tool Use into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Function Calling and Tool Use, not just recognize the words.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal"
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "A tool is an action boundary",
+        "detail": "Start by separating model text from application action."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Tool schemas shape model choices",
+        "detail": "After the boundary, define names and arguments precisely."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Validate and execute outside the model",
+        "detail": "A proposed call becomes real only after code checks it."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Return results for the next decision",
+        "detail": "Once code runs, the model needs the result as new evidence."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Failure modes and safe tool use",
+        "detail": "End with how tool loops break in practice."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_1",
+        "label": "Is each tool narrow and named clearly?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_2",
+        "label": "Are required arguments typed and validated?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_3",
+        "label": "Does code authorize side effects before execution?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_4",
+        "label": "Are tool outputs treated as untrusted data?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_5",
+        "label": "What should I learn next: MCP, agent loops, or sandboxing?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Function Calling and Tool Use: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "LLMs"
+      "prompt": "Design one safe `lookup_order` and one risky `issue_refund` tool. Write their schemas, validation rules, authorization checks, and failure behavior. Next rung: secure tool-using agents and MCP.",
+      "scopedTo": "Function Calling and Tool Use"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Structured Outputs and Function Calling",
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Tool and Plugin Standards",
+      "url": "https://spec.openapis.org/oas/latest.html",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "OpenAI function calling guide",
+      "url": "https://developers.openai.com/api/docs/guides/function-calling",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Gemini structured output docs",
+      "url": "https://ai.google.dev/gemini-api/docs/structured-output",
+      "asOfDate": "2026-06-22"
     }
   }
 }

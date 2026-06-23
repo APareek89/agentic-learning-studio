@@ -4,8 +4,8 @@
     "topic": "Evaluating Agentic Workflows",
     "title": "Evaluating Agentic Workflows",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 36,
-    "thesis": "Evaluating Agentic Workflows becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 38,
+    "thesis": "Evaluating Agentic Workflows is practical when learners can apply it to this concrete case: A multi-step ticket agent must be judged on tool choices, state updates, and final answer quality. By the end, they should be able to build or review agent workflow evaluation trace with step-level assertions, measure task success with correct intermediate actions, and catch the failure where the final answer looks right while the agent took unsafe or wasteful steps."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Evaluating Agentic Workflows: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Evaluating Agentic Workflows by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Evaluate agentic workflows by final success, trace behavior, tool safety, retrieval, cost, and recovery rather than final prose alone.",
+    "oneLineThesis": "Agent workflow evaluation must score the path because tool calls, retries, approvals, and retrieval can fail while the final answer sounds fine.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Evaluating Agentic Workflows.",
-        "what": "Mental model turns Evaluating Agentic Workflows into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+        "label": "Final text is only one output",
+        "sub": "The workflow path can be wrong even when prose is polished.",
+        "what": "Learners define agent success as trace plus final output.",
+        "relevance": "This catches unsafe or wasteful paths hidden behind helpful language.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Inspect tool calls, retrieval, approvals, and stops alongside the answer.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Evaluating Agentic Workflows into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+        "label": "Hard assertions guard contracts",
+        "sub": "Some failures should block immediately.",
+        "what": "Learners split hard gates from soft scores.",
+        "relevance": "This makes safety and integration failures non-negotiable.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Assert schemas, allowed tools, approvals, and timeouts deterministically.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Evaluating Agentic Workflows into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+        "label": "Fixtures make agent runs repeatable",
+        "sub": "Agents need setup data, tool mocks, and baseline comparisons.",
+        "what": "Learners build reproducible agent eval cases.",
+        "relevance": "This reduces flaky demos and makes failures debuggable.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Use realistic fixtures without hiding integration bugs.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Evaluating Agentic Workflows into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+        "label": "Trace assertions make path regressions testable",
+        "sub": "Required spans and forbidden tools can be checked in code.",
+        "what": "Learners implement workflow-level checks.",
+        "relevance": "This turns agent behavior into CI-testable evidence.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Assert the path before judging the prose.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Evaluating Agentic Workflows into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+        "label": "Promote failures into regression cases",
+        "sub": "The suite should learn from escaped failures.",
+        "what": "Learners define the eval lifecycle.",
+        "relevance": "This keeps the workflow suite aligned with real risk.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Turn production incidents into minimal tasks and trace checks.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,42 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Evaluating Agentic Workflows.",
-      "summary": "Build the simplest useful picture of Evaluating Agentic Workflows. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Final text is only one output",
+      "sub": "The workflow path can be wrong even when prose is polished.",
+      "summary": "Agent eval starts from the full run trace.",
       "objectives": [
-        "Explain the role of mental model in Evaluating Agentic Workflows.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why final-answer scoring is insufficient.",
+        "Name trace elements to inspect.",
+        "Classify workflow failures."
       ],
       "termIds": [
         "eval",
         "trace",
         "dataset",
         "judge",
-        "regression"
+        "regression",
+        "rubric"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "An agent answer has a supply chain",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Evaluating Agentic Workflows",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a refund agent writes a correct-looking apology but skipped policy retrieval and called the refund tool without approval. Final prose alone would pass; workflow eval fails it."
                 }
               ]
             },
@@ -148,33 +153,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Agentic evals should inspect route, tools, arguments, retrieved evidence, approvals, retries, cost, latency, and final response."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "For each user-visible answer, identify the internal steps that must be true."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
+          ],
+          "sources": [
+            "kb3",
+            "kb5",
+            "kb6"
+          ],
+          "analogy": "The final answer is the receipt; the trace is the kitchen camera."
+        },
+        {
+          "id": "m1_artifact",
+          "kind": "functionalExample",
+          "title": "Case study: refund trace failure",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The trace shows no retrieval span, one unauthorized tool call, and a final answer with no policy citation. The final answer is fluent but not shippable."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The fix belongs in routing and approval gates, not sentence style."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Evaluating Agentic Workflows."
+                    "text": "Define task goal."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "List required and forbidden trace events."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Score final answer against evidence."
+                  }
+                ],
+                [
+                  {
+                    "text": "Bucket failures by workflow component."
                   }
                 ]
               ]
@@ -183,256 +232,92 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Evaluating Agentic Workflows.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb5",
+            "kb6"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Evaluating Agentic Workflows, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for evaluating agentic workflows help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Evaluating Agentic Workflows?",
+          "title": "Trace need",
+          "prompt": "Why can final-answer scoring miss an agent failure?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Final answers never matter.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The agent may use wrong tools, skip evidence, or violate policy before writing plausible text.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Tools cannot affect users.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Agent correctness includes the path.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb5",
+        "kb6"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Hard assertions guard contracts",
+      "sub": "Some failures should block immediately.",
+      "summary": "Hard gates protect the workflow boundary.",
       "objectives": [
-        "Explain the role of mechanism in Evaluating Agentic Workflows.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Define hard assertions.",
+        "Separate semantic scores from safety gates.",
+        "Use baseline drift metrics."
       ],
       "termIds": [
         "eval",
         "trace",
         "dataset",
         "judge",
-        "regression"
+        "regression",
+        "rubric"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Contracts should not depend on judge vibes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Evaluating Agentic Workflows",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Hard assertions include valid schema, only allowed tools, required approval before side effects, expected source retrieved, timeout respected, and no forbidden network/file action."
                 }
               ]
             },
@@ -440,152 +325,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Evaluating Agentic Workflows."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Evaluating Agentic Workflows, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for evaluating agentic workflows help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Semantic scores can judge helpfulness or completeness after hard gates pass. A helpful answer with unauthorized tool use is still a release failure."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Put safety and contract assertions before LLM judges in the report."
                 }
               ]
             }
@@ -593,87 +342,186 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb5",
+            "kb6"
+          ],
+          "analogy": "A smoke detector does not ask whether the room feels cozy."
+        },
+        {
+          "id": "m2_artifact",
+          "kind": "decisionMatrix",
+          "title": "Agent eval assertion classes",
+          "criteria": [
+            "Class",
+            "Examples",
+            "Release behavior"
+          ],
+          "options": [
+            {
+              "name": "Hard contract",
+              "cells": [
+                {
+                  "criterion": "Class",
+                  "text": "Schema, allowed tools, approvals.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Examples",
+                  "text": "Unauthorized tool call.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Release behavior",
+                  "text": "Block immediately.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Safety and integration",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Semantic score",
+              "cells": [
+                {
+                  "criterion": "Class",
+                  "text": "Helpfulness, completeness, tone.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Examples",
+                  "text": "Partially useful answer.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Release behavior",
+                  "text": "Threshold or review.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "After hard gates",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Drift metric",
+              "cells": [
+                {
+                  "criterion": "Class",
+                  "text": "Cost, latency, tool count.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Examples",
+                  "text": "30 calls for a simple task.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Release behavior",
+                  "text": "Compare to baseline.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Regression detection",
+              "cost": "Low",
+              "complexity": "Medium"
+            }
+          ],
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
+          ],
+          "sources": [
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Evaluating Agentic Workflows?",
+          "title": "Hard gate",
+          "prompt": "Which failure should block before semantic judging?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The answer used a synonym.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The agent called a forbidden external-send tool.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The response was one sentence shorter.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Safety contract failures are hard gates.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb5",
+        "kb6"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Fixtures make agent runs repeatable",
+      "sub": "Agents need setup data, tool mocks, and baseline comparisons.",
+      "summary": "Repeatability comes from controlled setup.",
       "objectives": [
-        "Explain the role of design choices in Evaluating Agentic Workflows.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Design fixtures for agent runs.",
+        "Label mock, recorded, and live tools.",
+        "Compare to baseline."
       ],
       "termIds": [
         "eval",
         "trace",
         "dataset",
         "judge",
-        "regression"
+        "regression",
+        "rubric"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Fixture design affects trust",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Evaluating Agentic Workflows",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A workflow eval case should include user input, app state, documents, mock tool responses or sandboxed real tools, allowed resources, expected traces, and baseline run."
                 }
               ]
             },
@@ -681,33 +529,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Tool mocks are useful but dangerous if they diverge from real tools. Keep contract tests against real adapters or recorded traces."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Every fixture should say whether it is mocked, recorded, or live."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
+          ],
+          "sources": [
+            "kb3",
+            "kb5",
+            "kb6"
+          ],
+          "analogy": "Fixtures are the stage props that make the play repeatable."
+        },
+        {
+          "id": "m3_artifact",
+          "kind": "functionalExample",
+          "title": "Worked fixture: refund support",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The case includes a customer with standard plan, a policy doc, a ticket ID, and a mock refund tool that records attempted calls. Expected trace: retrieve policy, draft explanation, no refund tool because approval is missing."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A separate integration test checks the real refund adapter schema."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Evaluating Agentic Workflows."
+                    "text": "Freeze setup data."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Define allowed tools and expected traces."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Decide mock, recorded, or live tools."
+                  }
+                ],
+                [
+                  {
+                    "text": "Compare candidate to baseline."
                   }
                 ]
               ]
@@ -716,265 +608,92 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Evaluating Agentic Workflows, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb5",
+            "kb6"
           ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Evaluating Agentic Workflows?",
+          "title": "Fixture risk",
+          "prompt": "What is a risk of tool mocks?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "They always make evals impossible.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "They can hide integration bugs if they differ from real tool behavior.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "They remove the need for expected traces.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Mocks need contract checks.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Evaluating Agentic Workflows: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb5",
+        "kb6"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Trace assertions make path regressions testable",
+      "sub": "Required spans and forbidden tools can be checked in code.",
+      "summary": "Trace assertions operationalize workflow eval.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Evaluating Agentic Workflows.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write required-span checks.",
+        "Write forbidden-tool checks.",
+        "Predict a trace pass/fail result."
       ],
       "termIds": [
         "eval",
         "trace",
         "dataset",
         "judge",
-        "regression"
+        "regression",
+        "rubric"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "Trace checks make invisible failures visible",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Evaluating Agentic Workflows",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A trace assertion can be simple: expected retriever span exists, refund tool is absent, approval span appears before send, final schema is valid."
                 }
               ]
             },
@@ -982,251 +701,134 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Use stable operation names and metadata. Assertions based on raw natural-language trace names will be brittle."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Evaluating Agentic Workflows."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "A missing parent span or tool span is a product signal, not just an observability issue."
+                }
               ]
             }
           ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
-          ]
+            "kb3",
+            "kb5",
+            "kb6"
+          ],
+          "analogy": "Trace assertions are turnstiles in the workflow path."
         },
         {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Evaluating Agentic Workflows, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for evaluating agentic workflows help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
+          "id": "m4_artifact",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Trace assertions for an agent run",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
+          "code": "trace = [\n    {\"span\": \"router\", \"tool\": None},\n    {\"span\": \"retrieval\", \"source\": \"refund_policy\"},\n    {\"span\": \"draft_answer\", \"tool\": None},\n]\nspans = {s[\"span\"] for s in trace}\ntools = {s.get(\"tool\") for s in trace if s.get(\"tool\")}\nassert \"retrieval\" in spans\nassert \"send_refund\" not in tools\nassert \"draft_answer\" in spans\nprint(\"workflow trace OK\")",
+          "explanation": "The checker verifies required spans and forbidden tool use before semantic scoring.",
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before reading the answer, predict whether the trace passes.",
+            "answer": "It passes because retrieval and draft_answer exist and the forbidden send_refund tool is absent."
           },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
-            }
-          ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Evaluating Agentic Workflows?",
+          "title": "Trace assertion",
+          "prompt": "What makes trace assertions brittle?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Testing for forbidden tools.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Using unstable operation names or missing metadata for important steps.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Checking required retrieval.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Assertions need stable instrumentation.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb5",
+        "kb6"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Promote failures into regression cases",
+      "sub": "The suite should learn from escaped failures.",
+      "summary": "Agent eval is a feedback loop.",
       "objectives": [
-        "Explain the role of check and apply in Evaluating Agentic Workflows.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Add incident-derived cases.",
+        "Track cost and latency drift.",
+        "Assign owners to failure buckets."
       ],
       "termIds": [
         "eval",
         "trace",
         "dataset",
         "judge",
-        "regression"
+        "regression",
+        "rubric"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "title": "Incidents are future tests",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Evaluating Agentic Workflows",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "When a production trace shows an agent overusing tools, missing approval, or citing stale evidence, create the smallest case that would have caught it. Label severity and owner."
                 }
               ]
             },
@@ -1234,14 +836,45 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "Track cost, latency, tool count, and pass rate by slice; a passing agent that takes 30 tool calls for a simple task can still regress."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "text": "eval",
-                  "term": "eval"
-                },
+                  "text": "The suite should answer “what changed?” after every prompt, model, KB, or tool update."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
+          ],
+          "sources": [
+            "kb3",
+            "kb5",
+            "kb6"
+          ],
+          "analogy": "A good incident review leaves a tripwire behind."
+        },
+        {
+          "id": "m5_artifact",
+          "kind": "functionalExample",
+          "title": "Verify an agent workflow eval suite",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Review the suite against real runs."
                 }
               ]
             },
@@ -1250,17 +883,27 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Evaluating Agentic Workflows."
+                    "text": "Cases run the full production path or an intentionally faithful fixture."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Hard assertions cover schemas, tools, approvals, retrieval, and safety."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Semantic scores evaluate final task success with evidence."
+                  }
+                ],
+                [
+                  {
+                    "text": "Cost, latency, retries, and tool count compare to baseline."
+                  }
+                ],
+                [
+                  {
+                    "text": "Production incidents become minimal regression cases."
                   }
                 ]
               ]
@@ -1269,306 +912,139 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Evaluating Agentic Workflows, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb5",
+            "kb6"
           ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Evaluating Agentic Workflows?",
+          "title": "Regression loop",
+          "prompt": "What should happen after a production agent incident?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Delete the trace.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Add a minimal eval case that would have caught the failure.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Trust manual demos only.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Agent eval suites learn from escaped failures.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression",
+            "rubric"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb5",
+            "kb6"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Evaluating Agentic Workflows: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb5",
+        "kb6"
+      ]
     }
   ],
   "glossary": {
     "eval": {
       "id": "eval",
       "label": "Eval",
-      "laymanDefinition": "Eval is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Eval is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A repeatable test of model or system behavior against expected criteria.",
+      "technicalNote": "In these lessons, evals are release evidence: they combine cases, assertions, scores, and review rules.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one run, including spans, inputs, outputs, metadata, and scores.",
+      "technicalNote": "Traces make failures diagnosable by showing which retrieval, model, tool, or scoring step produced the result.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ]
     },
     "dataset": {
       "id": "dataset",
       "label": "Dataset",
-      "laymanDefinition": "Dataset is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Dataset is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A curated set of examples used for evaluation, debugging, or regression checks.",
+      "technicalNote": "A useful eval dataset stores inputs, expected behavior, metadata slices, and source or rubric references.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ]
     },
     "judge": {
       "id": "judge",
       "label": "LLM-as-judge",
-      "laymanDefinition": "LLM-as-judge is a core building block in this lesson.",
-      "technicalNote": "In this lesson, LLM-as-judge is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "An LLM used to grade or compare outputs with a rubric.",
+      "technicalNote": "LLM judges are semantic scorers, not final authority; their prompts, model, thresholds, and spot checks must be versioned.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ],
       "acronymExpansion": "Large language model as judge"
     },
     "regression": {
       "id": "regression",
       "label": "Regression",
-      "laymanDefinition": "Regression is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Regression is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A previously working behavior that breaks after a prompt, model, data, or code change.",
+      "technicalNote": "Regression testing protects known capabilities and safety boundaries while allowing harmless wording variation.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ]
     },
     "rubric": {
       "id": "rubric",
       "label": "Rubric",
-      "laymanDefinition": "Rubric is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Rubric is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A scoring guide that states what a good answer or run must demonstrate.",
+      "technicalNote": "Rubrics make qualitative judgment reviewable by naming criteria, severity, examples, and thresholds.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb3"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Evaluating Agentic Workflows",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Agent eval design",
         "questions": [
           {
-            "q": "What decision does Evaluating Agentic Workflows change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Which workflow steps must be correct for this agent to be safe and useful?",
+            "why": "A multi-step agent can hide errors in intermediate actions and still produce plausible text.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Trace-aware workflow eval",
+              "Final-answer-only judge",
+              "Manual demo only"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Evaluate the full production path with hard trace assertions plus semantic outcome scores."
           }
         ]
       }
@@ -1580,64 +1056,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Evaluating Agentic Workflows is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct agent workflow eval by naming task, fixtures, tool traces, retrieved evidence, approvals, final answer, cost/latency, and baseline comparison."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Agent workflow eval path from task to trace assertions",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Evaluating Agentic Workflows.",
-          "what": "Mental model turns Evaluating Agentic Workflows into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+          "label": "Final text is only one output",
+          "sub": "The workflow path can be wrong even when prose is polished.",
+          "what": "Learners define agent success as trace plus final output.",
+          "relevance": "This catches unsafe or wasteful paths hidden behind helpful language.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Inspect tool calls, retrieval, approvals, and stops alongside the answer.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Evaluating Agentic Workflows into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+          "label": "Hard assertions guard contracts",
+          "sub": "Some failures should block immediately.",
+          "what": "Learners split hard gates from soft scores.",
+          "relevance": "This makes safety and integration failures non-negotiable.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Assert schemas, allowed tools, approvals, and timeouts deterministically.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Evaluating Agentic Workflows into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+          "label": "Fixtures make agent runs repeatable",
+          "sub": "Agents need setup data, tool mocks, and baseline comparisons.",
+          "what": "Learners build reproducible agent eval cases.",
+          "relevance": "This reduces flaky demos and makes failures debuggable.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Use realistic fixtures without hiding integration bugs.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Evaluating Agentic Workflows into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Evaluating Agentic Workflows, not just recognize the words.",
+          "label": "Trace assertions make path regressions testable",
+          "sub": "Required spans and forbidden tools can be checked in code.",
+          "what": "Learners implement workflow-level checks.",
+          "relevance": "This turns agent behavior into CI-testable evidence.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Assert the path before judging the prose.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Promote failures into regression cases",
+          "sub": "The suite should learn from escaped failures.",
+          "what": "Learners define the eval lifecycle.",
+          "relevance": "This keeps the workflow suite aligned with real risk.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Turn production incidents into minimal tasks and trace checks.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "frames"
         },
         {
           "from": "n_m2",
@@ -1648,86 +1141,84 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Final text is only one output",
+        "detail": "Agent eval starts from the full run trace."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Hard assertions guard contracts",
+        "detail": "Hard gates protect the workflow boundary."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Fixtures make agent runs repeatable",
+        "detail": "Repeatability comes from controlled setup."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Trace assertions make path regressions testable",
+        "detail": "Trace assertions operationalize workflow eval."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Promote failures into regression cases",
+        "detail": "Agent eval is a feedback loop."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_case",
+        "label": "Can you explain the concrete case in \"Final text is only one output\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_artifact",
+        "label": "Does \"Trace assertions make path regressions testable\" produce a reviewable artifact?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Promote failures into regression cases\" define a release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Evaluating Agentic Workflows: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Evaluation"
+      "prompt": "Create an eval plan for a refund-support agent: five golden tasks, allowed tools, expected retrieval, approval rules, max tool count, final rubric, and failure buckets. Next rung: run it in a regression harness.",
+      "scopedTo": "Evaluating Agentic Workflows"
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
+    "kb3": {
+      "id": "kb3",
       "kind": "kb",
-      "title": "KB: AI Evaluation, Observability, and Regression Testing",
+      "title": "KB: LLM Evaluation",
       "url": "https://platform.openai.com/docs/guides/evals",
-      "asOfDate": "2026-06-19"
+      "asOfDate": "2026-06-22"
     },
-    "kb2": {
-      "id": "kb2",
+    "kb5": {
+      "id": "kb5",
       "kind": "kb",
-      "title": "KB support: AI Evaluation, Observability, and Regression Testing",
-      "url": "https://platform.openai.com/docs/guides/evals",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Regression Testing for Agentic Systems",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     },
-    "canon1": {
-      "id": "canon1",
-      "kind": "canonical",
-      "title": "Langfuse documentation",
-      "url": "https://langfuse.com/docs",
-      "asOfDate": "2026-06-20"
-    },
-    "canon2": {
-      "id": "canon2",
-      "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://langfuse.com/docs",
-      "asOfDate": "2026-06-20"
+    "kb6": {
+      "id": "kb6",
+      "kind": "kb",
+      "title": "KB: LLM Observability",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
     }
   }
 }

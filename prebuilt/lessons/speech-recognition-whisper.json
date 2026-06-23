@@ -4,8 +4,8 @@
     "topic": "Speech Recognition with Whisper",
     "title": "Speech Recognition with Whisper",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 30,
-    "thesis": "Speech Recognition with Whisper becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 42,
+    "thesis": "Speech Recognition with Whisper is practical when learners can apply it to this concrete case: A sales team transcribes calls with Whisper and needs timestamps, speaker checks, and privacy handling. By the end, they should be able to build or review speech-to-text transcription QA plan, measure word error rate on domain vocabulary, and catch the failure where names and product terms are confidently mistranscribed."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -25,94 +25,106 @@
   },
   "mentalMap": {
     "title": "Speech Recognition with Whisper: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Speech Recognition with Whisper by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Use Whisper-style ASR by preparing audio, transcribing, checking timestamps and domain terms, measuring quality, and gating downstream use.",
+    "oneLineThesis": "Speech recognition is useful when transcripts become verified data, not when raw audio is blindly treated as truth.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Speech Recognition with Whisper in the system map.",
-        "what": "What the tool owns turns Speech Recognition with Whisper into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+        "label": "ASR turns speech audio into text tokens",
+        "sub": "The transcript is a model output, not a perfect recording.",
+        "what": "Learners understand ASR as probabilistic model output.",
+        "relevance": "This prevents fluent transcripts from becoming unquestioned truth.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Convert a noisy learner question into a reviewable transcript.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow turns Speech Recognition with Whisper into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+        "label": "Audio preparation changes transcription quality",
+        "sub": "Garbage audio makes confident text unreliable.",
+        "what": "Learners improve the input before blaming the model.",
+        "relevance": "This catches quality problems outside ASR.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Prepare classroom audio before decoding transcript segments.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives turns Speech Recognition with Whisper into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+        "label": "Timestamps make correction possible",
+        "sub": "Language, task, and segment boundaries matter downstream.",
+        "what": "Learners make transcripts auditable.",
+        "relevance": "This prevents untraceable snippets in search indexes.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Attach segment times and settings to each learner question.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch turns Speech Recognition with Whisper into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+        "label": "Code a transcript quality gate",
+        "sub": "Check domain terms before transcripts feed search.",
+        "what": "Learners implement a verification layer.",
+        "relevance": "This keeps ASR errors from poisoning retrieval.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Check a transcript for required lesson terms and metadata.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist turns Speech Recognition with Whisper into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+        "label": "Transcripts feed agents only after approval",
+        "sub": "Downstream systems amplify ASR mistakes.",
+        "what": "Learners close with transcript governance.",
+        "relevance": "This prevents an ASR error from becoming a wrong answer or tool call.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Approve, correct, or quarantine transcripts before indexing.",
+        "order": 5
       }
     ],
     "edges": [
       {
         "from": "n_m1",
         "to": "n_m2",
-        "label": "then"
+        "label": "prepares"
       },
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "decodes"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "checks"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "routes"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Place Speech Recognition with Whisper in the system map.",
-      "summary": "Place Speech Recognition with Whisper in the system map. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "ASR turns speech audio into text tokens",
+      "sub": "The transcript is a model output, not a perfect recording.",
+      "summary": "Whisper-style ASR maps audio features to text for search, captions, and agents.",
       "objectives": [
-        "Explain the role of what the tool owns in Speech Recognition with Whisper.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain ASR.",
+        "Anchor in a spoken learner question.",
+        "Name ASR failure modes."
       ],
       "termIds": [
         "diffusion",
@@ -121,230 +133,47 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "What the tool owns: the core idea",
+          "title": "A transcript is an interpretation of audio",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Speech Recognition with Whisper",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a learner asks a spoken question about backpropagation. The app wants to transcribe it, retrieve lesson notes, and answer. Whisper is a general-purpose speech recognition model, but output still needs checks for noise, accents, names, equations, and domain terms."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Speech Recognition with Whisper."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
-          ]
+            "canon_openai_whisper_repo",
+            "canon_openai_whisper_intro",
+            "kb_multimodal_generative"
+          ],
+          "analogy": "ASR is a careful listener with a keyboard, not an audio truth oracle."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Speech Recognition with Whisper.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Speech Recognition with Whisper, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked ASR artifact",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for speech recognition with whisper help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Audio ID: learner-q-104.wav. Expected terms: gradient, loss, derivative. Transcript: \"Why does the gradient get smaller in earlier layers?\" Review notes: correct terms, no overlap, approved for retrieval."
                 }
               ]
             }
@@ -352,59 +181,64 @@
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "canon_openai_whisper_repo"
+          ],
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"What the tool owns\" in Speech Recognition with Whisper?",
+          "title": "Transcript trust",
+          "prompt": "Why review transcripts before agent use?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Whisper cannot output text.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "ASR can produce fluent but wrong text for noisy, accented, or technical audio.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Audio transcripts never affect downstream behavior.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Agents and retrieval inherit transcript errors.",
           "termIds": [
             "diffusion",
-            "latent_space"
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_openai_whisper_intro"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_openai_whisper_repo",
+        "canon_openai_whisper_intro",
+        "kb_multimodal_generative"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the inputs, outputs, and lifecycle.",
-      "summary": "Trace the inputs, outputs, and lifecycle. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Audio preparation changes transcription quality",
+      "sub": "Garbage audio makes confident text unreliable.",
+      "summary": "Before decoding, inspect format, clipping, background noise, and segmentation.",
       "objectives": [
-        "Explain the role of core workflow in Speech Recognition with Whisper.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name audio checks.",
+        "Explain chunking and timestamps.",
+        "Recognize overlapping-speaker risk."
       ],
       "termIds": [
         "diffusion",
@@ -413,250 +247,142 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the core idea",
+          "title": "The model hears what the pipeline gives it",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Speech Recognition with Whisper",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Background music, clipping, long silence, overlapping speakers, and bad segmentation can change ASR output. Store audio metadata, normalize format, chunk long files, and preserve timestamps so reviewers can jump back to source audio."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Speech Recognition with Whisper."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_openai_whisper_repo",
+            "kb_multimodal_generative"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Speech Recognition with Whisper, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "ASR prep checklist",
+          "criteria": [
+            "Issue",
+            "Symptom",
+            "Mitigation"
           ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for speech recognition with whisper help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "whisper lesson_audio.wav --model turbo --language English",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "whisper",
-              "explains": "Runs transcription."
-            },
-            {
-              "part": "--model",
-              "explains": "Chooses model size."
-            },
-            {
-              "part": "--language",
-              "explains": "Adds a language hint."
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core workflow\" in Speech Recognition with Whisper?",
-          "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
+              "name": "Noise",
+              "cells": [
+                {
+                  "criterion": "Issue",
+                  "text": "Noise",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "missing or substituted words",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Mitigation",
+                  "text": "denoise or human review",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Classroom or mobile recordings.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
+              "name": "Long audio",
+              "cells": [
+                {
+                  "criterion": "Issue",
+                  "text": "Long audio",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "slow decode or context drift",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Mitigation",
+                  "text": "chunk with timestamps",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Lectures.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
+              "name": "Overlap",
+              "cells": [
+                {
+                  "criterion": "Issue",
+                  "text": "Overlap",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "mixed speakers in one transcript",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Mitigation",
+                  "text": "diarization or manual review",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Group discussion.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
           "termIds": [
             "diffusion",
-            "latent_space"
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_openai_whisper_repo"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_openai_whisper_repo",
+        "kb_multimodal_generative"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Compare when this tool is right or wrong.",
-      "summary": "Compare when this tool is right or wrong. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Timestamps make correction possible",
+      "sub": "Language, task, and segment boundaries matter downstream.",
+      "summary": "The ASR result should carry model, language, timestamps, and review metadata.",
       "objectives": [
-        "Explain the role of fit and alternatives in Speech Recognition with Whisper.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Record model settings.",
+        "Use timestamps for correction.",
+        "Distinguish transcribe and translate tasks."
       ],
       "termIds": [
         "diffusion",
@@ -665,238 +391,45 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the core idea",
+          "title": "The transcript needs provenance too",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Speech Recognition with Whisper",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "For a lesson product, store whether the task was transcription or translation, the model/version, language, segment timestamps, and reviewer status. A plain text blob is not enough for correction or audit."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Speech Recognition with Whisper."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_openai_whisper_repo",
+            "canon_openai_whisper_intro"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Speech Recognition with Whisper, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "m3_case",
+          "kind": "functionalExample",
+          "title": "Timestamped correction loop",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Segment 00:12-00:17 says \"back probation\" instead of \"backpropagation.\" The reviewer clicks the timestamp, hears the audio, corrects the term, and marks the transcript approved for retrieval."
                 }
               ]
             }
@@ -904,60 +437,30 @@
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Fit and alternatives\" in Speech Recognition with Whisper?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "canon_openai_whisper_repo"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Speech Recognition with Whisper: baseline, production design, or advanced optimization."
+        "canon_openai_whisper_repo",
+        "canon_openai_whisper_intro"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "See the smallest working pattern.",
-      "summary": "See the smallest working pattern. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Code a transcript quality gate",
+      "sub": "Check domain terms before transcripts feed search.",
+      "summary": "A small QA script catches missing terms and routes unreviewed transcripts to review.",
       "objectives": [
-        "Explain the role of implementation sketch in Speech Recognition with Whisper.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Run a transcript QA check.",
+        "Predict missing-domain-term alerts.",
+        "Verify ASR pipelines."
       ],
       "termIds": [
         "diffusion",
@@ -966,250 +469,82 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Speech Recognition with Whisper",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Speech Recognition with Whisper."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Speech Recognition with Whisper, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for speech recognition with whisper help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "whisper lesson_audio.wav --model turbo --language English",
-          "explain": [
+          "title": "Transcript QA before retrieval indexing",
+          "language": "python",
+          "code": "transcript = {\n    \"audio_id\": \"learner-q-104.wav\",\n    \"model\": \"whisper-large-v3\",\n    \"language\": \"en\",\n    \"segments\": [{\"start\": 0.0, \"end\": 4.2, \"text\": \"Why does the gradient get smaller in earlier layers?\"}],\n    \"reviewed\": False,\n}\nrequired_terms = {\"gradient\", \"layers\"}\ntext = \" \".join(seg[\"text\"].lower() for seg in transcript[\"segments\"])\nmissing_terms = sorted(term for term in required_terms if term not in text)\nneeds_review = bool(missing_terms) or not transcript[\"reviewed\"]\nprint({\"missing_terms\": missing_terms, \"needs_review\": needs_review})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This is a product gate: if important terms are missing or the transcript is unreviewed, do not treat it as trusted retrieval text."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "What prints when reviewed is False but all required terms are present?",
+            "answer": "missing_terms is empty, but needs_review is true because review approval is still missing."
           },
-          "syntax": [
+          "termIds": [
+            "diffusion",
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
+          ],
+          "sources": [
+            "canon_openai_whisper_repo",
+            "kb_multimodal_generative"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify ASR code",
+          "body": [
             {
-              "part": "whisper",
-              "explains": "Runs transcription."
-            },
-            {
-              "part": "--model",
-              "explains": "Chooses model size."
-            },
-            {
-              "part": "--language",
-              "explains": "Adds a language hint."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: audio metadata stored; model/language/task recorded; timestamps preserved; long audio chunked; technical terms reviewed; transcript status controls downstream search or agent use."
+                }
+              ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Implementation sketch\" in Speech Recognition with Whisper?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "canon_openai_whisper_repo"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_openai_whisper_repo",
+        "kb_multimodal_generative"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Harden versioning, evals, and operations.",
-      "summary": "Harden versioning, evals, and operations. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Transcripts feed agents only after approval",
+      "sub": "Downstream systems amplify ASR mistakes.",
+      "summary": "ASR output becomes safer when treated as evidence with correction and rollback.",
       "objectives": [
-        "Explain the role of production checklist in Speech Recognition with Whisper.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain ASR-to-agent risk.",
+        "Plan human correction.",
+        "Define indexing rules."
       ],
       "termIds": [
         "diffusion",
@@ -1218,296 +553,65 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Production checklist: the core idea",
+          "title": "A transcript can become a retrieval bug",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Speech Recognition with Whisper",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Once transcribed, audio may enter search, summaries, tools, or memory. Misheard words can retrieve the wrong lesson. Spoken malicious instructions can become text an agent sees. Keep transcript provenance, user intent, and approval status attached."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Speech Recognition with Whisper."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Speech Recognition with Whisper, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_multimodal_generative",
+            "canon_openai_whisper_repo"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Index transcripts only when quality, timestamps, and review status match downstream risk.",
+          "useWhen": "Use ASR for captions, searchable lessons, spoken questions, and agent inputs when correction is possible.",
+          "avoidWhen": "Avoid high-impact automation from raw transcripts without review, confidence checks, and audit trails.",
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Production checklist\" in Speech Recognition with Whisper?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "kb_multimodal_generative"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Speech Recognition with Whisper: baseline, production design, or advanced optimization."
+        "kb_multimodal_generative",
+        "canon_openai_whisper_repo"
+      ]
     }
   ],
   "glossary": {
     "diffusion": {
       "id": "diffusion",
       "label": "Diffusion",
-      "laymanDefinition": "Diffusion is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Diffusion is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A generative process that learns to turn noise into structured media.",
+      "technicalNote": "Diffusion systems combine denoising steps, conditioning, schedulers, and safety controls; quality and provenance depend on the full pipeline.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +620,8 @@
     "latent_space": {
       "id": "latent_space",
       "label": "Latent space",
-      "laymanDefinition": "Latent space is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latent space is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A compressed representation where models manipulate meaning more efficiently than raw pixels or audio.",
+      "technicalNote": "Latent-space choices affect speed, detail, editability, artifacts, and what safety or provenance checks can inspect.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +630,8 @@
     "pipeline": {
       "id": "pipeline",
       "label": "Pipeline",
-      "laymanDefinition": "Pipeline is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Pipeline is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The ordered set of model, preprocessing, generation, postprocessing, and safety steps.",
+      "technicalNote": "Media pipelines should pin model versions, prompts, parameters, assets, moderation, watermarking, and review metadata for reproducibility.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +640,8 @@
     "vlm": {
       "id": "vlm",
       "label": "VLM",
-      "laymanDefinition": "A model that connects vision and language.",
-      "technicalNote": "In this lesson, VLM is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A model that connects visual inputs with language understanding or generation.",
+      "technicalNote": "VLM workflows need image preprocessing, prompt grounding, output validation, and privacy review for uploaded visual content.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1547,8 +651,8 @@
     "asr": {
       "id": "asr",
       "label": "ASR",
-      "laymanDefinition": "Turning speech into text.",
-      "technicalNote": "In this lesson, ASR is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Technology that converts spoken audio into text.",
+      "technicalNote": "ASR systems should track language, accent, noise, timestamps, confidence, privacy, and downstream correction paths.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1558,8 +662,8 @@
     "provenance": {
       "id": "provenance",
       "label": "Provenance",
-      "laymanDefinition": "Provenance is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Provenance is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Evidence about where media came from and how it was created or edited.",
+      "technicalNote": "Provenance for generated media includes source assets, model versions, prompts, parameters, edits, disclosures, and review decisions.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1567,20 +671,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Speech Recognition with Whisper",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Transcript readiness",
         "questions": [
           {
-            "q": "What decision does Speech Recognition with Whisper change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What must be checked before this transcript feeds search, lessons, or an agent?",
+            "why": "ASR can fail on noise, accents, overlapping speakers, domain terms, and segmentation even when text looks fluent.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Audio plus transcript QA",
+              "Raw transcript as truth",
+              "Ignore timestamps"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Prepare audio, transcribe, inspect difficult spans, and attach review metadata."
           }
         ]
       }
@@ -1592,124 +696,152 @@
         "t": "p",
         "spans": [
           {
-            "text": "Speech Recognition with Whisper is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct Whisper ASR by naming audio preparation, language/task, decoding, timestamps, domain-term checks, error review, transcript metadata, and downstream gates."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Whisper ASR path from audio file to trusted transcript",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Speech Recognition with Whisper in the system map.",
-          "what": "What the tool owns turns Speech Recognition with Whisper into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+          "label": "ASR turns speech audio into text tokens",
+          "sub": "The transcript is a model output, not a perfect recording.",
+          "what": "Learners understand ASR as probabilistic model output.",
+          "relevance": "This prevents fluent transcripts from becoming unquestioned truth.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Convert a noisy learner question into a reviewable transcript.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow turns Speech Recognition with Whisper into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+          "label": "Audio preparation changes transcription quality",
+          "sub": "Garbage audio makes confident text unreliable.",
+          "what": "Learners improve the input before blaming the model.",
+          "relevance": "This catches quality problems outside ASR.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Prepare classroom audio before decoding transcript segments.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives turns Speech Recognition with Whisper into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+          "label": "Timestamps make correction possible",
+          "sub": "Language, task, and segment boundaries matter downstream.",
+          "what": "Learners make transcripts auditable.",
+          "relevance": "This prevents untraceable snippets in search indexes.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Attach segment times and settings to each learner question.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch turns Speech Recognition with Whisper into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Speech Recognition with Whisper, not just recognize the words.",
+          "label": "Code a transcript quality gate",
+          "sub": "Check domain terms before transcripts feed search.",
+          "what": "Learners implement a verification layer.",
+          "relevance": "This keeps ASR errors from poisoning retrieval.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Check a transcript for required lesson terms and metadata.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Transcripts feed agents only after approval",
+          "sub": "Downstream systems amplify ASR mistakes.",
+          "what": "Learners close with transcript governance.",
+          "relevance": "This prevents an ASR error from becoming a wrong answer or tool call.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Approve, correct, or quarantine transcripts before indexing.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "prepares"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "decodes"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "checks"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "routes"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "ASR turns speech audio into text tokens",
+        "detail": "Whisper-style ASR maps audio features to text for search, captions, and agents."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Audio preparation changes transcription quality",
+        "detail": "Before decoding, inspect format, clipping, background noise, and segmentation."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Timestamps make correction possible",
+        "detail": "The ASR result should carry model, language, timestamps, and review metadata."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Code a transcript quality gate",
+        "detail": "A small QA script catches missing terms and routes unreviewed transcripts to review."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Transcripts feed agents only after approval",
+        "detail": "ASR output becomes safer when treated as evidence with correction and rollback."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"ASR turns speech audio into text tokens\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Code a transcript quality gate\"?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Transcripts feed agents only after approval\" define the release or review gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Speech Recognition with Whisper: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Generative"
+      "prompt": "Transcribe a short learner question. Store audio ID, language, model, segments, timestamps, domain-term review, and downstream approval status. Next rung: add diarization or human correction workflow.",
+      "scopedTo": "Audio recognition",
+      "checks": [
+        "Audio quality inspected.",
+        "Language/task recorded.",
+        "Timestamps and domain terms reviewed.",
+        "Transcript approved before agent use."
+      ]
     }
   },
   "citations": {
@@ -1740,6 +872,27 @@
       "title": "Official documentation",
       "url": "https://huggingface.co/docs/diffusers/en/index",
       "asOfDate": "2026-06-20"
+    },
+    "canon_openai_whisper_repo": {
+      "id": "canon_openai_whisper_repo",
+      "kind": "canonical",
+      "title": "OpenAI Whisper repository",
+      "url": "https://github.com/openai/whisper",
+      "asOfDate": "2026-06-23"
+    },
+    "canon_openai_whisper_intro": {
+      "id": "canon_openai_whisper_intro",
+      "kind": "canonical",
+      "title": "Introducing Whisper",
+      "url": "https://openai.com/index/whisper/",
+      "asOfDate": "2026-06-23"
+    },
+    "kb_multimodal_generative": {
+      "id": "kb_multimodal_generative",
+      "kind": "kb",
+      "title": "KB: Multimodal and Generative Models",
+      "url": "https://huggingface.co/docs/diffusers/index",
+      "asOfDate": "2026-06-22"
     }
   }
 }

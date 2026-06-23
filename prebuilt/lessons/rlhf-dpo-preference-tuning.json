@@ -4,8 +4,8 @@
     "topic": "RLHF, DPO, and Preference Tuning",
     "title": "RLHF, DPO, and Preference Tuning",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 36,
-    "thesis": "RLHF, DPO, and Preference Tuning becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 42,
+    "thesis": "RLHF and DPO use preference signals after pretraining to steer model behavior: RLHF trains a reward model and optimizes a policy, while DPO trains directly on chosen/rejected pairs."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -24,59 +24,69 @@
     ]
   },
   "mentalMap": {
-    "title": "RLHF, DPO, and Preference Tuning: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use RLHF, DPO, and Preference Tuning by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "title": "Preference tuning — chosen beats rejected",
+    "caption": "The map separates preference data, RLHF’s reward-model path, DPO’s offline path, and failure modes.",
+    "oneLineThesis": "Preference tuning teaches models from comparisons when “better” is easier to rank than to write as one perfect answer.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
+        "label": "Preference signal",
         "sub": "Build the simplest useful picture of RLHF, DPO, and Preference Tuning.",
-        "what": "Mental model turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
+        "what": "Preference data says which response is better for a prompt.",
+        "relevance": "It captures helpfulness, safety, tone, and judgment that are hard to write as labels.",
         "moduleId": "m1",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Why pairwise choices fit subjective qualities better than single gold answers.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
+        "label": "Chosen vs rejected",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
+        "what": "Preference pairs are the core data unit.",
+        "relevance": "Bad pairs teach the wrong behavior even with perfect training code.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "How prompts, preferred answers, and rejected answers become training examples.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
+        "label": "RLHF route",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
+        "what": "RLHF uses a learned reward model and an RL optimizer.",
+        "relevance": "It explains the extra moving parts and reward-hacking risks.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "How rankings train a reward model before policy optimization.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
+        "label": "DPO route",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
+        "what": "DPO is an offline preference objective over chosen and rejected responses.",
+        "relevance": "It is simpler to run and debug when high-quality pairs already exist.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "How DPO trains directly from static preference pairs.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Regression risks",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
+        "what": "Preference tuning changes behavior but can break other capabilities.",
+        "relevance": "Advanced users need evals before trusting alignment improvements.",
         "moduleId": "m5",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "How preference gains can hide factual, safety, or diversity regressions.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,39 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "dependency",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of RLHF, DPO, and Preference Tuning.",
-      "summary": "Build the simplest useful picture of RLHF, DPO, and Preference Tuning. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "When gold answers are too narrow",
+      "sub": "Start with why comparisons are useful after supervised behavior exists.",
+      "summary": "Many assistant qualities are easier to rank than to specify as one canonical response.",
       "objectives": [
-        "Explain the role of mental model in RLHF, DPO, and Preference Tuning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why preference tuning exists.",
+        "Name behaviors suited to ranking.",
+        "Avoid using preferences for missing facts."
       ],
       "termIds": [
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "preference_pair"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "pd_m1",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Better is sometimes easier than exact",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "RLHF, DPO, and Preference Tuning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "For many assistant behaviors, there is no single perfect target answer. Reviewers can still prefer one answer over another: safer, less verbose, more honest about uncertainty, or better at asking a clarifying question."
                 }
               ]
             },
@@ -148,240 +150,65 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of RLHF, DPO, and Preference Tuning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for RLHF, DPO, and Preference Tuning.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For RLHF, DPO, and Preference Tuning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "Preference tuning exists for that layer. It should come after the model already knows the task format; it steers quality, judgment, and style."
                 }
               ]
             }
           ],
           "termIds": [
             "llm",
-            "token"
+            "preference_pair"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb2"
+          ],
+          "analogy": "Preference tuning is like coaching from comparisons: “do more like this answer, less like that one.”"
         },
         {
-          "id": "m1_example",
+          "id": "pd_m1_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Case study: clarification beats guessing",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for rlhf, dpo, and preference tuning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Prompt: “Can I get reimbursed?” Chosen response asks which policy and date apply. Rejected response invents a universal reimbursement rule. The preferred answer is not longer or flashier; it is safer behavior."
                 }
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "preference_pair"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
         },
         {
-          "id": "m1_quiz",
+          "id": "pd_m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in RLHF, DPO, and Preference Tuning?",
+          "title": "Check purpose",
+          "prompt": "When is preference tuning useful?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "When the app needs the latest policy facts.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "When reviewers can reliably rank outputs for qualities like helpfulness or safety.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "When no evals or examples exist yet.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Preference tuning needs meaningful comparisons and held-out checks.",
           "termIds": [
-            "llm",
-            "token"
+            "preference_pair"
           ],
           "sources": [
             "kb1"
@@ -389,50 +216,37 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Preference pairs are the data unit",
+      "sub": "Before algorithms, inspect the chosen/rejected examples.",
+      "summary": "The quality of prompts, chosen responses, rejected responses, and label instructions determines what the model learns.",
       "objectives": [
-        "Explain the role of mechanism in RLHF, DPO, and Preference Tuning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Describe a preference pair.",
+        "Identify confounded pairs.",
+        "Explain why data provenance matters."
       ],
       "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "preference_pair",
+        "llm"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m2_concept",
+          "id": "pd_m2",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "A pair must isolate the behavior you want",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "RLHF, DPO, and Preference Tuning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A preference pair usually contains a prompt, a chosen response, and a rejected response. If the chosen answer differs in tone, length, factuality, and safety all at once, the model may learn the wrong feature."
                 }
               ]
             },
@@ -440,742 +254,83 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Good pairs are comparable. They make the desired preference clear: cite uncertainty, refuse unsafe action, ask a clarifying question, or follow the tool policy."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of RLHF, DPO, and Preference Tuning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "preference_pair"
           ],
           "sources": [
-            "kb1"
-          ]
+            "kb2"
+          ],
+          "analogy": "A preference pair is like two drafts with one deliberate difference for the editor to choose between."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For RLHF, DPO, and Preference Tuning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for rlhf, dpo, and preference tuning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in RLHF, DPO, and Preference Tuning?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m3",
-      "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of design choices in RLHF, DPO, and Preference Tuning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m3_concept",
-          "kind": "conceptual",
-          "title": "Design choices: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "RLHF, DPO, and Preference Tuning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of RLHF, DPO, and Preference Tuning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For RLHF, DPO, and Preference Tuning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in RLHF, DPO, and Preference Tuning?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for RLHF, DPO, and Preference Tuning: baseline, production design, or advanced optimization."
-    },
-    {
-      "id": "m4",
-      "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of tiny implementation sketch in RLHF, DPO, and Preference Tuning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "RLHF, DPO, and Preference Tuning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "llm",
-                  "term": "llm"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of RLHF, DPO, and Preference Tuning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For RLHF, DPO, and Preference Tuning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for rlhf, dpo, and preference tuning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
+          "id": "pd_m2_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "json",
-          "code": "{\"type\":\"object\",\"properties\":{\"answer\":{\"type\":\"string\"},\"citations\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"answer\",\"citations\"],\"additionalProperties\":false}",
+          "title": "Inspect a tiny preference pair",
+          "language": "python",
+          "code": "pair = {\n    \"prompt\": \"Refund this order without an invoice\",\n    \"chosen\": \"I need the invoice ID before I can check refund eligibility.\",\n    \"rejected\": \"Sure, I can refund it now.\"\n}\n\ndef preference_feature(pair):\n    if \"need the invoice\" in pair[\"chosen\"].lower():\n        return \"asks_for_required_info\"\n    return \"unclear\"\n\nprint(preference_feature(pair))",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Run this as a tiny model of the mechanism. The point is to predict behavior before trusting the output."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict the feature label.",
+            "answer": "It prints asks_for_required_info. The pair teaches the model to request required information instead of taking an unsupported action."
           },
           "syntax": [
             {
-              "part": "type",
-              "explains": "Declares output shape."
+              "part": "input data",
+              "explains": "The small concrete case the example operates on."
             },
             {
-              "part": "required",
-              "explains": "Names required fields."
+              "part": "decision rule",
+              "explains": "The line or function that turns the inputs into behavior."
             },
             {
-              "part": "additionalProperties",
-              "explains": "Blocks surprise fields."
+              "part": "print(...)",
+              "explains": "A visible result so you can check your prediction."
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "preference_pair"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb2"
           ]
         },
         {
-          "id": "m4_quiz",
+          "id": "pd_m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in RLHF, DPO, and Preference Tuning?",
+          "title": "Check pairs",
+          "prompt": "What makes a pair weak?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The rejected answer is not exactly the same length.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Chosen and rejected differ in many uncontrolled ways, so the learned preference is ambiguous.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The prompt is realistic.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Confounded pairs teach shortcuts.",
           "termIds": [
-            "llm",
-            "token"
+            "preference_pair"
           ],
           "sources": [
             "kb1"
@@ -1183,50 +338,37 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb1"
       ]
     },
     {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "id": "m3",
+      "order": 3,
+      "title": "RLHF: reward model then policy update",
+      "sub": "With preference data understood, open the more complex training route.",
+      "summary": "RLHF trains a reward model from rankings, then optimizes a policy model while constraining drift from a reference.",
       "objectives": [
-        "Explain the role of check and apply in RLHF, DPO, and Preference Tuning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name RLHF moving parts.",
+        "Explain why KL or reference control matters.",
+        "Identify reward hacking risk."
       ],
       "termIds": [
         "llm",
-        "token",
-        "context_window",
-        "prompt",
-        "schema"
+        "preference_pair"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "pd_m3",
           "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "title": "RLHF adds a learned reward layer",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This llms lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "RLHF, DPO, and Preference Tuning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "In the RLHF recipe, reviewers rank outputs. A reward model learns to score outputs from those rankings. The policy model is then optimized to increase reward while staying close to a reference model."
                 }
               ]
             },
@@ -1234,14 +376,226 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "The extra machinery is useful when on-policy optimization matters, but it creates extra failure modes: reward hacking, instability, and over-optimization."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "llm",
+            "preference_pair"
+          ],
+          "sources": [
+            "kb2",
+            "canon1"
+          ],
+          "analogy": "RLHF is like training a judge, then training a performer to please that judge without drifting too far from the original act."
+        },
+        {
+          "id": "pd_m3_case",
+          "kind": "functionalExample",
+          "title": "Case study: overly cautious assistant",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": "llm",
-                  "term": "llm"
-                },
+                  "text": "A reward model overvalues refusals because labelers preferred safe answers. The policy learns to refuse harmless requests. The win rate improves on safety pairs but factual usefulness drops."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The fix is not just a lower learning rate. The team needs balanced preference data and held-out evals for helpfulness, factuality, and safe completion."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "llm",
+            "preference_pair"
+          ],
+          "sources": [
+            "kb2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
+        },
+        {
+          "id": "pd_m3_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check RLHF",
+          "prompt": "What is a reward model used for?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Retrieving current facts from documents.",
+              "correct": false
+            },
+            {
+              "text": "Scoring candidate responses based on learned preferences.",
+              "correct": true
+            },
+            {
+              "text": "Tokenizing prompts into IDs.",
+              "correct": false
+            }
+          ],
+          "explanation": "The reward model maps outputs to preference-like scores used during optimization.",
+          "termIds": [
+            "llm"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m4",
+      "order": 4,
+      "title": "DPO: optimize the pair directly",
+      "sub": "Compare the simpler offline route after RLHF.",
+      "summary": "DPO trains the policy to prefer chosen responses over rejected responses directly from static pairs, without a separate reward model.",
+      "objectives": [
+        "Explain DPO at a high level.",
+        "Know when DPO is a good fit.",
+        "Name DPO data-quality risks."
+      ],
+      "termIds": [
+        "preference_pair",
+        "llm"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "pd_m4",
+          "kind": "conceptual",
+          "title": "DPO removes the separate reward model",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Direct Preference Optimization uses chosen/rejected pairs to train the policy so it assigns higher relative likelihood to the chosen response. It avoids a separate reward model and online reinforcement-learning loop."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "DPO is attractive when you already have high-quality static preference pairs and want a simpler training pipeline. It still inherits all the risks of the data."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "preference_pair",
+            "llm"
+          ],
+          "sources": [
+            "kb2",
+            "canon1"
+          ],
+          "analogy": "DPO is like training directly from edited pairs instead of first training a separate critic."
+        },
+        {
+          "id": "pd_m4_compare",
+          "kind": "functionalExample",
+          "title": "RLHF vs DPO in a team decision",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A lab with infrastructure for online sampling and reward modeling may choose RLHF for complex reward shaping. A product team with 20,000 carefully reviewed chosen/rejected support answers may choose DPO for a simpler offline run."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The decision turns less on hype and more on data quality, infrastructure, and eval coverage."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "preference_pair"
+          ],
+          "sources": [
+            "kb2"
+          ],
+          "personalizedFor": "Agentic Learning Studio course library"
+        },
+        {
+          "id": "pd_m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Check DPO",
+          "prompt": "What does DPO avoid?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "The need for preference data.",
+              "correct": false
+            },
+            {
+              "text": "A separate reward model and online RL loop.",
+              "correct": true
+            },
+            {
+              "text": "All safety and factuality evals.",
+              "correct": false
+            }
+          ],
+          "explanation": "DPO simplifies training mechanics but does not eliminate data and eval requirements.",
+          "termIds": [
+            "preference_pair"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        }
+      ],
+      "citations": [
+        "kb1"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Preference gains can hide regressions",
+      "sub": "End with the advanced failure modes that decide ship/no-ship.",
+      "summary": "Preference tuning can improve ranked style while hurting factuality, tool use, diversity, or long-context behavior.",
+      "objectives": [
+        "Name preference-tuning failure modes.",
+        "Design held-out regression checks.",
+        "Choose what to monitor after tuning."
+      ],
+      "termIds": [
+        "preference_pair",
+        "llm"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "pd_m5_fail",
+          "kind": "conceptual",
+          "title": "How preference tuning breaks",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Preference data encodes labeler values and blind spots. A tuned model can become more pleasing while becoming less factual, less diverse, too cautious, or worse at tool use."
                 }
               ]
             },
@@ -1250,232 +604,106 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of RLHF, DPO, and Preference Tuning."
+                    "text": "Reward hacking: outputs exploit the judge rather than improve usefulness."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Over-caution: the model refuses safe requests."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Confounded preferences: the model learns length or tone instead of correctness."
+                  }
+                ],
+                [
+                  {
+                    "text": "Distribution shift: held-out traffic differs from labeled pairs."
                   }
                 ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "preference_pair",
+            "llm"
           ],
           "sources": [
-            "kb1"
+            "kb2"
           ]
         },
         {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For RLHF, DPO, and Preference Tuning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "llm",
-            "token"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "llm",
-            "token",
-            "context_window"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "pd_m5_verify",
+          "kind": "note",
+          "title": "Verify AI-generated preference-tuning plans",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "When an AI proposes RLHF or DPO, demand evidence of a real training plan."
                 }
               ]
             },
             {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Does it define the source and audit process for preference pairs?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it compare RLHF and DPO rather than naming one by default?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it include factuality, safety, and tool-use regression evals?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it specify a reference model and rollback path?"
+                  }
+                ]
               ]
             }
           ],
           "termIds": [
-            "llm",
-            "token",
-            "context_window"
+            "preference_pair",
+            "llm"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb2"
           ]
         },
         {
-          "id": "m5_quiz",
+          "id": "pd_m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in RLHF, DPO, and Preference Tuning?",
+          "title": "Check failure modes",
+          "prompt": "What is the biggest warning sign before shipping a preference-tuned model?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The dataset contains chosen and rejected answers.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Preference win rate improves while factuality or safety regressions are unmeasured.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The team chose DPO over RLHF.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Preference metrics must be paired with regression evals.",
           "termIds": [
-            "llm",
-            "token"
+            "preference_pair"
           ],
           "sources": [
             "kb1"
@@ -1483,20 +711,16 @@
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for RLHF, DPO, and Preference Tuning: baseline, production design, or advanced optimization."
+        "kb1"
+      ]
     }
   ],
   "glossary": {
     "llm": {
       "id": "llm",
       "label": "LLM",
-      "laymanDefinition": "A model trained to generate token sequences.",
-      "technicalNote": "In this lesson, LLM is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A language model that predicts and generates token sequences from context.",
+      "technicalNote": "LLM behavior depends on training data, tokenization, context, decoding, alignment, system instructions, and the application wrapper.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +730,8 @@
     "token": {
       "id": "token",
       "label": "Token",
-      "laymanDefinition": "Token is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Token is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A unit of text, code, punctuation, or whitespace that the model reads and generates.",
+      "technicalNote": "Token boundaries determine context usage, cost, latency, truncation behavior, and how the model represents text internally.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +740,8 @@
     "context_window": {
       "id": "context_window",
       "label": "Context window",
-      "laymanDefinition": "Context window is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Context window is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The limited set of input and generated tokens available to the model at one time.",
+      "technicalNote": "Context windows constrain what evidence, instructions, conversation state, and tool results can influence the next output.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +750,8 @@
     "prompt": {
       "id": "prompt",
       "label": "Prompt",
-      "laymanDefinition": "Prompt is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prompt is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The instructions, user request, examples, and context sent to the model.",
+      "technicalNote": "Prompts are release artifacts when they shape behavior, tool use, output schema, safety handling, or evaluation results.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +760,8 @@
     "schema": {
       "id": "schema",
       "label": "Schema",
-      "laymanDefinition": "Schema is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Schema is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A machine-readable contract for fields, types, required values, and allowed shapes.",
+      "technicalNote": "Schemas make model outputs and tool calls checkable, but they still need validation, refusal handling, and regression tests.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,9 +770,25 @@
     "tool_call": {
       "id": "tool_call",
       "label": "Tool call",
-      "laymanDefinition": "Tool call is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Tool call is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured request from the model to use an external capability.",
+      "technicalNote": "Tool calls should be parsed, authorized, validated, traced, and executed by trusted code rather than by free-form text.",
       "wrapPolicy": "firstOnly",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "preference_pair": {
+      "id": "preference_pair",
+      "label": "Preference pair",
+      "laymanDefinition": "A prompt with a chosen response and a rejected response for preference training.",
+      "sources": [
+        "kb1"
+      ]
+    },
+    "fine_tuning": {
+      "id": "fine_tuning",
+      "label": "Fine-tuning",
+      "laymanDefinition": "Continuing training so repeated behavior becomes more likely in model weights.",
       "sources": [
         "kb1"
       ]
@@ -1580,154 +820,98 @@
         "t": "p",
         "spans": [
           {
-            "text": "RLHF, DPO, and Preference Tuning is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, compare RLHF and DPO: what data they need, what objective path they take, and which failures each can hide. Then name why preference tuning is not the same as supervised fine-tuning."
           }
         ]
       }
     ],
-    "referenceArchitecture": {
-      "title": "Reference path",
-      "layout": "flow",
-      "nodes": [
-        {
-          "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of RLHF, DPO, and Preference Tuning.",
-          "what": "Mental model turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
-          "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
-          "moduleId": "m2",
-          "layer": "Path",
-          "emphasis": "normal"
-        },
-        {
-          "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
-          "moduleId": "m3",
-          "layer": "Path",
-          "emphasis": "spine"
-        },
-        {
-          "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns RLHF, DPO, and Preference Tuning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply RLHF, DPO, and Preference Tuning, not just recognize the words.",
-          "moduleId": "m4",
-          "layer": "Path",
-          "emphasis": "normal"
-        }
-      ],
-      "edges": [
-        {
-          "from": "n_m1",
-          "to": "n_m2",
-          "label": "then"
-        },
-        {
-          "from": "n_m2",
-          "to": "n_m3",
-          "label": "then"
-        },
-        {
-          "from": "n_m3",
-          "to": "n_m4",
-          "label": "then"
-        }
-      ]
-    },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "When gold answers are too narrow",
+        "detail": "Start with why comparisons are useful after supervised behavior exists."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Preference pairs are the data unit",
+        "detail": "Before algorithms, inspect the chosen/rejected examples."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "RLHF: reward model then policy update",
+        "detail": "With preference data understood, open the more complex training route."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "DPO: optimize the pair directly",
+        "detail": "Compare the simpler offline route after RLHF."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Preference gains can hide regressions",
+        "detail": "End with the advanced failure modes that decide ship/no-ship."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_1",
+        "label": "Are pairs comparable and realistic?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_2",
+        "label": "Do labelers or judges encode the right values?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_3",
+        "label": "Is RLHF complexity justified over DPO?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_4",
+        "label": "Do held-out evals cover factuality and safety?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_5",
+        "label": "What should I learn next: eval design and data governance.",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for RLHF, DPO, and Preference Tuning: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "LLMs"
+      "prompt": "Design a preference-tuning plan for a support assistant that should ask clarifying questions instead of guessing. Write three chosen/rejected pairs, pick RLHF or DPO, and define held-out safety and factuality evals. Next rung: building golden preference datasets.",
+      "scopedTo": "RLHF, DPO, and Preference Tuning"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "Fine-tuning",
+      "url": "https://huggingface.co/docs/transformers/training",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: How Large Language Models Work",
-      "url": "https://huggingface.co/docs/transformers/en/generation_strategies",
-      "asOfDate": "2026-06-19"
+      "title": "RLHF, DPO, and Preference Tuning",
+      "url": "https://huggingface.co/docs/trl/index",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OpenAI Prompt Engineering Guide",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "Hugging Face TRL DPO Trainer",
+      "url": "https://huggingface.co/docs/trl/dpo_trainer",
+      "asOfDate": "2026-06-22"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://platform.openai.com/docs/guides/prompt-engineering",
-      "asOfDate": "2026-06-20"
+      "title": "RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
     }
   }
 }

@@ -4,8 +4,8 @@
     "topic": "Model Registries and Versioning",
     "title": "Model Registries and Versioning",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 30,
-    "thesis": "Model Registries and Versioning becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 40,
+    "thesis": "Model Registries and Versioning is practical when learners can apply it to this concrete case: A release team must track which model, prompt, dataset, and eval produced each behavior. By the end, they should be able to build or review model registry card with version, lineage, metrics, and rollback data, measure the ability to reproduce a production answer, and catch the failure where a rollback changes weights but leaves an incompatible prompt in place."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Model Registries and Versioning: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Model Registries and Versioning by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Bundle model, data, code, prompt, evals, and deployment aliases into a reproducible release trail.",
+    "oneLineThesis": "A registry is valuable when every prediction can be traced to immutable artifacts, approval evidence, and a rollback target.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Model Registries and Versioning.",
-        "what": "Mental model turns Model Registries and Versioning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+        "label": "Name the whole release bundle",
+        "sub": "Track model, data, code, prompt, evals, package, and owner as one promotion unit.",
+        "what": "Versioning is useful only when it covers every artifact needed to explain and reproduce a prediction.",
+        "relevance": "List the artifacts in a complete model release bundle.",
         "moduleId": "m1",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Bundle every artifact needed to reproduce and explain predictions.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Model Registries and Versioning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+        "label": "Make lineage immutable at boundaries",
+        "sub": "Separate experimental churn from production identities that can be audited and rolled back.",
+        "what": "Training can create new artifacts freely; production should consume named versions and aliases with history.",
+        "relevance": "Explain immutable data and model references.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Protect production by promoting immutable versions through explicit aliases.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Model Registries and Versioning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+        "label": "Promote with evidence, not vibes",
+        "sub": "Use gates for metrics, slices, latency, schema compatibility, and human approval.",
+        "what": "A registry records status; release gates decide whether the status is deserved.",
+        "relevance": "Distinguish registry status from quality control.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Promote versions only after quality, slice, latency, and contract evidence.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Model Registries and Versioning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+        "label": "Log prediction identity in production",
+        "sub": "Make every output traceable to version, alias, package, and request context.",
+        "what": "A versioned release pays off when production logs can reconstruct which bundle answered each request.",
+        "relevance": "Write a small prediction-log contract.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Attach version identity to every production prediction and trace.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Model Registries and Versioning into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+        "label": "Practice a rollback-ready release",
+        "sub": "Synthesize the registry loop and apply it to a solo release card.",
+        "what": "The learner should finish able to build a release card that supports promotion, incident review, and rollback.",
+        "relevance": "Recall the release bundle from memory.",
         "moduleId": "m5",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Reconstruct the release bundle and rehearse rollback evidence.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,43 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Model Registries and Versioning.",
-      "summary": "Build the simplest useful picture of Model Registries and Versioning. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Name the whole release bundle",
+      "sub": "Track model, data, code, prompt, evals, package, and owner as one promotion unit.",
+      "summary": "Versioning is useful only when it covers every artifact needed to explain and reproduce a prediction.",
       "objectives": [
-        "Explain the role of mental model in Model Registries and Versioning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "List the artifacts in a complete model release bundle.",
+        "Explain why model-only versioning is not enough.",
+        "Connect prediction logs to registry identity."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "The model file is not the release",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Model Registries and Versioning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a churn model starts over-discounting enterprise customers after a Friday deployment. The registry says \"churn-model v42,\" but the team cannot identify the training data snapshot, feature code, prompt template for explanations, evaluation slice report, Docker image, or the alias switch that sent traffic to it."
                 }
               ]
             },
@@ -148,14 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "A real release bundle names the model artifact, data snapshot, code commit, feature or preprocessing contract, prompt or retrieval index when relevant, eval set, metrics, package image, owner, approval, deployment alias, and rollback target. Without that, debugging becomes archaeology."
                 }
               ]
             },
@@ -164,17 +163,17 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Model Registries and Versioning."
+                    "text": "Product framing: versioning answers which customer-facing behavior changed and who approved it."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Engineering framing: versioning makes rollback and reproduction a deterministic operation."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Governance framing: versioning records evidence, but it does not by itself prove quality."
                   }
                 ]
               ]
@@ -183,127 +182,27 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Model Registries and Versioning.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Model Registries and Versioning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
+            "kb2",
             "canon1"
           ]
         },
         {
-          "id": "m1_example",
+          "id": "m1_artifact",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked artifact: registry card for one release",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for model registries and versioning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "`name=churn-risk`, `version=42`, `alias=canary`, `artifact=s3://models/churn/42`, `dataset=customers@2026-06-18`, `features=features/churn.py@abc123`, `image=registry/churn:42`, `eval_set=retention_gold_v7`, `metrics=auc .87, enterprise_recall .78`, `latency_p95=82ms`, `approver=ml-platform`, `rollback=version 41`."
                 }
               ]
             },
@@ -311,40 +210,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "For an LLM feature, add prompt version, model provider or self-hosted endpoint, retrieval index version, tool schema version, and safety eval report. The principle is identical: prediction behavior comes from a bundle, not one weight file."
                 }
               ]
             }
@@ -352,36 +218,45 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "canon1"
-          ]
+            "kb2"
+          ],
+          "personalizedFor": "Model release review"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Model Registries and Versioning?",
+          "title": "Registry scope",
+          "prompt": "What is the biggest flaw in registering only `model.pkl`?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "It makes the model too easy to find.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It omits the data, code, package, eval, and deployment context needed for debugging.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It prevents all future retraining.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The model artifact matters, but production behavior depends on the full release bundle.",
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1"
@@ -391,48 +266,41 @@
       "citations": [
         "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Make lineage immutable at boundaries",
+      "sub": "Separate experimental churn from production identities that can be audited and rolled back.",
+      "summary": "Training can create new artifacts freely; production should consume named versions and aliases with history.",
       "objectives": [
-        "Explain the role of mechanism in Model Registries and Versioning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain immutable data and model references.",
+        "Use aliases without overwriting history.",
+        "Describe why mutable paths break incident response."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Aliases are pointers, history is evidence",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Model Registries and Versioning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Experiment runs are allowed to be messy. Production references should not be. A release should point to immutable data snapshots, code commits, package tags, and registered model versions. Human-friendly aliases such as champion, staging, canary, and rollback are useful only when moving them leaves history."
                 }
               ]
             },
@@ -440,240 +308,193 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "DVC and lake-style tools can identify data versions; MLflow-style registries identify model versions and status. Deployment systems then resolve an alias to a version. The dangerous anti-pattern is a mutable path like `models/current.pkl` because it answers today and erases yesterday."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Model Registries and Versioning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Model Registries and Versioning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "canon1",
+            "canon2"
           ]
         },
         {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for model registries and versioning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Lineage boundary checklist",
+          "criteria": [
+            "Boundary",
+            "Immutable evidence",
+            "Failure if missing"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Model Registries and Versioning?",
-          "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
+              "name": "Data",
+              "cells": [
+                {
+                  "criterion": "Boundary",
+                  "text": "Training or eval dataset",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Immutable evidence",
+                  "text": "snapshot ID, table version, or DVC/lake commit",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure if missing",
+                  "text": "cannot explain why a retrain changed behavior",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Before registering a candidate.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
+              "name": "Model",
+              "cells": [
+                {
+                  "criterion": "Boundary",
+                  "text": "Artifact and metrics",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Immutable evidence",
+                  "text": "registry version, run ID, parameters, metrics",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure if missing",
+                  "text": "cannot compare or roll back reliably",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "At candidate creation.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
+              "name": "Deployment",
+              "cells": [
+                {
+                  "criterion": "Boundary",
+                  "text": "Serving alias and package",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Immutable evidence",
+                  "text": "image tag, alias history, prediction logs",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure if missing",
+                  "text": "cannot tell which version answered users",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "At promotion and rollout.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1"
+            "kb1",
+            "kb2"
+          ]
+        },
+        {
+          "id": "m2_failure",
+          "kind": "functionalExample",
+          "title": "Case study: rollback that did not roll back",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "An incident team moves the model alias from v42 back to v41, but errors continue. The registry rollback worked; the hidden problem was that the feature service still served the new transformation code and the explanation prompt still used v42 assumptions. A model rollback without feature, prompt, and package rollback is only partial."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This is the spaced recall from module 1: the release was the whole bundle. Rollback must restore the bundle or explicitly prove which components are safe to keep."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1",
+            "kb2"
           ]
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "canon2",
+        "kb2"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Promote with evidence, not vibes",
+      "sub": "Use gates for metrics, slices, latency, schema compatibility, and human approval.",
+      "summary": "A registry records status; release gates decide whether the status is deserved.",
       "objectives": [
-        "Explain the role of design choices in Model Registries and Versioning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish registry status from quality control.",
+        "Define promotion gates for ML and LLM releases.",
+        "Include slice metrics and contract tests before alias changes."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "The registry is not the judge",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Model Registries and Versioning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A registry can say staging, production, champion, or archived. Those labels are dangerous if they are only labels. The evidence behind promotion should include aggregate metric change, slice behavior, calibration or ranking quality, latency and throughput, input/output schema compatibility, package tests, and an owner approval."
                 }
               ]
             },
@@ -681,567 +502,152 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "For LLM applications, the release bundle adds prompt version, retrieval index, model/provider route, tool schema, safety checks, and eval transcripts. A registry does not have to store all content directly, but it must link to immutable evidence."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Model Registries and Versioning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "kb1"
+            "kb1",
+            "kb2"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
+          "id": "m3_gate",
+          "kind": "functionalExample",
+          "title": "Worked promotion gate for churn v42",
+          "body": [
             {
-              "label": "Name the boundary",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Model Registries and Versioning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
+                  "text": "Gate: overall AUC must not drop by more than .01; enterprise recall must improve or stay within .02; p95 latency under 100 ms; input schema unchanged or migration approved; package contract tests pass on 100 golden examples; prediction logs include version 42; rollback to v41 tested in staging."
                 }
               ]
             },
             {
-              "label": "Attach evidence",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "The approver can now say what was accepted. If enterprise recall worsens next week, the team knows whether the risk was visible at release or emerged after traffic shifted."
                 }
               ]
             }
           ],
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
             "canon1"
-          ]
+          ],
+          "personalizedFor": "Promotion gate review"
         },
         {
           "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Use registry status as a pointer to evidence, not a substitute for evidence.",
+          "useWhen": "Promote when metrics, slice checks, latency, schema tests, package tests, and rollback evidence are linked to the version.",
+          "avoidWhen": "Avoid moving aliases because a notebook looked good or a single aggregate metric improved.",
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Model Registries and Versioning?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1"
+            "kb2"
           ]
         }
       ],
       "citations": [
         "kb1",
         "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ],
       "decisionItForces": "Choose the right level of rigor for Model Registries and Versioning: baseline, production design, or advanced optimization."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Log prediction identity in production",
+      "sub": "Make every output traceable to version, alias, package, and request context.",
+      "summary": "A versioned release pays off when production logs can reconstruct which bundle answered each request.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Model Registries and Versioning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write a small prediction-log contract.",
+        "Predict why missing aliases hurt incident review.",
+        "Verify AI-generated registry plans for rollback gaps."
       ],
       "termIds": [
         "gpu",
         "serving",
         "gateway",
         "latency",
-        "throughput"
+        "throughput",
+        "versioning"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Model Registries and Versioning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Model Registries and Versioning."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Model Registries and Versioning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for model registries and versioning help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Prediction log identity check",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
+          "code": "required = {\n    \"request_id\", \"model_name\", \"model_version\", \"registry_alias\",\n    \"package_image\", \"input_schema\", \"prediction\", \"latency_ms\"\n}\n\ndef validate_prediction_log(row):\n    missing = required - set(row)\n    assert not missing, f\"missing release identity: {sorted(missing)}\"\n    assert row[\"registry_alias\"] in {\"canary\", \"champion\", \"rollback\"}\n    return True\n\nvalidate_prediction_log({\n    \"request_id\": \"req_123\",\n    \"model_name\": \"churn-risk\",\n    \"model_version\": \"42\",\n    \"registry_alias\": \"canary\",\n    \"package_image\": \"registry/churn:42\",\n    \"input_schema\": \"churn_input_v5\",\n    \"prediction\": 0.73,\n    \"latency_ms\": 81,\n})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This code tests the production side of versioning. Registration is incomplete if prediction logs cannot later identify the release bundle that made a decision."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "What incident question becomes hard if `registry_alias` and `model_version` are missing from logs?",
+            "answer": "You cannot reliably know which release answered a user request, so rollback verification and root-cause analysis become guesswork."
           },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
-            }
-          ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb1",
+            "canon1"
           ]
         },
         {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Model Registries and Versioning?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "gpu",
-            "serving"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Model Registries and Versioning.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "gpu",
-        "serving",
-        "gateway",
-        "latency",
-        "throughput"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
+          "id": "m4_verify",
           "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "title": "Verify an AI-generated registry design",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Model Registries and Versioning",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "AI-generated MLOps plans often mention MLflow or a registry but skip lifecycle edges. Check whether the plan records data snapshots, code commit, package image, input/output schema, eval report, approver, alias history, prediction-log identity, and rollback procedure."
                 }
               ]
             },
@@ -1250,17 +656,22 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Model Registries and Versioning."
+                    "text": "Can a prediction be traced to the exact version and package?"
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Can the team reproduce the eval that justified promotion?"
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Can rollback restore prompt, retrieval index, feature code, and tool schema when relevant?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does retention policy say which artifacts can be deleted and when?"
                   }
                 ]
               ]
@@ -1269,213 +680,44 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Model Registries and Versioning, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving"
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "kb2"
           ]
         },
         {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_quiz",
+          "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Model Registries and Versioning?",
+          "title": "Production traceability",
+          "prompt": "Why should prediction logs include model version?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "So the model file becomes smaller.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "So incidents and metrics can be tied to the exact release that answered.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "So retraining can skip evaluation.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Versioned logs connect production outcomes back to release evidence.",
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
           ],
           "sources": [
             "kb1"
@@ -1484,9 +726,125 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "kb2"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Practice a rollback-ready release",
+      "sub": "Synthesize the registry loop and apply it to a solo release card.",
+      "summary": "The learner should finish able to build a release card that supports promotion, incident review, and rollback.",
+      "objectives": [
+        "Recall the release bundle from memory.",
+        "Write a retrieval prompt for registry design.",
+        "Produce a capstone model release card."
+      ],
+      "termIds": [
+        "gpu",
+        "serving",
+        "gateway",
+        "latency",
+        "throughput",
+        "versioning"
+      ],
+      "estMinutes": 8,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_recall",
+          "kind": "conceptual",
+          "title": "Retrieval prompt for the whole lesson",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Answer this from memory: \"What must a registry-backed model release record so I can debug and roll it back?\" Include data snapshot, code commit, model artifact, package, schema, eval set, metrics, slice checks, latency, owner, alias history, prediction logs, and rollback target."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Spaced recall: a registry is not quality control. It is the place where quality evidence, artifact identity, and deployment status meet."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1",
+            "kb2"
+          ]
+        },
+        {
+          "id": "m5_decision",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Treat every promoted model as an auditable release bundle.",
+          "useWhen": "Use formal registry workflow when models affect users, money, compliance, or repeated operational decisions.",
+          "avoidWhen": "Avoid heavyweight registry process for throwaway experiments, but do not let experiments become production by accident.",
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m5_capstone",
+          "kind": "functionalExample",
+          "title": "Capstone: create a release card",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Choose a model or LLM feature. Fill in artifact, data, code, prompt/retrieval/tool versions if relevant, package image, eval report, slice metrics, latency, owner, alias, rollout plan, prediction-log fields, and rollback command. Then ask a teammate to answer: \"Which version answered request X, and how do we roll it back?\""
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Next rung: connect this to monitoring drift and quality, where release identity becomes the join key for live performance changes."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "gateway",
+            "latency",
+            "throughput",
+            "versioning"
+          ],
+          "sources": [
+            "kb1",
+            "kb2"
+          ],
+          "personalizedFor": "Solo release-card exercise"
+        }
+      ],
+      "citations": [
+        "kb1",
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Model Registries and Versioning: baseline, production design, or advanced optimization."
     }
@@ -1495,8 +853,8 @@
     "gpu": {
       "id": "gpu",
       "label": "GPU",
-      "laymanDefinition": "A parallel accelerator for tensor computation.",
-      "technicalNote": "In this lesson, GPU is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The accelerator environment used to train or serve a model version.",
+      "technicalNote": "A release record should include hardware assumptions when they affect reproducibility, latency, or numerical behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +864,8 @@
     "serving": {
       "id": "serving",
       "label": "Serving",
-      "laymanDefinition": "Serving is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Serving is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The deployed prediction path that consumes a registered version.",
+      "technicalNote": "Serving must log the exact model version, prompt or preprocessing version, and alias that answered each request.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +874,8 @@
     "gateway": {
       "id": "gateway",
       "label": "Gateway",
-      "laymanDefinition": "Gateway is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Gateway is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The boundary that maps a product name to a registered version or alias.",
+      "technicalNote": "A gateway or deployment layer should resolve stable aliases such as champion, canary, or rollback without losing version history.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +884,8 @@
     "latency": {
       "id": "latency",
       "label": "Latency",
-      "laymanDefinition": "Latency is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latency is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A release metric that must be compared across versions.",
+      "technicalNote": "Registry approval should include latency and resource metrics, not only offline quality, because a slower model can fail production even if accuracy improves.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +894,8 @@
     "throughput": {
       "id": "throughput",
       "label": "Throughput",
-      "laymanDefinition": "Throughput is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Throughput is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "How much prediction traffic a version can handle.",
+      "technicalNote": "Throughput belongs in the version evidence when batch behavior, hardware, or packaging changes.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +904,8 @@
     "versioning": {
       "id": "versioning",
       "label": "Versioning",
-      "laymanDefinition": "Versioning is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Versioning is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Giving every model, data snapshot, code commit, prompt, and eval set an immutable identity.",
+      "technicalNote": "Versioning is the core concept: a registry records artifacts and status, but tests and approval evidence decide whether a version should move.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1555,20 +913,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Model Registries and Versioning",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Release-readiness check",
         "questions": [
           {
-            "q": "What decision does Model Registries and Versioning change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What decision does Model Registries and Versioning change for this case?",
+            "why": "A good lesson changes how the learner builds, reviews, or ships model registry card with version, lineage, metrics, and rollback data.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Thin slice",
+              "Production path",
+              "Advanced optimization"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Choose the smallest option that catches: a rollback changes weights but leaves an incompatible prompt in place."
           }
         ]
       }
@@ -1580,57 +938,74 @@
         "t": "p",
         "spans": [
           {
-            "text": "Model Registries and Versioning is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, reconstruct the registry-backed release: bundle data, code, model, package, prompt or retrieval versions, evals, approval, alias history, prediction identity, and rollback target."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Model Registries and Versioning operating path",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Model Registries and Versioning.",
-          "what": "Mental model turns Model Registries and Versioning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+          "label": "Name the whole release bundle",
+          "sub": "Track model, data, code, prompt, evals, package, and owner as one promotion unit.",
+          "what": "Versioning is useful only when it covers every artifact needed to explain and reproduce a prediction.",
+          "relevance": "List the artifacts in a complete model release bundle.",
           "moduleId": "m1",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "spine",
+          "orient": "Bundle every artifact needed to reproduce and explain predictions.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Model Registries and Versioning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+          "label": "Make lineage immutable at boundaries",
+          "sub": "Separate experimental churn from production identities that can be audited and rolled back.",
+          "what": "Training can create new artifacts freely; production should consume named versions and aliases with history.",
+          "relevance": "Explain immutable data and model references.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Protect production by promoting immutable versions through explicit aliases.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Model Registries and Versioning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+          "label": "Promote with evidence, not vibes",
+          "sub": "Use gates for metrics, slices, latency, schema compatibility, and human approval.",
+          "what": "A registry records status; release gates decide whether the status is deserved.",
+          "relevance": "Distinguish registry status from quality control.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "spine",
+          "orient": "Promote versions only after quality, slice, latency, and contract evidence.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Model Registries and Versioning into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Model Registries and Versioning, not just recognize the words.",
+          "label": "Log prediction identity in production",
+          "sub": "Make every output traceable to version, alias, package, and request context.",
+          "what": "A versioned release pays off when production logs can reconstruct which bundle answered each request.",
+          "relevance": "Write a small prediction-log contract.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Attach version identity to every production prediction and trace.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Practice a rollback-ready release",
+          "sub": "Synthesize the registry loop and apply it to a solo release card.",
+          "what": "The learner should finish able to build a release card that supports promotion, incident review, and rollback.",
+          "relevance": "Recall the release bundle from memory.",
+          "moduleId": "m5",
+          "layer": "Path",
+          "emphasis": "spine",
+          "orient": "Reconstruct the release bundle and rehearse rollback evidence.",
+          "order": 5
         }
       ],
       "edges": [
@@ -1648,86 +1023,101 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "then"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Name the whole release bundle",
+        "detail": "Track model, data, code, prompt, evals, package, and owner as one promotion unit."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Make lineage immutable at boundaries",
+        "detail": "Separate experimental churn from production identities that can be audited and rolled back."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Promote with evidence, not vibes",
+        "detail": "Use gates for metrics, slices, latency, schema compatibility, and human approval."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Log prediction identity in production",
+        "detail": "Make every output traceable to version, alias, package, and request context."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Practice a rollback-ready release",
+        "detail": "Synthesize the registry loop and apply it to a solo release card."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_contract",
+        "label": "Does the release card include model, data, code, package, schema, evals, owner, and approval?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_flow",
+        "label": "Are production aliases pointers to immutable versions with history?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_choice",
+        "label": "Do promotion gates include slice metrics, latency, contract tests, and rollback evidence?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_verify",
+        "label": "Do prediction logs identify model version, alias, package image, and schema?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_next",
+        "label": "Can rollback restore the whole bundle, not only the weight file?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Model Registries and Versioning: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Infrastructure"
+      "prompt": "Create a one-page release-ready plan for model registry card with version, lineage, metrics, and rollback data. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (ability to reproduce a production answer), failure case (a rollback changes weights but leaves an incompatible prompt in place), owner, and the next rung after this lesson.",
+      "scopedTo": "Model Registries and Versioning"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Model and Data Versioning with Registries",
+      "url": "https://mlflow.org/docs/latest/ml/model-registry/",
+      "asOfDate": "2026-06-23"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Infrastructure and Serving",
-      "url": "https://docs.vllm.ai/en/v0.19.0/serving/openai_compatible_server/",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Model Packaging and Containerization",
+      "url": "https://docs.bentoml.com/",
+      "asOfDate": "2026-06-23"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "vLLM documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "MLflow Model Registry documentation",
+      "url": "https://mlflow.org/docs/latest/ml/model-registry/",
+      "asOfDate": "2026-06-23"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://docs.vllm.ai/en/v0.19.0/",
-      "asOfDate": "2026-06-20"
+      "title": "DVC documentation",
+      "url": "https://dvc.org/doc",
+      "asOfDate": "2026-06-23"
     }
   }
 }

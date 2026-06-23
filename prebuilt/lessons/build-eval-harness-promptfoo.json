@@ -5,7 +5,7 @@
     "title": "Build an Evaluation Harness with promptfoo",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 40,
-    "thesis": "Build an Evaluation Harness with promptfoo becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Build an Evaluation Harness with promptfoo is practical when learners can apply it to this concrete case: A policy-answering bot changed prompts and the team needs to catch regressions before release. By the end, they should be able to build or review Promptfoo-style eval suite with golden cases and assertions, measure regression failures caught before deployment, and catch the failure where a prompt update improves tone but drops required policy citations."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Build an Evaluation Harness with promptfoo: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Build an Evaluation Harness with promptfoo by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build a promptfoo harness around the real app path: contract, target, cases, assertions, CI, and triage.",
+    "oneLineThesis": "A promptfoo harness is useful when it tests the system users will hit, not a toy prompt path beside it.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Build an Evaluation Harness with promptfoo.",
-        "what": "Target behavior turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+        "label": "Write the harness contract and file layout",
+        "sub": "Make the eval target reviewable before adding cases.",
+        "what": "Learners create a concrete harness artifact instead of an eval idea.",
+        "relevance": "This prevents scattered tests that nobody can rerun.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Lay out the promptfoo project and the release question it answers.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+        "label": "Connect promptfoo to the real app path",
+        "sub": "Test the same routing, retrieval, and formatting users rely on.",
+        "what": "Learners connect promptfoo to product behavior.",
+        "relevance": "This catches regressions that a standalone prompt test would miss.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Wire the harness target to the policy-answering endpoint or function.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+        "label": "Encode golden cases and assertions",
+        "sub": "Cases should make expected behavior machine-checkable.",
+        "what": "Learners create cases that are clear enough for CI and humans.",
+        "relevance": "This prevents vague evals that cannot explain failures.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Translate policy scenarios into cases with assertions and metadata.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+        "label": "Run, inspect, and fail CI on regressions",
+        "sub": "The harness should produce a clear failure story.",
+        "what": "Learners implement the part that turns eval cases into release behavior.",
+        "relevance": "This makes failures visible before deployment.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Run the harness and make missing citations fail the release.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+        "label": "Promote failures and tune thresholds",
+        "sub": "A harness stays useful only if the dataset evolves carefully.",
+        "what": "Learners maintain the promptfoo harness as product behavior changes.",
+        "relevance": "This prevents eval rot and baseline worship.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Close the build with promotion, waiver, and threshold rules.",
+        "order": 5
       }
     ],
     "edges": [
@@ -88,31 +98,33 @@
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "feeds"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "runs"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "maintains"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Build an Evaluation Harness with promptfoo.",
-      "summary": "Define the user-visible outcome for Build an Evaluation Harness with promptfoo. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Write the harness contract and file layout",
+      "sub": "Make the eval target reviewable before adding cases.",
+      "summary": "The build starts with files, owners, and release questions.",
       "objectives": [
-        "Explain the role of target behavior in Build an Evaluation Harness with promptfoo.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Define what the harness must prove.",
+        "Choose a small file layout for prompts, cases, and config.",
+        "Set pass/fail behavior before writing assertions."
       ],
       "termIds": [
         "prototype",
@@ -127,20 +139,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "A harness is a release artifact",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build an Evaluation Harness with promptfoo",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a policy-answering bot changed prompts and now might drop required citations. The team needs a harness that can be run in a pull request, not a notebook owned by one engineer."
                 }
               ]
             },
@@ -148,33 +153,55 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The first artifact is a small repository layout: promptfooconfig.yaml, prompts/policy_v1.txt, prompts/policy_v2.txt, cases/refunds.yaml, scripts/app_target.ts, and docs/eval-triage.md. The contract says what the harness proves: grounded answers, required citations, safe refusals, stable JSON, and acceptable cost."
                 }
               ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_promptfoo_intro",
+            "kb_eval_frameworks",
+            "kb_regression_testing"
+          ]
+        },
+        {
+          "id": "m1_layout",
+          "kind": "functionalExample",
+          "title": "Worked file layout for the policy bot",
+          "body": [
             {
-              "t": "ul",
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build an Evaluation Harness with promptfoo."
+                    "text": "prompts/ stores candidate prompt templates."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "cases/ stores user inputs, fixtures, expected behavior, and slice metadata."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "scripts/app_target.ts calls the real answer path with fixtures."
+                  }
+                ],
+                [
+                  {
+                    "text": "promptfooconfig.yaml declares providers, prompts, tests, and assertions."
+                  }
+                ],
+                [
+                  {
+                    "text": "docs/eval-triage.md says who owns failures and waivers."
                   }
                 ]
               ]
@@ -183,228 +210,65 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Build an Evaluation Harness with promptfoo.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "canon_promptfoo_intro",
+            "kb_regression_testing"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build an Evaluation Harness with promptfoo, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build an evaluation harness with promptfoo help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Build an Evaluation Harness with promptfoo?",
+          "title": "Harness artifact",
+          "prompt": "What makes an eval harness reviewable?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A one-off notebook screenshot.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A clear file layout, target behavior, owners, and rerunnable command.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only a vague helpfulness rubric.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "A harness should be rerunnable by the team and tied to release decisions.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_regression_testing"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_promptfoo_intro",
+        "kb_eval_frameworks",
+        "kb_regression_testing"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Connect promptfoo to the real app path",
+      "sub": "Test the same routing, retrieval, and formatting users rely on.",
+      "summary": "The target should call the app boundary or a faithful fixture-backed slice.",
       "objectives": [
-        "Explain the role of architecture slice in Build an Evaluation Harness with promptfoo.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Choose between direct provider prompts and custom app targets.",
+        "Use fixtures for retrieval and account state.",
+        "Avoid testing a prompt path that production never uses."
       ],
       "termIds": [
         "prototype",
@@ -419,240 +283,71 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "The target is the realism dial",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build an Evaluation Harness with promptfoo",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "promptfoo can compare prompts directly, but a product harness often needs to call the real app path: route classification, retrieval fixtures, prompt rendering, model call, output parser, and citation validator. If production adds citations after the model call, a direct prompt-only eval may miss the broken formatter."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build an Evaluation Harness with promptfoo."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_promptfoo_intro",
+            "kb_eval_frameworks"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build an Evaluation Harness with promptfoo, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Fixture-backed target for repeatability",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for build an evaluation harness with promptfoo help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "For the policy bot, freeze retrieval to two markdown snippets and account_state=outside_refund_window. The target function receives the test vars, loads those fixtures, calls the same answer builder used by the app, and returns the final JSON. This preserves realism while avoiding live database drift during CI."
                 }
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "npx promptfoo@latest init\nnpx promptfoo@latest eval",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "init",
-              "explains": "Creates eval config."
-            },
-            {
-              "part": "eval",
-              "explains": "Runs tests."
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Build an Evaluation Harness with promptfoo?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "kb_regression_testing"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_promptfoo_intro",
+        "kb_eval_frameworks",
+        "kb_regression_testing"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Encode golden cases and assertions",
+      "sub": "Cases should make expected behavior machine-checkable.",
+      "summary": "The core harness is a set of golden cases with hard and semantic checks.",
       "objectives": [
-        "Explain the role of core implementation in Build an Evaluation Harness with promptfoo.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write golden cases with vars, fixtures, and metadata.",
+        "Pair each case with deterministic assertions.",
+        "Add one rubric for quality after hard checks."
       ],
       "termIds": [
         "prototype",
@@ -667,293 +362,159 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "Goldens are product expectations in miniature",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build an Evaluation Harness with promptfoo",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A golden case is not just an input. It states the setup, expected behavior, protected risk, and pass conditions. In the policy bot, a golden case can say: outside_refund_window, policy_source=refunds#45, expected_decision=deny, citation_required=true, escalation_allowed=true."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build an Evaluation Harness with promptfoo."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_regression_testing",
+            "canon_promptfoo_intro"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build an Evaluation Harness with promptfoo, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Golden case coverage plan",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Slice",
+            "Required assertion",
+            "Risk protected"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Eligible refund",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
+                  "criterion": "Slice",
+                  "text": "Eligible refund",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "criterion": "Required assertion",
+                  "text": "decision approve plus citation",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk protected",
+                  "text": "overly cautious denial",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Happy path must still work.",
               "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Outside window",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Slice",
+                  "text": "Outside window",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Required assertion",
+                  "text": "deny automatic refund and cite policy",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk protected",
+                  "text": "unauthorized promise",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
+              "whenToUse": "Critical policy boundary.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Missing account state",
+              "cells": [
+                {
+                  "criterion": "Slice",
+                  "text": "Missing account state",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Required assertion",
+                  "text": "ask for review or tool result",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk protected",
+                  "text": "invented account facts",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Incomplete context.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Injection attempt",
+              "cells": [
+                {
+                  "criterion": "Slice",
+                  "text": "Injection attempt",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Required assertion",
+                  "text": "forbidden action absent",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk protected",
+                  "text": "user instruction overrides policy",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Untrusted user text.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Build an Evaluation Harness with promptfoo?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "kb_regression_testing"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build an Evaluation Harness with promptfoo: baseline, production design, or advanced optimization."
+        "kb_regression_testing",
+        "canon_promptfoo_intro"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Run, inspect, and fail CI on regressions",
+      "sub": "The harness should produce a clear failure story.",
+      "summary": "A CI eval needs deterministic output, budget limits, and actionable failure reports.",
       "objectives": [
-        "Explain the role of validation and tracing in Build an Evaluation Harness with promptfoo.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Read a small assertion script used by promptfoo.",
+        "Predict a failing case from a missing citation.",
+        "Add a verify-AI checklist for generated harnesses."
       ],
       "termIds": [
         "prototype",
@@ -962,246 +523,82 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build an Evaluation Harness with promptfoo",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build an Evaluation Harness with promptfoo."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build an Evaluation Harness with promptfoo, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build an evaluation harness with promptfoo help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "npx promptfoo@latest init\nnpx promptfoo@latest eval",
-          "explain": [
+          "title": "Custom assertion helper for harness output",
+          "language": "javascript",
+          "code": "function assertPolicyAnswer(output, context) {\n  const parsed = typeof output === 'string' ? JSON.parse(output) : output;\n  const errors = [];\n\n  if (!['approve', 'deny', 'escalate'].includes(parsed.decision)) {\n    errors.push('decision must be approve, deny, or escalate');\n  }\n  if (context.vars.citation_required && (!parsed.citations || parsed.citations.length === 0)) {\n    errors.push('missing required citation');\n  }\n  if (context.vars.slice === 'outside_refund_window' && parsed.decision === 'approve') {\n    errors.push('outside-window case cannot approve automatic refund');\n  }\n\n  return errors.length === 0\n    ? { pass: true, score: 1 }\n    : { pass: false, score: 0, reason: errors.join('; ') };\n}\n\nmodule.exports = assertPolicyAnswer;",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This kind of helper can be referenced from a promptfoo assertion. It makes product rules explicit instead of hoping a broad rubric catches them."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict the returned reason for an outside_refund_window case with decision=\"approve\" and no citations.",
+            "answer": "The helper fails with two reasons: missing required citation and outside-window case cannot approve automatic refund. That is the release-blocking behavior the harness exists to catch."
           },
-          "syntax": [
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_promptfoo_intro",
+            "kb_regression_testing"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify the AI-generated harness",
+          "body": [
             {
-              "part": "init",
-              "explains": "Creates eval config."
-            },
-            {
-              "part": "eval",
-              "explains": "Runs tests."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: the CI command uses the intended config; custom assertion files are committed with tests; fixture data is stable; failures include case ID and slice; model/provider names are pinned for the run; cost budget is explicit; and critical failures block release rather than only printing a report."
+                }
+              ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Build an Evaluation Harness with promptfoo?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "kb_regression_testing"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_promptfoo_intro",
+        "kb_regression_testing"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Promote failures and tune thresholds",
+      "sub": "A harness stays useful only if the dataset evolves carefully.",
+      "summary": "The maintenance loop turns incidents into cases and stale cases into reviewed changes.",
       "objectives": [
-        "Explain the role of hardening path in Build an Evaluation Harness with promptfoo.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Promote production failures into goldens.",
+        "Update thresholds with dated rationale.",
+        "Avoid overfitting the prompt to the current test pack."
       ],
       "termIds": [
         "prototype",
@@ -1216,20 +613,13 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "The harness is a living release gate",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build an Evaluation Harness with promptfoo",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "When a production incident appears, add the smallest redacted case that would have caught it. When product policy changes, update expected behavior with date, owner, and rationale. When an LLM judge is flaky, tighten the rubric, add a hard check, or quarantine the case with an expiry date."
                 }
               ]
             },
@@ -1237,340 +627,156 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The harness should not overfit prompts to six examples. Keep slices broad enough to protect behavior, and rotate in production-derived cases so the suite keeps matching reality."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build an Evaluation Harness with promptfoo."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build an Evaluation Harness with promptfoo, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_regression_testing",
+            "canon_promptfoo_intro"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "A passing harness is evidence for this release, not proof of universal quality.",
+          "useWhen": "Use it to block known regressions, compare release candidates, and document risk acceptance.",
+          "avoidWhen": "Avoid treating a small golden set as a benchmark or ignoring failures because they are inconvenient.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_regression_testing"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Build an Evaluation Harness with promptfoo?",
+          "title": "Harness maintenance",
+          "prompt": "What should happen after a production failure that the harness missed?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Delete similar tests because they were incomplete.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Add a minimal redacted case that would have caught the failure.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only increase the model temperature.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Missed incidents are raw material for better regression coverage.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_regression_testing"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build an Evaluation Harness with promptfoo: baseline, production design, or advanced optimization."
+        "kb_regression_testing",
+        "canon_promptfoo_intro"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A narrow build slice that proves one behavior before full production hardening.",
+      "technicalNote": "A prototype should include the smallest runnable path, its failure test, and the evidence needed to decide the next build step.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     },
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A component that selects candidate context or records for a question.",
+      "technicalNote": "Retrievers need source IDs, filters, top-k choices, and evaluation because missing evidence changes every downstream answer.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     },
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A deterministic or model-assisted check that accepts, rejects, or repairs an output.",
+      "technicalNote": "Validators protect contracts such as schema, citations, allowed tools, approval rules, and safety policy.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one run, including spans, inputs, outputs, metadata, and scores.",
+      "technicalNote": "Traces make failures diagnosable by showing which retrieval, model, tool, or scoring step produced the result.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     },
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A released runtime configuration with model, prompt, data, infrastructure, monitoring, and rollback decisions.",
+      "technicalNote": "Deployment quality depends on observability, eval gates, ownership, and privacy controls, not only code running.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     },
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A test that proves a feature meets its release contract.",
+      "technicalNote": "Acceptance tests should be tied to user-visible behavior and include critical failure cases, not just happy paths.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_promptfoo_intro"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Build an Evaluation Harness with promptfoo",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Harness scope",
         "questions": [
           {
-            "q": "What decision does Build an Evaluation Harness with promptfoo change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Does the harness run the real application behavior or just a disconnected prompt?",
+            "why": "A harness catches regressions only when providers, prompts, retrieval fixtures, assertions, and CI match the release path closely enough.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Real app target plus fixtures",
+              "Standalone prompt demo",
+              "Manual spreadsheet review"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Start with a thin real path and add mocks only where they make failures repeatable."
           }
         ]
       }
@@ -1582,154 +788,175 @@
         "t": "p",
         "spans": [
           {
-            "text": "Build an Evaluation Harness with promptfoo is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild the promptfoo harness by naming the file layout, app target, fixtures, golden cases, assertions, CI command, triage rule, and next dataset promotion step."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "promptfoo harness build from contract to CI triage",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Build an Evaluation Harness with promptfoo.",
-          "what": "Target behavior turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+          "label": "Write the harness contract and file layout",
+          "sub": "Make the eval target reviewable before adding cases.",
+          "what": "Learners create a concrete harness artifact instead of an eval idea.",
+          "relevance": "This prevents scattered tests that nobody can rerun.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Lay out the promptfoo project and the release question it answers.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+          "label": "Connect promptfoo to the real app path",
+          "sub": "Test the same routing, retrieval, and formatting users rely on.",
+          "what": "Learners connect promptfoo to product behavior.",
+          "relevance": "This catches regressions that a standalone prompt test would miss.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Wire the harness target to the policy-answering endpoint or function.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+          "label": "Encode golden cases and assertions",
+          "sub": "Cases should make expected behavior machine-checkable.",
+          "what": "Learners create cases that are clear enough for CI and humans.",
+          "relevance": "This prevents vague evals that cannot explain failures.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Translate policy scenarios into cases with assertions and metadata.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Build an Evaluation Harness with promptfoo into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build an Evaluation Harness with promptfoo, not just recognize the words.",
+          "label": "Run, inspect, and fail CI on regressions",
+          "sub": "The harness should produce a clear failure story.",
+          "what": "Learners implement the part that turns eval cases into release behavior.",
+          "relevance": "This makes failures visible before deployment.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Run the harness and make missing citations fail the release.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Promote failures and tune thresholds",
+          "sub": "A harness stays useful only if the dataset evolves carefully.",
+          "what": "Learners maintain the promptfoo harness as product behavior changes.",
+          "relevance": "This prevents eval rot and baseline worship.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Close the build with promotion, waiver, and threshold rules.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "defines"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "targets"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "executes"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "maintains"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Write the harness contract and file layout",
+        "detail": "The build starts with files, owners, and release questions."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Connect promptfoo to the real app path",
+        "detail": "The target should call the app boundary or a faithful fixture-backed slice."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Encode golden cases and assertions",
+        "detail": "The core harness is a set of golden cases with hard and semantic checks."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Run, inspect, and fail CI on regressions",
+        "detail": "A CI eval needs deterministic output, budget limits, and actionable failure reports."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Promote failures and tune thresholds",
+        "detail": "The maintenance loop turns incidents into cases and stale cases into reviewed changes."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Write the harness contract and file layout\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Run, inspect, and fail CI on regressions\"?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Promote failures and tune thresholds\" define the release or production gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Build an Evaluation Harness with promptfoo: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
+      "prompt": "Build a promptfoo harness for a policy-answering endpoint. Add a config file, two prompts, a custom app target or provider, six golden cases, deterministic assertions, one rubric, CI command, and a failure triage note. Next rung: attach traces and promote production failures.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Harness invokes the same answer function or endpoint used in release.",
+        "Fixtures make retrieval and account state repeatable.",
+        "Assertions cover schema, citation, refusal, and quality.",
+        "CI output has owner and severity rules."
+      ]
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
-      "kind": "kb",
-      "title": "KB: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_promptfoo_intro": {
+      "id": "canon_promptfoo_intro",
       "kind": "canonical",
-      "title": "LlamaIndex RAG documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "promptfoo documentation",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
-      "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+    "kb_eval_frameworks": {
+      "id": "kb_eval_frameworks",
+      "kind": "kb",
+      "title": "KB: Eval Frameworks",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_regression_testing": {
+      "id": "kb_regression_testing",
+      "kind": "kb",
+      "title": "KB: Regression Testing for Agentic Systems",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

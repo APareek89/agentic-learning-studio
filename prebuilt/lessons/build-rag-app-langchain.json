@@ -5,7 +5,7 @@
     "title": "Build a RAG App with LangChain",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 44,
-    "thesis": "Build a RAG App with LangChain becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Build a RAG App with LangChain is practical when learners can apply it to this concrete case: A LangChain docs assistant answers support questions but often cites the wrong page. By the end, they should be able to build or review RAG chain with retriever, prompt, citation contract, and faithfulness check, measure faithful answer rate on support questions, and catch the failure where the generated answer uses a plausible policy not present in retrieved chunks."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Build a RAG App with LangChain: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Build a RAG App with LangChain by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build a LangChain RAG slice around Documents, splitters, retrievers, prompt assembly, model calls, and inspectable traces.",
+    "oneLineThesis": "A LangChain RAG app is strongest when the chain keeps retrieval, prompt construction, generation, and validation visible as separate runnable steps.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Build a RAG App with LangChain.",
-        "what": "Target behavior turns Build a RAG App with LangChain into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+        "label": "Pin the LangChain answer contract",
+        "sub": "Start with the exact grounded behavior the chain must guarantee.",
+        "what": "Learners turn the product requirement into a small chain acceptance target.",
+        "relevance": "This keeps LangChain integrations from becoming a demo without grounding tests.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Define the cited answer and refusal behavior before choosing integrations.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Build a RAG App with LangChain into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+        "label": "Documents and splitters make retrievable evidence",
+        "sub": "LangChain retrieval quality starts with Document text and metadata.",
+        "what": "Learners connect LangChain Documents to chunking and citation quality.",
+        "relevance": "Weak metadata produces weak citations even when the chain syntax is correct.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Preserve source title, heading, and permissions in every Document chunk.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Build a RAG App with LangChain into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+        "label": "Retriever, prompt, and model are separate runnables",
+        "sub": "The core chain should expose each stage instead of hiding failures.",
+        "what": "Learners design the chain as observable stages.",
+        "relevance": "A wrong answer can be traced to missing evidence, bad prompt packing, or unsupported synthesis.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Compose retrieval and answer synthesis so each output can be inspected.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Build a RAG App with LangChain into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+        "label": "Code the chain with evidence logging",
+        "sub": "A runnable slice should print retrieved Documents before answering.",
+        "what": "Learners connect a retriever-like function to answer formatting and trace output.",
+        "relevance": "Visible traces catch retrieval errors before UI polish hides them.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Build a tiny chain whose trace makes the selected context obvious.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Build a RAG App with LangChain into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+        "label": "Promote the chain into regression tests",
+        "sub": "LangChain changes should rerun source-based checks.",
+        "what": "Learners convert the slice into a maintainable test surface.",
+        "relevance": "Framework upgrades, prompt edits, and splitter changes can silently break grounding.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Gate loaders, splitters, prompts, and retrievers with acceptance tests.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,26 +110,29 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Build a RAG App with LangChain.",
-      "summary": "Define the user-visible outcome for Build a RAG App with LangChain. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Pin the LangChain answer contract",
+      "sub": "Start with the exact grounded behavior the chain must guarantee.",
+      "summary": "The first LangChain decision is the user-visible contract, not the vector store brand.",
       "objectives": [
-        "Explain the role of target behavior in Build a RAG App with LangChain.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why pin the langchain answer contract matters for this LangChain build.",
+        "Define answer and refusal behavior.",
+        "Choose representative documents and questions."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -127,20 +140,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "A LangChain app still needs a contract",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LangChain",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a learner asks a LangChain-backed tutor why reranking improves RAG. The chain must answer from retrieved course notes, cite the note title, and refuse when the notes do not contain the answer."
                 }
               ]
             },
@@ -148,33 +154,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "LangChain gives many integrations, but the build should start with the behavior contract: what counts as evidence, how citations appear, what happens when retrieval is empty, and which questions prove the slice works."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Write the five acceptance questions before importing a vector store."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon9"
+          ],
+          "analogy": "Build the smallest bridge you can load-test before opening the highway."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Worked contract: five questions and one refusal",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LangChain prototype accepts a question, retrieves evidence from local Markdown notes, returns an answer with source titles, and logs retrieved chunks or nodes. It passes when four factual questions cite the expected source and the negative question refuses."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This artifact is small enough for a reviewer to inspect in one sitting, but complete enough to catch the failures that matter: missing evidence, noisy retrieval, unsupported claims, and silent fallback."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LangChain."
+                    "text": "Pick three source files and record their source metadata."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Write five user-style questions with expected source titles."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Define answer, citation, and refusal requirements."
+                  }
+                ],
+                [
+                  {
+                    "text": "Run the slice before adding memory, chat history, or agents."
                   }
                 ]
               ]
@@ -183,235 +233,78 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Build a RAG App with LangChain.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb4",
+            "canon9"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LangChain, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with langchain help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Build a RAG App with LangChain"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Build a RAG App with LangChain?",
+          "title": "Build scope",
+          "prompt": "Why include a negative question in the first RAG app slice?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To reduce the number of citations.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "To verify the app can say there is not enough evidence instead of inventing an answer.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "To avoid building retrieval.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Refusal on missing evidence is part of grounded behavior.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon9"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Documents and splitters make retrievable evidence",
+      "sub": "LangChain retrieval quality starts with Document text and metadata.",
+      "summary": "Loaders and text splitters decide what the retriever can later return.",
       "objectives": [
-        "Explain the role of architecture slice in Build a RAG App with LangChain.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why documents and splitters make retrievable evidence matters for this LangChain build.",
+        "Split or parse into evidence-sized units.",
+        "Preview units before embedding."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -419,20 +312,13 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "Document metadata is part of the answer",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LangChain",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A LangChain `Document` is more than `page_content`. Its metadata should carry source title, URL or path, heading, version, tenant, and category so retrieval can filter and the answer can cite."
                 }
               ]
             },
@@ -440,33 +326,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Splitter settings should follow source structure first. Recursive splitting is useful, but a broken table or orphaned heading becomes a broken citation downstream."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Print sampled `Document` chunks before embedding and reject chunks whose metadata would not satisfy a reviewer."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon9"
+          ],
+          "analogy": "The loader stamps the passport each chunk carries through the app."
+        },
+        {
+          "id": "m2_worked",
+          "kind": "functionalExample",
+          "title": "Case study: from “Document 3” to useful source titles",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The first prototype returns citations like “Document 2,” which makes review painful. After ingestion stores human-readable titles and heading paths, the same answer becomes auditable."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "No model changed; the app simply preserved provenance."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LangChain."
+                    "text": "Normalize text and remove boilerplate."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Split by source structure before token windows."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Attach title, URL/path, heading, and version metadata."
+                  }
+                ],
+                [
+                  {
+                    "text": "Print sample units and reject malformed ones."
                   }
                 ]
               ]
@@ -475,195 +405,78 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LangChain, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon9"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with langchain help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
-            },
-            {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
-            },
-            {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
+          "personalizedFor": "Build a RAG App with LangChain"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Build a RAG App with LangChain?",
+          "title": "Ingestion signal",
+          "prompt": "What is the fastest way to catch bad chunking before model calls?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Raise answer temperature.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Preview the chunk or node text together with metadata.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Hide citations until production.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Inspection at ingestion catches source-shape errors early.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon9"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Retriever, prompt, and model are separate runnables",
+      "sub": "The core chain should expose each stage instead of hiding failures.",
+      "summary": "LangChain chains are easiest to debug when retrieval and generation remain separable.",
       "objectives": [
-        "Explain the role of core implementation in Build a RAG App with LangChain.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why retriever, prompt, and model are separate runnables matters for this LangChain build.",
+        "Prompt the model with explicit evidence boundaries.",
+        "Validate citations and insufficient-evidence behavior."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -671,20 +484,13 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "Do not collapse the chain into one mystery call",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LangChain",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "The retriever should be testable without the model. The prompt should show exactly which evidence chunks are passed. The model output should then be validated against those chunks."
                 }
               ]
             },
@@ -692,211 +498,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build a RAG App with LangChain."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LangChain, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "LangChain runnable composition is useful because each stage can carry callbacks, traces, retries, and tests. Treat that observability as part of the design, not a later add-on."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "A trace should show question, retrieved document IDs, prompt context, model answer, and citation validation result."
                 }
               ]
             }
@@ -904,67 +515,172 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon9"
+          ],
+          "analogy": "Do not debug the whole machine when one visible gear is slipping."
+        },
+        {
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "RAG app failure surfaces",
+          "criteria": [
+            "Surface",
+            "Symptom",
+            "Fix"
+          ],
+          "options": [
+            {
+              "name": "Retrieval",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Wrong or missing evidence.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "Expected source absent from top-k.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Chunking, filters, hybrid search, reranking.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Inspect before prompt tuning.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Generation",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Evidence present but answer misreads it.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "Unsupported synthesis or overbroad claim.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Prompt, context packing, answer constraints.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Inspect with fixed evidence.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Validation",
+              "cells": [
+                {
+                  "criterion": "Surface",
+                  "text": "Answer lacks citations or schema.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Symptom",
+                  "text": "UI cannot trust or render output.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Fix",
+                  "text": "Structured output, citation checks, refusal gate.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Use before returning to users.",
+              "cost": "Low",
+              "complexity": "Medium"
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Build a RAG App with LangChain?",
+          "title": "Debug split",
+          "prompt": "The expected source is absent from retrieved evidence. Which stage should you fix first?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "CSS layout.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Retrieval or ingestion, before rewriting the answer prompt.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The final citation renderer only.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The model cannot cite evidence it never receives.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build a RAG App with LangChain: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon9"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Code the chain with evidence logging",
+      "sub": "A runnable slice should print retrieved Documents before answering.",
+      "summary": "The first useful LangChain implementation is boring, inspectable, and source-aware.",
       "objectives": [
-        "Explain the role of validation and tracing in Build a RAG App with LangChain.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why code the chain with evidence logging matters for this LangChain build.",
+        "Predict which source answers a test question.",
+        "Expose traces for validation."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -972,20 +688,13 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
+          "title": "The useful code path prints the evidence first",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LangChain",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A local toy retriever is acceptable for the first architecture check because it proves the control flow without external credentials. Once the trace contract works, swap in LangChain loaders, vector stores, and chat models."
                 }
               ]
             },
@@ -993,230 +702,119 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Spaced recall: from RAG evaluation, judge the packed context that generation actually sees. Logging unused candidates does not prove the answer was grounded."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Build a RAG App with LangChain."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "The code should make it obvious which source the answer cites."
+                }
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LangChain, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for build a rag app with langchain help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "LangChain-style RAG chain with trace",
           "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
+          "code": "from langchain_core.documents import Document\n\nDOCS = [\n    Document(page_content=\"Reranking reorders retrieved candidates before generation.\", metadata={\"source\": \"retrieval.md\"}),\n    Document(page_content=\"Chunking preserves answer evidence with headings and metadata.\", metadata={\"source\": \"chunking.md\"}),\n]\n\ndef retrieve(question):\n    terms = set(question.lower().split())\n    ranked = sorted(DOCS, key=lambda d: len(terms & set(d.page_content.lower().split())), reverse=True)\n    return ranked[:2]\n\ndef answer(question):\n    evidence = retrieve(question)\n    print(\"TRACE\", [(d.metadata[\"source\"], d.page_content) for d in evidence])\n    if not evidence or \"reranking\" not in evidence[0].page_content.lower():\n        return \"Not enough evidence.\"\n    return f\"Reranking reorders retrieved candidates before generation. Source: {evidence[0].metadata['source']}\"\n\nprint(answer(\"What does reranking do before generation?\"))",
+          "explanation": "This uses a toy retriever so the control flow is runnable without external services; swap in LangChain loaders, vector stores, and models after the trace contract is clear.",
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before running it, predict which source appears in TRACE for the reranking question.",
+            "answer": "retrieval.md should appear first. If a real retriever disagrees, debug retrieval before changing answer style."
           },
-          "syntax": [
-            {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
-            },
-            {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
-            },
-            {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Build a RAG App with LangChain?",
+          "title": "Runnable slice",
+          "prompt": "Why use a tiny corpus for the first implementation?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Tiny corpora prove production scalability.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It makes retrieval and citation failures easy to inspect by hand.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It removes the need for metadata.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Small slices are for correctness and observability, not scale claims.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon9"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Promote the chain into regression tests",
+      "sub": "LangChain changes should rerun source-based checks.",
+      "summary": "A LangChain RAG app is reviewable when failures are repeatable.",
       "objectives": [
-        "Explain the role of hardening path in Build a RAG App with LangChain.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why promote the chain into regression tests matters for this LangChain build.",
+        "Verify citations support generated claims.",
+        "Define the next production rung."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "deployment",
+        "acceptance_test"
       ],
       "estMinutes": 9,
       "loadState": "full",
@@ -1224,20 +822,13 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "The chain is not done until tests can fail it",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a RAG App with LangChain",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Record the expected source for each acceptance question and rerun the suite after changing loaders, splitters, retrievers, prompts, model versions, or LangChain packages."
                 }
               ]
             },
@@ -1245,14 +836,44 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "The release bar should include packed-context hit rate, citation support, negative-case refusal, and trace completeness. A single happy-path chat transcript is not enough."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
+                  "text": "Every failed test should name a likely owner: ingestion, retrieval, prompt, validation, or source content."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon9"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Regression gate for a LangChain RAG slice",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Use this checklist before calling the build complete."
                 }
               ]
             },
@@ -1261,17 +882,27 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a RAG App with LangChain."
+                    "text": "The retrieved evidence contains the facts stated in the answer."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Each citation points to a readable source title and location."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "The negative test produces a qualified refusal or “not enough evidence.”"
+                  }
+                ],
+                [
+                  {
+                    "text": "The trace shows retrieved IDs, scores or ranks, and final packed context."
+                  }
+                ],
+                [
+                  {
+                    "text": "The acceptance test reruns after source, model, framework, or chunking changes."
                   }
                 ]
               ]
@@ -1280,234 +911,67 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Build a RAG App with LangChain, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon9"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Build a RAG App with LangChain?",
+          "title": "Release gate",
+          "prompt": "What should block release even if the answer sounds helpful?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The trace includes too many useful details for developers.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A factual claim that is not supported by the retrieved cited evidence.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The app has only one model provider.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Groundedness is the top-level promise of a RAG app.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon9"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build a RAG App with LangChain: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon9"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A small working version used to prove the workflow and failure cases.",
+      "technicalNote": "A useful AI prototype includes representative inputs, acceptance checks, observability, and known limits rather than only a happy-path demo.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +980,8 @@
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The component that finds relevant evidence before the model answers.",
+      "technicalNote": "Retrievers need chunking, metadata filters, ranking, citation handoff, and evaluation against real questions.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +990,8 @@
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that decides whether an output or workflow step meets the contract.",
+      "technicalNote": "Validators can inspect schemas, citations, safety rules, acceptance tests, and regressions before a result reaches users.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +1000,8 @@
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A recorded path of model calls, retrieval, tools, tokens, latency, and errors.",
+      "technicalNote": "Traces make build lessons debuggable by showing which prompt, source, tool, model, and check produced a result.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1010,8 @@
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The packaged path that serves the workflow to real users or reviewers.",
+      "technicalNote": "Deployment includes environment, secrets, routing, monitoring, rollback, and data-handling policy, not just pushing code.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,8 +1020,8 @@
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A concrete test that says the feature is good enough for the intended use.",
+      "technicalNote": "Acceptance tests should cover the target scenario, expected artifact, failure mode, and evidence needed for review.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1565,20 +1029,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Build a RAG App with LangChain",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "LangChain build gate",
         "questions": [
           {
-            "q": "What decision does Build a RAG App with LangChain change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What is the smallest app slice that proves grounded answers work end to end?",
+            "why": "A narrow slice makes loader, splitter, retriever, prompt, validator, and trace failures visible.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "One-source grounded Q&A with source inspection",
+              "Full chat product immediately",
+              "Fine-tune the model before retrieval"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Ship the first slice only when it can answer, cite, and refuse on representative cases."
           }
         ]
       }
@@ -1590,64 +1054,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Build a RAG App with LangChain is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct the LangChain build by naming Documents, splitter settings, retriever top-k, prompt template, model call, citation validator, trace fields, and acceptance tests."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "LangChain RAG chain from Documents to cited answer",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Build a RAG App with LangChain.",
-          "what": "Target behavior turns Build a RAG App with LangChain into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+          "label": "Pin the LangChain answer contract",
+          "sub": "Start with the exact grounded behavior the chain must guarantee.",
+          "what": "Learners turn the product requirement into a small chain acceptance target.",
+          "relevance": "This keeps LangChain integrations from becoming a demo without grounding tests.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Define the cited answer and refusal behavior before choosing integrations.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Build a RAG App with LangChain into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+          "label": "Documents and splitters make retrievable evidence",
+          "sub": "LangChain retrieval quality starts with Document text and metadata.",
+          "what": "Learners connect LangChain Documents to chunking and citation quality.",
+          "relevance": "Weak metadata produces weak citations even when the chain syntax is correct.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Preserve source title, heading, and permissions in every Document chunk.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Build a RAG App with LangChain into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+          "label": "Retriever, prompt, and model are separate runnables",
+          "sub": "The core chain should expose each stage instead of hiding failures.",
+          "what": "Learners design the chain as observable stages.",
+          "relevance": "A wrong answer can be traced to missing evidence, bad prompt packing, or unsupported synthesis.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Compose retrieval and answer synthesis so each output can be inspected.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Build a RAG App with LangChain into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Build a RAG App with LangChain, not just recognize the words.",
+          "label": "Code the chain with evidence logging",
+          "sub": "A runnable slice should print retrieved Documents before answering.",
+          "what": "Learners connect a retriever-like function to answer formatting and trace output.",
+          "relevance": "Visible traces catch retrieval errors before UI polish hides them.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Build a tiny chain whose trace makes the selected context obvious.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Promote the chain into regression tests",
+          "sub": "LangChain changes should rerun source-based checks.",
+          "what": "Learners convert the slice into a maintainable test surface.",
+          "relevance": "Framework upgrades, prompt edits, and splitter changes can silently break grounding.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Gate loaders, splitters, prompts, and retrievers with acceptance tests.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "feeds"
         },
         {
           "from": "n_m2",
@@ -1658,57 +1139,62 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "gates"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Build a LangChain RAG prototype over three Markdown files. Use Document metadata, a splitter, a retriever, a prompt that quotes evidence boundaries, a trace printout, and five acceptance tests including one insufficient-evidence case. Next rung: add LangSmith or OpenTelemetry tracing.",
+      "scopedTo": "Build a RAG App with LangChain"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Pin the LangChain answer contract",
+        "detail": "The first LangChain decision is the user-visible contract, not the vector store brand."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Documents and splitters make retrievable evidence",
+        "detail": "Loaders and text splitters decide what the retriever can later return."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Retriever, prompt, and model are separate runnables",
+        "detail": "LangChain chains are easiest to debug when retrieval and generation remain separable."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Code the chain with evidence logging",
+        "detail": "The first useful LangChain implementation is boring, inspectable, and source-aware."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Promote the chain into regression tests",
+        "detail": "A LangChain RAG app is reviewable when failures are repeatable."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_contract",
+        "label": "Can you explain the contract in “Pin the LangChain answer contract”?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_trace",
+        "label": "Can a reviewer inspect evidence from “Code the chain with evidence logging”?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does “Promote the chain into regression tests” block unsupported answers?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Design a one-page implementation plan for Build a RAG App with LangChain: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -1738,6 +1224,41 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon9": {
+      "id": "canon9",
+      "kind": "canonical",
+      "title": "LangChain RAG docs",
+      "url": "https://docs.langchain.com/oss/python/langchain/rag",
+      "asOfDate": "2026-06-22"
     }
   }
 }
