@@ -78,8 +78,13 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     Object.assign(st, await retriever(st as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await architect(st as any, config as any));
+    // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
+    // usable blueprint). A validation-GATE miss already carries a repairBlueprint()-fixed
+    // best-effort skeleton — ship it rather than pay a second ~56s Opus call. The overview is a
+    // FREE, user-reviewed preview (editable via "Edit overview"), so best-effort is the right
+    // default; a genuine parse/shape failure (architect returns no blueprint) still re-gens.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
+    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }

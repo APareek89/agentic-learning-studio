@@ -6,6 +6,21 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
+## ⬆️ STAGING ahead of PROD — promotion queue (2026-06-23)
+`main`/prod currently has ONLY the 529 resilience (R0, `58fabd3`). The following are committed + verified
+on `staging` and **NOT yet on `main`** — promote (cherry-pick, in order) when ready:
+1. `764fae2` — **module-cache correctness fix**: `moduleCacheKey` (`src/lib/hash.ts` + `src/server.ts`) keys on
+   objective/buildGoal/framework/lessonTypes (else a cache hit served a fragment that dropped those inputs).
+   Also `Stale/` gitignore + cleanup notes. (Side effect: existing `module_cache` rows regenerate once.)
+2. `56d5a27` — **parallel module build (A1/A4/A2)** (`src/agent/orchestrator.ts` + `nodes.ts`): cap-3 parallel
+   module bodies (`MAX_MODULE_CONCURRENCY`, default 3), spine-order incremental render (Module 1 in first wave),
+   relaxed density-repair trigger. ~13.5 min → ~5-6 min.
+3. **deterministic overview repair (A5)** (`src/agent/orchestrator.ts`, this commit): `runOverviewJob` skips the
+   2nd ~56s Opus call on gate-only validation misses (ships the `repairBlueprint`-fixed skeleton); re-gens only on a
+   true parse/shape failure. Saves ~56s on gate-failing overviews.
+Already on prod: `58fabd3` (R0 529 resilience). Promote with a clean worktree off `origin/main` + `git cherry-pick`
+(the touched files are identical on both branches, so picks apply cleanly). `tsc` must stay clean.
+
 ## Generation latency (2026-06-23)
 - **529/overload resilience (`runDeepDive`, on staging + prod):** Anthropic `overloaded_error` (529) was failing whole
   builds — the old 3-attempt/~3s retry burned out during a transient overload (clears in 30-90s) → 0 modules, empty lesson.
