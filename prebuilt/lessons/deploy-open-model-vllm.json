@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Deploy an Open Model with vLLM: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Deploy an Open Model with vLLM is useful when you can apply it to a team deploys an open model for ticket summaries and must hit latency and cost limits, choose a design, and verify p95 latency under the release target.",
+    "caption": "Deploy an open model with vLLM by selecting model/hardware, launching server, smoke-testing API, load-testing, and hardening the endpoint.",
+    "oneLineThesis": "A vLLM deployment is not done until serving, streaming, metrics, load, and rollback are proven for the chosen model and traffic shape.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Deploy an Open Model with vLLM.",
-        "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+        "label": "Choose the open model and serving target",
+        "sub": "Start with model, traffic shape, and GPU budget.",
+        "what": "Learners position vLLM accurately.",
+        "relevance": "This prevents using vLLM when a hosted API or local runner would be simpler.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Target behavior connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+        "orient": "Size a support-agent endpoint around GPU memory and request shape.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+        "label": "Budget weights, context, and KV cache before launch",
+        "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+        "what": "Learners understand the serving bottleneck.",
+        "relevance": "This prevents setting long contexts and high concurrency without memory math.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Architecture slice connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+        "orient": "Estimate how long prompts and active users consume GPU memory.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+        "label": "Expose an OpenAI-compatible endpoint",
+        "sub": "Compatibility helps, but integration tests still matter.",
+        "what": "Learners connect runtime to application code.",
+        "relevance": "This catches mismatch between provider assumptions and self-hosted behavior.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Core implementation connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Serve a model and call it through the same client shape.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+        "label": "Run the server and smoke-test streaming",
+        "sub": "The first production slice proves launch, request, stream, and metrics.",
+        "what": "Learners implement the serving slice concretely.",
+        "relevance": "This makes the deployment testable before scaling.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Validation and tracing connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+        "orient": "Start vLLM and call it through an OpenAI-compatible client.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+        "label": "Load-test, monitor, and protect the endpoint",
+        "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+        "what": "Learners close deployment with operations.",
+        "relevance": "This prevents an exposed GPU server from becoming a fragile product dependency.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Hardening path connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+        "orient": "Gate the endpoint with load, metrics, auth, and fallback checks.",
         "order": 5
       }
     ],
@@ -108,7 +108,7 @@
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hardens"
       }
     ],
     "structureType": "procedural",
@@ -118,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Target behavior applies Deploy an Open Model with vLLM to vLLM deployment checklist with model, batching, and rollback settings, with examples and checks tied to p95 latency under the release target.",
+      "title": "Choose the open model and serving target",
+      "sub": "Start with model, traffic shape, and GPU budget.",
+      "summary": "A vLLM deployment begins with model choice, context budget, and traffic assumptions.",
       "objectives": [
-        "Apply target behavior to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: throughput looks fine in a demo but collapses under concurrent users."
+        "Explain vLLM fit.",
+        "Name PagedAttention and continuous batching.",
+        "Separate production endpoint from local demo."
       ],
       "termIds": [
         "prototype",
@@ -133,172 +133,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Deploy an Open Model with vLLM matters here",
+          "title": "The product constraint is GPU memory under load",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A team deploys an open model for ticket summaries and must hit latency and cost limits. The learner's job is not to memorize Deploy an Open Model with vLLM; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved p95 latency under the release target."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Running case: vLLM deployment checklist with model, batching, and rollback settings. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if throughput looks fine in a demo but collapses under concurrent users, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson skips definition-drilling and spends its effort on edge cases: state boundaries, hidden coupling, observability gaps, and the evidence that would change a production decision."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Deploy an Open Model with vLLM matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Deploy an Open Model with vLLM matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure p95 latency under the release target on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Deploy an Open Model with vLLM.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team deploys an open model for ticket summaries and must hit latency and cost limits"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review vLLM deployment checklist with model, batching, and rollback settings: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where throughput looks fine in a demo but collapses under concurrent users. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Problem anchor: a support-agent team wants to serve an open instruction model for many concurrent users. Hosted APIs are too costly for expected volume, and data locality matters. vLLM is a fit because it focuses on high-throughput online serving, continuous batching, OpenAI-compatible endpoints, and efficient KV-cache management."
                 }
               ]
             }
@@ -311,97 +158,21 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb_vllm",
+            "canon_vllm_serving"
+          ],
+          "analogy": "vLLM is an airport scheduler for token generation: it keeps many flights moving through limited gates."
         },
         {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Worked example: Target behavior applied to the running case",
+          "title": "Deployment target sheet",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A team deploys an open model for ticket summaries and must hit latency and cost limits. This module asks what target behavior changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve p95 latency under the release target."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: throughput looks fine in a demo but collapses under concurrent users."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For vLLM deployment checklist with model, batching, and rollback settings, log or test the fields needed to debug p95 latency under the release target. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "Model: Llama-3.1-8B-Instruct. Traffic: 20 concurrent chats, p95 prompt 2k tokens, p95 output 400 tokens. Hardware: two GPUs. Release target: OpenAI-compatible chat endpoint with streaming, health checks, metrics, and load test before production."
                 }
               ]
             }
@@ -414,128 +185,31 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: vLLM deployment checklist with model, batching, and rollback settings",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A team deploys an open model for ticket summaries and must hit latency and cost limits. The team wants to improve p95 latency under the release target, but it has already seen this failure: throughput looks fine in a demo but collapses under concurrent users."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Traffic plan: 1,200 requests per hour, p95 latency target under two seconds, predictable cost, and a rollback path if quality drops. A demo benchmark is not enough."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: vLLM deployment checklist with model, batching, and rollback settings. It includes workload shape, token or batch budget, model or hardware choice, fallbacks, observability, rollout plan, and the metric p95 latency under the release target."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: route short requests to the fast path, batch background jobs, cap output tokens, log model version and latency, and roll back if quality or cost crosses the release threshold."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: production AI engineer. Context: A team deploys an open model for ticket summaries and must hit latency and cost limits. Task: design the release runbook for vLLM deployment checklist with model, batching, and rollback settings. Include workload, latency and cost budgets, fallback, observability, rollout, and rollback trigger. Output: {slo, capacity_plan, monitoring, fallback, rollout_gate}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Deploy an Open Model with vLLM to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb_vllm"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Deploy an Open Model with vLLM to the running case?",
+          "title": "vLLM fit",
+          "prompt": "When does vLLM become compelling?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and test the failure: throughput looks fine in a demo but collapses under concurrent users.",
+              "text": "A one-off laptop demo with no concurrency.",
+              "correct": false
+            },
+            {
+              "text": "High-throughput self-hosted serving where GPU memory, batching, and KV cache matter.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only for image generation.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "vLLM is production-serving oriented.",
           "termIds": [
             "prototype",
             "retriever",
@@ -544,28 +218,25 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_vllm",
+        "canon_vllm_serving"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Architecture slice applies Deploy an Open Model with vLLM to vLLM deployment checklist with model, batching, and rollback settings, with examples and checks tied to p95 latency under the release target.",
+      "title": "Budget weights, context, and KV cache before launch",
+      "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+      "summary": "PagedAttention reduces waste but does not remove memory limits.",
       "objectives": [
-        "Apply architecture slice to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: throughput looks fine in a demo but collapses under concurrent users."
+        "Explain KV cache pressure.",
+        "Connect context length to concurrency.",
+        "Name why prefix caching helps only some workloads."
       ],
       "termIds": [
         "prototype",
@@ -574,60 +245,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the mechanism in the running case",
+          "title": "PagedAttention manages memory; it does not make memory infinite",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Architecture slice opens the machinery behind Deploy an Open Model with vLLM. In the running case, the important question is: what exactly changes between the user's request and the final output?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Mechanism means connecting workload shape, model choice, serving constraints, observability, and rollback behavior."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is vLLM deployment checklist with model, batching, and rollback settings. Which single field, trace, or test would show whether p95 latency under the release target improved?"
+                  "text": "vLLM is known for PagedAttention, which manages key/value cache in blocks to reduce waste. The practical constraint remains: model weights, active prompt tokens, generated tokens, batch size, and context length compete for GPU memory. Long context serving leaves less room for concurrent users."
                 }
               ]
             }
@@ -640,256 +270,90 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_vllm_paged_attention",
+            "kb_vllm"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team deploys an open model for ticket summaries and must hit latency and cost limits"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review vLLM deployment checklist with model, batching, and rollback settings: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where throughput looks fine in a demo but collapses under concurrent users. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Serving memory pressures",
+          "criteria": [
+            "Pressure",
+            "What increases it",
+            "First mitigation"
           ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Architecture slice applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A team deploys an open model for ticket summaries and must hit latency and cost limits. This module asks what architecture slice changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve p95 latency under the release target."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: throughput looks fine in a demo but collapses under concurrent users."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
-          "language": "python",
-          "code": "# Deploy an Open Model with vLLM: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to throughput looks fine in a demo but collapses under concurrent users."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: throughput looks fine in a demo but collapses under concurrent users. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to vLLM deployment checklist with model, batching, and rollback settings: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: p95 latency under the release target becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Deploy an Open Model with vLLM design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Deploy an Open Model with vLLM to the running case?",
-          "format": "mcq",
           "options": [
             {
-              "text": "Build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and test the failure: throughput looks fine in a demo but collapses under concurrent users.",
-              "correct": true
+              "name": "Weights",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "Weights",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "larger model or precision",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "quantization or smaller model",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Model selection.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "KV cache",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "KV cache",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "long context and many active tokens",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "shorter context, batching limits, more GPUs",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Concurrency tuning.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "Prefill cost",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "Prefill cost",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "long shared prompts",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "prefix caching when prefixes match exactly",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Repeated system/context prompts.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "prototype",
             "retriever",
@@ -898,28 +362,27 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm",
+            "canon_vllm_prefix_cache"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_vllm_paged_attention",
+        "kb_vllm",
+        "canon_vllm_prefix_cache"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Core implementation applies Deploy an Open Model with vLLM to vLLM deployment checklist with model, batching, and rollback settings, with examples and checks tied to p95 latency under the release target.",
+      "title": "Expose an OpenAI-compatible endpoint",
+      "sub": "Compatibility helps, but integration tests still matter.",
+      "summary": "Apps can often use existing OpenAI clients against vLLM, with caveat tests.",
       "objectives": [
-        "Apply core implementation to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: throughput looks fine in a demo but collapses under concurrent users."
+        "Start vLLM serving.",
+        "Call it with an OpenAI-style client.",
+        "Test unsupported parameters and chat templates."
       ],
       "termIds": [
         "prototype",
@@ -928,46 +391,66 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the choice that changes reliability",
+          "title": "Compatibility is an integration surface, not a guarantee",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Deploy an Open Model with vLLM becomes a decision. The team must choose how much rigor vLLM deployment checklist with model, batching, and rollback settings needs before it can be trusted."
+                  "text": "vLLM exposes OpenAI-compatible serving endpoints, which lets many apps point an OpenAI client at a self-hosted base URL. But provider-specific parameters, tool behavior, chat templates, and streaming details still need tests. Chat-tuned models especially need correct templates."
                 }
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves p95 latency under the release target while making this failure visible: throughput looks fine in a demo but collapses under concurrent users."
-                }
-              ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_vllm_serving",
+            "kb_vllm"
+          ]
+        },
+        {
+          "id": "m3_case",
+          "kind": "functionalExample",
+          "title": "Integration test plan",
+          "body": [
             {
               "t": "ul",
               "items": [
                 [
                   {
-                    "text": "Thin slice: prove the path on one realistic example."
+                    "text": "List models endpoint returns the expected model name."
                   }
                 ],
                 [
                   {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
+                    "text": "Chat completion works with the app message format."
                   }
                 ],
                 [
                   {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
+                    "text": "Streaming chunks parse in the UI."
+                  }
+                ],
+                [
+                  {
+                    "text": "Unsupported parameters fail clearly."
+                  }
+                ],
+                [
+                  {
+                    "text": "Tool-call or structured-output behavior is tested before release."
                   }
                 ]
               ]
@@ -981,333 +464,25 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team deploys an open model for ticket summaries and must hit latency and cost limits"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review vLLM deployment checklist with model, batching, and rollback settings: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where throughput looks fine in a demo but collapses under concurrent users. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Deploy an Open Model with vLLM on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: throughput looks fine in a demo but collapses under concurrent users.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on p95 latency under the release target.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves p95 latency under the release target and catches: throughput looks fine in a demo but collapses under concurrent users.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For vLLM deployment checklist with model, batching, and rollback settings, log or test the fields needed to debug p95 latency under the release target. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: throughput looks fine in a demo but collapses under concurrent users. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "A benchmark passes at low concurrency but fails at realistic traffic."
-                  }
-                ],
-                [
-                  {
-                    "text": "Cost falls per request but retries increase total spend."
-                  }
-                ],
-                [
-                  {
-                    "text": "Monitoring tracks latency but not quality, version, or fallback behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: p95 latency under the release target gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when p95 latency under the release target affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: throughput looks fine in a demo but collapses under concurrent users.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Deploy an Open Model with vLLM to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and test the failure: throughput looks fine in a demo but collapses under concurrent users.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_vllm_serving"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Deploy an Open Model with vLLM: baseline, production design, or advanced optimization."
+        "canon_vllm_serving",
+        "kb_vllm"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Validation and tracing applies Deploy an Open Model with vLLM to vLLM deployment checklist with model, batching, and rollback settings, with examples and checks tied to p95 latency under the release target.",
+      "title": "Run the server and smoke-test streaming",
+      "sub": "The first production slice proves launch, request, stream, and metrics.",
+      "summary": "A minimal server command plus client call catches deployment mistakes early.",
       "objectives": [
-        "Apply validation and tracing to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: throughput looks fine in a demo but collapses under concurrent users."
+        "Run a vLLM serve command.",
+        "Predict chat-template or model-name failure.",
+        "Verify generated deployment scripts."
       ],
       "termIds": [
         "prototype",
@@ -1316,203 +491,29 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 10,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Deploy an Open Model with vLLM should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For vLLM deployment checklist with model, batching, and rollback settings, the sketch should prove one thing: the system can improve p95 latency under the release target without hiding the failure where throughput looks fine in a demo but collapses under concurrent users."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team deploys an open model for ticket summaries and must hit latency and cost limits"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review vLLM deployment checklist with model, batching, and rollback settings: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where throughput looks fine in a demo but collapses under concurrent users. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Validation and tracing applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A team deploys an open model for ticket summaries and must hit latency and cost limits. This module asks what validation and tracing changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve p95 latency under the release target."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: throughput looks fine in a demo but collapses under concurrent users."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: estimate load before release",
-          "language": "python",
-          "code": "# Deploy an Open Model with vLLM: simple serving budget check.\nrequests_per_hour = 1200\navg_tokens = 880\nprice_per_1k_tokens = 0.002\nbudget_per_hour = 2.50\n\ncost = requests_per_hour * avg_tokens / 1000 * price_per_1k_tokens\nprint(round(cost, 2))\nprint(\"within budget\" if cost <= budget_per_hour else \"optimize first\")",
-          "explain": [
+          "title": "vLLM launch and OpenAI-compatible smoke test",
+          "language": "bash",
+          "code": "vllm serve meta-llama/Llama-3.1-8B-Instruct   --host 0.0.0.0   --port 8000   --tensor-parallel-size 2   --enable-prefix-caching\n\npython - <<'PY'\nfrom openai import OpenAI\nclient = OpenAI(base_url=\"http://localhost:8000/v1\", api_key=\"local\")\nresp = client.chat.completions.create(\n    model=\"meta-llama/Llama-3.1-8B-Instruct\",\n    messages=[{\"role\": \"user\", \"content\": \"Explain KV cache in two sentences.\"}],\n    stream=False,\n)\nprint(resp.choices[0].message.content[:200])\nPY",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to throughput looks fine in a demo but collapses under concurrent users."
+                  "text": "This is the thin slice: server starts, the model name matches, the client can call it, and the app can parse the response. Load and safety tests come after this smoke test passes."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the cost and budget decision.",
-            "answer": "It prints:\n2.11\nwithin budget\n\nThe numbers are small, but the habit is production-grade: connect traffic, tokens, cost, and release gates before scaling."
+            "prompt": "What likely happens if the client uses a model name different from the served model ID?",
+            "answer": "The request can fail with an unknown model or routing error. The app should assert the served model list before release."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
@@ -1521,53 +522,22 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_vllm_serving",
+            "kb_vllm"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify AI-generated vLLM deployment scripts",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Deploy an Open Model with vLLM, review it against the running case before accepting it."
+                  "text": "Checklist: model ID and license reviewed; tensor or pipeline parallel settings match hardware; chat template works; streaming parsed; health and metrics exposed; prefix caching only assumed for exact shared prefixes; and dev-only endpoints are not public."
                 }
               ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: vLLM deployment checklist with model, batching, and rollback settings?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: throughput looks fine in a demo but collapses under concurrent users?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug p95 latency under the release target?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
             }
           ],
           "termIds": [
@@ -1578,60 +548,26 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Deploy an Open Model with vLLM to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and test the failure: throughput looks fine in a demo but collapses under concurrent users.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm",
+            "canon_vllm_serving"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_vllm_serving",
+        "kb_vllm"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Hardening path applies Deploy an Open Model with vLLM to vLLM deployment checklist with model, batching, and rollback settings, with examples and checks tied to p95 latency under the release target.",
+      "title": "Load-test, monitor, and protect the endpoint",
+      "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+      "summary": "A vLLM endpoint needs load tests, metrics, routing policy, and operational safeguards.",
       "objectives": [
-        "Apply hardening path to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: throughput looks fine in a demo but collapses under concurrent users."
+        "Name vLLM production checks.",
+        "Plan monitoring and rollback.",
+        "Know when to put a gateway in front."
       ],
       "termIds": [
         "prototype",
@@ -1640,36 +576,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: retrieval before mastery",
+          "title": "The server is not the whole serving system",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how vLLM deployment checklist with model, batching, and rollback settings improves p95 latency under the release target and catches throughput looks fine in a demo but collapses under concurrent users, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "Production checks include p50/p95 latency, tokens per second, time to first token, GPU memory, active requests, queueing, error rate, cost per tenant, and quality evals. Put a gateway in front when you need tenant keys, budgets, routing, fallback to hosted models, or one logical model name across replicas."
                 }
               ]
             }
@@ -1682,148 +601,16 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team deploys an open model for ticket summaries and must hit latency and cost limits"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review vLLM deployment checklist with model, batching, and rollback settings: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where throughput looks fine in a demo but collapses under concurrent users. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm",
+            "canon_vllm_serving"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Deploy an Open Model with vLLM on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: throughput looks fine in a demo but collapses under concurrent users.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on p95 latency under the release target.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves p95 latency under the release target and catches: throughput looks fine in a demo but collapses under concurrent users.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Ship vLLM when load tests, integration tests, metrics, auth, and rollback are all in place.",
+          "useWhen": "Use it for self-hosted high-throughput open-model serving where GPU utilization matters.",
+          "avoidWhen": "Avoid exposing raw dynamic endpoints, cache reset tools, or unauthenticated model APIs in production.",
           "termIds": [
             "prototype",
             "retriever",
@@ -1832,174 +619,30 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For vLLM deployment checklist with model, batching, and rollback settings, log or test the fields needed to debug p95 latency under the release target. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Deploy an Open Model with vLLM: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Deploy an Open Model with vLLM without copying the worked example. Keep the same running case - A team deploys an open model for ticket summaries and must hit latency and cost limits - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: p95 latency under the release target."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: throughput looks fine in a demo but collapses under concurrent users."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Deploy an Open Model with vLLM to the running case?",
+          "title": "Hardening gate",
+          "prompt": "What should pass before a vLLM endpoint serves users?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and test the failure: throughput looks fine in a demo but collapses under concurrent users.",
+              "text": "Only one successful localhost response.",
+              "correct": false
+            },
+            {
+              "text": "Load tests, integration tests, monitoring, auth/routing policy, and quality checks.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A screenshot of GPU utilization.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Production serving needs operations around the model runtime.",
           "termIds": [
             "prototype",
             "retriever",
@@ -2008,79 +651,75 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_vllm"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Deploy an Open Model with vLLM: baseline, production design, or advanced optimization."
+        "kb_vllm",
+        "canon_vllm_serving"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A narrow runnable slice that proves one infrastructure behavior.",
+      "technicalNote": "A good prototype includes setup, smoke test, failure mode, and migration boundary.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A component that fetches context or records for a request.",
+      "technicalNote": "Serving lessons track retrievers because retrieval shape affects latency, cost, and quality.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that enforces output, request, or deployment contracts.",
+      "technicalNote": "Validators protect schemas, health checks, citations, policy gates, and readiness criteria.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one request or job through serving components.",
+      "technicalNote": "Traces reveal queue time, model call latency, token counts, errors, and release metadata.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A versioned runtime configuration exposed to users or systems.",
+      "technicalNote": "A deployment includes model, serving flags, hardware, API contract, monitoring, rollback, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A test that proves the build meets its release contract.",
+      "technicalNote": "Acceptance tests should cover smoke behavior, failure modes, metrics, and rollback expectations.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     }
   },
@@ -2088,17 +727,17 @@
     "title": "Decision prompts for Deploy an Open Model with vLLM",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Deployment acceptance",
         "questions": [
           {
-            "q": "What decision does Deploy an Open Model with vLLM change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships vLLM deployment checklist with model, batching, and rollback settings.",
+            "q": "What evidence proves this vLLM endpoint is ready for a product traffic slice?",
+            "why": "Open-model deployment must prove model fit, GPU memory, API compatibility, latency, throughput, safety, and rollback.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Load-tested endpoint with gates",
+              "Server starts once",
+              "Model card only"
             ],
-            "rot": "Choose the smallest option that catches: throughput looks fine in a demo but collapses under concurrent users."
+            "rot": "Gate deployment on smoke tests, load tests, metrics, auth, and quality checks."
           }
         ]
       }
@@ -2110,73 +749,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Deploy an Open Model with vLLM using the running case: A team deploys an open model for ticket summaries and must hit latency and cost limits. Name the artifact (vLLM deployment checklist with model, batching, and rollback settings), explain the mechanism, choose a design level, write the check for throughput looks fine in a demo but collapses under concurrent users, and say how you would measure p95 latency under the release target."
+            "text": "Retrieval prompt: rebuild the vLLM deployment by naming chosen model, GPU memory budget, serve command, client smoke test, streaming test, metrics, load threshold, gateway/auth, and rollback plan."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "vLLM deployment path from model choice to hardened endpoint",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Deploy an Open Model with vLLM.",
-          "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+          "label": "Choose the open model and serving target",
+          "sub": "Start with model, traffic shape, and GPU budget.",
+          "what": "Learners position vLLM accurately.",
+          "relevance": "This prevents using vLLM when a hosted API or local runner would be simpler.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Target behavior connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+          "orient": "Size a support-agent endpoint around GPU memory and request shape.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+          "label": "Budget weights, context, and KV cache before launch",
+          "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+          "what": "Learners understand the serving bottleneck.",
+          "relevance": "This prevents setting long contexts and high concurrency without memory math.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Architecture slice connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+          "orient": "Estimate how long prompts and active users consume GPU memory.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+          "label": "Expose an OpenAI-compatible endpoint",
+          "sub": "Compatibility helps, but integration tests still matter.",
+          "what": "Learners connect runtime to application code.",
+          "relevance": "This catches mismatch between provider assumptions and self-hosted behavior.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Core implementation connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Serve a model and call it through the same client shape.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+          "label": "Run the server and smoke-test streaming",
+          "sub": "The first production slice proves launch, request, stream, and metrics.",
+          "what": "Learners implement the serving slice concretely.",
+          "relevance": "This makes the deployment testable before scaling.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Validation and tracing connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+          "orient": "Start vLLM and call it through an OpenAI-compatible client.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Hardening path",
-          "sub": "Decide what to ship, monitor, and improve next.",
-          "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve p95 latency under the release target while avoiding the failure: throughput looks fine in a demo but collapses under concurrent users.",
+          "label": "Load-test, monitor, and protect the endpoint",
+          "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+          "what": "Learners close deployment with operations.",
+          "relevance": "This prevents an exposed GPU server from becoming a fragile product dependency.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Hardening path connects Deploy an Open Model with vLLM to the running artifact and failure test.",
+          "orient": "Gate the endpoint with load, metrics, auth, and fallback checks.",
           "order": 5
         }
       ],
@@ -2199,97 +838,93 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "hardens"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Target behavior",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Choose the open model and serving target",
+        "detail": "A vLLM deployment begins with model choice, context budget, and traffic assumptions."
       },
       {
         "step": 2,
-        "label": "Architecture slice",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Budget weights, context, and KV cache before launch",
+        "detail": "PagedAttention reduces waste but does not remove memory limits."
       },
       {
         "step": 3,
-        "label": "Core implementation",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Expose an OpenAI-compatible endpoint",
+        "detail": "Apps can often use existing OpenAI clients against vLLM, with caveat tests."
       },
       {
         "step": 4,
-        "label": "Validation and tracing",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Run the server and smoke-test streaming",
+        "detail": "A minimal server command plus client call catches deployment mistakes early."
       },
       {
         "step": 5,
-        "label": "Hardening path",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Load-test, monitor, and protect the endpoint",
+        "detail": "A vLLM endpoint needs load tests, metrics, routing policy, and operational safeguards."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Choose the open model and serving target\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure p95 latency under the release target on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: throughput looks fine in a demo but collapses under concurrent users?",
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Run the server and smoke-test streaming\"?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_gate",
+        "label": "Does \"Load-test, monitor, and protect the endpoint\" define the production or release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for vLLM deployment checklist with model, batching, and rollback settings. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (p95 latency under the release target), failure case (throughput looks fine in a demo but collapses under concurrent users), owner, and the next rung after this lesson.",
-      "scopedTo": "Deploy an Open Model with vLLM"
+      "prompt": "Deploy an open instruction model behind vLLM for a small app. Include serve command, OpenAI-compatible client test, streaming parser, health/metrics check, load test target, gateway/auth rule, and rollback. Next rung: add autoscaling or multi-replica routing.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Model and license reviewed.",
+        "Serve command matches hardware.",
+        "Smoke and streaming tests pass.",
+        "Load and rollback gates are documented."
+      ]
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
+    "kb_vllm": {
+      "id": "kb_vllm",
       "kind": "kb",
-      "title": "KB: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
+      "title": "KB: vLLM",
+      "url": "https://docs.vllm.ai/",
+      "asOfDate": "2026-06-22"
     },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_vllm_serving": {
+      "id": "canon_vllm_serving",
       "kind": "canonical",
-      "title": "LlamaIndex RAG documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "vLLM online serving",
+      "url": "https://docs.vllm.ai/en/latest/serving/online_serving/",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
+    "canon_vllm_prefix_cache": {
+      "id": "canon_vllm_prefix_cache",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "vLLM automatic prefix caching",
+      "url": "https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_vllm_paged_attention": {
+      "id": "canon_vllm_paged_attention",
+      "kind": "canonical",
+      "title": "vLLM PagedAttention engineering blog",
+      "url": "https://blog.vllm.ai/2023/06/20/vllm.html",
+      "asOfDate": "2026-06-22"
     }
   }
 }
