@@ -197,7 +197,10 @@ export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boole
   try {
     await writeRunLog({
       startedAt,
-      ok: !redSeen && !dbError && errors.length === 0,
+      // ok = run-level health (red-IP item or DB error). Per-source fetch timeouts/errors
+      // are EXPECTED on some slow sources and stay visible in `errors` — they shouldn't
+      // paint the daily heartbeat red.
+      ok: !redSeen && !dbError,
       since: cli.since,
       only: cli.only,
       dryRun: cli.dryRun,
