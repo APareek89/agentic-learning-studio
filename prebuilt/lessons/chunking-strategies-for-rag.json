@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Chunking Strategies for RAG: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Chunking Strategies for RAG is useful when you can apply it to a support docs assistant cites the wrong page because chunks split policy context in half, choose a design, and verify retrieved chunks contain complete answer context.",
+    "caption": "Design chunks from source structure, retrieval behavior, and answer evidence rather than a universal token number.",
+    "oneLineThesis": "Chunking is the evidence-shaping decision in RAG: it decides what can be found, ranked, cited, and safely packed into the answer prompt.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Chunking Strategies for RAG.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+        "label": "Start from the answer evidence",
+        "sub": "Chunking begins with what an answer must prove.",
+        "what": "Learners identify the evidence unit before choosing a splitter.",
+        "relevance": "This prevents token windows from slicing off the caveat or exception that makes an answer true.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Chunking Strategies for RAG to the running artifact and failure test.",
+        "orient": "Anchor chunk choices in the sentence a future answer must support.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+        "label": "Respect document structure first",
+        "sub": "Headings, tables, code, and transcripts need different splitters.",
+        "what": "Learners choose splitters from document shape instead of copying one default.",
+        "relevance": "Structure-aware splits reduce broken tables, orphaned headings, and meaningless code fragments.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Chunking Strategies for RAG to the running artifact and failure test.",
+        "orient": "Use native source boundaries before falling back to token windows.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+        "label": "Metadata makes chunks rankable and reviewable",
+        "sub": "Search quality depends on labels, filters, and provenance.",
+        "what": "Learners plan metadata as part of chunking, not an afterthought.",
+        "relevance": "Metadata supports tenant filters, freshness checks, exact source links, and debugging.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Chunking Strategies for RAG to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Attach the fields retrieval and citation review will later need.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+        "label": "Implement and test the split",
+        "sub": "A tiny splitter should expose boundaries before indexing.",
+        "what": "Learners implement a small chunking routine and inspect output.",
+        "relevance": "Inspecting chunks catches broken evidence before expensive embedding and indexing.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Chunking Strategies for RAG to the running artifact and failure test.",
+        "orient": "Turn the chunk contract into runnable checks before embedding anything.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+        "label": "Evaluate chunking as a regression surface",
+        "sub": "Chunking quality is measured with retrieval questions.",
+        "what": "Learners turn chunking assumptions into repeatable retrieval checks.",
+        "relevance": "Chunk changes otherwise look harmless while breaking citations or answer completeness.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Chunking Strategies for RAG to the running artifact and failure test.",
+        "orient": "Promote chunk decisions into tests that block silent retrieval regressions.",
         "order": 5
       }
     ],
@@ -118,34 +118,34 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Chunking Strategies for RAG to chunking strategy sheet with size, overlap, metadata, and evaluation cases, with examples and checks tied to retrieved chunks contain complete answer context.",
+      "title": "Start from the answer evidence",
+      "sub": "Chunking begins with what an answer must prove.",
+      "summary": "A chunk is not just a storage unit; it is the candidate evidence the model will cite.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
+        "Define a chunk as an answer-support unit.",
+        "Explain why tiny chunks can retrieve keywords but lose meaning.",
+        "Name metadata that helps a weak chunk become usable."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Chunking Strategies for RAG matters here",
+          "title": "A chunk is the shape of retrievable evidence",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A support docs assistant cites the wrong page because chunks split policy context in half. The learner's job is not to memorize Chunking Strategies for RAG; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved retrieved chunks contain complete answer context."
+                  "text": "Problem anchor: a support assistant cites the refund page but misses the paragraph saying enterprise contracts require finance approval. Retrieval “worked” by keyword, yet the answer was wrong because the returned chunk lacked the governing caveat."
                 }
               ]
             },
@@ -153,7 +153,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: chunking strategy sheet with size, overlap, metadata, and evaluation cases. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "The practical question is not “450 tokens or 800 tokens?” It is “what unit would let a reviewer verify this answer without opening the original document?” Headings, definitions, examples, table captions, and version dates are part of that unit."
                 }
               ]
             },
@@ -162,169 +162,43 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if small chunks retrieve keywords but lose the paragraph that explains the rule, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
+                  "text": "Before touching code, write the claim the assistant must support and underline the minimum surrounding context that makes the claim safe."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Chunking Strategies for RAG matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Chunking Strategies for RAG matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure retrieved chunks contain complete answer context on examples that resemble the real workload."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "A good chunk is a labeled evidence envelope, not a random slice from a shredder."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Chunking Strategies for RAG.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support docs assistant cites the wrong page because chunks split policy context in half"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review chunking strategy sheet with size, overlap, metadata, and evaluation cases: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where small chunks retrieve keywords but lose the paragraph that explains the rule. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Worked artifact: refund policy chunk contract",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A support docs assistant cites the wrong page because chunks split policy context in half. This module asks what mental model changes in the artifact."
+                  "text": "For the refund policy page, the chunk contract says each returned unit must include the heading path, product tier, effective date, and any exception paragraph adjacent to the rule. The body target is 350-600 tokens, but the policy exception outranks the target size."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The resulting chunk text starts with a breadcrumb: “Billing > Refunds > Enterprise exceptions.” That breadcrumb gives lexical search exact words, vector search semantic context, and the generator enough provenance to cite the correct page."
                 }
               ]
             },
@@ -333,260 +207,113 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Write the answer claim: “Enterprise refunds require finance approval after 30 days.”"
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Select the smallest source section containing the rule and exception."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve retrieved chunks contain complete answer context."
+                    "text": "Attach source URL, heading path, product tier, and effective date."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: small chunks retrieve keywords but lose the paragraph that explains the rule."
+                    "text": "Create an eval query that asks exactly about enterprise refunds after 30 days."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For chunking strategy sheet with size, overlap, metadata, and evaluation cases, log or test the fields needed to debug retrieved chunks contain complete answer context. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: chunking strategy sheet with size, overlap, metadata, and evaluation cases",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A support docs assistant cites the wrong page because chunks split policy context in half. The team wants to improve retrieved chunks contain complete answer context, but it has already seen this failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Question: \"Can I get a refund after 35 days if I lost my invoice?\" The answer must cite the exact policy chunk, not a plausible refund rule remembered by the model."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: chunking strategy sheet with size, overlap, metadata, and evaluation cases. It specifies loaders, chunk metadata, retriever settings, prompt contract, citation format, and a faithfulness check for retrieved chunks contain complete answer context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: retrieve policy-refunds-v3 section 4, quote \"30 days\" and \"invoice id required\", answer that the request probably fails the policy, and link the source chunk used."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: RAG reviewer. Context: A support docs assistant cites the wrong page because chunks split policy context in half. Task: inspect chunking strategy sheet with size, overlap, metadata, and evaluation cases. Require a user question, retrieved chunks with source ids, final answer, and a claim-by-claim support check. Constraints: do not allow claims that are absent from retrieved chunks; flag stale or missing metadata. Output: {question, retrieved_sources, answer, unsupported_claims, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Chunking Strategies for RAG to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Chunking Strategies for RAG"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Chunking Strategies for RAG to the running case?",
+          "title": "Evidence before size",
+          "prompt": "A chunk contains the keyword “refund” but not the exception paragraph. What should you change first?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review chunking strategy sheet with size, overlap, metadata, and evaluation cases, measure retrieved chunks contain complete answer context, and test the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+              "text": "Lower the model temperature so it becomes more factual.",
+              "correct": false
+            },
+            {
+              "text": "Return a larger structural parent or split around headings so the exception travels with the rule.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Delete metadata because it distracts semantic search.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Generation settings cannot restore evidence that retrieval did not return.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Chunking Strategies for RAG to chunking strategy sheet with size, overlap, metadata, and evaluation cases, with examples and checks tied to retrieved chunks contain complete answer context.",
+      "title": "Respect document structure first",
+      "sub": "Headings, tables, code, and transcripts need different splitters.",
+      "summary": "The best initial splitter is usually the one that preserves the author’s organization.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
+        "Compare heading, recursive, semantic, and parent-child splitting.",
+        "Explain why code and tables require special handling.",
+        "Choose overlap only after structure is preserved."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Structure beats blind length",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind Chunking Strategies for RAG. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "A Markdown handbook, an API reference, a spreadsheet export, and a call transcript should not all become identical 500-token windows. Each source has boundaries that already signal meaning."
                 }
               ]
             },
@@ -594,32 +321,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means separating retrieval quality from answer quality: did the system fetch the right evidence, and did the model stay faithful to that evidence?"
+                  "text": "Recursive splitting is useful because it tries larger natural units first, then falls back to smaller ones. Parent-child retrieval is useful when small children rank well but the answer needs the parent section."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,90 +330,43 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is chunking strategy sheet with size, overlap, metadata, and evaluation cases. Which single field, trace, or test would show whether retrieved chunks contain complete answer context improved?"
+                  "text": "If a chunk starts with “however” or “this limit,” find the antecedent. The split probably cut away the sentence that gives the chunk meaning."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "Use the document’s skeleton before measuring its limbs."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support docs assistant cites the wrong page because chunks split policy context in half"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review chunking strategy sheet with size, overlap, metadata, and evaluation cases: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where small chunks retrieve keywords but lose the paragraph that explains the rule. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
+          "title": "Case study: onboarding docs with tables and code",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A support docs assistant cites the wrong page because chunks split policy context in half. This module asks what mechanism changes in the artifact."
+                  "text": "A developer-assistant KB ingests onboarding docs. The first version chunks every 400 characters and returns code snippets without the prerequisite environment variable. The second version keeps code fences whole, summarizes tables with column names, and stores heading breadcrumbs."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Retrieval improves not because embeddings changed, but because each candidate now contains a complete procedural step. The model can answer “How do I create the API token?” without mixing token creation and token rotation."
                 }
               ]
             },
@@ -719,225 +375,113 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Split Markdown by heading levels."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Keep code fences and tables intact unless they exceed budget."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve retrieved chunks contain complete answer context."
+                    "text": "Window inside long sections with modest overlap."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: small chunks retrieve keywords but lose the paragraph that explains the rule."
+                    "text": "Return the parent section when the selected child is too narrow."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For chunking strategy sheet with size, overlap, metadata, and evaluation cases, log or test the fields needed to debug retrieved chunks contain complete answer context. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: small chunks retrieve keywords but lose the paragraph that explains the rule. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to chunking strategy sheet with size, overlap, metadata, and evaluation cases: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: retrieved chunks contain complete answer context becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Chunking Strategies for RAG design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Chunking Strategies for RAG"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Chunking Strategies for RAG to the running case?",
+          "title": "Splitter choice",
+          "prompt": "Why can a table perform poorly after ordinary paragraph chunking?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review chunking strategy sheet with size, overlap, metadata, and evaluation cases, measure retrieved chunks contain complete answer context, and test the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+              "text": "Tables never work in RAG and must be removed.",
+              "correct": false
+            },
+            {
+              "text": "Column names and row meanings can be separated, leaving cells without schema context.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Embedding models can only encode prose, not numbers.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Tables need schema and row grouping; they are not automatically unusable.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Chunking Strategies for RAG to chunking strategy sheet with size, overlap, metadata, and evaluation cases, with examples and checks tied to retrieved chunks contain complete answer context.",
+      "title": "Metadata makes chunks rankable and reviewable",
+      "sub": "Search quality depends on labels, filters, and provenance.",
+      "summary": "Chunk text carries meaning; metadata carries control.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
+        "List metadata needed for filtering and display.",
+        "Explain how breadcrumbs improve both lexical and vector retrieval.",
+        "Detect stale or unauthorized chunks before generation."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Metadata is retrieval control surface",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Chunking Strategies for RAG becomes a decision. The team must choose how much rigor chunking strategy sheet with size, overlap, metadata, and evaluation cases needs before it can be trusted."
+                  "text": "A chunk without source URL, heading path, version, permission scope, and freshness date is hard to trust even when the text is relevant. Metadata lets retrieval ask “relevant for whom, from which source, and as of when?”"
                 }
               ]
             },
@@ -945,387 +489,199 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves retrieved chunks contain complete answer context while making this failure visible: small chunks retrieve keywords but lose the paragraph that explains the rule."
+                  "text": "For Agentic Learning Studio, the category and lesson slug matter because a learner asking about “agents” should not receive a vector-near chunk about “agency” in a governance note. Filters narrow the candidate pool before ranking."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support docs assistant cites the wrong page because chunks split policy context in half"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review chunking strategy sheet with size, overlap, metadata, and evaluation cases: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where small chunks retrieve keywords but lose the paragraph that explains the rule. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Every chunk should be explainable in a trace: where it came from, why it was allowed, and why it was selected."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "Metadata is the label on the evidence bag."
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "Chunk metadata decisions",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Field",
+            "Why it matters",
+            "Failure if absent"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Heading path",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Chunking Strategies for RAG on one realistic case.",
+                  "criterion": "Field",
+                  "text": "Document title plus nested headings.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
+                  "criterion": "Why it matters",
+                  "text": "Ranks vague sections and gives citations readable labels.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-                  "rating": "ok"
+                  "criterion": "Failure if absent",
+                  "text": "A “Limitations” chunk has no topic context.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use when the team is still learning what matters.",
+              "whenToUse": "Use for all docs with structure.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production path",
+              "name": "Permission scope",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on retrieved chunks contain complete answer context.",
+                  "criterion": "Field",
+                  "text": "Tenant, role, source ACL, or visibility flag.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
+                  "criterion": "Why it matters",
+                  "text": "Prevents unauthorized evidence from entering prompts.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
+                  "criterion": "Failure if absent",
+                  "text": "Correct retrieval can still leak private content.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Mandatory for internal or customer data.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Freshness/version",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
+                  "criterion": "Field",
+                  "text": "Effective date, source hash, product version.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
+                  "criterion": "Why it matters",
+                  "text": "Detects stale indexes and version-specific answers.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
+                  "criterion": "Failure if absent",
+                  "text": "Old facts look just as authoritative as current ones.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves retrieved chunks contain complete answer context and catches: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For chunking strategy sheet with size, overlap, metadata, and evaluation cases, log or test the fields needed to debug retrieved chunks contain complete answer context. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
+              "whenToUse": "Use whenever facts change.",
+              "cost": "Low",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: small chunks retrieve keywords but lose the paragraph that explains the rule. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Retrieved chunks mention the right keyword but not the answer-bearing paragraph."
-                  }
-                ],
-                [
-                  {
-                    "text": "The answer is relevant but unfaithful: it adds a policy or fact not present in the retrieved evidence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metadata is missing, so citations cannot be checked or reranked later."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: retrieved chunks contain complete answer context gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when retrieved chunks contain complete answer context affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Chunking Strategies for RAG to the running case?",
+          "title": "Metadata check",
+          "prompt": "A chunk answers the question but belongs to the wrong customer tenant. What failed?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review chunking strategy sheet with size, overlap, metadata, and evaluation cases, measure retrieved chunks contain complete answer context, and test the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+              "text": "The reranker should have guessed the tenant from wording.",
+              "correct": false
+            },
+            {
+              "text": "The chunking/indexing path did not preserve permission metadata for filtering.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The answer prompt needs more examples.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Security and tenant filtering must be explicit metadata constraints.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Chunking Strategies for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Chunking Strategies for RAG to chunking strategy sheet with size, overlap, metadata, and evaluation cases, with examples and checks tied to retrieved chunks contain complete answer context.",
+      "title": "Implement and test the split",
+      "sub": "A tiny splitter should expose boundaries before indexing.",
+      "summary": "The first implementation test is a chunk preview, not a model answer.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
+        "Write a heading-aware chunk preview.",
+        "Predict overlap behavior at section boundaries.",
+        "Create an eval query tied to each risky split."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "Preview chunks before building the index",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Chunking Strategies for RAG should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "A chunker that only reports counts hides the important failure: what text actually reaches retrieval. Print chunk IDs, headings, token estimates, and first/last sentences."
                 }
               ]
             },
@@ -1333,7 +689,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For chunking strategy sheet with size, overlap, metadata, and evaluation cases, the sketch should prove one thing: the system can improve retrieved chunks contain complete answer context without hiding the failure where small chunks retrieve keywords but lose the paragraph that explains the rule."
+                  "text": "Spaced recall: earlier you named the answer evidence. Now verify the split produces that evidence as one returned unit or as a child linked to the right parent."
                 }
               ]
             },
@@ -1342,197 +698,164 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "If you cannot explain why a chunk boundary exists, the retriever will have to live with an accidental decision."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support docs assistant cites the wrong page because chunks split policy context in half"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review chunking strategy sheet with size, overlap, metadata, and evaluation cases: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where small chunks retrieve keywords but lose the paragraph that explains the rule. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A support docs assistant cites the wrong page because chunks split policy context in half. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve retrieved chunks contain complete answer context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: small chunks retrieve keywords but lose the paragraph that explains the rule."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
+          "title": "Heading-aware chunk preview",
           "language": "python",
-          "code": "# Chunking Strategies for RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to small chunks retrieve keywords but lose the paragraph that explains the rule."
-                }
-              ]
-            }
-          ],
+          "code": "def split_sections(markdown):\n    sections, current = [], {\"path\": [], \"lines\": []}\n    for line in markdown.splitlines():\n        if line.startswith(\"## \"):\n            if current[\"lines\"]:\n                sections.append(current)\n            current = {\"path\": [line[3:].strip()], \"lines\": [line]}\n        else:\n            current[\"lines\"].append(line)\n    if current[\"lines\"]:\n        sections.append(current)\n    return sections\n\ndef window_words(text, size=90, overlap=18):\n    words = text.split()\n    step = max(1, size - overlap)\n    for start in range(0, len(words), step):\n        yield \" \".join(words[start:start + size])\n\npolicy = \"\"\"## Refunds\nStandard plans can be refunded within 30 days.\nEnterprise contracts require finance approval after 30 days.\nRefunds are denied when usage violates the acceptable-use policy.\n\"\"\"\n\nfor section in split_sections(policy):\n    for i, chunk in enumerate(window_words(\"\n\".join(section[\"lines\"]))):\n        print({\"heading\": section[\"path\"], \"chunk\": i, \"text\": chunk})",
+          "explanation": "The preview keeps the heading with each window so the refund exception is not retrieved as context-free prose.",
           "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
+            "prompt": "Before running it, predict whether the enterprise exception appears in the same previewed chunk as the 30-day rule.",
+            "answer": "With this small policy it stays together; on a longer section, the printed preview tells you whether to shrink, expand, or return the parent section."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Implementation signal",
+          "prompt": "What should you inspect before embedding the chunks?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Only the final vector dimensions.",
+              "correct": false
+            },
+            {
+              "text": "The actual chunk text, headings, metadata, and whether known answer evidence stays intact.",
+              "correct": true
+            },
+            {
+              "text": "Only the model response after generation.",
+              "correct": false
+            }
+          ],
+          "explanation": "Embedding a bad split makes the bad split faster, not better.",
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Evaluate chunking as a regression surface",
+      "sub": "Chunking quality is measured with retrieval questions.",
+      "summary": "A chunking strategy is not done until retrieval eval says the evidence survives.",
+      "objectives": [
+        "Build query cases that target boundary failures.",
+        "Separate retrieval miss from generation hallucination.",
+        "Use capstone criteria to decide what changes next."
+      ],
+      "termIds": [
+        "rag",
+        "chunk",
+        "embedding",
+        "vector_search",
+        "reranker"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Every chunking rule needs a failure test",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Chunking Strategies for RAG, review it against the running case before accepting it."
+                  "text": "Chunking changes should be evaluated like code changes. A good test asks the exact question that used to fail and checks whether the expected source or fact appears high enough to fit in the answer prompt."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Failure modes are topic-specific: refund exceptions split away from rules, code snippets separated from prerequisites, tables indexed without column names, or stale pages kept after source refresh."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Retrieval recall at 20 is not enough if your prompt only packs top 6. Test the budget you actually ship."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify the AI output after a chunking change",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "When the model gives a better-looking answer, verify the retrieval layer before celebrating."
                 }
               ]
             },
@@ -1541,27 +864,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: chunking strategy sheet with size, overlap, metadata, and evaluation cases?"
+                    "text": "The cited chunk contains the full sentence or table row supporting each claim."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "The chunk metadata points to the correct source URL, heading, version, and permission scope."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: small chunks retrieve keywords but lose the paragraph that explains the rule?"
+                    "text": "A negative question returns “not enough evidence” instead of a plausible answer."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug retrieved chunks contain complete answer context?"
+                    "text": "The old failing query now retrieves the decisive chunk within the packed top-k."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "The answer does not quote neighboring text that was only present because overlap duplicated it."
                   }
                 ]
               ]
@@ -1569,454 +892,58 @@
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Chunking Strategies for RAG to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review chunking strategy sheet with size, overlap, metadata, and evaluation cases, measure retrieved chunks contain complete answer context, and test the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Chunking Strategies for RAG to chunking strategy sheet with size, overlap, metadata, and evaluation cases, with examples and checks tied to retrieved chunks contain complete answer context.",
-      "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how chunking strategy sheet with size, overlap, metadata, and evaluation cases improves retrieved chunks contain complete answer context and catches small chunks retrieve keywords but lose the paragraph that explains the rule, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support docs assistant cites the wrong page because chunks split policy context in half"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review chunking strategy sheet with size, overlap, metadata, and evaluation cases: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where small chunks retrieve keywords but lose the paragraph that explains the rule. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Chunking Strategies for RAG on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on retrieved chunks contain complete answer context.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves retrieved chunks contain complete answer context and catches: small chunks retrieve keywords but lose the paragraph that explains the rule.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For chunking strategy sheet with size, overlap, metadata, and evaluation cases, log or test the fields needed to debug retrieved chunks contain complete answer context. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Chunking Strategies for RAG: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Chunking Strategies for RAG without copying the worked example. Keep the same running case - A support docs assistant cites the wrong page because chunks split policy context in half - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: retrieved chunks contain complete answer context."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: small chunks retrieve keywords but lose the paragraph that explains the rule."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Chunking Strategies for RAG to the running case?",
+          "title": "Regression mindset",
+          "prompt": "A new chunk size improves average relevance but breaks refund exceptions. What should happen?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review chunking strategy sheet with size, overlap, metadata, and evaluation cases, measure retrieved chunks contain complete answer context, and test the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+              "text": "Ship it because averages matter more than edge cases.",
+              "correct": false
+            },
+            {
+              "text": "Keep the aggregate metric but add exception-focused tests and adjust the strategy.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Remove overlap from every source to simplify the system.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Chunking eval needs representative cases and known failure buckets, not only one aggregate number.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Chunking Strategies for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     }
   ],
   "glossary": {
@@ -2087,17 +1014,17 @@
     "title": "Decision prompts for Chunking Strategies for RAG",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Chunk design review",
         "questions": [
           {
-            "q": "What decision does Chunking Strategies for RAG change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships chunking strategy sheet with size, overlap, metadata, and evaluation cases.",
+            "q": "Which chunking plan gives the retriever complete answer evidence without flooding context?",
+            "why": "The chunk plan sets the ceiling for retrieval quality before the model ever writes an answer.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Structure-aware sections with bounded windows",
+              "Tiny fixed windows everywhere",
+              "One long chunk per document"
             ],
-            "rot": "Choose the smallest option that catches: small chunks retrieve keywords but lose the paragraph that explains the rule."
+            "rot": "Prefer the smallest chunk that still carries the definition, caveat, and metadata needed to support an answer."
           }
         ]
       }
@@ -2109,73 +1036,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Chunking Strategies for RAG using the running case: A support docs assistant cites the wrong page because chunks split policy context in half. Name the artifact (chunking strategy sheet with size, overlap, metadata, and evaluation cases), explain the mechanism, choose a design level, write the check for small chunks retrieve keywords but lose the paragraph that explains the rule, and say how you would measure retrieved chunks contain complete answer context."
+            "text": "Retrieval prompt: rebuild the lesson from memory by naming the source structure, chunk size, overlap, metadata, evaluation queries, and the failure signal each choice is meant to catch."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Chunking path from source document to answerable evidence",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Chunking Strategies for RAG.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+          "label": "Start from the answer evidence",
+          "sub": "Chunking begins with what an answer must prove.",
+          "what": "Learners identify the evidence unit before choosing a splitter.",
+          "relevance": "This prevents token windows from slicing off the caveat or exception that makes an answer true.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Chunking Strategies for RAG to the running artifact and failure test.",
+          "orient": "Anchor chunk choices in the sentence a future answer must support.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+          "label": "Respect document structure first",
+          "sub": "Headings, tables, code, and transcripts need different splitters.",
+          "what": "Learners choose splitters from document shape instead of copying one default.",
+          "relevance": "Structure-aware splits reduce broken tables, orphaned headings, and meaningless code fragments.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Chunking Strategies for RAG to the running artifact and failure test.",
+          "orient": "Use native source boundaries before falling back to token windows.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+          "label": "Metadata makes chunks rankable and reviewable",
+          "sub": "Search quality depends on labels, filters, and provenance.",
+          "what": "Learners plan metadata as part of chunking, not an afterthought.",
+          "relevance": "Metadata supports tenant filters, freshness checks, exact source links, and debugging.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Chunking Strategies for RAG to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Attach the fields retrieval and citation review will later need.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+          "label": "Implement and test the split",
+          "sub": "A tiny splitter should expose boundaries before indexing.",
+          "what": "Learners implement a small chunking routine and inspect output.",
+          "relevance": "Inspecting chunks catches broken evidence before expensive embedding and indexing.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Chunking Strategies for RAG to the running artifact and failure test.",
+          "orient": "Turn the chunk contract into runnable checks before embedding anything.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve retrieved chunks contain complete answer context while avoiding the failure: small chunks retrieve keywords but lose the paragraph that explains the rule.",
+          "label": "Evaluate chunking as a regression surface",
+          "sub": "Chunking quality is measured with retrieval questions.",
+          "what": "Learners turn chunking assumptions into repeatable retrieval checks.",
+          "relevance": "Chunk changes otherwise look harmless while breaking citations or answer completeness.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Chunking Strategies for RAG to the running artifact and failure test.",
+          "orient": "Promote chunk decisions into tests that block silent retrieval regressions.",
           "order": 5
         }
       ],
@@ -2183,7 +1110,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -2198,68 +1125,58 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Take one real policy or product-doc page. Produce a chunking spec with heading-aware splits, target token range, overlap rule, metadata fields, parent-child return behavior, and six eval questions that prove the answer context survives splitting. Next rung: add hybrid retrieval when exact identifiers matter.",
+      "scopedTo": "Chunking Strategies for RAG"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Start from the answer evidence",
+        "detail": "A chunk is not just a storage unit; it is the candidate evidence the model will cite."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Respect document structure first",
+        "detail": "The best initial splitter is usually the one that preserves the author’s organization."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Metadata makes chunks rankable and reviewable",
+        "detail": "Chunk text carries meaning; metadata carries control."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Implement and test the split",
+        "detail": "The first implementation test is a chunk preview, not a model answer."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Evaluate chunking as a regression surface",
+        "detail": "A chunking strategy is not done until retrieval eval says the evidence survives."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Start from the answer evidence” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure retrieved chunks contain complete answer context on realistic cases?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Metadata makes chunks rankable and reviewable” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: small chunks retrieve keywords but lose the paragraph that explains the rule?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Evaluate chunking as a regression surface”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Create a one-page release-ready plan for chunking strategy sheet with size, overlap, metadata, and evaluation cases. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (retrieved chunks contain complete answer context), failure case (small chunks retrieve keywords but lose the paragraph that explains the rule), owner, and the next rung after this lesson.",
-      "scopedTo": "Chunking Strategies for RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2289,6 +1206,34 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

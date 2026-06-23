@@ -25,63 +25,68 @@
   },
   "mentalMap": {
     "title": "Graph RAG: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Graph RAG is useful when you can apply it to a product-support assistant needs to connect customers, products, incidents, and policies across documents, choose a design, and verify multi-hop questions answered with explicit evidence paths.",
+    "caption": "Move from isolated chunks to entities, relationships, neighborhoods, and graph-backed evidence assembly.",
+    "oneLineThesis": "Graph RAG helps when the answer depends on relationships spread across sources, not just one semantically similar passage.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Graph RAG.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+        "label": "Relationship questions expose classic RAG limits",
+        "sub": "Graph RAG begins when isolated passages are not enough.",
+        "what": "Learners distinguish lookup questions from relationship questions.",
+        "relevance": "This prevents overbuilding graph pipelines for simple factual search.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Graph RAG to the running artifact and failure test."
+        "orient": "Identify the multi-hop relationship the answer must explain.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+        "label": "Entities and edges need provenance",
+        "sub": "A graph claim must point back to source text.",
+        "what": "Learners add provenance to graph nodes and edges.",
+        "relevance": "Without provenance, graph summaries become another source of ungrounded claims.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Graph RAG to the running artifact and failure test."
+        "orient": "Treat extracted relationships as hypotheses until source-linked.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+        "label": "Query planning chooses vector, graph, or both",
+        "sub": "Graph RAG is an orchestration choice at query time.",
+        "what": "Learners design query plans for graph-backed retrieval.",
+        "relevance": "Using graph traversal for every query increases cost and can pull weak context.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Graph RAG to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "Route simple lookups and relationship questions through different paths.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+        "label": "Implement a bounded graph expansion",
+        "sub": "Small traversal code reveals hop and edge-type behavior.",
+        "what": "Learners implement a minimal graph neighborhood expansion.",
+        "relevance": "Bounded traversal prevents weakly connected nodes from flooding context.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Graph RAG to the running artifact and failure test."
+        "orient": "Build the graph walk as inspectable retrieval code.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+        "label": "Graph answers fail through false edges",
+        "sub": "Evaluation must inspect paths, not only final prose.",
+        "what": "Learners evaluate Graph RAG with path-level faithfulness.",
+        "relevance": "A fluent answer can hide a wrong edge or overextended traversal.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Graph RAG to the running artifact and failure test."
+        "orient": "Review extracted relationships and generated claims together.",
+        "order": 5
       }
     ],
     "edges": [
@@ -106,40 +111,40 @@
         "label": "then"
       }
     ],
-    "structureType": "conceptual"
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Graph RAG to Graph RAG design with entity extraction, relationships, and retrieval paths, with examples and checks tied to multi-hop questions answered with explicit evidence paths.",
+      "title": "Relationship questions expose classic RAG limits",
+      "sub": "Graph RAG begins when isolated passages are not enough.",
+      "summary": "Graph RAG is for connected evidence, not for every knowledge base.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: entity extraction errors create confident but wrong graph connections."
+        "Define the retrieval problem Graph RAG solves.",
+        "Recognize entity and relationship questions.",
+        "Decide when classic RAG is sufficient."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Graph RAG matters here",
+          "title": "Some answers live between chunks",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A product-support assistant needs to connect customers, products, incidents, and policies across documents. The learner's job is not to memorize Graph RAG; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved multi-hop questions answered with explicit evidence paths."
+                  "text": "Problem anchor: an operations lead asks which product features depend on a vendor whose contract is expiring. No single policy page says the full answer. The evidence is spread across architecture notes, vendor docs, feature ownership pages, and incident records."
                 }
               ]
             },
@@ -147,7 +152,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: Graph RAG design with entity extraction, relationships, and retrieval paths. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Classic vector search can retrieve related chunks, but it may not connect vendor, service, feature, team, and incident into a defensible chain. Graph RAG makes those connections retrievable."
                 }
               ]
             },
@@ -156,169 +161,43 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if entity extraction errors create confident but wrong graph connections, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
+                  "text": "If the answer needs “A depends on B because C owns D,” list the entities and relations before choosing a retriever."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson skips definition-drilling and spends its effort on edge cases: state boundaries, hidden coupling, observability gaps, and the evidence that would change a production decision."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Graph RAG matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Graph RAG matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure multi-hop questions answered with explicit evidence paths on examples that resemble the real workload."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Classic RAG finds pages; Graph RAG can follow the index cards pinned between them."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Graph RAG.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product-support assistant needs to connect customers, products, incidents, and policies across documents"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Graph RAG design with entity extraction, relationships, and retrieval paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where entity extraction errors create confident but wrong graph connections. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Case study: vendor exposure map",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product-support assistant needs to connect customers, products, incidents, and policies across documents. This module asks what mental model changes in the artifact."
+                  "text": "The corpus contains docs for AuthFlow, Billing, VendorX, and incident postmortems. A graph extracts nodes for services, vendors, teams, and incidents, with edges such as DEPENDS_ON, OWNS, and MENTIONED_IN."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A query for “What breaks if VendorX sunsets the embeddings endpoint?” seeds VendorX, expands to dependent services, then retrieves source chunks for each edge. The final answer cites paths, not only passages."
                 }
               ]
             },
@@ -327,260 +206,113 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Extract candidate entities from each chunk."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Store edges with source chunk IDs and confidence."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve multi-hop questions answered with explicit evidence paths."
+                    "text": "Resolve aliases such as “VendorX API” and “VX embeddings.”"
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: entity extraction errors create confident but wrong graph connections."
+                    "text": "At query time, retrieve seed entities and expand a bounded neighborhood."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Graph RAG design with entity extraction, relationships, and retrieval paths, log or test the fields needed to debug multi-hop questions answered with explicit evidence paths. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: Graph RAG design with entity extraction, relationships, and retrieval paths",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A product-support assistant needs to connect customers, products, incidents, and policies across documents. The team wants to improve multi-hop questions answered with explicit evidence paths, but it has already seen this failure: entity extraction errors create confident but wrong graph connections."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Question: \"Can I get a refund after 35 days if I lost my invoice?\" The answer must cite the exact policy chunk, not a plausible refund rule remembered by the model."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: Graph RAG design with entity extraction, relationships, and retrieval paths. It specifies loaders, chunk metadata, retriever settings, prompt contract, citation format, and a faithfulness check for multi-hop questions answered with explicit evidence paths."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: retrieve policy-refunds-v3 section 4, quote \"30 days\" and \"invoice id required\", answer that the request probably fails the policy, and link the source chunk used."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: RAG reviewer. Context: A product-support assistant needs to connect customers, products, incidents, and policies across documents. Task: inspect Graph RAG design with entity extraction, relationships, and retrieval paths. Require a user question, retrieved chunks with source ids, final answer, and a claim-by-claim support check. Constraints: do not allow claims that are absent from retrieved chunks; flag stale or missing metadata. Output: {question, retrieved_sources, answer, unsupported_claims, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Graph RAG to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Graph RAG"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Graph RAG to the running case?",
+          "title": "Graph fit",
+          "prompt": "Which question most clearly calls for Graph RAG?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and test the failure: entity extraction errors create confident but wrong graph connections.",
+              "text": "What is the refund deadline in the billing policy?",
+              "correct": false
+            },
+            {
+              "text": "Which teams and features are indirectly affected by VendorX through shared services?",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Summarize the introduction paragraph of one document.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The affected-features question depends on relationships across multiple sources.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Graph RAG to Graph RAG design with entity extraction, relationships, and retrieval paths, with examples and checks tied to multi-hop questions answered with explicit evidence paths.",
+      "title": "Entities and edges need provenance",
+      "sub": "A graph claim must point back to source text.",
+      "summary": "Graph structure is useful only when every important edge can be audited.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: entity extraction errors create confident but wrong graph connections."
+        "Describe entity extraction and edge extraction.",
+        "Explain why entity resolution is hard.",
+        "Attach source provenance to graph claims."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Edges are evidence claims",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind Graph RAG. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "An LLM-extracted edge like “Billing DEPENDS_ON VendorX” is a claim, not a fact by itself. It needs source chunk IDs, extraction date, confidence, and ideally the exact sentence or table row that supported it."
                 }
               ]
             },
@@ -588,32 +320,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means separating retrieval quality from answer quality: did the system fetch the right evidence, and did the model stay faithful to that evidence?"
+                  "text": "Entity resolution is a major failure point. “OpenAI,” “Open AI,” and “the model vendor” may refer to the same entity in one corpus and different entities in another. Bad merges poison graph traversal."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -621,90 +329,43 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is Graph RAG design with entity extraction, relationships, and retrieval paths. Which single field, trace, or test would show whether multi-hop questions answered with explicit evidence paths improved?"
+                  "text": "For each high-impact edge, ask whether a reviewer can open the source and verify it in under a minute."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "A graph edge without provenance is a rumor with a neat label."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product-support assistant needs to connect customers, products, incidents, and policies across documents"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Graph RAG design with entity extraction, relationships, and retrieval paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where entity extraction errors create confident but wrong graph connections. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
+          "title": "Worked edge record",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product-support assistant needs to connect customers, products, incidents, and policies across documents. This module asks what mechanism changes in the artifact."
+                  "text": "A source chunk says “Billing uses VendorX embeddings to classify invoice disputes.” The graph stores Service:Billing, Vendor:VendorX, Capability:invoice dispute classification, and an edge Billing USES VendorX with the source chunk ID."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "At answer time, the generated explanation cites the source chunk behind the edge, not the graph database alone. If the source changes, the edge can be re-extracted or retired."
                 }
               ]
             },
@@ -713,225 +374,113 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Extract entities and proposed relations from chunks."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Normalize aliases with human-reviewed rules for critical entities."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve multi-hop questions answered with explicit evidence paths."
+                    "text": "Store source chunk IDs and spans on edges."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: entity extraction errors create confident but wrong graph connections."
+                    "text": "Use edge provenance in the answer context."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Graph RAG design with entity extraction, relationships, and retrieval paths, log or test the fields needed to debug multi-hop questions answered with explicit evidence paths. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: entity extraction errors create confident but wrong graph connections. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to Graph RAG design with entity extraction, relationships, and retrieval paths: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: multi-hop questions answered with explicit evidence paths becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Graph RAG design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Graph RAG"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Graph RAG to the running case?",
+          "title": "Provenance check",
+          "prompt": "Why should an extracted graph edge keep a source chunk ID?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and test the failure: entity extraction errors create confident but wrong graph connections.",
+              "text": "So the LLM can ignore document permissions.",
+              "correct": false
+            },
+            {
+              "text": "So generated answers and audits can verify the relationship against original evidence.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "So vector search is no longer needed.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Graph structure complements source evidence; it does not replace it.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Graph RAG to Graph RAG design with entity extraction, relationships, and retrieval paths, with examples and checks tied to multi-hop questions answered with explicit evidence paths.",
+      "title": "Query planning chooses vector, graph, or both",
+      "sub": "Graph RAG is an orchestration choice at query time.",
+      "summary": "The query should decide how much graph expansion is warranted.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: entity extraction errors create confident but wrong graph connections."
+        "Seed graph traversal from query entities or retrieved chunks.",
+        "Bound hop count and relationship types.",
+        "Combine vector evidence with graph neighborhoods."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Start with seeds, then expand deliberately",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Graph RAG becomes a decision. The team must choose how much rigor Graph RAG design with entity extraction, relationships, and retrieval paths needs before it can be trusted."
+                  "text": "A graph query usually needs seed entities. Seeds can come from entity linking in the user question, vector retrieval over entity descriptions, or classic retrieval over chunks that mention candidate entities."
                 }
               ]
             },
@@ -939,387 +488,199 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves multi-hop questions answered with explicit evidence paths while making this failure visible: entity extraction errors create confident but wrong graph connections."
+                  "text": "Expansion should be bounded: max hops, allowed edge types, freshness filters, and source permissions. Otherwise the graph can wander into weakly related neighborhoods and flood the prompt."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product-support assistant needs to connect customers, products, incidents, and policies across documents"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Graph RAG design with entity extraction, relationships, and retrieval paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where entity extraction errors create confident but wrong graph connections. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If a graph expansion adds context, name the relationship that made each added item relevant."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Graph traversal is a guided walk, not a sightseeing tour."
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "Graph RAG query paths",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Path",
+            "Best for",
+            "Risk"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Vector only",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Graph RAG on one realistic case.",
+                  "criterion": "Path",
+                  "text": "Retrieve chunks directly by semantic similarity.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
+                  "criterion": "Best for",
+                  "text": "Single-source lookup or ordinary Q&A.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: entity extraction errors create confident but wrong graph connections.",
+                  "criterion": "Risk",
+                  "text": "Misses relationship chains.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the team is still learning what matters.",
+              "whenToUse": "Use for simple factual questions.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production path",
+              "name": "Graph seeded by entities",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on multi-hop questions answered with explicit evidence paths.",
+                  "criterion": "Path",
+                  "text": "Link entities, expand edges, retrieve provenance.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Best for",
+                  "text": "Ownership, dependency, compatibility, influence.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Alias errors and over-expansion.",
                   "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Use for relationship questions.",
               "cost": "Medium",
-              "complexity": "Medium"
+              "complexity": "High"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Vector seeds plus graph expansion",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
+                  "criterion": "Path",
+                  "text": "Use retrieved chunks to find seed entities, then expand.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
+                  "criterion": "Best for",
+                  "text": "Messy natural-language questions.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
+                  "criterion": "Risk",
+                  "text": "Bad first-stage retrieval biases the graph walk.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
+              "whenToUse": "Use when entity names are implicit.",
+              "cost": "Medium",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that improves multi-hop questions answered with explicit evidence paths and catches: entity extraction errors create confident but wrong graph connections.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Graph RAG design with entity extraction, relationships, and retrieval paths, log or test the fields needed to debug multi-hop questions answered with explicit evidence paths. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: entity extraction errors create confident but wrong graph connections. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Retrieved chunks mention the right keyword but not the answer-bearing paragraph."
-                  }
-                ],
-                [
-                  {
-                    "text": "The answer is relevant but unfaithful: it adds a policy or fact not present in the retrieved evidence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metadata is missing, so citations cannot be checked or reranked later."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: multi-hop questions answered with explicit evidence paths gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when multi-hop questions answered with explicit evidence paths affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: entity extraction errors create confident but wrong graph connections.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Graph RAG to the running case?",
+          "title": "Query plan",
+          "prompt": "A user asks for the refund deadline in one policy page. What should the system likely do?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and test the failure: entity extraction errors create confident but wrong graph connections.",
+              "text": "Run community detection for every query.",
+              "correct": false
+            },
+            {
+              "text": "Use classic retrieval first; graph traversal is probably unnecessary.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Extract new graph edges during answer generation only.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Graph RAG is a tool for relationship-heavy questions, not a default for all lookup.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Graph RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Graph RAG to Graph RAG design with entity extraction, relationships, and retrieval paths, with examples and checks tied to multi-hop questions answered with explicit evidence paths.",
+      "title": "Implement a bounded graph expansion",
+      "sub": "Small traversal code reveals hop and edge-type behavior.",
+      "summary": "Graph RAG needs explicit limits that traces can show.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: entity extraction errors create confident but wrong graph connections."
+        "Represent edges with type and provenance.",
+        "Expand from seed entities with max hops.",
+        "Predict which nodes and chunks enter context."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "Traversal settings are retrieval settings",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Graph RAG should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "Max hops, edge types, confidence thresholds, and provenance filters are as important as vector top-k. They decide what the generator can see."
                 }
               ]
             },
@@ -1327,7 +688,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For Graph RAG design with entity extraction, relationships, and retrieval paths, the sketch should prove one thing: the system can improve multi-hop questions answered with explicit evidence paths without hiding the failure where entity extraction errors create confident but wrong graph connections."
+                  "text": "Spaced recall: from chunking, source chunk IDs still matter. Graph expansion should bring back the text behind edges, not just node names."
                 }
               ]
             },
@@ -1336,197 +697,164 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Print the path that led each evidence chunk into the prompt. If the path is not meaningful, do not include it."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product-support assistant needs to connect customers, products, incidents, and policies across documents"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Graph RAG design with entity extraction, relationships, and retrieval paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where entity extraction errors create confident but wrong graph connections. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A product-support assistant needs to connect customers, products, incidents, and policies across documents. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve multi-hop questions answered with explicit evidence paths."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: entity extraction errors create confident but wrong graph connections."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
+          "title": "Bounded relationship expansion",
           "language": "python",
-          "code": "# Graph RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to entity extraction errors create confident but wrong graph connections."
-                }
-              ]
-            }
-          ],
+          "code": "edges = {\n    \"VendorX\": [(\"used_by\", \"Billing\", \"chunk_vendor_billing\")],\n    \"Billing\": [(\"owned_by\", \"PaymentsTeam\", \"chunk_billing_owner\"), (\"powers\", \"InvoiceDisputes\", \"chunk_invoice\")],\n}\n\ndef expand(seed, max_hops=2, allowed={\"used_by\", \"owned_by\", \"powers\"}):\n    frontier = [(seed, [])]\n    seen = {seed}\n    evidence = []\n    for _ in range(max_hops):\n        new_frontier = []\n        for node, path in frontier:\n            for rel, target, source in edges.get(node, []):\n                if rel not in allowed or target in seen:\n                    continue\n                seen.add(target)\n                next_path = path + [(node, rel, target)]\n                evidence.append({\"target\": target, \"path\": next_path, \"source\": source})\n                new_frontier.append((target, next_path))\n        frontier = new_frontier\n    return evidence\n\nprint(expand(\"VendorX\"))",
+          "explanation": "The traversal returns paths and source chunk IDs, which are the minimum ingredients needed to assemble grounded answer context.",
           "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
+            "prompt": "Before running it, predict which feature node appears because VendorX is used by Billing.",
+            "answer": "InvoiceDisputes appears through VendorX -> Billing -> InvoiceDisputes, and the trace keeps the source chunk behind each edge."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Traversal guardrail",
+          "prompt": "What should happen when graph expansion reaches a node through an irrelevant edge type?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Let the model decide silently after seeing it.",
+              "correct": false
+            },
+            {
+              "text": "Filter it out before it becomes answer context.",
+              "correct": true
+            },
+            {
+              "text": "Delete the whole graph.",
+              "correct": false
+            }
+          ],
+          "explanation": "Edge-type filters keep traversal aligned with the user’s relationship question.",
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Graph answers fail through false edges",
+      "sub": "Evaluation must inspect paths, not only final prose.",
+      "summary": "Graph RAG quality depends on extraction, resolution, traversal, and synthesis.",
+      "objectives": [
+        "Name Graph RAG-specific failure modes.",
+        "Verify answer claims against source-backed paths.",
+        "Decide when a human review gate is needed."
+      ],
+      "termIds": [
+        "rag",
+        "chunk",
+        "embedding",
+        "vector_search",
+        "reranker"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "The graph can hallucinate before the model does",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Graph RAG, review it against the running case before accepting it."
+                  "text": "Graph RAG adds new failure modes: false extracted edges, duplicate entity merges, stale relationships, over-broad community summaries, and path expansion that looks connected but does not answer the question."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Evaluation should ask: Did the system choose the right seed? Were the traversed edges correct? Did the answer cite the source behind each relationship? Did the model overstate a weak path?"
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "For high-impact operational answers, require the output to show path evidence or defer to human review."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from Graph RAG",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Inspect both graph evidence and final language."
                 }
               ]
             },
@@ -1535,27 +863,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: Graph RAG design with entity extraction, relationships, and retrieval paths?"
+                    "text": "Each relationship claim maps to a source-backed edge or source chunk."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Entity aliases are resolved correctly for the domain and time period."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: entity extraction errors create confident but wrong graph connections?"
+                    "text": "The graph path answers the question rather than merely connecting related nodes."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug multi-hop questions answered with explicit evidence paths?"
+                    "text": "Community summaries are backed by retrievable source evidence."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "The answer distinguishes confirmed paths from uncertain or missing relationships."
                   }
                 ]
               ]
@@ -1563,454 +891,58 @@
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Graph RAG to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and test the failure: entity extraction errors create confident but wrong graph connections.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Graph RAG to Graph RAG design with entity extraction, relationships, and retrieval paths, with examples and checks tied to multi-hop questions answered with explicit evidence paths.",
-      "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: entity extraction errors create confident but wrong graph connections."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how Graph RAG design with entity extraction, relationships, and retrieval paths improves multi-hop questions answered with explicit evidence paths and catches entity extraction errors create confident but wrong graph connections, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product-support assistant needs to connect customers, products, incidents, and policies across documents"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Graph RAG design with entity extraction, relationships, and retrieval paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where entity extraction errors create confident but wrong graph connections. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Graph RAG on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: entity extraction errors create confident but wrong graph connections.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on multi-hop questions answered with explicit evidence paths.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves multi-hop questions answered with explicit evidence paths and catches: entity extraction errors create confident but wrong graph connections.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Graph RAG design with entity extraction, relationships, and retrieval paths, log or test the fields needed to debug multi-hop questions answered with explicit evidence paths. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Graph RAG: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Graph RAG without copying the worked example. Keep the same running case - A product-support assistant needs to connect customers, products, incidents, and policies across documents - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: multi-hop questions answered with explicit evidence paths."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: entity extraction errors create confident but wrong graph connections."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Graph RAG to the running case?",
+          "title": "Graph faithfulness",
+          "prompt": "The answer says Feature A depends on VendorX, but the path only shows both mentioned in one incident summary. What is wrong?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and test the failure: entity extraction errors create confident but wrong graph connections.",
+              "text": "The answer is safe because graph paths always imply causality.",
+              "correct": false
+            },
+            {
+              "text": "The relationship is overstated; co-mention is not dependency evidence.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The model should remove all citations.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Graph paths need semantically valid edge types and source support.",
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
             "vector_search",
-            "chunk",
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Graph RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     }
   ],
   "glossary": {
@@ -2081,17 +1013,17 @@
     "title": "Decision prompts for Graph RAG",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Graph RAG fit check",
         "questions": [
           {
-            "q": "What decision does Graph RAG change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships Graph RAG design with entity extraction, relationships, and retrieval paths.",
+            "q": "Does the question require entities, paths, communities, contradictions, or ownership relationships across documents?",
+            "why": "Graph extraction adds cost and refresh complexity, so it should be reserved for relationship-heavy retrieval failures.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Graph plus vector retrieval",
+              "Classic vector RAG",
+              "Deterministic database query"
             ],
-            "rot": "Choose the smallest option that catches: entity extraction errors create confident but wrong graph connections."
+            "rot": "Use Graph RAG when relationship traversal or path explanation is central; use simpler retrieval when one or two passages answer the question."
           }
         ]
       }
@@ -2103,76 +1035,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Graph RAG using the running case: A product-support assistant needs to connect customers, products, incidents, and policies across documents. Name the artifact (Graph RAG design with entity extraction, relationships, and retrieval paths), explain the mechanism, choose a design level, write the check for entity extraction errors create confident but wrong graph connections, and say how you would measure multi-hop questions answered with explicit evidence paths."
+            "text": "Retrieval prompt: rebuild Graph RAG by naming entities, edges, provenance, seed retrieval, path expansion, community summaries, and the failure mode each step introduces."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Graph RAG path from text to entities to answer context",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Graph RAG.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+          "label": "Relationship questions expose classic RAG limits",
+          "sub": "Graph RAG begins when isolated passages are not enough.",
+          "what": "Learners distinguish lookup questions from relationship questions.",
+          "relevance": "This prevents overbuilding graph pipelines for simple factual search.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Graph RAG to the running artifact and failure test."
+          "orient": "Identify the multi-hop relationship the answer must explain.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+          "label": "Entities and edges need provenance",
+          "sub": "A graph claim must point back to source text.",
+          "what": "Learners add provenance to graph nodes and edges.",
+          "relevance": "Without provenance, graph summaries become another source of ungrounded claims.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Graph RAG to the running artifact and failure test."
+          "orient": "Treat extracted relationships as hypotheses until source-linked.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+          "label": "Query planning chooses vector, graph, or both",
+          "sub": "Graph RAG is an orchestration choice at query time.",
+          "what": "Learners design query plans for graph-backed retrieval.",
+          "relevance": "Using graph traversal for every query increases cost and can pull weak context.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Graph RAG to the running artifact and failure test."
+          "emphasis": "normal",
+          "orient": "Route simple lookups and relationship questions through different paths.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+          "label": "Implement a bounded graph expansion",
+          "sub": "Small traversal code reveals hop and edge-type behavior.",
+          "what": "Learners implement a minimal graph neighborhood expansion.",
+          "relevance": "Bounded traversal prevents weakly connected nodes from flooding context.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Graph RAG to the running artifact and failure test."
+          "orient": "Build the graph walk as inspectable retrieval code.",
+          "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve multi-hop questions answered with explicit evidence paths while avoiding the failure: entity extraction errors create confident but wrong graph connections.",
+          "label": "Graph answers fail through false edges",
+          "sub": "Evaluation must inspect paths, not only final prose.",
+          "what": "Learners evaluate Graph RAG with path-level faithfulness.",
+          "relevance": "A fluent answer can hide a wrong edge or overextended traversal.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Graph RAG to the running artifact and failure test."
+          "orient": "Review extracted relationships and generated claims together.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -2187,68 +1124,58 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Choose a corpus where answers depend on relationships, such as vendor dependencies or research-paper claims. Sketch entities, edge types, provenance fields, seed retrieval, max-hop expansion, and three questions classic RAG misses. Next rung: evaluate graph answers for faithfulness.",
+      "scopedTo": "Graph RAG"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Relationship questions expose classic RAG limits",
+        "detail": "Graph RAG is for connected evidence, not for every knowledge base."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Entities and edges need provenance",
+        "detail": "Graph structure is useful only when every important edge can be audited."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Query planning chooses vector, graph, or both",
+        "detail": "The query should decide how much graph expansion is warranted."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Implement a bounded graph expansion",
+        "detail": "Graph RAG needs explicit limits that traces can show."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Graph answers fail through false edges",
+        "detail": "Graph RAG quality depends on extraction, resolution, traversal, and synthesis."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Relationship questions expose classic RAG limits” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure multi-hop questions answered with explicit evidence paths on realistic cases?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Query planning chooses vector, graph, or both” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: entity extraction errors create confident but wrong graph connections?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Graph answers fail through false edges”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Create a one-page release-ready plan for Graph RAG design with entity extraction, relationships, and retrieval paths. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (multi-hop questions answered with explicit evidence paths), failure case (entity extraction errors create confident but wrong graph connections), owner, and the next rung after this lesson.",
-      "scopedTo": "Graph RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2278,6 +1205,48 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon6": {
+      "id": "canon6",
+      "kind": "canonical",
+      "title": "Microsoft GraphRAG docs",
+      "url": "https://microsoft.github.io/graphrag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon7": {
+      "id": "canon7",
+      "kind": "canonical",
+      "title": "Neo4j GraphRAG Python docs",
+      "url": "https://neo4j.com/docs/neo4j-graphrag-python/current/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "LlamaIndex for RAG: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "LlamaIndex for RAG is useful when you can apply it to a team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources, choose a design, and verify answers include correct source nodes.",
+    "caption": "Build RAG around LlamaIndex data objects: readers, nodes, indexes, retrievers, query engines, and evaluators.",
+    "oneLineThesis": "LlamaIndex is most valuable when the hard part is preparing, indexing, and querying private data rather than merely calling an LLM.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place LlamaIndex for RAG in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+        "label": "Data objects come before agents",
+        "sub": "LlamaIndex starts with documents, nodes, and indexes.",
+        "what": "Learners map source data into LlamaIndex vocabulary.",
+        "relevance": "This keeps RAG quality work separate from model personality work.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects LlamaIndex for RAG to the running artifact and failure test.",
+        "orient": "Name the data unit each RAG step manipulates.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+        "label": "Readers and node parsers set the ceiling",
+        "sub": "Garbage in still becomes garbage retrieval.",
+        "what": "Learners treat parsing as a quality gate.",
+        "relevance": "Parsing mistakes create broken citations and missing context downstream.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects LlamaIndex for RAG to the running artifact and failure test.",
+        "orient": "Inspect parsed nodes before tuning models.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+        "label": "Retrievers and postprocessors shape context",
+        "sub": "Similarity top-k is only the first retrieval decision.",
+        "what": "Learners configure retrieval rather than accepting default context.",
+        "relevance": "Defaults can overpack noisy nodes or miss exact source constraints.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects LlamaIndex for RAG to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Use retrievers, filters, and rerankers as explicit context controls.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+        "label": "Build the query engine slice",
+        "sub": "A small runnable slice should expose retrieved nodes.",
+        "what": "Learners connect index and query engine with inspection.",
+        "relevance": "Evidence inspection catches bad retrieval before user-facing polish.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects LlamaIndex for RAG to the running artifact and failure test.",
+        "orient": "Create a minimal RAG path and print its evidence.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+        "label": "Evaluate before adding an agent loop",
+        "sub": "A query engine should pass retrieval tests on its own.",
+        "what": "Learners delay agent complexity until retrieval is trustworthy.",
+        "relevance": "Agents amplify retrieval failures by making more steps with bad context.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects LlamaIndex for RAG to the running artifact and failure test.",
+        "orient": "Gate LlamaIndex RAG with evidence-focused evaluation.",
         "order": 5
       }
     ],
@@ -118,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies LlamaIndex for RAG to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, with examples and checks tied to answers include correct source nodes.",
+      "title": "Data objects come before agents",
+      "sub": "LlamaIndex starts with documents, nodes, and indexes.",
+      "summary": "A query engine is only as good as the nodes and index behind it.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: documents load correctly but metadata is stripped before retrieval."
+        "Define documents, nodes, indexes, retrievers, and query engines.",
+        "Explain why metadata belongs on nodes.",
+        "Choose LlamaIndex when data work dominates."
       ],
       "termIds": [
         "rag",
@@ -133,19 +133,19 @@
         "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why LlamaIndex for RAG matters here",
+          "title": "LlamaIndex is data-centric RAG plumbing",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. The learner's job is not to memorize LlamaIndex for RAG; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved answers include correct source nodes."
+                  "text": "Problem anchor: a lesson assistant must answer from curated KB notes with citations. The risky part is not the final sentence style; it is loading notes, preserving headings, creating nodes, retrieving the right context, and proving citations support claims."
                 }
               ]
             },
@@ -153,7 +153,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "LlamaIndex gives names to those steps: readers load data, parsers create nodes, indexes organize nodes, retrievers select nodes, and query engines synthesize answers."
                 }
               ]
             },
@@ -162,143 +162,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if documents load correctly but metadata is stripped before retrieval, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: LlamaIndex for RAG matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: LlamaIndex for RAG matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure answers include correct source nodes on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for LlamaIndex for RAG.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where documents load correctly but metadata is stripped before retrieval. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If you cannot point to the node that supports a sentence, the RAG app is not debuggable."
                 }
               ]
             }
@@ -311,20 +175,29 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "canon4"
+          ],
+          "analogy": "LlamaIndex is a workshop for shaping source material before the model writes."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Worked map: five course notes to a query engine",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. This module asks what what the tool owns changes in the artifact."
+                  "text": "The app reads five Markdown notes, stores category and source URL as metadata, parses heading-based nodes, builds a vector index, and exposes a query engine with similarity_top_k=6."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A learner question about reranking retrieves nodes with heading breadcrumbs. The answer includes source titles rather than anonymous passages."
                 }
               ]
             },
@@ -333,77 +206,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Load documents with source metadata."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Parse into nodes using structure-aware settings."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve answers include correct source nodes."
+                    "text": "Build or connect a vector index."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: documents load correctly but metadata is stripped before retrieval."
+                    "text": "Expose a query engine and inspect retrieved nodes."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, log or test the fields needed to debug answers include correct source nodes. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
@@ -414,128 +235,32 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. The team wants to improve answers include correct source nodes, but it has already seen this failure: documents load correctly but metadata is stripped before retrieval."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Question: \"Can I get a refund after 35 days if I lost my invoice?\" The answer must cite the exact policy chunk, not a plausible refund rule remembered by the model."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis. It specifies loaders, chunk metadata, retriever settings, prompt contract, citation format, and a faithfulness check for answers include correct source nodes."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: retrieve policy-refunds-v3 section 4, quote \"30 days\" and \"invoice id required\", answer that the request probably fails the policy, and link the source chunk used."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: RAG reviewer. Context: A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. Task: inspect LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis. Require a user question, retrieved chunks with source ids, final answer, and a claim-by-claim support check. Constraints: do not allow claims that are absent from retrieved chunks; flag stale or missing metadata. Output: {question, retrieved_sources, answer, unsupported_claims, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties LlamaIndex for RAG to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb3",
+            "canon4"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "LlamaIndex for RAG"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LlamaIndex for RAG to the running case?",
+          "title": "Object vocabulary",
+          "prompt": "Which object is closest to a retrievable chunk with metadata?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, measure answers include correct source nodes, and test the failure: documents load correctly but metadata is stripped before retrieval.",
+              "text": "A model temperature setting.",
+              "correct": false
+            },
+            {
+              "text": "A node.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A final answer string.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Nodes are the units that indexes and retrievers work with.",
           "termIds": [
             "rag",
             "embedding",
@@ -544,28 +269,26 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "canon4"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies LlamaIndex for RAG to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, with examples and checks tied to answers include correct source nodes.",
+      "title": "Readers and node parsers set the ceiling",
+      "sub": "Garbage in still becomes garbage retrieval.",
+      "summary": "RAG quality often fails before the index exists.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: documents load correctly but metadata is stripped before retrieval."
+        "Attach metadata during loading.",
+        "Choose parser settings for document shape.",
+        "Preview nodes before embedding."
       ],
       "termIds": [
         "rag",
@@ -574,19 +297,19 @@
         "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "Parsing decides what the index can know",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind LlamaIndex for RAG. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "A PDF with headers, a Markdown note, and a table export need different parsing care. If boilerplate, nav text, or fragmented tables become nodes, retrieval quality suffers no matter which model generates the final answer."
                 }
               ]
             },
@@ -594,32 +317,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means separating retrieval quality from answer quality: did the system fetch the right evidence, and did the model stay faithful to that evidence?"
+                  "text": "The loader should preserve source URL, document title, heading path, date, and permissions. The parser should keep definitions with caveats and code with prerequisites."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,7 +326,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis. Which single field, trace, or test would show whether answers include correct source nodes improved?"
+                  "text": "Print ten sample nodes and ask whether each could support a cited answer."
                 }
               ]
             }
@@ -640,77 +339,29 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "canon4"
+          ],
+          "analogy": "The index is downstream of the parser; it cannot recover missing source structure."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where documents load correctly but metadata is stripped before retrieval. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
+          "title": "Case study: citation drift from weak nodes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. This module asks what core workflow changes in the artifact."
+                  "text": "A query engine cites a note titled “Limitations,” but the displayed source title gives no topic. The fix is not a better answer prompt; it is heading metadata and node text that includes the parent title."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "After metadata and parser changes, the same retrieval result becomes “RAG Evaluation > Limitations,” and reviewers can verify the claim."
                 }
               ]
             },
@@ -719,80 +370,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Load with source metadata."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Parse by headings or semantic boundaries."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve answers include correct source nodes."
+                    "text": "Preview node text and metadata together."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: documents load correctly but metadata is stripped before retrieval."
+                    "text": "Add eval questions for parser-sensitive cases."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
-          "language": "python",
-          "code": "# LlamaIndex for RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to documents load correctly but metadata is stripped before retrieval."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
             }
           ],
           "termIds": [
@@ -803,93 +399,32 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: documents load correctly but metadata is stripped before retrieval. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: answers include correct source nodes becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful LlamaIndex for RAG design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+            "kb3",
+            "canon4"
           ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "LlamaIndex for RAG"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LlamaIndex for RAG to the running case?",
+          "title": "Parser failure",
+          "prompt": "What should you inspect when LlamaIndex returns vague “Limitations” citations?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, measure answers include correct source nodes, and test the failure: documents load correctly but metadata is stripped before retrieval.",
+              "text": "Only the chat model’s persona.",
+              "correct": false
+            },
+            {
+              "text": "Node metadata and heading breadcrumbs from the parsing step.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The color of the citation badge.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Citation clarity often depends on metadata attached before indexing.",
           "termIds": [
             "rag",
             "embedding",
@@ -898,28 +433,26 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "canon4"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies LlamaIndex for RAG to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, with examples and checks tied to answers include correct source nodes.",
+      "title": "Retrievers and postprocessors shape context",
+      "sub": "Similarity top-k is only the first retrieval decision.",
+      "summary": "The query engine assembles context from several configurable choices.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: documents load correctly but metadata is stripped before retrieval."
+        "Tune similarity_top_k with eval.",
+        "Use metadata filters for eligibility.",
+        "Add reranking when candidates are present but misordered."
       ],
       "termIds": [
         "rag",
@@ -928,19 +461,19 @@
         "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "Retrieval is not a black box",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where LlamaIndex for RAG becomes a decision. The team must choose how much rigor LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis needs before it can be trusted."
+                  "text": "A LlamaIndex query engine can hide several choices: which retriever, how many nodes, which metadata filters, and which postprocessors or rerankers. Each choice changes what the model sees."
                 }
               ]
             },
@@ -948,84 +481,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves answers include correct source nodes while making this failure visible: documents load correctly but metadata is stripped before retrieval."
+                  "text": "For exact product versions or categories, metadata filters should narrow eligible nodes. For noisy top-k, reranking or node postprocessing can improve packed evidence."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where documents load correctly but metadata is stripped before retrieval. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Log retrieved node IDs, scores, metadata, and final prompt context for every evaluation query."
                 }
               ]
             }
@@ -1038,132 +503,89 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "canon4"
+          ],
+          "analogy": "A query engine is a context assembly line, not a magic answer slot."
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "LlamaIndex retrieval choices",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Choice",
+            "Use when",
+            "Risk"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Higher top-k",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of LlamaIndex for RAG on one realistic case.",
-                  "rating": "good"
+                  "criterion": "Choice",
+                  "text": "Retrieve more nodes before synthesis.",
+                  "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
+                  "criterion": "Use when",
+                  "text": "Expected evidence is just below the cutoff.",
+                  "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: documents load correctly but metadata is stripped before retrieval.",
+                  "criterion": "Risk",
+                  "text": "Can pack noise and raise cost.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the team is still learning what matters.",
+              "whenToUse": "Use with measured recall gaps.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production path",
+              "name": "Metadata filters",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on answers include correct source nodes.",
+                  "criterion": "Choice",
+                  "text": "Restrict nodes by category, tenant, date, or source.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Use when",
+                  "text": "Eligibility matters.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Bad metadata hides valid nodes.",
                   "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
+              "whenToUse": "Use in most production apps.",
+              "cost": "Low",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Reranker/postprocessor",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
+                  "criterion": "Choice",
+                  "text": "Reorder or trim retrieved nodes.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
+                  "criterion": "Use when",
+                  "text": "Right nodes appear but rank poorly.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
+                  "criterion": "Risk",
+                  "text": "Adds latency and another eval surface.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves answers include correct source nodes and catches: documents load correctly but metadata is stripped before retrieval.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, log or test the fields needed to debug answers include correct source nodes. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
+              "whenToUse": "Use after candidate recall is healthy.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -1174,109 +596,31 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: documents load correctly but metadata is stripped before retrieval. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Retrieved chunks mention the right keyword but not the answer-bearing paragraph."
-                  }
-                ],
-                [
-                  {
-                    "text": "The answer is relevant but unfaithful: it adds a policy or fact not present in the retrieved evidence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metadata is missing, so citations cannot be checked or reranked later."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: answers include correct source nodes gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when answers include correct source nodes affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: documents load correctly but metadata is stripped before retrieval.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LlamaIndex for RAG to the running case?",
+          "title": "Context control",
+          "prompt": "Why should metadata filters be applied before answer synthesis?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, measure answers include correct source nodes, and test the failure: documents load correctly but metadata is stripped before retrieval.",
+              "text": "They make embeddings unnecessary for every question.",
+              "correct": false
+            },
+            {
+              "text": "They prevent ineligible nodes from entering the model context.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "They force the model to write JSON.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Filters are part of retrieval safety and relevance.",
           "termIds": [
             "rag",
             "embedding",
@@ -1285,29 +629,26 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for LlamaIndex for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "canon4"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies LlamaIndex for RAG to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, with examples and checks tied to answers include correct source nodes.",
+      "title": "Build the query engine slice",
+      "sub": "A small runnable slice should expose retrieved nodes.",
+      "summary": "The first useful app returns both answer and sources.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: documents load correctly but metadata is stripped before retrieval."
+        "Write a minimal LlamaIndex query flow.",
+        "Predict which node answers a question.",
+        "Inspect sources before trusting the answer."
       ],
       "termIds": [
         "rag",
@@ -1316,19 +657,19 @@
         "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
+          "title": "The useful demo shows sources",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for LlamaIndex for RAG should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "A RAG demo that only prints the final answer is incomplete. The development slice should print retrieved node text, scores, and metadata so you can debug failures."
                 }
               ]
             },
@@ -1336,7 +677,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, the sketch should prove one thing: the system can improve answers include correct source nodes without hiding the failure where documents load correctly but metadata is stripped before retrieval."
+                  "text": "Spaced recall: from structured outputs, the model is not the validator. Your app should verify source support and output shape outside the model call."
                 }
               ]
             },
@@ -1345,7 +686,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Add one question whose correct response is “not enough evidence.”"
                 }
               ]
             }
@@ -1358,159 +699,122 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where documents load correctly but metadata is stripped before retrieval. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve answers include correct source nodes."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: documents load correctly but metadata is stripped before retrieval."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
+          "title": "Minimal LlamaIndex RAG skeleton",
           "language": "python",
-          "code": "# LlamaIndex for RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
+          "code": "from llama_index.core import Document, VectorStoreIndex\n\nnotes = [\n    Document(text=\"Reranking reorders retrieved candidates before answer synthesis.\", metadata={\"source\": \"retrieval-eval.md\"}),\n    Document(text=\"Chunking preserves answer evidence with headings and metadata.\", metadata={\"source\": \"chunking.md\"}),\n]\n\nindex = VectorStoreIndex.from_documents(notes)\nquery_engine = index.as_query_engine(similarity_top_k=2)\nresponse = query_engine.query(\"What does reranking do in a RAG system?\")\n\nprint(response)\nfor node in response.source_nodes:\n    print(node.metadata, node.score, node.text[:80])",
+          "explanation": "The code builds an index, queries it, and prints source nodes so the developer can verify grounding.",
+          "predictThenReveal": {
+            "prompt": "Before running it with a real LlamaIndex install, predict which source should appear for the reranking question.",
+            "answer": "The retrieval-eval note should be selected; if chunking.md dominates, inspect embeddings, top-k, or node text."
+          },
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "chunk",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "canon4"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Useful demo",
+          "prompt": "What should a minimal RAG demo print besides the answer?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Only total package install time.",
+              "correct": false
+            },
+            {
+              "text": "Retrieved source nodes, scores, and metadata.",
+              "correct": true
+            },
+            {
+              "text": "Only the model provider name.",
+              "correct": false
+            }
+          ],
+          "explanation": "Source inspection is the fastest way to debug RAG quality.",
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "chunk",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "canon4"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "canon4"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Evaluate before adding an agent loop",
+      "sub": "A query engine should pass retrieval tests on its own.",
+      "summary": "A reliable query engine is the foundation for RAG-backed agents.",
+      "objectives": [
+        "Create retrieval eval questions.",
+        "Measure whether expected nodes appear in packed context.",
+        "Verify answer faithfulness to source nodes."
+      ],
+      "termIds": [
+        "rag",
+        "embedding",
+        "vector_search",
+        "chunk",
+        "reranker"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Do not hide weak retrieval inside an agent",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to documents load correctly but metadata is stripped before retrieval."
+                  "text": "If a query engine cannot reliably retrieve the right nodes for direct questions, wrapping it as an agent tool will not fix the evidence problem. It will make traces longer."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Evaluation should include direct lookup, paraphrase, exact identifiers, negative cases, and stale-source cases. The target is not just a plausible answer; it is answer text supported by retrieved nodes."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Promote recurring failed questions into the eval set before tuning the next setting."
+                }
+              ]
             }
           ],
           "termIds": [
@@ -1521,21 +825,20 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from LlamaIndex RAG",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for LlamaIndex for RAG, review it against the running case before accepting it."
+                  "text": "Use this review when reading generated answers."
                 }
               ]
             },
@@ -1544,27 +847,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis?"
+                    "text": "The retrieved nodes contain the facts used in the answer."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Node metadata gives usable citations and source titles."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: documents load correctly but metadata is stripped before retrieval?"
+                    "text": "The query engine refuses or qualifies answers when evidence is absent."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug answers include correct source nodes?"
+                    "text": "Parser and chunk settings are recorded with the eval results."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Any reranker or postprocessor improves packed top-k on known failures."
                   }
                 ]
               ]
@@ -1578,428 +881,32 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LlamaIndex for RAG to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, measure answers include correct source nodes, and test the failure: documents load correctly but metadata is stripped before retrieval.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb3",
+            "canon4"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies LlamaIndex for RAG to LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, with examples and checks tied to answers include correct source nodes.",
-      "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: documents load correctly but metadata is stripped before retrieval."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis improves answers include correct source nodes and catches documents load correctly but metadata is stripped before retrieval, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where documents load correctly but metadata is stripped before retrieval. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of LlamaIndex for RAG on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: documents load correctly but metadata is stripped before retrieval.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on answers include correct source nodes.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves answers include correct source nodes and catches: documents load correctly but metadata is stripped before retrieval.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, log or test the fields needed to debug answers include correct source nodes. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct LlamaIndex for RAG: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply LlamaIndex for RAG without copying the worked example. Keep the same running case - A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: answers include correct source nodes."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: documents load correctly but metadata is stripped before retrieval."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LlamaIndex for RAG to the running case?",
+          "title": "Next complexity",
+          "prompt": "When should you expose the query engine as an agent tool?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis, measure answers include correct source nodes, and test the failure: documents load correctly but metadata is stripped before retrieval.",
+              "text": "Before loading documents.",
+              "correct": false
+            },
+            {
+              "text": "After direct retrieval and faithfulness checks are reliable for representative questions.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only after removing all source citations.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Agent loops should build on trustworthy retrieval, not conceal missing evidence.",
           "termIds": [
             "rag",
             "embedding",
@@ -2008,18 +915,15 @@
             "reranker"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for LlamaIndex for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "canon4"
+      ]
     }
   ],
   "glossary": {
@@ -2090,17 +994,17 @@
     "title": "Decision prompts for LlamaIndex for RAG",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "LlamaIndex RAG design",
         "questions": [
           {
-            "q": "What decision does LlamaIndex for RAG change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis.",
+            "q": "Which LlamaIndex object should own each step from raw data to answer?",
+            "why": "Clear object boundaries make ingestion, retrieval, and answer synthesis easier to test.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Reader -> nodes -> index -> retriever -> query engine",
+              "One prompt with all documents",
+              "Agent tool before any index"
             ],
-            "rot": "Choose the smallest option that catches: documents load correctly but metadata is stripped before retrieval."
+            "rot": "Use LlamaIndex when document preparation and retrieval quality are central to the product."
           }
         ]
       }
@@ -2112,73 +1016,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct LlamaIndex for RAG using the running case: A team builds a LlamaIndex RAG assistant for onboarding docs and needs traceable sources. Name the artifact (LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis), explain the mechanism, choose a design level, write the check for documents load correctly but metadata is stripped before retrieval, and say how you would measure answers include correct source nodes."
+            "text": "Retrieval prompt: name the document reader, node parser, index, retriever, postprocessor, query engine, and evaluation signal for a grounded LlamaIndex app."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "LlamaIndex RAG path from documents to query engine",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place LlamaIndex for RAG in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+          "label": "Data objects come before agents",
+          "sub": "LlamaIndex starts with documents, nodes, and indexes.",
+          "what": "Learners map source data into LlamaIndex vocabulary.",
+          "relevance": "This keeps RAG quality work separate from model personality work.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects LlamaIndex for RAG to the running artifact and failure test.",
+          "orient": "Name the data unit each RAG step manipulates.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+          "label": "Readers and node parsers set the ceiling",
+          "sub": "Garbage in still becomes garbage retrieval.",
+          "what": "Learners treat parsing as a quality gate.",
+          "relevance": "Parsing mistakes create broken citations and missing context downstream.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects LlamaIndex for RAG to the running artifact and failure test.",
+          "orient": "Inspect parsed nodes before tuning models.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+          "label": "Retrievers and postprocessors shape context",
+          "sub": "Similarity top-k is only the first retrieval decision.",
+          "what": "Learners configure retrieval rather than accepting default context.",
+          "relevance": "Defaults can overpack noisy nodes or miss exact source constraints.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects LlamaIndex for RAG to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Use retrievers, filters, and rerankers as explicit context controls.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+          "label": "Build the query engine slice",
+          "sub": "A small runnable slice should expose retrieved nodes.",
+          "what": "Learners connect index and query engine with inspection.",
+          "relevance": "Evidence inspection catches bad retrieval before user-facing polish.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects LlamaIndex for RAG to the running artifact and failure test.",
+          "orient": "Create a minimal RAG path and print its evidence.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve answers include correct source nodes while avoiding the failure: documents load correctly but metadata is stripped before retrieval.",
+          "label": "Evaluate before adding an agent loop",
+          "sub": "A query engine should pass retrieval tests on its own.",
+          "what": "Learners delay agent complexity until retrieval is trustworthy.",
+          "relevance": "Agents amplify retrieval failures by making more steps with bad context.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects LlamaIndex for RAG to the running artifact and failure test.",
+          "orient": "Gate LlamaIndex RAG with evidence-focused evaluation.",
           "order": 5
         }
       ],
@@ -2186,7 +1090,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -2201,68 +1105,58 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Build a small LlamaIndex plan for five docs: loader, metadata, chunk/node settings, index type, similarity_top_k, reranker choice, citation rule, and three retrieval eval questions. Next rung: build the app end to end.",
+      "scopedTo": "LlamaIndex for RAG"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Data objects come before agents",
+        "detail": "A query engine is only as good as the nodes and index behind it."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Readers and node parsers set the ceiling",
+        "detail": "RAG quality often fails before the index exists."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Retrievers and postprocessors shape context",
+        "detail": "The query engine assembles context from several configurable choices."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Build the query engine slice",
+        "detail": "The first useful app returns both answer and sources."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Evaluate before adding an agent loop",
+        "detail": "A reliable query engine is the foundation for RAG-backed agents."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Data objects come before agents” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure answers include correct source nodes on realistic cases?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Retrievers and postprocessors shape context” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: documents load correctly but metadata is stripped before retrieval?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Evaluate before adding an agent loop”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Create a one-page release-ready plan for LlamaIndex RAG pipeline with loaders, nodes, retriever, and response synthesis. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (answers include correct source nodes), failure case (documents load correctly but metadata is stripped before retrieval), owner, and the next rung after this lesson.",
-      "scopedTo": "LlamaIndex for RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2292,6 +1186,34 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

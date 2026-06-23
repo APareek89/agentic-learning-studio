@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "pgvector for RAG: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "pgvector for RAG is useful when you can apply it to a SaaS app stores embeddings in Postgres so docs search can share existing auth and backups, choose a design, and verify query latency and recall on real support questions.",
+    "caption": "Use Postgres-native vectors when embeddings belong beside app records, metadata, transactions, and SQL filters.",
+    "oneLineThesis": "pgvector is a pragmatic RAG store when retrieval needs vector similarity and relational control in the same Postgres boundary.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place pgvector for RAG in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+        "label": "Vectors live beside relational facts",
+        "sub": "pgvector keeps embeddings inside the application database.",
+        "what": "Learners connect vector search to ordinary SQL data modeling.",
+        "relevance": "This prevents treating the vector store as disconnected from permissions and source metadata.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects pgvector for RAG to the running artifact and failure test.",
+        "orient": "Start with the operational reason for storing chunks in Postgres.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+        "label": "Dimensions and distance must match the embedding model",
+        "sub": "The vector column encodes a contract.",
+        "what": "Learners plan vector columns and distance operators deliberately.",
+        "relevance": "Dimension mismatch and wrong distance metrics are common silent or hard failures.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects pgvector for RAG to the running artifact and failure test.",
+        "orient": "Treat embedding dimension as schema, not a loose setting.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+        "label": "HNSW and IVFFlat are tradeoffs",
+        "sub": "ANN indexes reduce latency by trading exactness and resources.",
+        "what": "Learners compare pgvector index choices.",
+        "relevance": "Blindly adding an ANN index can hurt writes, memory, or recall.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects pgvector for RAG to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Choose the index by corpus size, write pattern, and measured recall.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+        "label": "Write the filtered vector query",
+        "sub": "The query should combine SQL eligibility and vector distance.",
+        "what": "Learners write a realistic pgvector query.",
+        "relevance": "A clear query exposes filters, limits, and distance operator choices.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects pgvector for RAG to the running artifact and failure test.",
+        "orient": "Make the production retrieval contract visible in SQL.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+        "label": "Operate pgvector with eval and migrations",
+        "sub": "The database path still needs retrieval quality gates.",
+        "what": "Learners prepare production safeguards for pgvector RAG.",
+        "relevance": "Operational simplicity can hide stale embeddings, poor ANN recall, or overloaded databases.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects pgvector for RAG to the running artifact and failure test.",
+        "orient": "Plan index maintenance, model changes, and answer verification together.",
         "order": 5
       }
     ],
@@ -118,34 +118,33 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies pgvector for RAG to pgvector schema, indexing, and retrieval checklist, with examples and checks tied to query latency and recall on real support questions.",
+      "title": "Vectors live beside relational facts",
+      "sub": "pgvector keeps embeddings inside the application database.",
+      "summary": "pgvector makes semantic search another Postgres capability.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: embedding dimensions or index settings mismatch the model in production."
+        "Define what pgvector adds to Postgres.",
+        "Explain why metadata joins matter for RAG.",
+        "Identify when pgvector is the simplest viable store."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why pgvector for RAG matters here",
+          "title": "RAG rows are still database rows",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. The learner's job is not to memorize pgvector for RAG; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved query latency and recall on real support questions."
+                  "text": "Problem anchor: a course assistant stores lesson chunks, categories, source URLs, learner levels, and embeddings. The answer must retrieve semantically relevant chunks, but only from published lessons and the learner’s permitted category."
                 }
               ]
             },
@@ -153,7 +152,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: pgvector schema, indexing, and retrieval checklist. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "With pgvector, chunk text, metadata, and embeddings live together. The query can filter by status, category, tenant, or date before ordering by vector distance. That is the main appeal: semantic ranking plus relational control."
                 }
               ]
             },
@@ -162,143 +161,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if embedding dimensions or index settings mismatch the model in production, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: pgvector for RAG matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: pgvector for RAG matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure query latency and recall on real support questions on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for pgvector for RAG.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review pgvector schema, indexing, and retrieval checklist: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where embedding dimensions or index settings mismatch the model in production. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If your retrieval decision depends on a SQL field, model it as a first-class column rather than hiding it inside unstructured text."
                 }
               ]
             }
@@ -307,24 +170,33 @@
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "pgvector turns Postgres into a library catalog that can sort by meaning as well as shelf labels."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Case study: Supabase-backed lesson retrieval",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. This module asks what what the tool owns changes in the artifact."
+                  "text": "Agentic Learning Studio already uses Postgres-like application data. A separate vector database would add another sync path and permission boundary. pgvector lets the team store lesson chunks with slug, category, level, source hash, and embedding in one table."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "When a learner asks about RAG evaluation, SQL filters to RAG lessons and published sources, then vector distance ranks the evidence. Debugging is possible with ordinary SQL selects."
                 }
               ]
             },
@@ -333,260 +205,110 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Create a chunks table with text, metadata, and embedding."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Filter by product, category, status, and permissions."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve query latency and recall on real support questions."
+                    "text": "Order eligible rows by vector distance."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: embedding dimensions or index settings mismatch the model in production."
+                    "text": "Return source fields needed for citation display."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For pgvector schema, indexing, and retrieval checklist, log or test the fields needed to debug query latency and recall on real support questions. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: pgvector schema, indexing, and retrieval checklist",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. The team wants to improve query latency and recall on real support questions, but it has already seen this failure: embedding dimensions or index settings mismatch the model in production."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Question: \"Can I get a refund after 35 days if I lost my invoice?\" The answer must cite the exact policy chunk, not a plausible refund rule remembered by the model."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: pgvector schema, indexing, and retrieval checklist. It specifies loaders, chunk metadata, retriever settings, prompt contract, citation format, and a faithfulness check for query latency and recall on real support questions."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: retrieve policy-refunds-v3 section 4, quote \"30 days\" and \"invoice id required\", answer that the request probably fails the policy, and link the source chunk used."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: RAG reviewer. Context: A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. Task: inspect pgvector schema, indexing, and retrieval checklist. Require a user question, retrieved chunks with source ids, final answer, and a claim-by-claim support check. Constraints: do not allow claims that are absent from retrieved chunks; flag stale or missing metadata. Output: {question, retrieved_sources, answer, unsupported_claims, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties pgvector for RAG to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "pgvector for RAG"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies pgvector for RAG to the running case?",
+          "title": "Why Postgres?",
+          "prompt": "What is the strongest reason to choose pgvector for a modest RAG app already built on Postgres?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review pgvector schema, indexing, and retrieval checklist, measure query latency and recall on real support questions, and test the failure: embedding dimensions or index settings mismatch the model in production.",
+              "text": "It removes the need to evaluate retrieval.",
+              "correct": false
+            },
+            {
+              "text": "It keeps embeddings close to relational metadata, transactions, backups, and filters.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "It lets vectors have any dimension in one column.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "pgvector simplifies operations, but dimensions, indexes, and eval still matter.",
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies pgvector for RAG to pgvector schema, indexing, and retrieval checklist, with examples and checks tied to query latency and recall on real support questions.",
+      "title": "Dimensions and distance must match the embedding model",
+      "sub": "The vector column encodes a contract.",
+      "summary": "A vector column is tied to the embedding model that produced it.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: embedding dimensions or index settings mismatch the model in production."
+        "Explain fixed vector dimensions.",
+        "Choose cosine, inner product, or L2 intentionally.",
+        "Plan embedding-model migrations."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "The embedding model writes your schema",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind pgvector for RAG. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "If an embedding model outputs 384 numbers, the pgvector column must accept 384-dimensional vectors. A 1536-dimensional model requires a different column or table. This is not a prompt setting; it is database schema."
                 }
               ]
             },
@@ -594,32 +316,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means separating retrieval quality from answer quality: did the system fetch the right evidence, and did the model stay faithful to that evidence?"
+                  "text": "Distance operators also matter. Cosine distance is common for normalized semantic embeddings, but the model and retrieval library should guide the choice. Mismatches distort ranking."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,7 +325,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is pgvector schema, indexing, and retrieval checklist. Which single field, trace, or test would show whether query latency and recall on real support questions improved?"
+                  "text": "Store the embedding model name and version with each index or table so migrations are visible."
                 }
               ]
             }
@@ -636,81 +334,33 @@
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "Changing embedding dimensions is more like changing a table column than changing a search keyword."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review pgvector schema, indexing, and retrieval checklist: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where embedding dimensions or index settings mismatch the model in production. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
+          "title": "Worked migration: 384 to 1536 dimensions",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. This module asks what core workflow changes in the artifact."
+                  "text": "A team starts with a local 384-dimensional model for cost. Later they test a hosted 1536-dimensional embedding model. They cannot insert new vectors into the old vector(384) column."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A safe migration creates a new vector column or table, backfills embeddings, builds a new ANN index, runs retrieval eval side by side, then switches the query path after quality and latency pass."
                 }
               ]
             },
@@ -719,228 +369,110 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Record current model, dimension, and distance operator."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Create a parallel column/table for the new dimension."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve query latency and recall on real support questions."
+                    "text": "Backfill and index in the background."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: embedding dimensions or index settings mismatch the model in production."
+                    "text": "Compare retrieval eval before switching traffic."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
-          "language": "python",
-          "code": "# pgvector for RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to embedding dimensions or index settings mismatch the model in production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
             }
           ],
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: embedding dimensions or index settings mismatch the model in production. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to pgvector schema, indexing, and retrieval checklist: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: query latency and recall on real support questions becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful pgvector for RAG design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "pgvector for RAG"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies pgvector for RAG to the running case?",
+          "title": "Dimension contract",
+          "prompt": "What happens if you try to store 1536-dimensional vectors in a vector(384) column?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review pgvector schema, indexing, and retrieval checklist, measure query latency and recall on real support questions, and test the failure: embedding dimensions or index settings mismatch the model in production.",
+              "text": "Postgres silently truncates vectors safely.",
+              "correct": false
+            },
+            {
+              "text": "The database schema does not match the vector, so inserts or queries must be migrated.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The LLM automatically converts dimensions.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Vector dimensionality is part of the database contract.",
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies pgvector for RAG to pgvector schema, indexing, and retrieval checklist, with examples and checks tied to query latency and recall on real support questions.",
+      "title": "HNSW and IVFFlat are tradeoffs",
+      "sub": "ANN indexes reduce latency by trading exactness and resources.",
+      "summary": "Approximate indexes need measurement, not faith.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: embedding dimensions or index settings mismatch the model in production."
+        "Describe exact scan, HNSW, and IVFFlat at a practical level.",
+        "Name HNSW write and storage tradeoffs.",
+        "Explain why IVFFlat needs representative data."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "Index choice changes retrieval behavior",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where pgvector for RAG becomes a decision. The team must choose how much rigor pgvector schema, indexing, and retrieval checklist needs before it can be trusted."
+                  "text": "For small corpora, exact vector search may be acceptable and simpler to reason about. As rows grow, approximate indexes such as HNSW and IVFFlat reduce latency by searching a structured subset of the vector space."
                 }
               ]
             },
@@ -948,84 +480,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves query latency and recall on real support questions while making this failure visible: embedding dimensions or index settings mismatch the model in production."
+                  "text": "HNSW often gives strong recall with higher memory and write cost. IVFFlat depends on representative data and probe settings. Either way, measure recall on your eval queries before trusting the speedup."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review pgvector schema, indexing, and retrieval checklist: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where embedding dimensions or index settings mismatch the model in production. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "An ANN index that is fast but drops the decisive evidence is a quality regression."
                 }
               ]
             }
@@ -1034,301 +498,177 @@
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "ANN search is a shortcut through the city; faster only helps if it still reaches the right address."
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "pgvector search choices",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Choice",
+            "Best for",
+            "Watch"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Exact scan",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of pgvector for RAG on one realistic case.",
+                  "criterion": "Choice",
+                  "text": "Order eligible rows directly by distance.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
+                  "criterion": "Best for",
+                  "text": "Small corpora or filtered candidate sets.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: embedding dimensions or index settings mismatch the model in production.",
+                  "criterion": "Watch",
+                  "text": "Latency grows with rows.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the team is still learning what matters.",
+              "whenToUse": "Start here for tiny KBs and baseline eval.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production path",
+              "name": "HNSW",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on query latency and recall on real support questions.",
+                  "criterion": "Choice",
+                  "text": "Graph-based approximate nearest neighbor index.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Best for",
+                  "text": "Low-latency search with strong recall.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Watch",
+                  "text": "Higher memory/index size and write overhead.",
                   "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Use when corpus grows and eval recall remains strong.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "IVFFlat",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
+                  "criterion": "Choice",
+                  "text": "List-based ANN index with probes.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
+                  "criterion": "Best for",
+                  "text": "Large datasets with representative training data.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
+                  "criterion": "Watch",
+                  "text": "Poor setup can miss good neighbors.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves query latency and recall on real support questions and catches: embedding dimensions or index settings mismatch the model in production.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For pgvector schema, indexing, and retrieval checklist, log or test the fields needed to debug query latency and recall on real support questions. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
+              "whenToUse": "Use when you can tune and evaluate probes.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: embedding dimensions or index settings mismatch the model in production. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Retrieved chunks mention the right keyword but not the answer-bearing paragraph."
-                  }
-                ],
-                [
-                  {
-                    "text": "The answer is relevant but unfaithful: it adds a policy or fact not present in the retrieved evidence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metadata is missing, so citations cannot be checked or reranked later."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: query latency and recall on real support questions gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when query latency and recall on real support questions affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: embedding dimensions or index settings mismatch the model in production.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies pgvector for RAG to the running case?",
+          "title": "Index caution",
+          "prompt": "Why should you run retrieval eval after adding HNSW?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review pgvector schema, indexing, and retrieval checklist, measure query latency and recall on real support questions, and test the failure: embedding dimensions or index settings mismatch the model in production.",
+              "text": "HNSW deletes metadata filters.",
+              "correct": false
+            },
+            {
+              "text": "Approximate search can change which chunks are returned and ranked.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Evaluation only matters before indexing.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Speedups must preserve the answer evidence your app needs.",
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for pgvector for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies pgvector for RAG to pgvector schema, indexing, and retrieval checklist, with examples and checks tied to query latency and recall on real support questions.",
+      "title": "Write the filtered vector query",
+      "sub": "The query should combine SQL eligibility and vector distance.",
+      "summary": "The RAG retriever is a SQL statement plus an embedding call.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: embedding dimensions or index settings mismatch the model in production."
+        "Install the extension and define a vector column.",
+        "Create an ANN index with a matching operator class.",
+        "Query with metadata filters and distance ordering."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
+          "title": "SQL is the retrieval interface",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for pgvector for RAG should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "The application embeds the user question, passes that vector into SQL, filters eligible rows, orders by distance, and returns text plus provenance. This is simple enough to test directly."
                 }
               ]
             },
@@ -1336,7 +676,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For pgvector schema, indexing, and retrieval checklist, the sketch should prove one thing: the system can improve query latency and recall on real support questions without hiding the failure where embedding dimensions or index settings mismatch the model in production."
+                  "text": "Spaced recall: from structured outputs, validation still belongs outside the model. For RAG, SQL filters are one of those external validations: the model should never see unauthorized chunks."
                 }
               ]
             },
@@ -1345,7 +685,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "The query should return source URL, heading, and distance score for tracing, not only text."
                 }
               ]
             }
@@ -1354,188 +694,150 @@
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review pgvector schema, indexing, and retrieval checklist: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where embedding dimensions or index settings mismatch the model in production. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve query latency and recall on real support questions."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: embedding dimensions or index settings mismatch the model in production."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
-          "language": "python",
-          "code": "# pgvector for RAG: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
+          "title": "Minimal pgvector table and retrieval query",
+          "language": "sql",
+          "code": "create extension if not exists vector;\n\ncreate table lesson_chunks (\n  id bigserial primary key,\n  lesson_slug text not null,\n  category text not null,\n  status text not null default 'published',\n  heading_path text not null,\n  content text not null,\n  embedding vector(384) not null\n);\n\ncreate index lesson_chunks_embedding_hnsw\n  on lesson_chunks using hnsw (embedding vector_cosine_ops);\n\n-- $1 is the query embedding, produced by the same 384-dim model.\nselect id, lesson_slug, heading_path, content, embedding <=> $1::vector as distance\nfrom lesson_chunks\nwhere status = 'published'\n  and category = 'RAG'\norder by embedding <=> $1::vector\nlimit 8;",
+          "explanation": "The query filters to eligible published RAG chunks before ordering by cosine distance and returning citation metadata.",
+          "predictThenReveal": {
+            "prompt": "Before running this against data, predict what breaks if the query embedding comes from a 1536-dimensional model.",
+            "answer": "The query vector no longer matches vector(384), so you need a migration path rather than a runtime guess."
+          },
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "SQL contract",
+          "prompt": "Where should tenant or document status filtering happen?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Only in the final natural-language answer.",
+              "correct": false
+            },
+            {
+              "text": "In the SQL retrieval query before results reach the prompt.",
+              "correct": true
+            },
+            {
+              "text": "In the user’s browser after generation.",
+              "correct": false
+            }
+          ],
+          "explanation": "Unauthorized or stale evidence should not enter model context.",
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Operate pgvector with eval and migrations",
+      "sub": "The database path still needs retrieval quality gates.",
+      "summary": "pgvector is simple to adopt, but still needs RAG discipline.",
+      "objectives": [
+        "Name pgvector production failure modes.",
+        "Design side-by-side embedding migrations.",
+        "Verify generated answers against returned chunks."
+      ],
+      "termIds": [
+        "rag",
+        "embedding",
+        "vector_search",
+        "chunk"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Simple storage does not remove retrieval risk",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to embedding dimensions or index settings mismatch the model in production."
+                  "text": "pgvector keeps the stack compact, but RAG risks remain: stale rows after source changes, wrong dimensions after model changes, ANN recall loss, slow scans on busy OLTP databases, and citations that do not support claims."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Operational review should include backup strategy, index build cost, query limits, table growth, and whether vector workloads interfere with ordinary application traffic."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Every embedding-model migration should run old and new retrieval side by side on the same eval set."
+                }
+              ]
             }
           ],
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from pgvector RAG",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for pgvector for RAG, review it against the running case before accepting it."
+                  "text": "Use this checklist before trusting the generated answer."
                 }
               ]
             },
@@ -1544,27 +846,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: pgvector schema, indexing, and retrieval checklist?"
+                    "text": "The SQL filters match the user’s tenant, product, status, and category."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "The returned chunks include source URL, heading, version, and distance for trace review."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: embedding dimensions or index settings mismatch the model in production?"
+                    "text": "The ANN index preserves expected evidence within packed top-k on eval queries."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug query latency and recall on real support questions?"
+                    "text": "Embedding model name, dimension, and distance operator are recorded together."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Generated claims are supported by the retrieved chunks, not only semantically nearby text."
                   }
                 ]
               ]
@@ -1574,452 +876,54 @@
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies pgvector for RAG to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review pgvector schema, indexing, and retrieval checklist, measure query latency and recall on real support questions, and test the failure: embedding dimensions or index settings mismatch the model in production.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies pgvector for RAG to pgvector schema, indexing, and retrieval checklist, with examples and checks tied to query latency and recall on real support questions.",
-      "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: embedding dimensions or index settings mismatch the model in production."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how pgvector schema, indexing, and retrieval checklist improves query latency and recall on real support questions and catches embedding dimensions or index settings mismatch the model in production, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review pgvector schema, indexing, and retrieval checklist: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where embedding dimensions or index settings mismatch the model in production. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of pgvector for RAG on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: embedding dimensions or index settings mismatch the model in production.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on query latency and recall on real support questions.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves query latency and recall on real support questions and catches: embedding dimensions or index settings mismatch the model in production.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For pgvector schema, indexing, and retrieval checklist, log or test the fields needed to debug query latency and recall on real support questions. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct pgvector for RAG: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply pgvector for RAG without copying the worked example. Keep the same running case - A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: query latency and recall on real support questions."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: embedding dimensions or index settings mismatch the model in production."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search",
-            "chunk",
-            "reranker"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies pgvector for RAG to the running case?",
+          "title": "Production signal",
+          "prompt": "A new HNSW index cuts latency but answer citations get worse. What should block release?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review pgvector schema, indexing, and retrieval checklist, measure query latency and recall on real support questions, and test the failure: embedding dimensions or index settings mismatch the model in production.",
+              "text": "The index name is too long.",
+              "correct": false
+            },
+            {
+              "text": "Retrieval eval showing expected evidence no longer appears in packed top-k.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The model temperature is below one.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Latency gains are not acceptable if they remove grounding evidence.",
           "termIds": [
             "rag",
             "embedding",
             "vector_search",
-            "chunk",
-            "reranker"
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for pgvector for RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     }
   ],
   "glossary": {
@@ -2090,17 +994,17 @@
     "title": "Decision prompts for pgvector for RAG",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Postgres vector architecture",
         "questions": [
           {
-            "q": "What decision does pgvector for RAG change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships pgvector schema, indexing, and retrieval checklist.",
+            "q": "Should this RAG app keep vectors inside Postgres or adopt a separate vector database?",
+            "why": "The storage choice affects metadata joins, backups, latency, index tuning, and operational ownership.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "pgvector in existing Postgres",
+              "Dedicated vector database",
+              "Long-context prompting only"
             ],
-            "rot": "Choose the smallest option that catches: embedding dimensions or index settings mismatch the model in production."
+            "rot": "Choose pgvector when relational filters and operational simplicity matter more than independent vector-store scaling."
           }
         ]
       }
@@ -2112,73 +1016,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct pgvector for RAG using the running case: A SaaS app stores embeddings in Postgres so docs search can share existing auth and backups. Name the artifact (pgvector schema, indexing, and retrieval checklist), explain the mechanism, choose a design level, write the check for embedding dimensions or index settings mismatch the model in production, and say how you would measure query latency and recall on real support questions."
+            "text": "Retrieval prompt: explain pgvector by reconstructing extension install, vector column dimensions, metadata filters, HNSW or IVFFlat indexing, query ordering, and migration risks."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "pgvector RAG path from chunk row to filtered nearest-neighbor search",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place pgvector for RAG in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+          "label": "Vectors live beside relational facts",
+          "sub": "pgvector keeps embeddings inside the application database.",
+          "what": "Learners connect vector search to ordinary SQL data modeling.",
+          "relevance": "This prevents treating the vector store as disconnected from permissions and source metadata.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects pgvector for RAG to the running artifact and failure test.",
+          "orient": "Start with the operational reason for storing chunks in Postgres.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+          "label": "Dimensions and distance must match the embedding model",
+          "sub": "The vector column encodes a contract.",
+          "what": "Learners plan vector columns and distance operators deliberately.",
+          "relevance": "Dimension mismatch and wrong distance metrics are common silent or hard failures.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects pgvector for RAG to the running artifact and failure test.",
+          "orient": "Treat embedding dimension as schema, not a loose setting.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+          "label": "HNSW and IVFFlat are tradeoffs",
+          "sub": "ANN indexes reduce latency by trading exactness and resources.",
+          "what": "Learners compare pgvector index choices.",
+          "relevance": "Blindly adding an ANN index can hurt writes, memory, or recall.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects pgvector for RAG to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Choose the index by corpus size, write pattern, and measured recall.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+          "label": "Write the filtered vector query",
+          "sub": "The query should combine SQL eligibility and vector distance.",
+          "what": "Learners write a realistic pgvector query.",
+          "relevance": "A clear query exposes filters, limits, and distance operator choices.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects pgvector for RAG to the running artifact and failure test.",
+          "orient": "Make the production retrieval contract visible in SQL.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve query latency and recall on real support questions while avoiding the failure: embedding dimensions or index settings mismatch the model in production.",
+          "label": "Operate pgvector with eval and migrations",
+          "sub": "The database path still needs retrieval quality gates.",
+          "what": "Learners prepare production safeguards for pgvector RAG.",
+          "relevance": "Operational simplicity can hide stale embeddings, poor ANN recall, or overloaded databases.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects pgvector for RAG to the running artifact and failure test.",
+          "orient": "Plan index maintenance, model changes, and answer verification together.",
           "order": 5
         }
       ],
@@ -2186,7 +1090,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -2201,68 +1105,58 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Design a Postgres table for a small RAG KB with source metadata, tenant filter, embedding vector column, index choice, and a SQL query that returns the top evidence for one question. Next rung: evaluate retrieval faithfulness.",
+      "scopedTo": "pgvector for RAG"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Vectors live beside relational facts",
+        "detail": "pgvector makes semantic search another Postgres capability."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Dimensions and distance must match the embedding model",
+        "detail": "A vector column is tied to the embedding model that produced it."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "HNSW and IVFFlat are tradeoffs",
+        "detail": "Approximate indexes need measurement, not faith."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Write the filtered vector query",
+        "detail": "The RAG retriever is a SQL statement plus an embedding call."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Operate pgvector with eval and migrations",
+        "detail": "pgvector is simple to adopt, but still needs RAG discipline."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Vectors live beside relational facts” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure query latency and recall on real support questions on realistic cases?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “HNSW and IVFFlat are tradeoffs” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: embedding dimensions or index settings mismatch the model in production?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Operate pgvector with eval and migrations”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Create a one-page release-ready plan for pgvector schema, indexing, and retrieval checklist. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (query latency and recall on real support questions), failure case (embedding dimensions or index settings mismatch the model in production), owner, and the next rung after this lesson.",
-      "scopedTo": "pgvector for RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2292,6 +1186,41 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon8": {
+      "id": "canon8",
+      "kind": "canonical",
+      "title": "pgvector repository and docs",
+      "url": "https://github.com/pgvector/pgvector",
+      "asOfDate": "2026-06-22"
     }
   }
 }
