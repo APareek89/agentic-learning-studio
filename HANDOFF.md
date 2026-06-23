@@ -150,25 +150,19 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **📦 DEPLOY STATUS (2026-06-23) — what's on PROD vs PENDING on staging:**
-  - **ON PROD** (`main` `9a9576f` → prathibhax.com + prod Supabase `kdgtlbnlyscdldogxorb`):
-    - **Wizbit UI** redesign (live).
-    - **KB-curator service** + `documents.curator_change` flag + **`kb_curator_runs` daily run-log** (code on main; migrations
-      **0010/0011/0012 applied to the prod DB**). Cron NOT armed yet (needs only the Actions secrets now).
-    - **`kb/` corpus (88 docs) + `src/rag` ingest pipeline + `kb-build/scripts` + `KB_IP_AUDIT`/`KB_CONTENT_POLICY`** committed to
-      main (`6493ca2`) — so the curator has its "existing docs" baseline and the KB is reproducible from git; prod app retrieval
-      now uses the same pipeline that built the live chunks.
-    - **RAG KB DATA: prod = 88 docs / 214 chunks** — migrated 69/179 → 88/214 on 2026-06-23 via `replace_kb` re-ingest (clean
-      audit 88/0/0, smoke coverage ~0.9). Prod backup: `kb-build/backups/prod-2026-06-23T05-59-57-353Z.sql`. Prod retrieval now
-      grounds on the 88-doc KB. (Earlier prod backup of the 69/179 state also in `kb-build/backups/`.)
-  - **PENDING on staging (NOT on prod yet):**
-    1. **Library batch-1 (20 lessons, `v3-agent`)** — on staging (`92fc18e`) + staging DB; **prod library DB still OLD**. Awaiting review → promote.
-    2. **Library RICH enrichment (76 lessons)** — on branch **`library-rich-codex`** (`8afe6b6`, ~11 commits), **NOT merged to staging** (concurrent session finishing it). Flow: review → merge to staging → seed → promote prod. Still-skipped: `browser-computer-use-agents`, `multi-agent-orchestration`.
-    3. **Knowledge-check / Objective / "Builder"-rename app feature** (`7ec2c4b`, `f685b7b`) — on staging, **NOT on main**. Concurrent session's work; pending review → prod.
-    4. ~~`kb/` corpus not in git~~ **DONE (2026-06-23)** — `kb/` (88 docs) + `src/rag` pipeline + `kb-build/scripts` + the
-       provenance docs committed to **staging (`4681ad4`) AND main (`6493ca2`)**. Curator baseline in place; KB reproducible from git.
-    5. **Arm the KB-curator cron** — set repo Actions secrets (`DATABASE_URL` target + `ANTHROPIC_API_KEY`); user sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` on prod Render (optional, lean build). This is now the ONLY thing left before the daily 9 PM IST run works.
-  - **Git note:** the KB-curator commits are DIFFERENT hashes on staging (`689adcf`/`55f0128`/`e08b68d`) vs main (`d58084f`/`9a9576f`) — content-identical (copied via worktree, not merged), because the shared tree was busy with the concurrent library session. A future `staging→main` merge must account for this (they look divergent though the content matches).
+- **📦 DEPLOY STATUS (2026-06-23, updated EOD) — what's on PROD vs PENDING:**
+  - **ON PROD** (`main` `ecb78cd` → prathibhax.com + prod Supabase `kdgtlbnlyscdldogxorb`):
+    - **Wizbit UI** redesign.
+    - **KB-curator service** + `documents.curator_change` flag + `kb_curator_runs` run-log (migrations **0010/0011/0012 on prod DB**). Cron NOT armed (needs only the Actions secrets).
+    - **`kb/` corpus + `src/rag` pipeline + `kb-build/scripts` + IP/policy docs** on main. **RAG KB DATA: prod = 88 docs / 214 chunks** (backup `kb-build/backups/prod-2026-06-23T05-59-57-353Z.sql`).
+    - **Knowledge-check Tier-A retention + Objective control + "Builder" rename** — cherry-picked to main (`97935e8`/`1b7395c`).
+    - **Trainer rework (2026-06-23):** multi-tab workspace (≤5) + one-row My Lessons (`b2f3c84`) · horizontal **per-module-tabs** redesign — examples-below-with-"See details" popup + per-module check tab (`9bce078`) · **2-bar chrome consolidation** — Dark on bar 2, tabs as blocks below it (`ecb78cd`). Front-end/renderer only, no DB. ⚠ horizontal is **v1**: the ≤25%-empty FILL is a generation-side tuning item still PENDING (see below).
+    - **Library v4-rich lessons (DB only):** per `05d2ab0` the 78 v4-rich lessons were seeded to **staging AND prod** DBs → prod users see v4-rich content. But the prod **git** (`main`) still has the OLD lesson JSONs — see PENDING #1.
+  - **PENDING (NOT fully on prod):**
+    1. **Library re-enrichment GIT source** — the 98 v4-rich `prebuilt/lessons/*.json` (+ `_exemplar`/`ENHANCE_SPEC`/`ENHANCED`/`scripts/validate-lesson.ts`) are on **staging** (merged `ebf4c2d`), **NOT on `main`**. Prod DB is already v4-rich, but main's JSONs are stale → **a future re-seed of prod from main would OVERWRITE v4-rich with old**. Reconcile: promote the lesson JSONs to main so git matches the DB.
+    2. **Horizontal-fill generation tuning** — tune the generation prompt so horizontal lessons paginate to ≤25% empty per tab (concept padding + example-preview length + how many tabs). The renderer frame is shipped; content density is the lever.
+    3. **Arm the KB-curator cron** — set repo Actions secrets (`DATABASE_URL` + `ANTHROPIC_API_KEY`); optional `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` on prod Render.
+  - **Git note:** staging and main diverged via worktree cherry-picks (KB-curator + the app features have DIFFERENT hashes but IDENTICAL content). Do NOT do a plain `staging→main` merge — **cherry-pick the real deltas** (that's how `b2f3c84`/`9bce078`/`ecb78cd` reached main).
 - **KB enrichment — MLOps / LLMOps / AI-analytics + role-based course tracks (QUEUED Jun 2026 — do via a SEPARATE Codex run; another session owns the curator, do NOT touch `services/kb-curator` or curator code for this).** Additive KB content (NOT a rebuild): new docs + embeddings pushed to **staging Supabase ONLY** (`DATABASE_URL`=staging; do NOT truncate, do NOT touch prod). Method = the established Codex pattern: dedupe against the LIVE KB first (`documents.title`/`category`), then source-priority cascade (official docs → permissive OSS [MIT/Apache/BSD/CC-BY] → reputable blogs/arXiv), ORIGINAL prose only (no verbatim, ≤1 short attributed quote), `KB_IP_AUDIT.md` (🔴 dropped), Markdown+frontmatter (title/category/url/license/verdict/as_of_date), local bge-small embed via `npm run ingest`. New categories: `MLOps & production ML`, `LLMOps`, `AI analytics`, `Course`.
   - **Topics (skip any already covered):** MLOps overview + lifecycle (train→package→serve→monitor→retrain) · model packaging/containerization (Docker, runtime pinning) · serving & inference at scale (REST/gRPC, dynamic batching, latency↔throughput — cross-link existing vllm/litellm/ai_infrastructure_serving) · model+data versioning & registries (DVC/MLflow/lakeFS) · feature stores (Feast; when you don't need one) · CI/CD + Continuous Training + orchestration (Kubeflow/ZenML/Metaflow/Dagster/Airflow) · experiment tracking & reproducibility (MLflow/W&B) · production monitoring — data/concept drift, perf decay, alerting (Evidently/NannyML) · GPU/CPU config & cost (autoscaling, right-sizing, spot) · serving on K8s + when it's overkill (KServe/Seldon) · ML failure modes (silent degradation, training-serving skew, pipeline breakage, stale features; Hidden Technical Debt / Rules of ML / ML Test Score papers) · **LLMOps** (prompt/version mgmt, eval pipelines, RAG infra, token-cost/latency monitoring; cross-link langfuse/promptfoo) · **AI analytics** (NL-to-SQL, semantic layers, automated insights, forecasting, anomaly detection — dbt semantic layer/Vanna/Prophet).
   - **Course tracks (kind `Course`, original curriculum outlines: who-it's-for · prerequisites · ordered modules mapping to KB · capstone):** AI Product Manager · AI Solution Architect · AI Engineer · ML/MLOps Engineer · AI Data Analyst.
