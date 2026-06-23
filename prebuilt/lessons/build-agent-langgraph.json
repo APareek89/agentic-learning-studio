@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Build an Agent with LangGraph: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Build an Agent with LangGraph is useful when you can apply it to a LangGraph ticket triage agent routes issues to billing, technical support, or human review, choose a design, and verify correct route plus trace completeness.",
+    "caption": "Build a LangGraph agent by defining state, nodes, edges, checkpoints, interrupts, tests, and traces.",
+    "oneLineThesis": "LangGraph works best when each agent step is an explicit state transition that can be routed, resumed, reviewed, and tested.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Build an Agent with LangGraph.",
-        "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+        "label": "State schema is the contract for the agent",
+        "sub": "Start with the data that must survive across steps.",
+        "what": "Learners anchor the graph in explicit state instead of hidden conversation variables.",
+        "relevance": "This prevents graph state from becoming an untestable junk drawer.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Target behavior connects Build an Agent with LangGraph to the running artifact and failure test.",
+        "orient": "Define the minimal state carried through a refund-assistant graph.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+        "label": "Nodes do one state transition each",
+        "sub": "Each node should have a clear input, output, and owner.",
+        "what": "Learners design graph nodes that can be tested in isolation.",
+        "relevance": "This reduces opaque agent behavior and makes failures local.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Architecture slice connects Build an Agent with LangGraph to the running artifact and failure test.",
+        "orient": "Turn the refund workflow into single-purpose graph nodes.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+        "label": "Edges encode routing, retries, and termination",
+        "sub": "Control flow belongs in conditional edges, not in wishful prompting.",
+        "what": "Learners make the agent topology visible.",
+        "relevance": "This catches wrong routes that silently bypass validation or approval.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Core implementation connects Build an Agent with LangGraph to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Route graph execution through validation, review, retry, and termination.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+        "label": "Checkpoints and interrupts make runs resumable",
+        "sub": "Persistence and human review are first-class graph behavior.",
+        "what": "Learners see the concrete LangGraph mechanics for resumable agent work.",
+        "relevance": "This avoids agents that lose context after approval or repeat side effects on resume.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Validation and tracing connects Build an Agent with LangGraph to the running artifact and failure test.",
+        "orient": "Code the graph skeleton with checkpointed state and a review pause.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+        "label": "Tests and traces harden the graph",
+        "sub": "A LangGraph agent should prove its routes before users do.",
+        "what": "Learners turn a working graph into a reviewable product component.",
+        "relevance": "This prevents graph edits from silently skipping validation or review.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Hardening path connects Build an Agent with LangGraph to the running artifact and failure test.",
+        "orient": "Gate the graph with route tests, resume tests, and trace evidence.",
         "order": 5
       }
     ],
@@ -98,17 +98,17 @@
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "routes through"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "persists with"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hardens into"
       }
     ],
     "structureType": "procedural",
@@ -118,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Target behavior applies Build an Agent with LangGraph to state graph with router, tool node, validator, and stop condition, with examples and checks tied to correct route plus trace completeness.",
+      "title": "State schema is the contract for the agent",
+      "sub": "Start with the data that must survive across steps.",
+      "summary": "A LangGraph build begins with typed state, not a prompt loop.",
       "objectives": [
-        "Apply target behavior to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the graph loops because the state never records that retrieval already happened."
+        "Define graph state for a concrete support agent.",
+        "Keep state small and intentionally merged.",
+        "Separate durable state from temporary model chatter."
       ],
       "termIds": [
         "prototype",
@@ -139,13 +139,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Build an Agent with LangGraph matters here",
+          "title": "The state type says what the agent is allowed to remember",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A LangGraph ticket triage agent routes issues to billing, technical support, or human review. The learner's job is not to memorize Build an Agent with LangGraph; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved correct route plus trace completeness."
+                  "text": "Problem anchor: you need a refund-policy agent that retrieves policy, checks account status, drafts an answer, and pauses for review before offering an exception. A plain loop hides all of that in messages. LangGraph asks you to name the state: goal, messages, retrieved_sources, account_status, draft, needs_review, approved, and status."
                 }
               ]
             },
@@ -153,24 +153,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: state graph with router, tool node, validator, and stop condition. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "This is the first design decision. If source IDs are not in state, citation validation cannot run. If approval is not in state, resume logic cannot know whether the human accepted the risky action."
                 }
               ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if the graph loops because the state never records that retrieval already happened, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langgraph_overview",
+            "kb_langgraph"
+          ]
+        },
+        {
+          "id": "m1_artifact",
+          "kind": "functionalExample",
+          "title": "State contract for the refund assistant",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
+                  "text": "State fields: goal: string; messages: list; retrieved_sources: list of source IDs; account_status: enum; draft_answer: string; citation_errors: list; approval_request: object or null; approved: boolean or null; status: drafting, review, done, cancelled."
                 }
               ]
             },
@@ -179,17 +188,17 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Build an Agent with LangGraph matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Keep: facts needed by later nodes and tests."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Build an Agent with LangGraph matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Avoid: raw tool credentials, giant retrieved documents, and every scratchpad token."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure correct route plus trace completeness on examples that resemble the real workload."
+                    "text": "Add: thread_id in runtime config so checkpointed runs can resume."
                   }
                 ]
               ]
@@ -203,339 +212,33 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Build an Agent with LangGraph.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "canon_langgraph_overview",
+            "canon_langgraph_persistence",
+            "kb_langgraph"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A LangGraph ticket triage agent routes issues to billing, technical support, or human review"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review state graph with router, tool node, validator, and stop condition: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the graph loops because the state never records that retrieval already happened. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Target behavior applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A LangGraph ticket triage agent routes issues to billing, technical support, or human review. This module asks what target behavior changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct route plus trace completeness."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the graph loops because the state never records that retrieval already happened."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For state graph with router, tool node, validator, and stop condition, log or test the fields needed to debug correct route plus trace completeness. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: state graph with router, tool node, validator, and stop condition",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A LangGraph ticket triage agent routes issues to billing, technical support, or human review. The team wants to improve correct route plus trace completeness, but it has already seen this failure: the graph loops because the state never records that retrieval already happened."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Request: \"Triage this support ticket, search the docs, draft the answer, and escalate if confidence is low.\" The framework is useful only if it makes each handoff and stop condition explicit."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: state graph with router, tool node, validator, and stop condition. It names the state fields, nodes, tools, retry policy, human-review edge, trace fields, and the acceptance test for correct route plus trace completeness."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: state = {ticket, route, evidence, draft, risk, done}; nodes = classify, retrieve, draft, validate, escalate; stop when validation passes or risk requires a human."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: agent framework architect. Context: A LangGraph ticket triage agent routes issues to billing, technical support, or human review. Task: produce the minimal workflow for state graph with router, tool node, validator, and stop condition. Include state fields, nodes, tools, edges, retry policy, human handoff, trace fields, and acceptance tests. Output: {state, nodes, edges, tools, stop_rules, tests}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Build an Agent with LangGraph to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Build an Agent with LangGraph to the running case?",
+          "title": "State design",
+          "prompt": "Why should retrieved source IDs be in LangGraph state?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review state graph with router, tool node, validator, and stop condition, measure correct route plus trace completeness, and test the failure: the graph loops because the state never records that retrieval already happened.",
+              "text": "They make the model more creative.",
+              "correct": false
+            },
+            {
+              "text": "Later validation and tests need to know what evidence the draft used.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "They replace the need for retrieval.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "State carries the data that downstream nodes and checks depend on.",
           "termIds": [
             "prototype",
             "retriever",
@@ -544,28 +247,26 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_langgraph"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langgraph_overview",
+        "kb_langgraph",
+        "canon_langgraph_persistence"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Architecture slice applies Build an Agent with LangGraph to state graph with router, tool node, validator, and stop condition, with examples and checks tied to correct route plus trace completeness.",
+      "title": "Nodes do one state transition each",
+      "sub": "Each node should have a clear input, output, and owner.",
+      "summary": "LangGraph nodes are inspectable transformations of shared state.",
       "objectives": [
-        "Apply architecture slice to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the graph loops because the state never records that retrieval already happened."
+        "Split retrieval, drafting, validation, and review into distinct nodes.",
+        "Describe what each node returns as a partial state update.",
+        "Avoid nodes that both decide and perform too much."
       ],
       "termIds": [
         "prototype",
@@ -574,19 +275,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the mechanism in the running case",
+          "title": "A node is not a whole agent; it is one transition",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Architecture slice opens the machinery behind Build an Agent with LangGraph. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "retrieve_policy reads goal and messages, then returns retrieved_sources and context_summary. draft_answer reads retrieved_sources and account_status, then returns draft_answer. validate_citations reads draft_answer and retrieved_sources, then returns citation_errors. request_review reads risk and errors, then returns an approval_request or lets the graph continue."
                 }
               ]
             },
@@ -594,40 +295,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means making the workflow explicit: state fields, nodes, edges, tools, retries, and termination."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is state graph with router, tool node, validator, and stop condition. Which single field, trace, or test would show whether correct route plus trace completeness improved?"
+                  "text": "This shape gives you two framings: product teams can review the workflow as a process map, while engineers can unit-test each transition."
                 }
               ]
             }
@@ -640,220 +308,20 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_overview",
+            "kb_langgraph"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A LangGraph ticket triage agent routes issues to billing, technical support, or human review"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review state graph with router, tool node, validator, and stop condition: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the graph loops because the state never records that retrieval already happened. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_case",
           "kind": "functionalExample",
-          "title": "Worked example: Architecture slice applied to the running case",
+          "title": "Case study: fixing the wrong node",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A LangGraph ticket triage agent routes issues to billing, technical support, or human review. This module asks what architecture slice changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct route plus trace completeness."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the graph loops because the state never records that retrieval already happened."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
-          "language": "python",
-          "code": "# Build an Agent with LangGraph: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the graph loops because the state never records that retrieval already happened."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the graph loops because the state never records that retrieval already happened. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to state graph with router, tool node, validator, and stop condition: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: correct route plus trace completeness becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Build an Agent with LangGraph design makes the wrong answer inspectable before it reaches users."
+                  "text": "If the agent gives a refund with no citation, a single-loop design says the agent failed. The graph design asks which node failed. retrieve_policy may have returned no source; draft_answer may have ignored source IDs; validate_citations may have allowed an empty citation; request_review may have skipped risky cases. Different node, different fix."
                 }
               ]
             }
@@ -866,60 +334,25 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Build an Agent with LangGraph to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review state graph with router, tool node, validator, and stop condition, measure correct route plus trace completeness, and test the failure: the graph loops because the state never records that retrieval already happened.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_langgraph"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langgraph_overview",
+        "kb_langgraph"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Core implementation applies Build an Agent with LangGraph to state graph with router, tool node, validator, and stop condition, with examples and checks tied to correct route plus trace completeness.",
+      "title": "Edges encode routing, retries, and termination",
+      "sub": "Control flow belongs in conditional edges, not in wishful prompting.",
+      "summary": "LangGraph edges make route decisions explicit and testable.",
       "objectives": [
-        "Apply core implementation to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the graph loops because the state never records that retrieval already happened."
+        "Choose direct and conditional edges for the support graph.",
+        "Explain how retry, review, and END conditions are represented.",
+        "Name edge failure modes that skip safeguards."
       ],
       "termIds": [
         "prototype",
@@ -928,19 +361,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the choice that changes reliability",
+          "title": "Edges are the graph's safety rails",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Build an Agent with LangGraph becomes a decision. The team must choose how much rigor state graph with router, tool node, validator, and stop condition needs before it can be trusted."
+                  "text": "After draft_answer, the graph should not always end. A conditional edge can route to validate_citations. If errors exist, route back to draft_answer with repair instructions. If the answer proposes an exception or external action, route to human_review. If approved, route to final_response. If rejected, route to cancelled."
                 }
               ]
             },
@@ -948,84 +381,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves correct route plus trace completeness while making this failure visible: the graph loops because the state never records that retrieval already happened."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A LangGraph ticket triage agent routes issues to billing, technical support, or human review"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review state graph with router, tool node, validator, and stop condition: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the graph loops because the state never records that retrieval already happened. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Prompt text can ask the model to be careful, but the edge function enforces the topology. Test edge functions like ordinary code."
                 }
               ]
             }
@@ -1038,193 +394,111 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_overview",
+            "kb_langgraph"
           ]
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "Route table for the refund assistant",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Condition",
+            "Next node",
+            "Failure prevented"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "No retrieved source",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Build an Agent with LangGraph on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the graph loops because the state never records that retrieval already happened.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct route plus trace completeness.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Condition",
+                  "text": "retrieve_policy retry or safe refusal",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
+                  "criterion": "Next node",
+                  "text": "unsupported answer",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure prevented",
+                  "text": "No retrieved source",
+                  "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Use when the no retrieved source row is the relevant design concern.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Citation errors",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
+                  "criterion": "Condition",
+                  "text": "draft_answer with repair note",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
+                  "criterion": "Next node",
+                  "text": "uncited policy claim",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
+                  "criterion": "Failure prevented",
+                  "text": "Citation errors",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct route plus trace completeness and catches: the graph loops because the state never records that retrieval already happened.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
+              "whenToUse": "Use when the citation errors row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "t": "p",
-              "spans": [
+              "name": "Exception requested",
+              "cells": [
                 {
-                  "text": "For state graph with router, tool node, validator, and stop condition, log or test the fields needed to debug correct route plus trace completeness. If a reviewer would need it during an incident, it belongs in the artifact or trace."
+                  "criterion": "Condition",
+                  "text": "human_review",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Next node",
+                  "text": "unauthorized commitment",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure prevented",
+                  "text": "Exception requested",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when the exception requested row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
+              "name": "Approved and validated",
+              "cells": [
                 {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
+                  "criterion": "Condition",
+                  "text": "final_response",
+                  "rating": "ok"
+                },
                 {
-                  "text": "The failure mode to keep in view is concrete: the graph loops because the state never records that retrieval already happened. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The workflow has nodes but no clear state contract, so later steps read stale or missing data."
-                  }
-                ],
-                [
-                  {
-                    "text": "Retries repeat the same bad action because the failure is not written into state."
-                  }
-                ],
-                [
-                  {
-                    "text": "A handoff occurs without enough context for the next actor to act safely."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: correct route plus trace completeness gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
+                  "criterion": "Next node",
+                  "text": "endless loop or duplicate tool call",
+                  "rating": "ok"
+                },
                 {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
+                  "criterion": "Failure prevented",
+                  "text": "Approved and validated",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when the approved and validated row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -1235,79 +509,26 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when correct route plus trace completeness affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the graph loops because the state never records that retrieval already happened.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Build an Agent with LangGraph to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review state graph with router, tool node, validator, and stop condition, measure correct route plus trace completeness, and test the failure: the graph loops because the state never records that retrieval already happened.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_overview",
+            "kb_langgraph"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build an Agent with LangGraph: baseline, production design, or advanced optimization."
+        "canon_langgraph_overview",
+        "kb_langgraph"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Validation and tracing applies Build an Agent with LangGraph to state graph with router, tool node, validator, and stop condition, with examples and checks tied to correct route plus trace completeness.",
+      "title": "Checkpoints and interrupts make runs resumable",
+      "sub": "Persistence and human review are first-class graph behavior.",
+      "summary": "LangGraph checkpointers and interrupts let agents pause and continue with state.",
       "objectives": [
-        "Apply validation and tracing to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the graph loops because the state never records that retrieval already happened."
+        "Write a minimal LangGraph snippet using state, nodes, edges, and interrupt.",
+        "Predict the route when citation validation fails.",
+        "Verify generated graph code for idempotent review behavior."
       ],
       "termIds": [
         "prototype",
@@ -1316,203 +537,29 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 10,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Build an Agent with LangGraph should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For state graph with router, tool node, validator, and stop condition, the sketch should prove one thing: the system can improve correct route plus trace completeness without hiding the failure where the graph loops because the state never records that retrieval already happened."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A LangGraph ticket triage agent routes issues to billing, technical support, or human review"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review state graph with router, tool node, validator, and stop condition: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the graph loops because the state never records that retrieval already happened. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Validation and tracing applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A LangGraph ticket triage agent routes issues to billing, technical support, or human review. This module asks what validation and tracing changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct route plus trace completeness."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the graph loops because the state never records that retrieval already happened."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
+          "title": "LangGraph skeleton with validation route and review interrupt",
           "language": "python",
-          "code": "# Build an Agent with LangGraph: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
+          "code": "from typing import TypedDict, Literal\nfrom langgraph.graph import StateGraph, START, END\nfrom langgraph.types import interrupt\n\nclass RefundState(TypedDict, total=False):\n    goal: str\n    retrieved_sources: list[str]\n    draft_answer: str\n    citation_errors: list[str]\n    approved: bool\n    status: str\n\ndef retrieve_policy(state: RefundState):\n    return {\"retrieved_sources\": [\"refund-policy#45\"]}\n\ndef draft_answer(state: RefundState):\n    return {\"draft_answer\": \"Policy says no automatic refund after 30 days. [refund-policy#45]\"}\n\ndef validate_citations(state: RefundState):\n    has_source = bool(state.get(\"retrieved_sources\")) and \"[refund-policy#45]\" in state.get(\"draft_answer\", \"\")\n    return {\"citation_errors\": [] if has_source else [\"missing refund-policy citation\"]}\n\ndef human_review(state: RefundState):\n    approved = interrupt({\"reason\": \"exception or sensitive refund answer\", \"draft\": state[\"draft_answer\"]})\n    return {\"approved\": bool(approved)}\n\ndef route_after_validation(state: RefundState) -> Literal[\"draft_answer\", \"human_review\"]:\n    return \"draft_answer\" if state.get(\"citation_errors\") else \"human_review\"\n\ndef route_after_review(state: RefundState) -> Literal[\"final\", \"cancelled\"]:\n    return \"final\" if state.get(\"approved\") else \"cancelled\"\n\ndef final(state: RefundState):\n    return {\"status\": \"done\"}\n\ndef cancelled(state: RefundState):\n    return {\"status\": \"cancelled\"}\n\ngraph = StateGraph(RefundState)\ngraph.add_node(\"retrieve_policy\", retrieve_policy)\ngraph.add_node(\"draft_answer\", draft_answer)\ngraph.add_node(\"validate_citations\", validate_citations)\ngraph.add_node(\"human_review\", human_review)\ngraph.add_node(\"final\", final)\ngraph.add_node(\"cancelled\", cancelled)\ngraph.add_edge(START, \"retrieve_policy\")\ngraph.add_edge(\"retrieve_policy\", \"draft_answer\")\ngraph.add_edge(\"draft_answer\", \"validate_citations\")\ngraph.add_conditional_edges(\"validate_citations\", route_after_validation)\ngraph.add_conditional_edges(\"human_review\", route_after_review)\ngraph.add_edge(\"final\", END)\ngraph.add_edge(\"cancelled\", END)\n\napp = graph.compile()  # add a checkpointer for resumable production runs",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the graph loops because the state never records that retrieval already happened."
+                  "text": "This snippet shows the topology. In production you would compile with a checkpointer and invoke with a thread_id so the interrupt can resume the same state."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
+            "prompt": "Predict the next node if validate_citations returns citation_errors with one item.",
+            "answer": "The route_after_validation function returns draft_answer. The graph repairs the draft before reaching human_review, so review is not asked to approve an uncited answer."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
@@ -1521,53 +568,23 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_overview",
+            "canon_langgraph_interrupts",
+            "kb_langgraph"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify the AI-generated LangGraph code",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Build an Agent with LangGraph, review it against the running case before accepting it."
+                  "text": "Checklist: state type contains every field used by nodes; each node returns partial state, not a mutated hidden global; conditional edge names match real node names; END is reachable; interrupt happens before side effects that cannot be repeated; production compile uses a checkpointer; resume uses a stable thread_id."
                 }
               ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: state graph with router, tool node, validator, and stop condition?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: the graph loops because the state never records that retrieval already happened?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug correct route plus trace completeness?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
             }
           ],
           "termIds": [
@@ -1578,60 +595,29 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Build an Agent with LangGraph to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review state graph with router, tool node, validator, and stop condition, measure correct route plus trace completeness, and test the failure: the graph loops because the state never records that retrieval already happened.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_persistence",
+            "canon_langgraph_interrupts",
+            "kb_langgraph"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langgraph_overview",
+        "canon_langgraph_interrupts",
+        "kb_langgraph",
+        "canon_langgraph_persistence"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Hardening path applies Build an Agent with LangGraph to state graph with router, tool node, validator, and stop condition, with examples and checks tied to correct route plus trace completeness.",
+      "title": "Tests and traces harden the graph",
+      "sub": "A LangGraph agent should prove its routes before users do.",
+      "summary": "The build finishes by testing nodes, route functions, resume behavior, and observability.",
       "objectives": [
-        "Apply hardening path to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the graph loops because the state never records that retrieval already happened."
+        "Create tests for route functions and safeguard nodes.",
+        "Add trace fields that explain graph execution.",
+        "Plan the next rung after the single-agent graph works."
       ],
       "termIds": [
         "prototype",
@@ -1640,19 +626,19 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: retrieval before mastery",
+          "title": "Graph tests should target the topology",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Test nodes with fixed state fixtures. Test route functions with edge cases: no sources, citation errors, sensitive exception, approved review, rejected review. Test resume behavior by pausing at human_review and continuing with approval=false. Add trace metadata for graph_name, node_name, thread_id, route_decision, checkpoint_id, and release SHA."
                 }
               ]
             },
@@ -1660,16 +646,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "If you can explain how state graph with router, tool node, validator, and stop condition improves correct route plus trace completeness and catches the graph loops because the state never records that retrieval already happened, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "The most important failure modes are graph-state bloat, conditional edges that skip safeguards, non-idempotent side effects before interrupts, and checkpoints that store private data without retention rules."
                 }
               ]
             }
@@ -1682,292 +659,47 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langgraph_overview",
+            "canon_langgraph_persistence",
+            "kb_langgraph"
           ]
         },
         {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A LangGraph ticket triage agent routes issues to billing, technical support, or human review"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review state graph with router, tool node, validator, and stop condition: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the graph loops because the state never records that retrieval already happened. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Build an Agent with LangGraph on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the graph loops because the state never records that retrieval already happened.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct route plus trace completeness.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct route plus trace completeness and catches: the graph loops because the state never records that retrieval already happened.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For state graph with router, tool node, validator, and stop condition, log or test the fields needed to debug correct route plus trace completeness. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Build an Agent with LangGraph: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
+          "id": "m5_capstone_case",
           "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
+          "title": "Mini test plan for the refund graph",
           "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Build an Agent with LangGraph without copying the worked example. Keep the same running case - A LangGraph ticket triage agent routes issues to billing, technical support, or human review - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
             {
               "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Write the problem statement in one sentence and name the success metric: correct route plus trace completeness."
+                    "text": "Fixture: retrieved source exists and citation is present -> route to human_review."
                   }
                 ],
                 [
                   {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
+                    "text": "Fixture: no citation -> route back to draft_answer."
                   }
                 ],
                 [
                   {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
+                    "text": "Fixture: approval false -> final status cancelled."
                   }
                 ],
                 [
                   {
-                    "text": "Add one test that reproduces this failure: the graph loops because the state never records that retrieval already happened."
+                    "text": "Fixture: resume after interrupt -> no duplicate account lookup or refund action."
                   }
                 ],
                 [
                   {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
+                    "text": "Trace assertion: each node emits node_name and route_decision."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "prototype",
             "retriever",
@@ -1976,30 +708,32 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "canon_langgraph_persistence",
+            "kb_langgraph"
+          ],
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Build an Agent with LangGraph to the running case?",
+          "title": "LangGraph hardening",
+          "prompt": "Which test most directly catches a graph that skips citation validation?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review state graph with router, tool node, validator, and stop condition, measure correct route plus trace completeness, and test the failure: the graph loops because the state never records that retrieval already happened.",
+              "text": "A screenshot of the final chat answer.",
+              "correct": false
+            },
+            {
+              "text": "A route test proving draft_answer always goes through validate_citations before final_response.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A token-cost comparison across models.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "LangGraph makes routes explicit, so route tests are core product tests.",
           "termIds": [
             "prototype",
             "retriever",
@@ -2008,18 +742,15 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_langgraph"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Build an Agent with LangGraph: baseline, production design, or advanced optimization."
+        "canon_langgraph_overview",
+        "canon_langgraph_persistence",
+        "kb_langgraph"
+      ]
     }
   ],
   "glossary": {
@@ -2088,17 +819,17 @@
     "title": "Decision prompts for Build an Agent with LangGraph",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Graph design gate",
         "questions": [
           {
-            "q": "What decision does Build an Agent with LangGraph change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships state graph with router, tool node, validator, and stop condition.",
+            "q": "Which agent decisions deserve explicit graph state and edges?",
+            "why": "LangGraph pays off when routing, retries, checkpointing, or human interrupts must be visible and testable.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Typed graph with checkpoints",
+              "One hidden while-loop",
+              "Stateless prompt chain"
             ],
-            "rot": "Choose the smallest option that catches: the graph loops because the state never records that retrieval already happened."
+            "rot": "Model the unstable or risky steps as graph nodes and keep state small enough to inspect."
           }
         ]
       }
@@ -2110,73 +841,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Build an Agent with LangGraph using the running case: A LangGraph ticket triage agent routes issues to billing, technical support, or human review. Name the artifact (state graph with router, tool node, validator, and stop condition), explain the mechanism, choose a design level, write the check for the graph loops because the state never records that retrieval already happened, and say how you would measure correct route plus trace completeness."
+            "text": "Retrieval prompt: rebuild the LangGraph agent by naming the state schema, node responsibilities, conditional edges, checkpoint thread ID, interrupt point, trace fields, and tests that prove the graph cannot skip safeguards."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "LangGraph build path from state contract to tested agent",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Build an Agent with LangGraph.",
-          "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+          "label": "State schema is the contract for the agent",
+          "sub": "Start with the data that must survive across steps.",
+          "what": "Learners anchor the graph in explicit state instead of hidden conversation variables.",
+          "relevance": "This prevents graph state from becoming an untestable junk drawer.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Target behavior connects Build an Agent with LangGraph to the running artifact and failure test.",
+          "orient": "Define the minimal state carried through a refund-assistant graph.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+          "label": "Nodes do one state transition each",
+          "sub": "Each node should have a clear input, output, and owner.",
+          "what": "Learners design graph nodes that can be tested in isolation.",
+          "relevance": "This reduces opaque agent behavior and makes failures local.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Architecture slice connects Build an Agent with LangGraph to the running artifact and failure test.",
+          "orient": "Turn the refund workflow into single-purpose graph nodes.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+          "label": "Edges encode routing, retries, and termination",
+          "sub": "Control flow belongs in conditional edges, not in wishful prompting.",
+          "what": "Learners make the agent topology visible.",
+          "relevance": "This catches wrong routes that silently bypass validation or approval.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Core implementation connects Build an Agent with LangGraph to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Route graph execution through validation, review, retry, and termination.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+          "label": "Checkpoints and interrupts make runs resumable",
+          "sub": "Persistence and human review are first-class graph behavior.",
+          "what": "Learners see the concrete LangGraph mechanics for resumable agent work.",
+          "relevance": "This avoids agents that lose context after approval or repeat side effects on resume.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Validation and tracing connects Build an Agent with LangGraph to the running artifact and failure test.",
+          "orient": "Code the graph skeleton with checkpointed state and a review pause.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Hardening path",
-          "sub": "Decide what to ship, monitor, and improve next.",
-          "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct route plus trace completeness while avoiding the failure: the graph loops because the state never records that retrieval already happened.",
+          "label": "Tests and traces harden the graph",
+          "sub": "A LangGraph agent should prove its routes before users do.",
+          "what": "Learners turn a working graph into a reviewable product component.",
+          "relevance": "This prevents graph edits from silently skipping validation or review.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Hardening path connects Build an Agent with LangGraph to the running artifact and failure test.",
+          "orient": "Gate the graph with route tests, resume tests, and trace evidence.",
           "order": 5
         }
       ],
@@ -2184,83 +915,79 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "constrains"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "routes"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "resumes"
         },
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "tests"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Target behavior",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "State schema is the contract for the agent",
+        "detail": "A LangGraph build begins with typed state, not a prompt loop."
       },
       {
         "step": 2,
-        "label": "Architecture slice",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Nodes do one state transition each",
+        "detail": "LangGraph nodes are inspectable transformations of shared state."
       },
       {
         "step": 3,
-        "label": "Core implementation",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Edges encode routing, retries, and termination",
+        "detail": "LangGraph edges make route decisions explicit and testable."
       },
       {
         "step": 4,
-        "label": "Validation and tracing",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Checkpoints and interrupts make runs resumable",
+        "detail": "LangGraph checkpointers and interrupts let agents pause and continue with state."
       },
       {
         "step": 5,
-        "label": "Hardening path",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
-      }
-    ],
-    "checklist": [
-      {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
-        "fromModuleId": "m1"
-      },
-      {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure correct route plus trace completeness on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the graph loops because the state never records that retrieval already happened?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
-        "fromModuleId": "m5"
+        "label": "Tests and traces harden the graph",
+        "detail": "The build finishes by testing nodes, route functions, resume behavior, and observability."
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for state graph with router, tool node, validator, and stop condition. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (correct route plus trace completeness), failure case (the graph loops because the state never records that retrieval already happened), owner, and the next rung after this lesson.",
-      "scopedTo": "Build an Agent with LangGraph"
-    }
+      "prompt": "Build a LangGraph refund assistant with state fields for goal, messages, retrieved sources, draft answer, approval, and status. Add nodes for retrieval, drafting, citation validation, and human review; use a checkpointer; write tests for route decisions and resume behavior. Next rung: add long-term memory or multi-agent handoff.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "State schema is typed and minimal.",
+        "Every node returns a partial state update.",
+        "Conditional edges cover success, retry, review, and end.",
+        "Checkpoint and interrupt behavior is tested."
+      ]
+    },
+    "checklist": [
+      {
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"State schema is the contract for the agent\"?",
+        "fromModuleId": "m1"
+      },
+      {
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Checkpoints and interrupts make runs resumable\"?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_gate",
+        "label": "Does \"Tests and traces harden the graph\" define the release or production gate?",
+        "fromModuleId": "m5"
+      }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2290,6 +1017,34 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "canon_langgraph_overview": {
+      "id": "canon_langgraph_overview",
+      "kind": "canonical",
+      "title": "LangGraph overview",
+      "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_langgraph_persistence": {
+      "id": "canon_langgraph_persistence",
+      "kind": "canonical",
+      "title": "LangGraph persistence",
+      "url": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_langgraph_interrupts": {
+      "id": "canon_langgraph_interrupts",
+      "kind": "canonical",
+      "title": "LangGraph interrupts",
+      "url": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_langgraph": {
+      "id": "kb_langgraph",
+      "kind": "kb",
+      "title": "KB: LangGraph",
+      "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "asOfDate": "2026-06-22"
     }
   }
 }

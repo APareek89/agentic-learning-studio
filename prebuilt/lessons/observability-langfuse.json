@@ -25,85 +25,90 @@
   },
   "mentalMap": {
     "title": "Observability with Langfuse: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Observability with Langfuse is useful when you can apply it to a product team needs to connect user complaints to prompts, tools, costs, and model versions, choose a design, and verify time to diagnose a bad answer.",
+    "caption": "Use Langfuse to make an LLM product run replayable: trace, spans, scores, datasets, cost, and privacy controls.",
+    "oneLineThesis": "Langfuse is valuable when a final answer is not enough evidence and the team needs to see the run that produced it.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Observability with Langfuse in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+        "label": "A trace turns one complaint into a replayable run",
+        "sub": "Start from the failed user interaction, not the dashboard.",
+        "what": "Learners see observability as replayable evidence for a run, not generic logging.",
+        "relevance": "This prevents dashboards that count traffic while hiding the failure path.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects Observability with Langfuse to the running artifact and failure test."
+        "orient": "Anchor the lesson in one unsupported refund answer and its missing evidence.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+        "label": "Spans separate retrieval, model, tools, and scores",
+        "sub": "A useful trace tree mirrors the real AI workflow boundaries.",
+        "what": "Learners design a trace tree that maps to actual LLM components.",
+        "relevance": "This catches failures where a single app span hides the bad retrieval or unsafe tool call.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects Observability with Langfuse to the running artifact and failure test."
+        "orient": "Break the run into components whose failures require different fixes.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+        "label": "Datasets and scores connect debugging to evals",
+        "sub": "A trace becomes more valuable when failures become repeatable tests.",
+        "what": "Learners connect observability to the eval loop instead of treating it as after-the-fact logging.",
+        "relevance": "This prevents the same failure from reappearing after a prompt or model change.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects Observability with Langfuse to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "Show how a failed trace graduates into a scored dataset case.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+        "label": "Trace payloads need stable metadata, not noisy names",
+        "sub": "Good fields make traces searchable across releases.",
+        "what": "Learners implement a small trace contract that an AI-generated integration can be checked against.",
+        "relevance": "This avoids beautiful trace screens that cannot answer release questions.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects Observability with Langfuse to the running artifact and failure test."
+        "orient": "Code a verifier that catches missing spans and unstable metadata.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+        "label": "Privacy and ownership make traces usable in production",
+        "sub": "An observability system is also a data product with retention rules.",
+        "what": "Learners turn instrumentation into an operated practice.",
+        "relevance": "This keeps traces from becoming an unmanaged store of private user content.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects Observability with Langfuse to the running artifact and failure test."
+        "orient": "Close with the governance rules that keep trace data safe and actionable.",
+        "order": 5
       }
     ],
     "edges": [
       {
         "from": "n_m1",
         "to": "n_m2",
-        "label": "then"
+        "label": "contains"
       },
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "feeds"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "supports"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hardens"
       }
     ],
     "structureType": "conceptual"
@@ -112,13 +117,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies Observability with Langfuse to Langfuse observability dashboard plan for an LLM feature, with examples and checks tied to time to diagnose a bad answer.",
+      "title": "A trace turns one complaint into a replayable run",
+      "sub": "Start from the failed user interaction, not the dashboard.",
+      "summary": "A Langfuse trace records the causal path behind one LLM response.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: logs omit the retrieved context that caused the hallucination."
+        "Describe trace, span, score, and metadata in one concrete support case.",
+        "Explain why final-answer logs cannot diagnose many LLM failures.",
+        "Name the first fields a trace should capture."
       ],
       "termIds": [
         "eval",
@@ -127,19 +132,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Observability with Langfuse matters here",
+          "title": "The unit of debugging is the run",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A product team needs to connect user complaints to prompts, tools, costs, and model versions. The learner's job is not to memorize Observability with Langfuse; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved time to diagnose a bad answer."
+                  "text": "Problem anchor: a support assistant tells a customer they are eligible for a refund, but the policy page says the opposite. The product log has only the user message, final answer, latency, and model name. Nobody can tell whether retrieval missed the policy, the prompt ignored it, or a tool returned stale account data."
                 }
               ]
             },
@@ -147,7 +152,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: Langfuse observability dashboard plan for an LLM feature. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "In Langfuse, the useful object is the trace: one user request with child spans for retrieval, model calls, tool calls, formatting, and scoring. The trace gives the complaint a replayable shape instead of leaving the team to infer causes from the final text."
                 }
               ]
             },
@@ -156,143 +161,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if logs omit the retrieved context that caused the hallucination, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Observability with Langfuse matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Observability with Langfuse matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure time to diagnose a bad answer on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Observability with Langfuse.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product team needs to connect user complaints to prompts, tools, costs, and model versions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse observability dashboard plan for an LLM feature: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where logs omit the retrieved context that caused the hallucination. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Two framings help: for support leads, the trace is an incident timeline; for engineers, it is a causal tree with inputs, outputs, and metadata."
                 }
               ]
             }
@@ -305,20 +174,21 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ],
+          "analogy": "A trace is the flight recorder for one LLM run, while a metric dashboard is the airport departures board."
         },
         {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Worked trace sketch: refund answer incident",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product team needs to connect user complaints to prompts, tools, costs, and model versions. This module asks what what the tool owns changes in the artifact."
+                  "text": "The first trace for the incident is named support_refund_answer and includes session_id, release_sha, prompt_version, model, route, and user_segment. Its child spans are retrieve_policy, call_account_tool, draft_answer, validate_citations, and score_groundedness."
                 }
               ]
             },
@@ -327,22 +197,27 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Open the user complaint and copy the trace ID into the incident ticket."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Check retrieve_policy: did the correct refund-policy chunk appear in top five?"
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve time to diagnose a bad answer."
+                    "text": "Check call_account_tool: did the account status match the customer?"
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: logs omit the retrieved context that caused the hallucination."
+                    "text": "Check draft_answer: did the prompt include the retrieved policy boundary?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Check score_groundedness: did the evaluator flag unsupported claims?"
                   }
                 ]
               ]
@@ -351,51 +226,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse observability dashboard plan for an LLM feature, log or test the fields needed to debug time to diagnose a bad answer. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "That artifact is larger than a log line but smaller than a postmortem. It is the minimum evidence needed to decide the next fix."
                 }
               ]
             }
@@ -408,128 +239,32 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: Langfuse observability dashboard plan for an LLM feature",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A product team needs to connect user complaints to prompts, tools, costs, and model versions. The team wants to improve time to diagnose a bad answer, but it has already seen this failure: logs omit the retrieved context that caused the hallucination."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Release change: a prompt or workflow update makes answers warmer, but the team must prove it did not lose required facts, citations, refusals, or safe tool behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: Langfuse observability dashboard plan for an LLM feature. It includes golden inputs, expected behaviors, assertions, failure labels, owner, and the release gate for time to diagnose a bad answer."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: case refund-policy-1 must include \"30 days\" and \"invoice id\", must not promise guaranteed approval, and must cite the refund policy source."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: evaluation lead. Context: A product team needs to connect user complaints to prompts, tools, costs, and model versions. Task: build the smallest golden test pack for Observability with Langfuse. Include happy path, edge case, refusal or escalation case, and one regression tied to \"logs omit the retrieved context that caused the hallucination\". Output: {cases, assertions, pass_fail_gate, owner}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Observability with Langfuse to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "canon_langfuse_tracing",
+            "kb_observability"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Observability with Langfuse to the running case?",
+          "title": "Trace purpose",
+          "prompt": "A user reports a hallucinated support answer. What should the first Langfuse trace help you determine?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Langfuse observability dashboard plan for an LLM feature, measure time to diagnose a bad answer, and test the failure: logs omit the retrieved context that caused the hallucination.",
+              "text": "How many users visited the chat page yesterday.",
+              "correct": false
+            },
+            {
+              "text": "Which span supplied or lost the evidence used by the answer.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Whether the UI color made the answer look trustworthy.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Observability starts with the causal run, then rolls up to aggregate reporting.",
           "termIds": [
             "eval",
             "trace",
@@ -538,28 +273,25 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies Observability with Langfuse to Langfuse observability dashboard plan for an LLM feature, with examples and checks tied to time to diagnose a bad answer.",
+      "title": "Spans separate retrieval, model, tools, and scores",
+      "sub": "A useful trace tree mirrors the real AI workflow boundaries.",
+      "summary": "Span design determines whether root cause is visible.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: logs omit the retrieved context that caused the hallucination."
+        "Choose span boundaries for retrieval, model calls, tool execution, and scoring.",
+        "Avoid hiding distinct failure modes inside one large span.",
+        "Recognize the metadata each span type needs."
       ],
       "termIds": [
         "eval",
@@ -568,19 +300,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "Span boundaries are debugging boundaries",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind Observability with Langfuse. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "A span should answer one question. Retrieval spans answer what evidence was considered. Model spans answer what prompt and parameters were used. Tool spans answer what action was attempted and what came back. Score spans answer how the run was judged."
                 }
               ]
             },
@@ -588,32 +320,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means turning subjective quality into repeatable cases, assertions, rubrics, and release gates."
+                  "text": "If a support flow records one giant span called answer_user, every failure looks like a model problem. If it records source_ids, top_k, reranker_version, tool_name, validated_args, model, prompt_version, and score_name, the same answer becomes diagnosable."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -621,7 +329,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is Langfuse observability dashboard plan for an LLM feature. Which single field, trace, or test would show whether time to diagnose a bad answer improved?"
+                  "text": "Spaced recall: bring back the trace from module 1 and ask which child span would prove the refund policy was present."
                 }
               ]
             }
@@ -634,183 +342,20 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product team needs to connect user complaints to prompts, tools, costs, and model versions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse observability dashboard plan for an LLM feature: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where logs omit the retrieved context that caused the hallucination. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_case",
           "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
+          "title": "Case study: one wrong answer, three different fixes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A product team needs to connect user complaints to prompts, tools, costs, and model versions. This module asks what core workflow changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve time to diagnose a bad answer."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: logs omit the retrieved context that caused the hallucination."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: turn one golden case into a gate",
-          "language": "python",
-          "code": "# Observability with Langfuse: one golden eval case.\ncase = {\n    \"must_include\": [\"30 days\", \"invoice id\"],\n    \"must_not_include\": [\"guaranteed approval\"],\n}\nanswer = \"Refund requests need an invoice id and must arrive within 30 days.\"\n\ndef passes(case, answer):\n    lower = answer.lower()\n    return all(x.lower() in lower for x in case[\"must_include\"]) and all(x.lower() not in lower for x in case[\"must_not_include\"])\n\nprint(\"pass\" if passes(case, answer) else \"fail\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to logs omit the retrieved context that caused the hallucination."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict whether the candidate answer passes.",
-            "answer": "It prints:\npass\n\nThe answer includes required facts and avoids the forbidden promise. Real eval harnesses scale this pattern across many cases."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: logs omit the retrieved context that caused the hallucination. The output still looks confident, which is exactly why the lesson needs a richer artifact."
+                  "text": "Case A: retrieve_policy returns only shipping-policy chunks. Fix the index, metadata filters, or reranker. Case B: retrieve_policy returns the correct refund chunk, but draft_answer omits it. Fix the prompt or context packing. Case C: draft_answer is grounded, but validate_citations fails because source IDs were dropped during formatting. Fix the renderer or schema."
                 }
               ]
             },
@@ -818,36 +363,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The team does not restart from scratch. It adds one missing control to Langfuse observability dashboard plan for an LLM feature: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: time to diagnose a bad answer becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Observability with Langfuse design makes the wrong answer inspectable before it reaches users."
+                  "text": "The final answer text looks similar in all three cases. The span tree makes the fixes different."
                 }
               ]
             }
@@ -860,30 +376,112 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_observability"
           ]
         },
         {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Observability with Langfuse to the running case?",
-          "format": "mcq",
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Span types and their debugging payload",
+          "criteria": [
+            "Span",
+            "Payload to record",
+            "Failure it exposes"
+          ],
           "options": [
             {
-              "text": "Build or review Langfuse observability dashboard plan for an LLM feature, measure time to diagnose a bad answer, and test the failure: logs omit the retrieved context that caused the hallucination.",
-              "correct": true
+              "name": "Retrieval",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "source IDs, query, filters, top-k, reranker",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Payload to record",
+                  "text": "missing or noisy evidence",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure it exposes",
+                  "text": "Retrieval",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the retrieval row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "Model call",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "model, prompt version, parameters, token use",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Payload to record",
+                  "text": "prompt drift or model-routing surprises",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure it exposes",
+                  "text": "Model call",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the model call row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "Tool call",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "tool name, validated args, status, latency",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Payload to record",
+                  "text": "unsafe, stale, or failing external action",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure it exposes",
+                  "text": "Tool call",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the tool call row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Score",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "score name, version, value, threshold",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Payload to record",
+                  "text": "quality regressions after the run",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure it exposes",
+                  "text": "Score",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the score row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "eval",
             "trace",
@@ -892,28 +490,26 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies Observability with Langfuse to Langfuse observability dashboard plan for an LLM feature, with examples and checks tied to time to diagnose a bad answer.",
+      "title": "Datasets and scores connect debugging to evals",
+      "sub": "A trace becomes more valuable when failures become repeatable tests.",
+      "summary": "Langfuse scores and datasets turn incidents into regression evidence.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: logs omit the retrieved context that caused the hallucination."
+        "Explain how traces, scores, feedback, and datasets reinforce each other.",
+        "Distinguish online triage from offline regression evaluation.",
+        "Promote a failed run into a test case without copying sensitive data."
       ],
       "termIds": [
         "eval",
@@ -922,19 +518,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "Scores make traces sortable; datasets make fixes repeatable",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Observability with Langfuse becomes a decision. The team must choose how much rigor Langfuse observability dashboard plan for an LLM feature needs before it can be trusted."
+                  "text": "A trace answers what happened. A score says whether it was acceptable. A dataset lets the team rerun the same kind of case after a prompt, retrieval, or model change. Langfuse is useful because those objects can sit near each other instead of living in separate spreadsheets and notebooks."
                 }
               ]
             },
@@ -942,7 +538,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves time to diagnose a bad answer while making this failure visible: logs omit the retrieved context that caused the hallucination."
+                  "text": "For the refund incident, the team can attach groundedness=0.42, citation_valid=false, policy_slice=refund, and severity=high. After redaction, the trace becomes a dataset item with the expected policy section and refusal rule."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression"
+          ],
+          "sources": [
+            "canon_langfuse_eval",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m3_worked",
+          "kind": "functionalExample",
+          "title": "Worked promotion: incident to regression case",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The support lead labels the trace as refund_policy_wrong. The engineer extracts a safe input: \"Can I get a refund after using the subscription for 45 days?\" The reference requires: no automatic refund, cite the terms section, offer escalation if the account has an exception flag."
                 }
               ]
             },
@@ -951,272 +573,26 @@
               "items": [
                 [
                   {
-                    "text": "Thin slice: prove the path on one realistic example."
+                    "text": "Keep: user intent, product slice, source IDs, expected facts, score rubric."
                   }
                 ],
                 [
                   {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
+                    "text": "Remove: customer name, account ID, raw tool token, private notes."
                   }
                 ],
                 [
                   {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product team needs to connect user complaints to prompts, tools, costs, and model versions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse observability dashboard plan for an LLM feature: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where logs omit the retrieved context that caused the hallucination. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Observability with Langfuse on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: logs omit the retrieved context that caused the hallucination.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on time to diagnose a bad answer.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves time to diagnose a bad answer and catches: logs omit the retrieved context that caused the hallucination.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse observability dashboard plan for an LLM feature, log or test the fields needed to debug time to diagnose a bad answer. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: logs omit the retrieved context that caused the hallucination. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Golden cases are too easy and miss the failures users actually report."
-                  }
-                ],
-                [
-                  {
-                    "text": "An assertion checks wording but not the required behavior or source."
-                  }
-                ],
-                [
-                  {
-                    "text": "The release gate averages away a serious failure in a high-risk slice."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: time to diagnose a bad answer gets worse even though the final answer or artifact still looks polished."
+                    "text": "Add: prompt version that failed and the release SHA that fixed it."
                   }
                 ]
               ]
             },
             {
-              "t": "callout",
-              "tone": "warn",
+              "t": "p",
               "spans": [
                 {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
+                  "text": "The next release does not only claim the bug is fixed; it reruns the case."
                 }
               ]
             }
@@ -1229,48 +605,32 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when time to diagnose a bad answer affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: logs omit the retrieved context that caused the hallucination.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
+            "canon_langfuse_eval",
+            "kb_observability"
           ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Observability with Langfuse to the running case?",
+          "title": "Trace to eval",
+          "prompt": "When should a production trace become a dataset case?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Langfuse observability dashboard plan for an LLM feature, measure time to diagnose a bad answer, and test the failure: logs omit the retrieved context that caused the hallucination.",
+              "text": "Only when every token in the trace can be stored forever.",
+              "correct": false
+            },
+            {
+              "text": "When it represents a failure pattern the team wants to prevent from returning.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Whenever latency is lower than the median.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Datasets should capture representative behavior and risk, with privacy controls.",
           "termIds": [
             "eval",
             "trace",
@@ -1279,29 +639,25 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_eval",
+        "kb_observability"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies Observability with Langfuse to Langfuse observability dashboard plan for an LLM feature, with examples and checks tied to time to diagnose a bad answer.",
+      "title": "Trace payloads need stable metadata, not noisy names",
+      "sub": "Good fields make traces searchable across releases.",
+      "summary": "Metadata design decides whether Langfuse traces can be queried and compared.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: logs omit the retrieved context that caused the hallucination."
+        "Write a minimal trace payload for an LLM feature.",
+        "Check for high-cardinality names and missing version fields.",
+        "Use predict-then-reveal to identify a missing span."
       ],
       "termIds": [
         "eval",
@@ -1310,27 +666,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
+          "title": "Stable metadata beats clever trace names",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Observability with Langfuse should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse observability dashboard plan for an LLM feature, the sketch should prove one thing: the system can improve time to diagnose a bad answer without hiding the failure where logs omit the retrieved context that caused the hallucination."
+                  "text": "Trace names should be low-cardinality, such as support_answer or lesson_generation, not support_answer_for_anand_2026_06_23. Put user hash, release SHA, prompt version, model, route, and dataset case ID in metadata fields. That makes filters and dashboards useful without exploding the name space."
                 }
               ]
             },
@@ -1339,7 +687,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Verify AI output: check that generated instrumentation records prompt_version, model, source IDs, cost, and release SHA; rejects raw secrets; and uses consistent span names."
                 }
               ]
             }
@@ -1352,161 +700,30 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product team needs to connect user complaints to prompts, tools, costs, and model versions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse observability dashboard plan for an LLM feature: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where logs omit the retrieved context that caused the hallucination. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A product team needs to connect user complaints to prompts, tools, costs, and model versions. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve time to diagnose a bad answer."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: logs omit the retrieved context that caused the hallucination."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: turn one golden case into a gate",
+          "title": "Verifier for a Langfuse-style trace contract",
           "language": "python",
-          "code": "# Observability with Langfuse: one golden eval case.\ncase = {\n    \"must_include\": [\"30 days\", \"invoice id\"],\n    \"must_not_include\": [\"guaranteed approval\"],\n}\nanswer = \"Refund requests need an invoice id and must arrive within 30 days.\"\n\ndef passes(case, answer):\n    lower = answer.lower()\n    return all(x.lower() in lower for x in case[\"must_include\"]) and all(x.lower() not in lower for x in case[\"must_not_include\"])\n\nprint(\"pass\" if passes(case, answer) else \"fail\")",
-          "explain": [
+          "code": "required_spans = {\"retrieve_policy\", \"draft_answer\", \"score_groundedness\"}\nrequired_meta = {\"release_sha\", \"prompt_version\", \"model\", \"route\"}\n\ntrace = {\n    \"name\": \"support_answer\",\n    \"metadata\": {\n        \"release_sha\": \"9f31c2a\",\n        \"prompt_version\": \"refund-v7\",\n        \"model\": \"gpt-5.5\",\n        \"route\": \"support/refunds\",\n    },\n    \"spans\": [\n        {\"name\": \"retrieve_policy\", \"metadata\": {\"top_k\": 5, \"source_ids\": [\"refunds.md#45\"]}},\n        {\"name\": \"draft_answer\", \"metadata\": {\"input_tokens\": 812, \"output_tokens\": 144}},\n        # Try deleting the next span before running the verifier.\n        {\"name\": \"score_groundedness\", \"metadata\": {\"score\": 0.94, \"rubric\": \"grounded-v2\"}},\n    ],\n}\n\nspan_names = {span[\"name\"] for span in trace[\"spans\"]}\nmissing_spans = required_spans - span_names\nmissing_meta = required_meta - set(trace[\"metadata\"])\n\nif missing_spans or missing_meta:\n    raise SystemExit({\"missing_spans\": sorted(missing_spans), \"missing_meta\": sorted(missing_meta)})\n\nprint(\"trace contract ok\")",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to logs omit the retrieved context that caused the hallucination."
+                  "text": "This dependency-free check is not the Langfuse SDK. It is the contract you can run in tests against the payload your SDK integration emits."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict whether the candidate answer passes.",
-            "answer": "It prints:\npass\n\nThe answer includes required facts and avoids the forbidden promise. Real eval harnesses scale this pattern across many cases."
+            "prompt": "Predict the output if the score_groundedness span is deleted. What key will the verifier report?",
+            "answer": "It reports missing_spans with score_groundedness. The trace might still show retrieval and the model call, but the release gate cannot tell whether the answer passed the groundedness check."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "eval",
             "trace",
@@ -1515,117 +732,26 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Observability with Langfuse, review it against the running case before accepting it."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: Langfuse observability dashboard plan for an LLM feature?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: logs omit the retrieved context that caused the hallucination?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug time to diagnose a bad answer?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Observability with Langfuse to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Langfuse observability dashboard plan for an LLM feature, measure time to diagnose a bad answer, and test the failure: logs omit the retrieved context that caused the hallucination.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies Observability with Langfuse to Langfuse observability dashboard plan for an LLM feature, with examples and checks tied to time to diagnose a bad answer.",
+      "title": "Privacy and ownership make traces usable in production",
+      "sub": "An observability system is also a data product with retention rules.",
+      "summary": "Production Langfuse usage needs redaction, sampling, ownership, and review loops.",
       "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: logs omit the retrieved context that caused the hallucination."
+        "Name privacy risks in prompt and trace capture.",
+        "Choose sampling and retention rules for sensitive flows.",
+        "Define ownership for scores, datasets, and incident review."
       ],
       "termIds": [
         "eval",
@@ -1634,334 +760,48 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
+          "title": "The trace store is part of your data boundary",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "Langfuse can capture the details that make LLM systems debuggable, but those details may include user messages, retrieved private documents, tool outputs, and failed generations. Production use needs a policy for what is captured, what is redacted, who can inspect it, and how long it remains."
                 }
               ]
             },
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how Langfuse observability dashboard plan for an LLM feature improves time to diagnose a bad answer and catches logs omit the retrieved context that caused the hallucination, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A product team needs to connect user complaints to prompts, tools, costs, and model versions"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse observability dashboard plan for an LLM feature: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where logs omit the retrieved context that caused the hallucination. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Observability with Langfuse on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: logs omit the retrieved context that caused the hallucination.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on time to diagnose a bad answer.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves time to diagnose a bad answer and catches: logs omit the retrieved context that caused the hallucination.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse observability dashboard plan for an LLM feature, log or test the fields needed to debug time to diagnose a bad answer. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Observability with Langfuse: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Observability with Langfuse without copying the worked example. Keep the same running case - A product team needs to connect user complaints to prompts, tools, costs, and model versions - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
+              "t": "ul",
               "items": [
                 [
                   {
-                    "text": "Write the problem statement in one sentence and name the success metric: time to diagnose a bad answer."
+                    "text": "Redact or hash user identifiers before trace storage."
                   }
                 ],
                 [
                   {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
+                    "text": "Sample low-risk successful traffic, but keep high-severity failures with review controls."
                   }
                 ],
                 [
                   {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
+                    "text": "Record policy_version and redaction_version so historical traces are interpretable."
                   }
                 ],
                 [
                   {
-                    "text": "Add one test that reproduces this failure: logs omit the retrieved context that caused the hallucination."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
+                    "text": "Assign an owner for every score and dataset, not only the trace pipeline."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "eval",
             "trace",
@@ -1970,30 +810,50 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ],
+          "analogy": "The trace store is a lab notebook with customer data nearby; useful, but governed."
+        },
+        {
+          "id": "m5_decision",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Capture enough to debug one run, but never store content merely because the SDK can capture it.",
+          "useWhen": "High-impact LLM workflows where failures need root-cause analysis. Teams that can define trace owners, score owners, retention, and redaction. Prompt or model releases that need trace-backed regression cases.",
+          "avoidWhen": "Anonymous toy demos where ordinary logs are sufficient. Flows with sensitive data and no redaction or access-control plan. Dashboards that collect fields no one uses for decisions.",
+          "termIds": [
+            "eval",
+            "trace",
+            "dataset",
+            "judge",
+            "regression"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Observability with Langfuse to the running case?",
+          "title": "Production readiness",
+          "prompt": "What makes a Langfuse observability rollout production-ready?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Langfuse observability dashboard plan for an LLM feature, measure time to diagnose a bad answer, and test the failure: logs omit the retrieved context that caused the hallucination.",
+              "text": "Capturing every prompt and output forever.",
+              "correct": false
+            },
+            {
+              "text": "Trace usefulness plus privacy controls, ownership, and release feedback loops.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only tracking total token cost by day.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "LLM observability is both debugging infrastructure and governed product data.",
           "termIds": [
             "eval",
             "trace",
@@ -2002,18 +862,14 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_tracing",
+        "kb_observability"
+      ]
     }
   ],
   "glossary": {
@@ -2083,17 +939,17 @@
     "title": "Decision prompts for Observability with Langfuse",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Trace usefulness",
         "questions": [
           {
-            "q": "What decision does Observability with Langfuse change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships Langfuse observability dashboard plan for an LLM feature.",
+            "q": "Can the trace explain the exact step that made a bad answer possible?",
+            "why": "A dashboard is useful only when it connects the user complaint to prompt version, retrieval, tool calls, scores, cost, and model routing.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Trace root cause by span",
+              "Only count total requests",
+              "Store every prompt without policy"
             ],
-            "rot": "Choose the smallest option that catches: logs omit the retrieved context that caused the hallucination."
+            "rot": "Start with the span tree that lets an engineer reproduce one complaint, then add aggregate dashboards."
           }
         ]
       }
@@ -2105,152 +961,153 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Observability with Langfuse using the running case: A product team needs to connect user complaints to prompts, tools, costs, and model versions. Name the artifact (Langfuse observability dashboard plan for an LLM feature), explain the mechanism, choose a design level, write the check for logs omit the retrieved context that caused the hallucination, and say how you would measure time to diagnose a bad answer."
+            "text": "Retrieval prompt: reconstruct Langfuse observability by naming the trace, the span types, the metadata fields, the scoring loop, and the privacy rule that prevents raw user data from becoming debug debt."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Langfuse path from user complaint to replayable evidence",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Observability with Langfuse in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+          "label": "A trace turns one complaint into a replayable run",
+          "sub": "Start from the failed user interaction, not the dashboard.",
+          "what": "Learners see observability as replayable evidence for a run, not generic logging.",
+          "relevance": "This prevents dashboards that count traffic while hiding the failure path.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects Observability with Langfuse to the running artifact and failure test."
+          "orient": "Anchor the lesson in one unsupported refund answer and its missing evidence.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+          "label": "Spans separate retrieval, model, tools, and scores",
+          "sub": "A useful trace tree mirrors the real AI workflow boundaries.",
+          "what": "Learners design a trace tree that maps to actual LLM components.",
+          "relevance": "This catches failures where a single app span hides the bad retrieval or unsafe tool call.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects Observability with Langfuse to the running artifact and failure test."
+          "orient": "Break the run into components whose failures require different fixes.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+          "label": "Datasets and scores connect debugging to evals",
+          "sub": "A trace becomes more valuable when failures become repeatable tests.",
+          "what": "Learners connect observability to the eval loop instead of treating it as after-the-fact logging.",
+          "relevance": "This prevents the same failure from reappearing after a prompt or model change.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects Observability with Langfuse to the running artifact and failure test."
+          "emphasis": "normal",
+          "orient": "Show how a failed trace graduates into a scored dataset case.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+          "label": "Trace payloads need stable metadata, not noisy names",
+          "sub": "Good fields make traces searchable across releases.",
+          "what": "Learners implement a small trace contract that an AI-generated integration can be checked against.",
+          "relevance": "This avoids beautiful trace screens that cannot answer release questions.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects Observability with Langfuse to the running artifact and failure test."
+          "orient": "Code a verifier that catches missing spans and unstable metadata.",
+          "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve time to diagnose a bad answer while avoiding the failure: logs omit the retrieved context that caused the hallucination.",
+          "label": "Privacy and ownership make traces usable in production",
+          "sub": "An observability system is also a data product with retention rules.",
+          "what": "Learners turn instrumentation into an operated practice.",
+          "relevance": "This keeps traces from becoming an unmanaged store of private user content.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects Observability with Langfuse to the running artifact and failure test."
+          "orient": "Close with the governance rules that keep trace data safe and actionable.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "contains"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "feeds evals"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "makes queryable"
         },
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "governs"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "A trace turns one complaint into a replayable run",
+        "detail": "A Langfuse trace records the causal path behind one LLM response."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Spans separate retrieval, model, tools, and scores",
+        "detail": "Span design determines whether root cause is visible."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Datasets and scores connect debugging to evals",
+        "detail": "Langfuse scores and datasets turn incidents into regression evidence."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Trace payloads need stable metadata, not noisy names",
+        "detail": "Metadata design decides whether Langfuse traces can be queried and compared."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
-      }
-    ],
-    "checklist": [
-      {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
-        "fromModuleId": "m1"
-      },
-      {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure time to diagnose a bad answer on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: logs omit the retrieved context that caused the hallucination?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
-        "fromModuleId": "m5"
+        "label": "Privacy and ownership make traces usable in production",
+        "detail": "Production Langfuse usage needs redaction, sampling, ownership, and review loops."
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for Langfuse observability dashboard plan for an LLM feature. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (time to diagnose a bad answer), failure case (logs omit the retrieved context that caused the hallucination), owner, and the next rung after this lesson.",
-      "scopedTo": "Observability with Langfuse"
-    }
+      "prompt": "Instrument a small support-answering flow with a trace for the request, spans for retrieval/model/tool work, one score, one cost field, and a redaction rule. Next rung: promote three failed traces into a dataset and gate a prompt release.",
+      "scopedTo": "LLM product observability",
+      "checks": [
+        "A single complaint can be opened as one trace.",
+        "Retrieval and model calls are separate spans.",
+        "The trace records prompt version, model, cost, and release SHA.",
+        "Sensitive content is redacted or sampled before storage."
+      ]
+    },
+    "checklist": [
+      {
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"A trace turns one complaint into a replayable run\"?",
+        "fromModuleId": "m1"
+      },
+      {
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Trace payloads need stable metadata, not noisy names\"?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_gate",
+        "label": "Does \"Privacy and ownership make traces usable in production\" define the release or production gate?",
+        "fromModuleId": "m5"
+      }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2280,6 +1137,34 @@
       "title": "Official documentation",
       "url": "https://langfuse.com/docs",
       "asOfDate": "2026-06-20"
+    },
+    "canon_langfuse_tracing": {
+      "id": "canon_langfuse_tracing",
+      "kind": "canonical",
+      "title": "Langfuse tracing documentation",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_langfuse_eval": {
+      "id": "canon_langfuse_eval",
+      "kind": "canonical",
+      "title": "Langfuse evaluation overview",
+      "url": "https://langfuse.com/docs/evaluation/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_observability": {
+      "id": "kb_observability",
+      "kind": "kb",
+      "title": "KB: Tracing and Observability",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_otel_genai": {
+      "id": "canon_otel_genai",
+      "kind": "canonical",
+      "title": "OpenTelemetry GenAI semantic conventions",
+      "url": "https://github.com/open-telemetry/semantic-conventions-genai",
+      "asOfDate": "2026-06-22"
     }
   }
 }

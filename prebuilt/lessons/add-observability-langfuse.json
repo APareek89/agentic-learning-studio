@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Add Observability with Langfuse: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Add Observability with Langfuse is useful when you can apply it to a support agent sometimes gives slow unsupported answers and the team needs trace-level evidence, choose a design, and verify percentage of bad answers with actionable traces.",
+    "caption": "Build Langfuse observability into a support agent one trace contract at a time.",
+    "oneLineThesis": "A Langfuse integration is done when bad answers produce actionable traces, not when the SDK import compiles.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Add Observability with Langfuse.",
-        "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+        "label": "Define the trace contract before touching the SDK",
+        "sub": "Write what evidence a useful trace must contain.",
+        "what": "Learners begin with observable behavior instead of library ceremony.",
+        "relevance": "This prevents a build that emits traces but cannot answer root-cause questions.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Target behavior connects Add Observability with Langfuse to the running artifact and failure test.",
+        "orient": "Specify the fields required to debug one slow unsupported answer.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+        "label": "Instrument the request boundary and model call",
+        "sub": "Create one parent trace and attach model metadata consistently.",
+        "what": "Learners wire the first useful trace around the production request path.",
+        "relevance": "This keeps model calls from floating outside the user incident.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Architecture slice connects Add Observability with Langfuse to the running artifact and failure test.",
+        "orient": "Wrap the support request and model call with stable trace metadata.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+        "label": "Capture retrieval, tools, and scores as separate spans",
+        "sub": "Add child spans where the agent can fail differently.",
+        "what": "Learners add the observability pieces that explain bad answers.",
+        "relevance": "This catches unsupported answers whose model span looks normal.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Core implementation connects Add Observability with Langfuse to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Record evidence, tool effects, and quality scores as separate child spans.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+        "label": "Write a verifier for trace completeness",
+        "sub": "Make observability fail loudly when a required field disappears.",
+        "what": "Learners treat traces as product output that can be tested.",
+        "relevance": "This prevents silent regressions where a refactor drops source IDs or scores.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Validation and tracing connects Add Observability with Langfuse to the running artifact and failure test.",
+        "orient": "Run a small test that rejects incomplete observability payloads.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+        "label": "Promote traces into datasets and release gates",
+        "sub": "Use observed failures to harden the next prompt or model change.",
+        "what": "Learners connect the build to ongoing evaluation and operations.",
+        "relevance": "This keeps observability from ending as a passive dashboard.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Hardening path connects Add Observability with Langfuse to the running artifact and failure test.",
+        "orient": "Turn failed traces into eval cases and retention-aware release gates.",
         "order": 5
       }
     ],
@@ -98,17 +98,17 @@
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "adds"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "tests"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "promotes"
       }
     ],
     "structureType": "procedural",
@@ -118,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Target behavior applies Add Observability with Langfuse to Langfuse tracing plan for prompts, retrieval, tools, and scores, with examples and checks tied to percentage of bad answers with actionable traces.",
+      "title": "Define the trace contract before touching the SDK",
+      "sub": "Write what evidence a useful trace must contain.",
+      "summary": "The first build artifact is a trace acceptance contract.",
       "objectives": [
-        "Apply target behavior to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: only final answers are logged, so root cause is invisible."
+        "Specify required trace and span fields.",
+        "Connect those fields to the support-agent failure being debugged.",
+        "Separate must-have evidence from nice dashboard fields."
       ],
       "termIds": [
         "prototype",
@@ -139,13 +139,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Add Observability with Langfuse matters here",
+          "title": "Acceptance target: every bad answer has a usable trace",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. The learner's job is not to memorize Add Observability with Langfuse; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved percentage of bad answers with actionable traces."
+                  "text": "Running case: a support agent sometimes gives slow unsupported answers. The team wants every flagged answer to include a trace with user-session hash, route, release SHA, prompt version, model, retrieval source IDs, tool status, token cost, latency, and a groundedness score."
                 }
               ]
             },
@@ -153,24 +153,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: Langfuse tracing plan for prompts, retrieval, tools, and scores. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Do not start by asking where to paste the Langfuse SDK call. Start by asking which question the trace must answer: did the right evidence arrive, did the model use it, did the tool agree, and did a score catch the issue?"
                 }
               ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if only final answers are logged, so root cause is invisible, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m1_artifact",
+          "kind": "functionalExample",
+          "title": "Trace contract for the support-agent slice",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
+                  "text": "Required trace fields: name=support_answer, session_hash, release_sha, prompt_version, route, model, total_tokens, cost_usd. Required spans: retrieve_policy, call_account_tool, draft_answer, validate_citations, score_groundedness."
                 }
               ]
             },
@@ -179,17 +188,17 @@
               "items": [
                 [
                   {
-                    "text": "Product framing: Add Observability with Langfuse matters when it changes a user-visible decision, release gate, or operational workflow."
+                    "text": "Failure test: delete source_ids from retrieve_policy and the verifier must fail."
                   }
                 ],
                 [
                   {
-                    "text": "Engineering framing: Add Observability with Langfuse matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
+                    "text": "Failure test: omit score_groundedness and the release gate must fail."
                   }
                 ],
                 [
                   {
-                    "text": "Validation framing: the lesson is not complete until the team can measure percentage of bad answers with actionable traces on examples that resemble the real workload."
+                    "text": "Failure test: include raw account_id and the privacy check must fail."
                   }
                 ]
               ]
@@ -203,339 +212,32 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Add Observability with Langfuse.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "canon_langfuse_tracing",
+            "kb_observability"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse tracing plan for prompts, retrieval, tools, and scores: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where only final answers are logged, so root cause is invisible. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Target behavior applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. This module asks what target behavior changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve percentage of bad answers with actionable traces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: only final answers are logged, so root cause is invisible."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse tracing plan for prompts, retrieval, tools, and scores, log or test the fields needed to debug percentage of bad answers with actionable traces. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: Langfuse tracing plan for prompts, retrieval, tools, and scores",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. The team wants to improve percentage of bad answers with actionable traces, but it has already seen this failure: only final answers are logged, so root cause is invisible."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Release change: a prompt or workflow update makes answers warmer, but the team must prove it did not lose required facts, citations, refusals, or safe tool behavior."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: Langfuse tracing plan for prompts, retrieval, tools, and scores. It includes golden inputs, expected behaviors, assertions, failure labels, owner, and the release gate for percentage of bad answers with actionable traces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: case refund-policy-1 must include \"30 days\" and \"invoice id\", must not promise guaranteed approval, and must cite the refund policy source."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: evaluation lead. Context: A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. Task: build the smallest golden test pack for Add Observability with Langfuse. Include happy path, edge case, refusal or escalation case, and one regression tied to \"only final answers are logged, so root cause is invisible\". Output: {cases, assertions, pass_fail_gate, owner}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Add Observability with Langfuse to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Observability with Langfuse to the running case?",
+          "title": "Build starting point",
+          "prompt": "What is the first artifact in this observability build?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and test the failure: only final answers are logged, so root cause is invisible.",
+              "text": "A screenshot of the Langfuse dashboard.",
+              "correct": false
+            },
+            {
+              "text": "A trace contract describing required fields and spans.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A model upgrade plan.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The contract makes the SDK integration measurable.",
           "termIds": [
             "prototype",
             "retriever",
@@ -544,28 +246,25 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Architecture slice applies Add Observability with Langfuse to Langfuse tracing plan for prompts, retrieval, tools, and scores, with examples and checks tied to percentage of bad answers with actionable traces.",
+      "title": "Instrument the request boundary and model call",
+      "sub": "Create one parent trace and attach model metadata consistently.",
+      "summary": "Boundary instrumentation ties user-facing work to model behavior.",
       "objectives": [
-        "Apply architecture slice to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: only final answers are logged, so root cause is invisible."
+        "Place the parent trace at the request boundary.",
+        "Record prompt, model, and release metadata on the model span.",
+        "Avoid trace names that contain user-specific values."
       ],
       "termIds": [
         "prototype",
@@ -580,13 +279,13 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the mechanism in the running case",
+          "title": "The request boundary owns the parent trace",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Architecture slice opens the machinery behind Add Observability with Langfuse. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Create the trace when the support request enters the application. That parent should survive routing, retrieval, tool calls, model calls, validation, and response formatting. If each helper creates its own trace, a single bad answer becomes scattered evidence."
                 }
               ]
             },
@@ -594,16 +293,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means turning subjective quality into repeatable cases, assertions, rubrics, and release gates."
+                  "text": "The model span should include model, provider, prompt_version, temperature or decoding settings, input/output token counts, and cost. Store the prompt version, not a long prompt name with a ticket number embedded in it."
                 }
               ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m2_case",
+          "kind": "functionalExample",
+          "title": "Boundary wiring review",
+          "body": [
             {
-              "t": "h",
-              "level": 4,
+              "t": "p",
               "spans": [
                 {
-                  "text": "Two framings for the same idea"
+                  "text": "A good AI-generated integration starts trace support_answer at the HTTP handler or job worker, then passes the trace context into retrieve_policy and draft_answer. A weak integration starts a trace inside the LLM helper only; it cannot show the retrieval context that caused the answer."
                 }
               ]
             },
@@ -612,24 +328,20 @@
               "items": [
                 [
                   {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
+                    "text": "Verify the trace has one parent ID for the whole request."
                   }
                 ],
                 [
                   {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
+                    "text": "Verify model metadata is on the model span, not only in logs."
+                  }
+                ],
+                [
+                  {
+                    "text": "Verify errors and retries attach to the same trace."
                   }
                 ]
               ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is Langfuse tracing plan for prompts, retrieval, tools, and scores. Which single field, trace, or test would show whether percentage of bad answers with actionable traces improved?"
-                }
-              ]
             }
           ],
           "termIds": [
@@ -640,286 +352,26 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse tracing plan for prompts, retrieval, tools, and scores: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where only final answers are logged, so root cause is invisible. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Architecture slice applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. This module asks what architecture slice changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve percentage of bad answers with actionable traces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: only final answers are logged, so root cause is invisible."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: turn one golden case into a gate",
-          "language": "python",
-          "code": "# Add Observability with Langfuse: one golden eval case.\ncase = {\n    \"must_include\": [\"30 days\", \"invoice id\"],\n    \"must_not_include\": [\"guaranteed approval\"],\n}\nanswer = \"Refund requests need an invoice id and must arrive within 30 days.\"\n\ndef passes(case, answer):\n    lower = answer.lower()\n    return all(x.lower() in lower for x in case[\"must_include\"]) and all(x.lower() not in lower for x in case[\"must_not_include\"])\n\nprint(\"pass\" if passes(case, answer) else \"fail\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to only final answers are logged, so root cause is invisible."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict whether the candidate answer passes.",
-            "answer": "It prints:\npass\n\nThe answer includes required facts and avoids the forbidden promise. Real eval harnesses scale this pattern across many cases."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: only final answers are logged, so root cause is invisible. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to Langfuse tracing plan for prompts, retrieval, tools, and scores: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: percentage of bad answers with actionable traces becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Add Observability with Langfuse design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Observability with Langfuse to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and test the failure: only final answers are logged, so root cause is invisible.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Core implementation applies Add Observability with Langfuse to Langfuse tracing plan for prompts, retrieval, tools, and scores, with examples and checks tied to percentage of bad answers with actionable traces.",
+      "title": "Capture retrieval, tools, and scores as separate spans",
+      "sub": "Add child spans where the agent can fail differently.",
+      "summary": "The integration becomes useful when evidence, action, and quality are distinct.",
       "objectives": [
-        "Apply core implementation to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: only final answers are logged, so root cause is invisible."
+        "Add retrieval span fields for source IDs and ranking.",
+        "Add tool span fields for validated arguments and status.",
+        "Attach a score that can promote failures into evals."
       ],
       "termIds": [
         "prototype",
@@ -934,13 +386,13 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the choice that changes reliability",
+          "title": "Different spans imply different owners",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Add Observability with Langfuse becomes a decision. The team must choose how much rigor Langfuse tracing plan for prompts, retrieval, tools, and scores needs before it can be trusted."
+                  "text": "Retrieval failures usually belong to indexing, chunking, filters, or reranking. Tool failures belong to authorization, validation, external service status, or argument construction. Scoring failures belong to eval rubric, threshold, or product policy. Separate spans make ownership clear."
                 }
               ]
             },
@@ -948,84 +400,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves percentage of bad answers with actionable traces while making this failure visible: only final answers are logged, so root cause is invisible."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse tracing plan for prompts, retrieval, tools, and scores: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where only final answers are logged, so root cause is invisible. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "For the support agent, retrieve_policy stores query, filters, top_k, source_ids, and reranker. call_account_tool stores tool name, validated args shape, status, and latency. score_groundedness stores score name, score version, value, and threshold."
                 }
               ]
             }
@@ -1038,193 +413,112 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "Child span checklist",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Span",
+            "Minimum fields",
+            "Owner"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "retrieve_policy",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Add Observability with Langfuse on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: only final answers are logged, so root cause is invisible.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on percentage of bad answers with actionable traces.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Span",
+                  "text": "query, filter, top_k, source_ids, rank positions",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
+                  "criterion": "Minimum fields",
+                  "text": "Search/RAG owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "retrieve_policy",
+                  "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Use when the retrieve_policy row is the relevant design concern.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "call_account_tool",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
+                  "criterion": "Span",
+                  "text": "tool, argument schema, status, latency, error class",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
+                  "criterion": "Minimum fields",
+                  "text": "Integration owner",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
+                  "criterion": "Owner",
+                  "text": "call_account_tool",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves percentage of bad answers with actionable traces and catches: only final answers are logged, so root cause is invisible.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
+              "whenToUse": "Use when the call_account_tool row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "t": "p",
-              "spans": [
+              "name": "draft_answer",
+              "cells": [
                 {
-                  "text": "For Langfuse tracing plan for prompts, retrieval, tools, and scores, log or test the fields needed to debug percentage of bad answers with actionable traces. If a reviewer would need it during an incident, it belongs in the artifact or trace."
+                  "criterion": "Span",
+                  "text": "prompt_version, model, tokens, cost, finish reason",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Minimum fields",
+                  "text": "Prompt/model owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "draft_answer",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when the draft_answer row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
+              "name": "score_groundedness",
+              "cells": [
                 {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
+                  "criterion": "Span",
+                  "text": "score_version, value, threshold, dataset_case_id",
+                  "rating": "ok"
+                },
                 {
-                  "text": "The failure mode to keep in view is concrete: only final answers are logged, so root cause is invisible. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Golden cases are too easy and miss the failures users actually report."
-                  }
-                ],
-                [
-                  {
-                    "text": "An assertion checks wording but not the required behavior or source."
-                  }
-                ],
-                [
-                  {
-                    "text": "The release gate averages away a serious failure in a high-risk slice."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: percentage of bad answers with actionable traces gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
+                  "criterion": "Minimum fields",
+                  "text": "Eval owner",
+                  "rating": "ok"
+                },
                 {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
+                  "criterion": "Owner",
+                  "text": "score_groundedness",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use when the score_groundedness row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -1235,79 +529,27 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when percentage of bad answers with actionable traces affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: only final answers are logged, so root cause is invisible.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Observability with Langfuse to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and test the failure: only final answers are logged, so root cause is invisible.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "canon_langfuse_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_tracing",
+        "canon_langfuse_eval",
+        "kb_observability"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Validation and tracing applies Add Observability with Langfuse to Langfuse tracing plan for prompts, retrieval, tools, and scores, with examples and checks tied to percentage of bad answers with actionable traces.",
+      "title": "Write a verifier for trace completeness",
+      "sub": "Make observability fail loudly when a required field disappears.",
+      "summary": "A small verifier turns trace quality into a testable contract.",
       "objectives": [
-        "Apply validation and tracing to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: only final answers are logged, so root cause is invisible."
+        "Implement a trace completeness check.",
+        "Use predict-then-reveal to reason about missing fields.",
+        "Review AI-generated instrumentation with a concrete checklist."
       ],
       "termIds": [
         "prototype",
@@ -1316,203 +558,29 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for Add Observability with Langfuse should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse tracing plan for prompts, retrieval, tools, and scores, the sketch should prove one thing: the system can improve percentage of bad answers with actionable traces without hiding the failure where only final answers are logged, so root cause is invisible."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse tracing plan for prompts, retrieval, tools, and scores: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where only final answers are logged, so root cause is invisible. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Validation and tracing applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. This module asks what validation and tracing changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve percentage of bad answers with actionable traces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: only final answers are logged, so root cause is invisible."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: turn one golden case into a gate",
+          "title": "Trace completeness verifier for the Langfuse build",
           "language": "python",
-          "code": "# Add Observability with Langfuse: one golden eval case.\ncase = {\n    \"must_include\": [\"30 days\", \"invoice id\"],\n    \"must_not_include\": [\"guaranteed approval\"],\n}\nanswer = \"Refund requests need an invoice id and must arrive within 30 days.\"\n\ndef passes(case, answer):\n    lower = answer.lower()\n    return all(x.lower() in lower for x in case[\"must_include\"]) and all(x.lower() not in lower for x in case[\"must_not_include\"])\n\nprint(\"pass\" if passes(case, answer) else \"fail\")",
-          "explain": [
+          "code": "trace = {\n    \"metadata\": {\"release_sha\": \"9f31c2a\", \"prompt_version\": \"support-v3\", \"model\": \"gpt-5.5\"},\n    \"spans\": {\n        \"retrieve_policy\": {\"source_ids\": [\"refunds#45\"], \"top_k\": 5},\n        \"call_account_tool\": {\"status\": \"ok\", \"validated_args\": True},\n        \"draft_answer\": {\"input_tokens\": 900, \"output_tokens\": 120, \"cost_usd\": 0.004},\n        \"score_groundedness\": {\"score\": 0.91, \"threshold\": 0.85},\n    },\n}\n\nrequired = {\n    \"metadata\": [\"release_sha\", \"prompt_version\", \"model\"],\n    \"spans.retrieve_policy\": [\"source_ids\", \"top_k\"],\n    \"spans.call_account_tool\": [\"status\", \"validated_args\"],\n    \"spans.draft_answer\": [\"input_tokens\", \"output_tokens\", \"cost_usd\"],\n    \"spans.score_groundedness\": [\"score\", \"threshold\"],\n}\n\nmissing = []\nfor path, fields in required.items():\n    target = trace\n    for part in path.split('.'):\n        target = target.get(part, {})\n    for field in fields:\n        if field not in target:\n            missing.append(f\"{path}.{field}\")\n\nprint(\"OK\" if not missing else {\"missing\": missing})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to only final answers are logged, so root cause is invisible."
+                  "text": "Use this as a release test around the payload your Langfuse instrumentation emits. The exact SDK calls can change; the evidence contract should not disappear quietly."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict whether the candidate answer passes.",
-            "answer": "It prints:\npass\n\nThe answer includes required facts and avoids the forbidden promise. Real eval harnesses scale this pattern across many cases."
+            "prompt": "Predict the result if retrieve_policy.source_ids is removed from the trace.",
+            "answer": "The script prints a missing list containing spans.retrieve_policy.source_ids. That is the exact failure this build is meant to catch: an answer can no longer be tied to evidence."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
@@ -1521,53 +589,22 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify the AI-generated integration",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Add Observability with Langfuse, review it against the running case before accepting it."
+                  "text": "Checklist: the parent trace starts at the request boundary; each child span has stable names; source IDs are captured without full private documents; tool args are shape-validated before logging; cost includes retries; score version and threshold are stored; and the verifier fails when a required span or field is absent."
                 }
               ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: Langfuse tracing plan for prompts, retrieval, tools, and scores?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: only final answers are logged, so root cause is invisible?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug percentage of bad answers with actionable traces?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
             }
           ],
           "termIds": [
@@ -1578,60 +615,26 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Observability with Langfuse to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and test the failure: only final answers are logged, so root cause is invisible.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Hardening path applies Add Observability with Langfuse to Langfuse tracing plan for prompts, retrieval, tools, and scores, with examples and checks tied to percentage of bad answers with actionable traces.",
+      "title": "Promote traces into datasets and release gates",
+      "sub": "Use observed failures to harden the next prompt or model change.",
+      "summary": "The build closes when traces feed regression tests and governance.",
       "objectives": [
-        "Apply hardening path to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: only final answers are logged, so root cause is invisible."
+        "Convert a failed trace into a redacted dataset item.",
+        "Define a release gate using trace-derived scores.",
+        "Add privacy and retention rules before broader rollout."
       ],
       "termIds": [
         "prototype",
@@ -1646,13 +649,13 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: retrieval before mastery",
+          "title": "Observability should improve the next release",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "After the first incident, the team should not merely stare at a dashboard. They should turn the redacted input, expected policy citation, and score rubric into a dataset case. The next prompt or model change must pass that case before deployment."
                 }
               ]
             },
@@ -1660,16 +663,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "If you can explain how Langfuse tracing plan for prompts, retrieval, tools, and scores improves percentage of bad answers with actionable traces and catches only final answers are logged, so root cause is invisible, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
+                  "text": "Privacy hardening belongs here too: decide which fields are redacted, which traces are sampled, who can view raw content, and when trace data expires."
                 }
               ]
             }
@@ -1682,148 +676,16 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Langfuse tracing plan for prompts, retrieval, tools, and scores: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where only final answers are logged, so root cause is invisible. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Add Observability with Langfuse on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: only final answers are logged, so root cause is invisible.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on percentage of bad answers with actionable traces.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves percentage of bad answers with actionable traces and catches: only final answers are logged, so root cause is invisible.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "A trace is production-ready when it can become a safe regression case.",
+          "useWhen": "A failed answer represents a recurring product risk. The trace includes enough evidence to define expected behavior. Sensitive fields can be removed or replaced with stable surrogates.",
+          "avoidWhen": "The trace depends on private content that cannot be safely retained. The failure is a one-off infrastructure outage already covered elsewhere. No owner will maintain the score or dataset case.",
           "termIds": [
             "prototype",
             "retriever",
@@ -1832,174 +694,31 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Langfuse tracing plan for prompts, retrieval, tools, and scores, log or test the fields needed to debug percentage of bad answers with actionable traces. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Add Observability with Langfuse: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Add Observability with Langfuse without copying the worked example. Keep the same running case - A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: percentage of bad answers with actionable traces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: only final answers are logged, so root cause is invisible."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Observability with Langfuse to the running case?",
+          "title": "Release gate",
+          "prompt": "What should happen to a high-severity failed trace after redaction?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and test the failure: only final answers are logged, so root cause is invisible.",
+              "text": "Delete it immediately and rely on memory.",
+              "correct": false
+            },
+            {
+              "text": "Promote it into a dataset case that future releases must pass.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Use it only as a dashboard screenshot.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Observability becomes durable when incidents enter regression testing.",
           "termIds": [
             "prototype",
             "retriever",
@@ -2008,18 +727,14 @@
             "deployment"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_langfuse_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_eval",
+        "kb_observability"
+      ]
     }
   ],
   "glossary": {
@@ -2088,17 +803,17 @@
     "title": "Decision prompts for Add Observability with Langfuse",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Build gate",
         "questions": [
           {
-            "q": "What decision does Add Observability with Langfuse change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships Langfuse tracing plan for prompts, retrieval, tools, and scores.",
+            "q": "What trace evidence must exist before this support agent ships?",
+            "why": "The build should prove retrieval, model, tool, score, cost, and version fields are visible for one representative bad answer.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Trace contract with verifier",
+              "SDK import only",
+              "Manual screenshot review"
             ],
-            "rot": "Choose the smallest option that catches: only final answers are logged, so root cause is invisible."
+            "rot": "Define the contract first, instrument the boundary second, and gate the release with trace completeness."
           }
         ]
       }
@@ -2110,73 +825,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Add Observability with Langfuse using the running case: A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. Name the artifact (Langfuse tracing plan for prompts, retrieval, tools, and scores), explain the mechanism, choose a design level, write the check for only final answers are logged, so root cause is invisible, and say how you would measure percentage of bad answers with actionable traces."
+            "text": "Retrieval prompt: rebuild the Langfuse implementation from memory by naming the trace contract, request boundary, child spans, verifier, dataset promotion rule, and privacy hardening step."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Langfuse build path from contract to release gate",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Add Observability with Langfuse.",
-          "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+          "label": "Define the trace contract before touching the SDK",
+          "sub": "Write what evidence a useful trace must contain.",
+          "what": "Learners begin with observable behavior instead of library ceremony.",
+          "relevance": "This prevents a build that emits traces but cannot answer root-cause questions.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Target behavior connects Add Observability with Langfuse to the running artifact and failure test.",
+          "orient": "Specify the fields required to debug one slow unsupported answer.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+          "label": "Instrument the request boundary and model call",
+          "sub": "Create one parent trace and attach model metadata consistently.",
+          "what": "Learners wire the first useful trace around the production request path.",
+          "relevance": "This keeps model calls from floating outside the user incident.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Architecture slice connects Add Observability with Langfuse to the running artifact and failure test.",
+          "orient": "Wrap the support request and model call with stable trace metadata.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+          "label": "Capture retrieval, tools, and scores as separate spans",
+          "sub": "Add child spans where the agent can fail differently.",
+          "what": "Learners add the observability pieces that explain bad answers.",
+          "relevance": "This catches unsupported answers whose model span looks normal.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Core implementation connects Add Observability with Langfuse to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Record evidence, tool effects, and quality scores as separate child spans.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+          "label": "Write a verifier for trace completeness",
+          "sub": "Make observability fail loudly when a required field disappears.",
+          "what": "Learners treat traces as product output that can be tested.",
+          "relevance": "This prevents silent regressions where a refactor drops source IDs or scores.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Validation and tracing connects Add Observability with Langfuse to the running artifact and failure test.",
+          "orient": "Run a small test that rejects incomplete observability payloads.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Hardening path",
-          "sub": "Decide what to ship, monitor, and improve next.",
-          "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve percentage of bad answers with actionable traces while avoiding the failure: only final answers are logged, so root cause is invisible.",
+          "label": "Promote traces into datasets and release gates",
+          "sub": "Use observed failures to harden the next prompt or model change.",
+          "what": "Learners connect the build to ongoing evaluation and operations.",
+          "relevance": "This keeps observability from ending as a passive dashboard.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Hardening path connects Add Observability with Langfuse to the running artifact and failure test.",
+          "orient": "Turn failed traces into eval cases and retention-aware release gates.",
           "order": 5
         }
       ],
@@ -2184,83 +899,79 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "defines"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "captures"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "verifies"
         },
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "promotes"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Target behavior",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Define the trace contract before touching the SDK",
+        "detail": "The first build artifact is a trace acceptance contract."
       },
       {
         "step": 2,
-        "label": "Architecture slice",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Instrument the request boundary and model call",
+        "detail": "Boundary instrumentation ties user-facing work to model behavior."
       },
       {
         "step": 3,
-        "label": "Core implementation",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Capture retrieval, tools, and scores as separate spans",
+        "detail": "The integration becomes useful when evidence, action, and quality are distinct."
       },
       {
         "step": 4,
-        "label": "Validation and tracing",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Write a verifier for trace completeness",
+        "detail": "A small verifier turns trace quality into a testable contract."
       },
       {
         "step": 5,
-        "label": "Hardening path",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
-      }
-    ],
-    "checklist": [
-      {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
-        "fromModuleId": "m1"
-      },
-      {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure percentage of bad answers with actionable traces on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: only final answers are logged, so root cause is invisible?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
-        "fromModuleId": "m5"
+        "label": "Promote traces into datasets and release gates",
+        "detail": "The build closes when traces feed regression tests and governance."
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for Langfuse tracing plan for prompts, retrieval, tools, and scores. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (percentage of bad answers with actionable traces), failure case (only final answers are logged, so root cause is invisible), owner, and the next rung after this lesson.",
-      "scopedTo": "Add Observability with Langfuse"
-    }
+      "prompt": "Add Langfuse-style observability to a toy support agent. Produce one trace with retrieval, model, tool, and score spans; run a completeness verifier; redact private fields; then promote one failed trace into a regression dataset item. Next rung: wire the same spans to CI evals.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Trace contract exists before SDK wiring.",
+        "Every required child span appears in a failing case.",
+        "Verifier fails on missing source IDs or score.",
+        "Dataset promotion removes sensitive values."
+      ]
+    },
+    "checklist": [
+      {
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Define the trace contract before touching the SDK\"?",
+        "fromModuleId": "m1"
+      },
+      {
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Write a verifier for trace completeness\"?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_gate",
+        "label": "Does \"Promote traces into datasets and release gates\" define the release or production gate?",
+        "fromModuleId": "m5"
+      }
+    ]
   },
   "citations": {
     "kb1": {
@@ -2290,6 +1001,27 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "canon_langfuse_tracing": {
+      "id": "canon_langfuse_tracing",
+      "kind": "canonical",
+      "title": "Langfuse tracing documentation",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_langfuse_eval": {
+      "id": "canon_langfuse_eval",
+      "kind": "canonical",
+      "title": "Langfuse evaluation overview",
+      "url": "https://langfuse.com/docs/evaluation/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_observability": {
+      "id": "kb_observability",
+      "kind": "kb",
+      "title": "KB: Tracing and Observability",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
     }
   }
 }
