@@ -189,7 +189,10 @@ async function tryClaudeProse(item: DetectedItem, doc: FetchedDoc): Promise<stri
   try {
     // Import lazily so the deterministic path has no LangChain dependency at load.
     const { makeLLM } = await import("../../src/agent/llm");
-    const llm = makeLLM("haiku", 0, { maxTokens: 300 });
+    // maxRetries:1 — if the key is unfunded/rate-limited, fail FAST to the deterministic
+    // template instead of burning ~4 exponential-backoff retries per item (a big time sink
+    // across many sources). The template path is fully functional without Claude.
+    const llm = makeLLM("haiku", 0, { maxTokens: 300, maxRetries: 1 });
     const res = await llm.invoke(prompt);
     const text = (typeof res.content === "string" ? res.content : "").trim();
     tokensUsedThisRun += estTokens(prompt) + estTokens(text);

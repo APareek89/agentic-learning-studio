@@ -109,7 +109,15 @@ export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boole
   let redSeen = false;
   let dbError = false;
 
+  // Wall-clock safety deadline: always finish well under the CI timeout-minutes (30),
+  // even on a heavy COLD first run across all sources. Any sources not reached get their
+  // turn next run (their state isn't advanced, so they're retried). Tunable via KB_RUN_BUDGET_MIN.
+  const budgetMin = Number(process.env.KB_RUN_BUDGET_MIN) || 20;
+  const deadline = Date.now() + budgetMin * 60_000;
+  let deferred = 0;
+
   for (const src of sources) {
+    if (Date.now() > deadline) { deferred++; continue; }
     try {
       const state = await loadState(src.id);
       const items = await detectSource(src, state, cli.sinceMs);
@@ -156,6 +164,8 @@ export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boole
       if (/database|connection|econnrefused|password|pg|ssl/i.test((err as Error).message)) dbError = true;
     }
   }
+
+  if (deferred > 0) errors.push(`deadline: ${deferred} source(s) deferred past the ${budgetMin}m run budget — retried next run`);
 
   const tally = tallyApply(applied);
 
