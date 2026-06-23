@@ -534,13 +534,22 @@ export async function runDeepDive(
       })
     ),
   ];
-  // Retry transient failures (rate-limit / overloaded / an occasional malformed
-  // structured-output) with backoff — these are the usual "couldn't build" cause,
-  // NOT a token wall. Each module is its own small call (≤8k), so no 36k limit applies.
+  // Retry transient failures with backoff. The two common causes need OPPOSITE waits:
+  //  - Anthropic 529 "Overloaded" / 429 rate-limit: an API-side capacity/throttle window
+  //    that typically clears in ~30-90s. A fast burn of 3 quick retries (the old ~3s total)
+  //    just guarantees the WHOLE build fails during an overload — so ride it out with long,
+  //    JITTERED backoff. (Jitter also de-syncs parallel module builds so they don't all
+  //    re-hammer the API on the same beat.)
+  //  - an occasional malformed structured-output / empty result: retry quickly.
+  // Each module is its own small call, so no token-wall risk from extra attempts.
+  const isOverloadOrRate = (m: string) =>
+    /overloaded|529|rate.?limit|\b429\b|too many requests/i.test(m);
+  const OVERLOAD_BACKOFF_MS = [2000, 5000, 12000, 25000, 40000]; // ~84s total across the waits
+  const MAX_ATTEMPTS = 6;
   let blocks: Block[] = [];
   let nodeMeta: { what?: string; relevance?: string; laymanExplanation?: string } | undefined;
   let lastErr = "";
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(messages, config ?? {});
       blocks = (out.blocks as Block[]) ?? [];
@@ -548,12 +557,16 @@ export async function runDeepDive(
       if (blocks.length) break;
       lastErr = "model returned no blocks";
     } catch (err) {
-      lastErr = (err as Error).message?.slice(0, 160) || "error";
+      lastErr = (err as Error).message?.slice(0, 200) || "error";
     }
-    if (attempt < 2) await new Promise((r) => setTimeout(r, 900 * (attempt + 1))); // 0.9s, 1.8s backoff
+    if (attempt < MAX_ATTEMPTS - 1) {
+      const base = isOverloadOrRate(lastErr) ? (OVERLOAD_BACKOFF_MS[attempt] ?? 40000) : 900 * (attempt + 1);
+      const wait = base + Math.floor(base * 0.3 * Math.random()); // +0-30% jitter
+      await new Promise((r) => setTimeout(r, wait));
+    }
   }
   if (!blocks.length) {
-    console.warn(`[runDeepDive] module "${moduleId}" failed after 3 attempts:`, lastErr);
+    console.warn(`[runDeepDive] module "${moduleId}" failed after ${MAX_ATTEMPTS} attempts:`, lastErr);
     return { ok: false, sources };
   }
 
