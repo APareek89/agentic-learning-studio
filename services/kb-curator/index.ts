@@ -115,47 +115,63 @@ export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boole
   const budgetMin = Number(process.env.KB_RUN_BUDGET_MIN) || 20;
   const deadline = Date.now() + budgetMin * 60_000;
   let deferred = 0;
+  // Hard per-source cap: if ANY source's processing (detect+fetch+synth+apply) stalls,
+  // abandon it and move on — so one bad source can't run out the clock (the between-source
+  // deadline above only fires BETWEEN sources). Tunable via KB_SOURCE_TIMEOUT_MS.
+  const sourceTimeoutMs = Number(process.env.KB_SOURCE_TIMEOUT_MS) || 60_000;
+  // Cap items processed per source per run. A COLD first run (empty kb_sources) otherwise
+  // sees every recent item as "new" (~150 across all sources → ~18 min of fetches). The
+  // newest N is plenty for a daily delta; older items get picked up on later runs. Tunable.
+  const maxItemsPerSource = Number(process.env.KB_MAX_ITEMS_PER_SOURCE) || 5;
 
   for (const src of sources) {
     if (Date.now() > deadline) { deferred++; continue; }
     try {
-      const state = await loadState(src.id);
-      const items = await detectSource(src, state, cli.sinceMs);
+      await Promise.race([
+        (async () => {
+          const state = await loadState(src.id);
+          // newest-first; cap per source so a cold run doesn't process a huge backlog.
+          const items = (await detectSource(src, state, cli.sinceMs)).slice(0, maxItemsPerSource);
 
-      // The change cursor = the NEWEST detected item's hash (items are sorted
-      // newest-first in detect.detectSource). Default to the prior cursor when
-      // nothing new was detected.
-      const newestHash = items.length && items[0].hash ? items[0].hash : state.lastHash;
+          // The change cursor = the NEWEST detected item's hash (items are sorted
+          // newest-first in detect.detectSource). Default to the prior cursor when
+          // nothing new was detected.
+          const newestHash = items.length && items[0].hash ? items[0].hash : state.lastHash;
 
-      for (const item of items as DetectedItem[]) {
-        // --- IP GATE first (cheapest; a red item is dropped before fetching) ---
-        const verdict = classifyLicense(src.license);
-        await appendAudit(src.id, item.title, item.url, verdict, cli.dryRun);
-        if (verdict.risk === "red" || !verdict.allowed) {
-          redSeen = true;
-          applied.push({ outcome: "dropped" });
-          continue;
-        }
+          for (const item of items as DetectedItem[]) {
+            // --- IP GATE first (cheapest; a red item is dropped before fetching) ---
+            const verdict = classifyLicense(src.license);
+            await appendAudit(src.id, item.title, item.url, verdict, cli.dryRun);
+            if (verdict.risk === "red" || !verdict.allowed) {
+              redSeen = true;
+              applied.push({ outcome: "dropped" });
+              continue;
+            }
 
-        // --- FETCH ---
-        const doc = await fetchItem(src, item);
-        if (!doc.content || doc.content.length < 40) {
-          applied.push({ outcome: "skipped" });
-          continue;
-        }
+            // --- FETCH ---
+            const doc = await fetchItem(src, item);
+            if (!doc.content || doc.content.length < 40) {
+              applied.push({ outcome: "skipped" });
+              continue;
+            }
 
-        // --- SYNTHESIZE ---
-        const synth = await synthesizeItem(src, item, doc, verdict);
+            // --- SYNTHESIZE ---
+            const synth = await synthesizeItem(src, item, doc, verdict);
 
-        // --- APPLY (embed for updates; stage new topics; honor dry-run) ---
-        const result = await applyNote(synth, verdict, cli.dryRun);
-        applied.push(result);
-      }
+            // --- APPLY (embed for updates; stage new topics; honor dry-run) ---
+            const result = await applyNote(synth, verdict, cli.dryRun);
+            applied.push(result);
+          }
 
-      // Persist the source's cursor (last_checked always; last_hash if advanced).
-      if (!cli.dryRun) {
-        await saveState(src, { lastChecked: new Date().toISOString(), lastHash: newestHash });
-      }
+          // Persist the source's cursor (last_checked always; last_hash if advanced).
+          if (!cli.dryRun) {
+            await saveState(src, { lastChecked: new Date().toISOString(), lastHash: newestHash });
+          }
+        })(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`source timeout (${sourceTimeoutMs}ms)`)), sourceTimeoutMs)
+        ),
+      ]);
     } catch (err) {
       const msg = `${src.id}: ${(err as Error).message}`;
       errors.push(msg);
