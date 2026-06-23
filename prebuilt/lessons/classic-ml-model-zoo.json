@@ -600,7 +600,15 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Linear models are inspectable baselines. Trees express rules but can overfit. SVMs and neighbors need meaningful geometry. Ensembles often improve accuracy but reduce simplicity. Clustering is useful for exploring unlabeled groups, but it does not replace supervised labels for a churn target."
+                  "text": "Linear models are inspectable baselines. Trees express rules but can overfit. SVMs and neighbors need meaningful geometry. Ensembles often improve accuracy but reduce simplicity. Clustering belongs in the zoo too: it groups unlabeled data for exploration, anomaly review, and candidate segments, but it does not replace supervised labels for a churn target."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A beginner decision rule: if you have labels and a target, start supervised. If you do not have labels and need to understand structure, use clustering as hypothesis generation. If you need both, cluster first to explore, then label or evaluate before training a supervised model."
                 }
               ]
             }
@@ -615,6 +623,98 @@
           "sources": [
             "canon_sklearn_user_guide",
             "canon_sklearn_clustering"
+          ]
+        },
+        {
+          "id": "m5_cluster_matrix",
+          "kind": "decisionMatrix",
+          "title": "Where clustering fits in the classic zoo",
+          "criteria": [
+            "Family",
+            "Best fit",
+            "Common failure"
+          ],
+          "options": [
+            {
+              "name": "k-means clustering",
+              "cells": [
+                {
+                  "criterion": "Family",
+                  "text": "k-means clustering",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "unlabeled compact groups around centroids",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common failure",
+                  "text": "forces every point into a cluster even when groups are weak",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Explore unlabeled data or candidate segments.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "DBSCAN-style clustering",
+              "cells": [
+                {
+                  "criterion": "Family",
+                  "text": "DBSCAN-style clustering",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "dense groups plus noise/outliers",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common failure",
+                  "text": "sensitive to distance scale and density settings",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Find repeated issue pockets with outliers.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Supervised classifier",
+              "cells": [
+                {
+                  "criterion": "Family",
+                  "text": "Supervised classifier",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best fit",
+                  "text": "known target labels such as churn/no churn",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Common failure",
+                  "text": "learns shortcuts if labels or features leak",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Predict a defined outcome.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            }
+          ],
+          "termIds": [
+            "ai",
+            "ml",
+            "model",
+            "loss",
+            "generalization"
+          ],
+          "sources": [
+            "canon_sklearn_clustering",
+            "canon_sklearn_supervised"
           ]
         },
         {
@@ -678,63 +778,63 @@
     "ai": {
       "id": "ai",
       "label": "AI",
-      "laymanDefinition": "Systems that perform tasks associated with human intelligence.",
-      "technicalNote": "In this lesson, AI is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Software systems that perform tasks associated with human intelligence.",
+      "technicalNote": "In these foundations lessons, AI is the broad field; the concrete mechanisms are models, data, objectives, and evaluation loops.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ],
       "acronymExpansion": "Artificial intelligence"
     },
     "ml": {
       "id": "ml",
       "label": "ML",
-      "laymanDefinition": "AI systems that learn from data.",
-      "technicalNote": "In this lesson, ML is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A branch of AI where systems learn patterns from data instead of only following hand-written rules.",
+      "technicalNote": "ML work is defined by training data, features, models, objectives, validation, and deployment constraints.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ],
       "acronymExpansion": "Machine learning"
     },
     "model": {
       "id": "model",
       "label": "Model",
-      "laymanDefinition": "Model is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Model is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A learned or configured function that maps inputs to predictions, scores, clusters, or generated outputs.",
+      "technicalNote": "Model choice encodes assumptions such as linearity, distance, tree splits, capacity, or sequential reward.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ]
     },
     "loss": {
       "id": "loss",
       "label": "Loss",
-      "laymanDefinition": "Loss is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Loss is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A numerical training signal that measures how wrong a prediction is for a task.",
+      "technicalNote": "Loss drives optimization; it is not the same as product quality, fairness, or final generalization.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ]
     },
     "generalization": {
       "id": "generalization",
       "label": "Generalization",
-      "laymanDefinition": "Generalization is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Generalization is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The ability of a model to perform well on examples it did not train on.",
+      "technicalNote": "Generalization is checked with validation/test data, leakage audits, and slice monitoring.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ]
     },
     "pipeline": {
       "id": "pipeline",
       "label": "Pipeline",
-      "laymanDefinition": "Pipeline is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Pipeline is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A repeatable sequence of data transforms, feature steps, model fitting, and evaluation or inference.",
+      "technicalNote": "Pipelines prevent train/test leakage and keep preprocessing identical between training and production.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_sklearn_supervised"
       ]
     }
   },
@@ -913,34 +1013,6 @@
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
-      "kind": "kb",
-      "title": "KB: AI, Machine Learning & Deep Learning - Foundations",
-      "url": "https://www.ibm.com/think/topics/ai-vs-machine-learning-vs-deep-learning-vs-neural-networks",
-      "asOfDate": "2026-06-19"
-    },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: AI, Machine Learning & Deep Learning - Foundations",
-      "url": "https://www.ibm.com/think/topics/ai-vs-machine-learning-vs-deep-learning-vs-neural-networks",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
-      "kind": "canonical",
-      "title": "scikit-learn User Guide",
-      "url": "https://scikit-learn.org/stable/user_guide.html",
-      "asOfDate": "2026-06-20"
-    },
-    "canon2": {
-      "id": "canon2",
-      "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://scikit-learn.org/stable/user_guide.html",
-      "asOfDate": "2026-06-20"
-    },
     "canon_sklearn_user_guide": {
       "id": "canon_sklearn_user_guide",
       "kind": "canonical",
