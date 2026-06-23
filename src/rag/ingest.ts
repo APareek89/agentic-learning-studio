@@ -19,7 +19,7 @@ const SKIP_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ds
 const SKIP_NAME = new Set([".DS_Store"]);
 // Planning / meta artifacts are ABOUT the KB, not learning content — they're
 // retrieval noise (e.g. a "Research Plan" or an ingest manifest). Skip them.
-const SKIP_META_RE = /^CONFIG_|_manifest\.json$/i;
+const SKIP_META_RE = /^(CONFIG_|manifest\.ya?ml$|_manifest\.json$|KB_IP_AUDIT\.md$|KB_CONTENT_POLICY\.md$)/i;
 
 /** Recursively list files under a directory (or just return the one file). */
 async function walk(root: string): Promise<string[]> {
