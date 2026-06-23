@@ -7,8 +7,10 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ⬆️ STAGING ahead of PROD — promotion queue (2026-06-23)
-`main`/prod currently has ONLY the 529 resilience (R0, `58fabd3`). The following are committed + verified
-on `staging` and **NOT yet on `main`** — promote (cherry-pick, in order) when ready:
+`main`/prod currently has ONLY the 529 resilience (R0, `58fabd3`). The items below are committed + `tsc`-clean on
+`staging` but **⚠️ NOT yet runtime-verified** — an Anthropic **529 "Overloaded"** event ran all day 2026-06-23 (every
+live call 529'd from ~14:06 UTC on), so no end-to-end generation could confirm them. **Test on staging once Anthropic
+recovers (see the VERIFY checklist below), THEN promote** (cherry-pick, in order) to `main`:
 1. `764fae2` — **module-cache correctness fix**: `moduleCacheKey` (`src/lib/hash.ts` + `src/server.ts`) keys on
    objective/buildGoal/framework/lessonTypes (else a cache hit served a fragment that dropped those inputs).
    Also `Stale/` gitignore + cleanup notes. (Side effect: existing `module_cache` rows regenerate once.)
@@ -18,10 +20,22 @@ on `staging` and **NOT yet on `main`** — promote (cherry-pick, in order) when 
 3. `9bd0f51` — **deterministic overview repair (A5)** (`src/agent/orchestrator.ts`): `runOverviewJob` skips the
    2nd ~56s Opus call on gate-only validation misses (ships the `repairBlueprint`-fixed skeleton); re-gens only on a
    true parse/shape failure. Saves ~56s on gate-failing overviews.
-4. **overview 529 resilience** (`src/agent/llm.ts` + `nodes.ts`, this commit): the profiler + Opus skeleton now ride out
+4. `bf0714d` — **overview 529 resilience** (`src/agent/llm.ts` + `nodes.ts`): the profiler + Opus skeleton now ride out
    a 529/overload too (shared `withOverloadRetry` helper), so an overload DURING the overview doesn't fail it.
 Already on prod: `58fabd3` (R0 529 resilience — the module build only). Promote with a clean worktree off `origin/main`
 + `git cherry-pick` (the touched files are identical on both branches, so picks apply cleanly). `tsc` must stay clean.
+
+**⚠️ VERIFY ON STAGING before promoting** (was blocked 2026-06-23 by the Anthropic overload — do these once it's healthy):
+- **Deploy:** confirm Render staging is on `bf0714d` and **Live** (a redeploy was triggered 2026-06-23 evening; auto-deploy
+  may have lagged). The 529s alone are NOT proof the code is live — the trace pattern is (see next).
+- **Overview ≈ 55-70s** (profiler + one Opus skeleton). A transient 529 should show in Langfuse as a SHORT RETRY BURST that
+  then SUCCEEDS (multiple attempts 2/5/12s apart), not a single ~38s failure — that burst pattern is how you confirm `bf0714d` is live.
+- **Build ≈ 5-6 min** (was ~13.5): Langfuse shows ~3 module-body traces STARTING within seconds of each other (parallel,
+  cap 3); Module 1 readable in ~90s while the rest build.
+- **Density (A2):** noticeably FEWER "TIGHTEN prose" traces than before (relaxed trigger).
+- **Overview repair (A5):** a gate-failing overview does NOT fire a 2nd Opus skeleton call.
+- **Cache fix:** generate two lessons on the SAME topic but different objective/buildGoal/framework — the 2nd must NOT serve
+  the 1st's module fragments (no wrong-input bleed from `module_cache`).
 
 ## Generation latency (2026-06-23)
 - **529/overload resilience (shared `withOverloadRetry` in `src/agent/llm.ts`):** Anthropic `overloaded_error` (529) was
