@@ -1,0 +1,84 @@
+# ============================================================================
+# KB Curator — nightly knowledge-base refresh.
+#
+# Polls the license-vetted allowlist (services/kb-curator/sources.yaml), detects
+# what changed in the last window, synthesizes KB notes, and upserts them via the
+# RAG store. Runs $0 by default (deterministic template synthesis + local
+# embeddings); uses Claude Haiku only if ANTHROPIC_API_KEY is present.
+#
+# ---- DEPLOY NOTES (read before relying on the schedule) ---------------------
+#  * GitHub only fires `schedule:` triggers from the DEFAULT branch. This repo's
+#    default branch is `main`. Work happens on `staging`; the cron will NOT run
+#    until THIS workflow file is merged to `main`. (You can always run it now via
+#    the "Run workflow" button — workflow_dispatch — from any branch.)
+#  * First scheduled run is the NEXT 15:30 UTC (= 21:00 IST) after the file lands
+#    on `main`. GitHub may DELAY scheduled runs by several minutes under load and
+#    occasionally skips them entirely — do not treat a missed minute as a bug.
+#  * GitHub DISABLES scheduled workflows after 60 days of repo inactivity; a push
+#    re-enables them.
+#  * The DATABASE_URL secret stays pointed at the STAGING Supabase project until
+#    the curator is trusted. Repoint it at prod only after a clean staging run.
+# ============================================================================
+
+name: kb-curate
+
+on:
+  schedule:
+    # 15:30 UTC every day == 21:00 IST (9pm). Cron is UTC; GitHub may delay it.
+    - cron: "30 15 * * *"
+  workflow_dispatch: {}
+
+# Only one curator run at a time — never let an overrun and the next schedule overlap.
+concurrency:
+  group: kb-curate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  curate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Cache the bge-small weights between runs (downloaded once, ~130MB).
+      TRANSFORMERS_CACHE: .cache/huggingface
+      # DB + optional services. GITHUB_TOKEN is injected automatically by Actions.
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # NOTE: deliberately NOT setting NODE_EXTRA_CA_CERTS — CI has no corp MITM
+      # proxy, so the local custom CA bundle would break TLS here.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Cache HuggingFace model weights
+        uses: actions/cache@v4
+        with:
+          path: .cache/huggingface
+          key: hf-bge-small-v1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run KB curator (last 24h)
+        run: npm run kb:curate -- --since 24h
+
+      - name: Upload KB + IP audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-curate-${{ github.run_id }}
+          path: |
+            kb/
+            KB_IP_AUDIT.md
+          if-no-files-found: warn
