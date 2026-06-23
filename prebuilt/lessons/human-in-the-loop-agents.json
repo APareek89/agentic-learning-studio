@@ -25,63 +25,68 @@
   },
   "mentalMap": {
     "title": "Human-in-the-loop Agents: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Human-in-the-loop Agents is useful when you can apply it to a healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff, choose a design, and verify correct escalation rate.",
+    "caption": "Add human review where judgment, authority, or correction changes the outcome, then resume the agent with a recorded decision.",
+    "oneLineThesis": "Human-in-the-loop agents work when the human sees a specific decision packet and the runtime can safely resume from it.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Human-in-the-loop Agents.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+        "label": "Humans own judgment and authority",
+        "sub": "Use review for decisions the model should not own alone.",
+        "what": "Learners decide which parts require human control.",
+        "relevance": "This prevents both over-automation and pointless human rubber-stamping.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects Human-in-the-loop Agents to the running artifact and failure test."
+        "orient": "Separate expert judgment from routine model/tool execution.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+        "label": "Choose interruption points deliberately",
+        "sub": "Interrupts should occur before irreversible or expensive actions.",
+        "what": "Learners position HITL gates in agent control flow.",
+        "relevance": "Late review can be useless after the harmful action already happened.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects Human-in-the-loop Agents to the running artifact and failure test."
+        "orient": "Place review gates where state is complete but side effects have not fired.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+        "label": "Present review packets, not raw traces",
+        "sub": "Humans need compact evidence and concrete choices.",
+        "what": "Learners design useful human review UX.",
+        "relevance": "Dumping a full trace makes review slow and error-prone.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects Human-in-the-loop Agents to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "Summarize the artifact, risk, evidence, and proposed action.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+        "label": "Resume safely after approval or correction",
+        "sub": "Human input becomes state, not a side conversation.",
+        "what": "Learners implement resume behavior after review.",
+        "relevance": "Bad resume logic can ignore corrections or duplicate actions.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects Human-in-the-loop Agents to the running artifact and failure test."
+        "orient": "Apply the decision deterministically and avoid repeating prior side effects.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+        "label": "Measure review burden and missed escapes",
+        "sub": "HITL quality includes latency, load, and safety coverage.",
+        "what": "Learners evaluate HITL gates, not just final answers.",
+        "relevance": "Too much review slows users; too little misses dangerous actions.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects Human-in-the-loop Agents to the running artifact and failure test."
+        "orient": "Treat human review as a product workflow with metrics.",
+        "order": 5
       }
     ],
     "edges": [
@@ -106,40 +111,39 @@
         "label": "then"
       }
     ],
-    "structureType": "conceptual"
+    "structureType": "procedural"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies Human-in-the-loop Agents to human-review routing policy with approval and override paths, with examples and checks tied to correct escalation rate.",
+      "title": "Humans own judgment and authority",
+      "sub": "Use review for decisions the model should not own alone.",
+      "summary": "Human review should protect meaningful decisions.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent treats a judgment call as an automatic action."
+        "Name reasons to put humans in the loop.",
+        "Distinguish approval, correction, and escalation.",
+        "Avoid review theater."
       ],
       "termIds": [
         "agent",
         "tool",
         "state",
-        "memory",
-        "mcp"
+        "sandbox"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Human-in-the-loop Agents matters here",
+          "title": "A human is not a decorative checkpoint",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. The learner's job is not to memorize Human-in-the-loop Agents; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved correct escalation rate."
+                  "text": "Problem anchor: an agent drafts a public lesson from internal KB notes. The model can assemble a draft, but a human must approve copyright-sensitive citations and product claims before publication."
                 }
               ]
             },
@@ -147,7 +151,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: human-review routing policy with approval and override paths. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Humans are useful for authority, ambiguity, taste, policy exceptions, and high-impact side effects. They are not useful if the packet lacks evidence or if approval is required so often that reviewers stop reading."
                 }
               ]
             },
@@ -156,143 +160,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if the agent treats a judgment call as an automatic action, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Human-in-the-loop Agents matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Human-in-the-loop Agents matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure correct escalation rate on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Human-in-the-loop Agents.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review human-review routing policy with approval and override paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent treats a judgment call as an automatic action. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If the reviewer cannot change the outcome, remove or redesign the checkpoint."
                 }
               ]
             }
@@ -301,24 +169,33 @@
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb6",
+            "kb7",
+            "kb4"
+          ],
+          "analogy": "A good review gate is a decision desk, not a turnstile."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Case study: publish approval for lesson content",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. This module asks what mental model changes in the artifact."
+                  "text": "The agent prepares a lesson, source list, known weak claims, and validation status. The reviewer can approve, request changes, or reject. The decision becomes part of the run state."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The human is not asked to inspect hidden reasoning. They inspect the artifact, evidence, and concrete risks."
                 }
               ]
             },
@@ -327,260 +204,110 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Identify the risky decision."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Prepare the artifact and evidence."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve correct escalation rate."
+                    "text": "Offer approve, edit/request changes, reject, or escalate."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: the agent treats a judgment call as an automatic action."
+                    "text": "Record reviewer, time, and rationale."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For human-review routing policy with approval and override paths, log or test the fields needed to debug correct escalation rate. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: human-review routing policy with approval and override paths",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. The team wants to improve correct escalation rate, but it has already seen this failure: the agent treats a judgment call as an automatic action."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Request: \"A returning customer asks about a refund and mentions that they prefer email updates.\" The agent may remember the communication preference, but it must not store payment fragments, one-time codes, or raw complaint text longer than needed."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: human-review routing policy with approval and override paths. It contains a memory schema, a write filter, retrieval rules, an escalation rule, and a tiny acceptance test tied to correct escalation rate."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: store {customer_id, preference: \"email updates\", source: \"support chat\", expires_at: \"90 days\"}; reject {card digits, passwords, medical details}; retrieve only when the current task is about support follow-up."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: agent designer. Context: A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. Task: design human-review routing policy with approval and override paths. Include memory or state fields, tool permissions, retrieval rules, human review points, audit logs, and failure tests. Output: {state, allowed_actions, blocked_actions, checks, metric}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Human-in-the-loop Agents to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb6",
+            "kb7",
+            "kb4"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Human-in-the-loop Agents to the running case?",
+          "title": "Review purpose",
+          "prompt": "Which decision is most appropriate for human review?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review human-review routing policy with approval and override paths, measure correct escalation rate, and test the failure: the agent treats a judgment call as an automatic action.",
+              "text": "Counting tokens in a prompt.",
+              "correct": false
+            },
+            {
+              "text": "Approving a customer-facing email that changes an account setting.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Parsing a JSON object with a schema validator.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Humans should guard judgment and authority, while deterministic checks handle mechanical validation.",
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb6",
+        "kb7",
+        "kb4"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies Human-in-the-loop Agents to human-review routing policy with approval and override paths, with examples and checks tied to correct escalation rate.",
+      "title": "Choose interruption points deliberately",
+      "sub": "Interrupts should occur before irreversible or expensive actions.",
+      "summary": "The best interrupt is just before commitment.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent treats a judgment call as an automatic action."
+        "Place approval before side effects.",
+        "Use interrupts for uncertainty and policy exceptions.",
+        "Set timeouts and fallback states."
       ],
       "termIds": [
         "agent",
         "tool",
         "state",
-        "memory",
-        "mcp"
+        "sandbox"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Timing determines whether review can help",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind Human-in-the-loop Agents. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Interrupt too early and the human lacks context. Interrupt too late and the action is already done. The ideal point is after the agent gathers evidence and proposes a concrete action, before the external side effect."
                 }
               ]
             },
@@ -588,32 +315,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means tracking what the agent observes, remembers, decides, acts on, and writes back to state."
+                  "text": "LangGraph-style interrupts and durable workflow signals are useful because they persist state while waiting for human input and resume with the decision."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -621,7 +324,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is human-review routing policy with approval and override paths. Which single field, trace, or test would show whether correct escalation rate improved?"
+                  "text": "Every interrupt should have a timeout, owner, and safe default."
                 }
               ]
             }
@@ -630,308 +333,177 @@
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb6",
+            "kb7",
+            "kb4"
+          ],
+          "analogy": "Review should happen while the door is unlocked, not after it has slammed shut."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "HITL trigger choices",
+          "criteria": [
+            "Trigger",
+            "Use when",
+            "Risk"
+          ],
+          "options": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "name": "Before side effect",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff"
-                    }
-                  ]
+                  "criterion": "Trigger",
+                  "text": "Approval before send, publish, delete, refund.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Action is external or hard to undo.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Reviewer fatigue if too broad.",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use for high-impact actions.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "name": "On uncertainty",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review human-review routing policy with approval and override paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
+                  "criterion": "Trigger",
+                  "text": "Model or evaluator detects missing evidence or ambiguity.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Human judgment improves quality.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Bad uncertainty detection misses cases.",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Use for nuanced tasks.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Run the failure",
-              "detail": [
+              "name": "After completion only",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent treats a judgment call as an automatic action. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "criterion": "Trigger",
+                  "text": "Sampled audit after action.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Actions are reversible or low risk.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Cannot prevent harm.",
+                  "rating": "bad"
                 }
-              ]
+              ],
+              "whenToUse": "Use as monitoring, not safety gate.",
+              "cost": "Low",
+              "complexity": "Low"
             }
           ],
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct escalation rate."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the agent treats a judgment call as an automatic action."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For human-review routing policy with approval and override paths, log or test the fields needed to debug correct escalation rate. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the agent treats a judgment call as an automatic action. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to human-review routing policy with approval and override paths: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: correct escalation rate becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Human-in-the-loop Agents design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Human-in-the-loop Agents to the running case?",
+          "title": "Interrupt placement",
+          "prompt": "Where should review happen before publishing generated content?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review human-review routing policy with approval and override paths, measure correct escalation rate, and test the failure: the agent treats a judgment call as an automatic action.",
+              "text": "After the content is already public.",
+              "correct": false
+            },
+            {
+              "text": "After evidence and draft are ready, before the publish action runs.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Before the agent knows the topic.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Review needs enough context and must still be able to prevent the side effect.",
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb6",
+        "kb7",
+        "kb4"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies Human-in-the-loop Agents to human-review routing policy with approval and override paths, with examples and checks tied to correct escalation rate.",
+      "title": "Present review packets, not raw traces",
+      "sub": "Humans need compact evidence and concrete choices.",
+      "summary": "The packet is the interface between agent and human.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent treats a judgment call as an automatic action."
+        "Build a review packet with exact action details.",
+        "Include evidence and model uncertainty.",
+        "Avoid asking reviewers to infer hidden state."
       ],
       "termIds": [
         "agent",
         "tool",
         "state",
-        "memory",
-        "mcp"
+        "sandbox"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "A review packet should answer “what am I approving?”",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Human-in-the-loop Agents becomes a decision. The team must choose how much rigor human-review routing policy with approval and override paths needs before it can be trusted."
+                  "text": "A useful packet includes the proposed action, arguments, artifact preview, supporting sources, policy reason for review, alternatives, and consequences of approve/edit/reject. It should hide irrelevant trace noise but link to full trace for audit."
                 }
               ]
             },
@@ -939,26 +511,75 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves correct escalation rate while making this failure visible: the agent treats a judgment call as an automatic action."
+                  "text": "The packet should not ask the human to approve hidden chain-of-thought. It should show observable evidence and concrete outputs."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "A reviewer should be able to decide in under a minute for routine cases."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "agent",
+            "tool",
+            "state",
+            "sandbox"
+          ],
+          "sources": [
+            "kb6",
+            "kb7",
+            "kb4"
+          ],
+          "analogy": "The review packet is an airport boarding pass: compact, specific, and linked to the full record."
+        },
+        {
+          "id": "m3_worked",
+          "kind": "functionalExample",
+          "title": "Worked packet: approve a tool call",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "For an email-send tool, the packet shows recipient, subject, body, source evidence, customer ID, risk tier, and the exact send button. It also offers edit, reject, and escalate."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If the body cites a policy, the cited source is included. If evidence is missing, the packet should recommend reject or request changes."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Thin slice: prove the path on one realistic example."
+                    "text": "State the proposed action and exact arguments."
                   }
                 ],
                 [
                   {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
+                    "text": "Show artifact preview and supporting evidence."
                   }
                 ],
                 [
                   {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
+                    "text": "Name why review is required."
+                  }
+                ],
+                [
+                  {
+                    "text": "Offer explicit decision options and record rationale."
                   }
                 ]
               ]
@@ -968,358 +589,85 @@
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review human-review routing policy with approval and override paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent treats a judgment call as an automatic action. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb6",
+            "kb7",
+            "kb4"
           ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Human-in-the-loop Agents on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the agent treats a judgment call as an automatic action.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct escalation rate.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct escalation rate and catches: the agent treats a judgment call as an automatic action.",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For human-review routing policy with approval and override paths, log or test the fields needed to debug correct escalation rate. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: the agent treats a judgment call as an automatic action. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The agent remembers the wrong thing, forgets the important thing, or cannot distinguish user preference from sensitive data."
-                  }
-                ],
-                [
-                  {
-                    "text": "A tool call succeeds technically but changes real-world state without review."
-                  }
-                ],
-                [
-                  {
-                    "text": "The loop repeats because state was not updated after the last action."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: correct escalation rate gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when correct escalation rate affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the agent treats a judgment call as an automatic action.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Human-in-the-loop Agents to the running case?",
+          "title": "Packet design",
+          "prompt": "What should be included in an approval packet for a database update?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review human-review routing policy with approval and override paths, measure correct escalation rate, and test the failure: the agent treats a judgment call as an automatic action.",
+              "text": "Only “the model wants to update the database.”",
+              "correct": false
+            },
+            {
+              "text": "The exact record, field changes, reason, evidence, risk, and approve/edit/reject options.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only the model provider name.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Specific context lets humans exercise real authority.",
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Human-in-the-loop Agents: baseline, production design, or advanced optimization."
+        "kb6",
+        "kb7",
+        "kb4"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies Human-in-the-loop Agents to human-review routing policy with approval and override paths, with examples and checks tied to correct escalation rate.",
+      "title": "Resume safely after approval or correction",
+      "sub": "Human input becomes state, not a side conversation.",
+      "summary": "The agent should continue from the reviewed decision point.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent treats a judgment call as an automatic action."
+        "Represent approve, edit, reject, and escalate.",
+        "Persist reviewer decisions.",
+        "Predict state after correction."
       ],
       "termIds": [
         "agent",
         "tool",
         "state",
-        "memory",
-        "mcp"
+        "sandbox"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
+          "title": "The human decision is an event in the run",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Human-in-the-loop Agents should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "After review, the runtime should resume with a structured decision: approved, rejected, edited arguments, requested changes, or escalation. The model may synthesize the next step, but application code applies the decision."
                 }
               ]
             },
@@ -1327,7 +675,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For human-review routing policy with approval and override paths, the sketch should prove one thing: the system can improve correct escalation rate without hiding the failure where the agent treats a judgment call as an automatic action."
+                  "text": "Spaced recall: from durable workflows, side effects before an interrupt must be idempotent or avoided. Otherwise resume can duplicate work."
                 }
               ]
             },
@@ -1336,7 +684,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Never ask the model to remember an approval from chat text alone; store it in run state."
                 }
               ]
             }
@@ -1345,188 +693,150 @@
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review human-review routing policy with approval and override paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent treats a judgment call as an automatic action. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct escalation rate."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the agent treats a judgment call as an automatic action."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: filter memory before writing it",
+          "title": "Approval resume state machine",
           "language": "python",
-          "code": "# Humanintheloop Agents: memory write gate for the running case.\nitems = [\n    {\"kind\": \"preference\", \"text\": \"prefers email updates\"},\n    {\"kind\": \"secret\", \"text\": \"card ends in 4242\"},\n    {\"kind\": \"task_fact\", \"text\": \"refund requested for invoice INV-19\"},\n]\nallowed = {\"preference\", \"task_fact\"}\n\ndef memory_write_candidates(items):\n    return [item for item in items if item[\"kind\"] in allowed]\n\nkept = memory_write_candidates(items)\nprint([item[\"kind\"] for item in kept])\nprint(\"safe to write\" if len(kept) == 2 else \"review\")",
-          "explain": [
+          "code": "state = {\"status\": \"awaiting_review\", \"draft\": \"Send refund note\", \"approved\": None}\n\ndef resume(state, decision):\n    if state[\"status\"] != \"awaiting_review\":\n        raise ValueError(\"not waiting for review\")\n    if decision[\"type\"] == \"approve\":\n        return {**state, \"status\": \"ready_to_send\", \"approved\": True, \"reviewer\": decision[\"reviewer\"]}\n    if decision[\"type\"] == \"edit\":\n        return {**state, \"status\": \"needs_revision\", \"draft\": decision[\"draft\"], \"approved\": False}\n    if decision[\"type\"] == \"reject\":\n        return {**state, \"status\": \"cancelled\", \"approved\": False}\n    return {**state, \"status\": \"escalated\", \"approved\": False}\n\nprint(resume(state, {\"type\": \"edit\", \"draft\": \"Ask finance to review first\", \"reviewer\": \"pm\"}))",
+          "explanation": "The decision changes structured state. Sending or publishing would happen only after the state reaches the approved branch.",
+          "predictThenReveal": {
+            "prompt": "Before reading the answer, predict the status after the edit decision.",
+            "answer": "The status becomes `needs_revision`, the draft is replaced, and the run is not approved."
+          },
+          "termIds": [
+            "agent",
+            "tool",
+            "state",
+            "sandbox"
+          ],
+          "sources": [
+            "kb6",
+            "kb7",
+            "kb4"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Resume logic",
+          "prompt": "Why store approval as structured state instead of only chat text?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Structured state prevents all model mistakes.",
+              "correct": false
+            },
+            {
+              "text": "The runtime can deterministically branch, audit, and avoid repeating side effects.",
+              "correct": true
+            },
+            {
+              "text": "Chat text cannot be displayed to humans.",
+              "correct": false
+            }
+          ],
+          "explanation": "Structured decisions make review enforceable by code.",
+          "termIds": [
+            "agent",
+            "tool",
+            "state",
+            "sandbox"
+          ],
+          "sources": [
+            "kb6",
+            "kb7",
+            "kb4"
+          ]
+        }
+      ],
+      "citations": [
+        "kb6",
+        "kb7",
+        "kb4"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Measure review burden and missed escapes",
+      "sub": "HITL quality includes latency, load, and safety coverage.",
+      "summary": "Human-in-the-loop systems need operating metrics.",
+      "objectives": [
+        "Track approval latency and reviewer load.",
+        "Measure false positives and false negatives.",
+        "Feed incidents back into triggers."
+      ],
+      "termIds": [
+        "agent",
+        "tool",
+        "state",
+        "sandbox"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Review gates need calibration",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the agent treats a judgment call as an automatic action."
+                  "text": "Track how often the agent asks for review, how long reviewers take, how often they edit or reject, and which risky actions bypassed review. These numbers tell you whether the gate is useful or noisy."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the list of kept item kinds and the final decision.",
-            "answer": "It prints:\n['preference', 'task_fact']\nsafe to write\n\nThe secret is filtered out before memory write. The point is not this tiny classifier; it is the boundary: memory should have an explicit write policy."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Reviewers need escalation paths and sampled audits. High-severity cases may require two-person approval; low-risk repetitive cases may move to deterministic checks after evidence accumulates."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If reviewers approve 99% without edits, inspect whether the packet is too broad, too weak, or no longer needed."
+                }
+              ]
             }
           ],
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output after human review",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Human-in-the-loop Agents, review it against the running case before accepting it."
+                  "text": "Use this checklist on runs that included a human decision."
                 }
               ]
             },
@@ -1535,27 +845,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: human-review routing policy with approval and override paths?"
+                    "text": "The review packet showed exact action, artifact, evidence, and risk."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "The decision was stored with reviewer, time, rationale, and any edits."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: the agent treats a judgment call as an automatic action?"
+                    "text": "The resumed run followed the human decision rather than re-deciding it."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug correct escalation rate?"
+                    "text": "No irreversible side effect occurred before required approval."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Metrics track review latency, edit/reject rate, and missed-policy incidents."
                   }
                 ]
               ]
@@ -1565,452 +875,54 @@
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Human-in-the-loop Agents to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review human-review routing policy with approval and override paths, measure correct escalation rate, and test the failure: the agent treats a judgment call as an automatic action.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb6",
+            "kb7",
+            "kb4"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies Human-in-the-loop Agents to human-review routing policy with approval and override paths, with examples and checks tied to correct escalation rate.",
-      "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent treats a judgment call as an automatic action."
-      ],
-      "termIds": [
-        "agent",
-        "tool",
-        "state",
-        "memory",
-        "mcp"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how human-review routing policy with approval and override paths improves correct escalation rate and catches the agent treats a judgment call as an automatic action, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review human-review routing policy with approval and override paths: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent treats a judgment call as an automatic action. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Human-in-the-loop Agents on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the agent treats a judgment call as an automatic action.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct escalation rate.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct escalation rate and catches: the agent treats a judgment call as an automatic action.",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For human-review routing policy with approval and override paths, log or test the fields needed to debug correct escalation rate. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Human-in-the-loop Agents: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Human-in-the-loop Agents without copying the worked example. Keep the same running case - A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: correct escalation rate."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: the agent treats a judgment call as an automatic action."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "agent",
-            "tool",
-            "state",
-            "memory",
-            "mcp"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Human-in-the-loop Agents to the running case?",
+          "title": "Calibration signal",
+          "prompt": "What does a high approval rate with no edits suggest?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review human-review routing policy with approval and override paths, measure correct escalation rate, and test the failure: the agent treats a judgment call as an automatic action.",
+              "text": "The system no longer needs audit logs.",
+              "correct": false
+            },
+            {
+              "text": "The review gate may be too broad, too low-value, or the packet may not reveal useful risks.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "All future actions should skip policy checks.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Review gates should be calibrated with evidence, not assumed useful forever.",
           "termIds": [
             "agent",
             "tool",
             "state",
-            "memory",
-            "mcp"
+            "sandbox"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7",
+            "kb4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Human-in-the-loop Agents: baseline, production design, or advanced optimization."
+        "kb6",
+        "kb7",
+        "kb4"
+      ]
     }
   ],
   "glossary": {
@@ -2080,17 +992,17 @@
     "title": "Decision prompts for Human-in-the-loop Agents",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Human review placement",
         "questions": [
           {
-            "q": "What decision does Human-in-the-loop Agents change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships human-review routing policy with approval and override paths.",
+            "q": "Where does a human decision reduce risk or improve quality enough to justify interruption?",
+            "why": "Human review is costly; it should guard judgment, authority, and ambiguous evidence rather than rubber-stamp every step.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Targeted interrupt with review packet",
+              "Review every model token",
+              "No review for side effects"
             ],
-            "rot": "Choose the smallest option that catches: the agent treats a judgment call as an automatic action."
+            "rot": "Interrupt at high-impact decisions with exact context, options, and recorded rationale."
           }
         ]
       }
@@ -2102,76 +1014,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Human-in-the-loop Agents using the running case: A healthcare intake agent drafts answers but escalates risky medical and billing decisions to staff. Name the artifact (human-review routing policy with approval and override paths), explain the mechanism, choose a design level, write the check for the agent treats a judgment call as an automatic action, and say how you would measure correct escalation rate."
+            "text": "Retrieval prompt: explain HITL by naming review trigger, packet, options, approval/correction, resume state, audit, and reviewer-load metrics."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Human-in-the-loop path from decision point to resumed run",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Human-in-the-loop Agents.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+          "label": "Humans own judgment and authority",
+          "sub": "Use review for decisions the model should not own alone.",
+          "what": "Learners decide which parts require human control.",
+          "relevance": "This prevents both over-automation and pointless human rubber-stamping.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects Human-in-the-loop Agents to the running artifact and failure test."
+          "orient": "Separate expert judgment from routine model/tool execution.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+          "label": "Choose interruption points deliberately",
+          "sub": "Interrupts should occur before irreversible or expensive actions.",
+          "what": "Learners position HITL gates in agent control flow.",
+          "relevance": "Late review can be useless after the harmful action already happened.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects Human-in-the-loop Agents to the running artifact and failure test."
+          "orient": "Place review gates where state is complete but side effects have not fired.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+          "label": "Present review packets, not raw traces",
+          "sub": "Humans need compact evidence and concrete choices.",
+          "what": "Learners design useful human review UX.",
+          "relevance": "Dumping a full trace makes review slow and error-prone.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects Human-in-the-loop Agents to the running artifact and failure test."
+          "emphasis": "normal",
+          "orient": "Summarize the artifact, risk, evidence, and proposed action.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+          "label": "Resume safely after approval or correction",
+          "sub": "Human input becomes state, not a side conversation.",
+          "what": "Learners implement resume behavior after review.",
+          "relevance": "Bad resume logic can ignore corrections or duplicate actions.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects Human-in-the-loop Agents to the running artifact and failure test."
+          "orient": "Apply the decision deterministically and avoid repeating prior side effects.",
+          "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct escalation rate while avoiding the failure: the agent treats a judgment call as an automatic action.",
+          "label": "Measure review burden and missed escapes",
+          "sub": "HITL quality includes latency, load, and safety coverage.",
+          "what": "Learners evaluate HITL gates, not just final answers.",
+          "relevance": "Too much review slows users; too little misses dangerous actions.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects Human-in-the-loop Agents to the running artifact and failure test."
+          "orient": "Treat human review as a product workflow with metrics.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "enables"
         },
         {
           "from": "n_m2",
@@ -2186,66 +1103,56 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Humans own judgment and authority",
+        "detail": "Human review should protect meaningful decisions."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Choose interruption points deliberately",
+        "detail": "The best interrupt is just before commitment."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Present review packets, not raw traces",
+        "detail": "The packet is the interface between agent and human."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Resume safely after approval or correction",
+        "detail": "The agent should continue from the reviewed decision point."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Measure review burden and missed escapes",
+        "detail": "Human-in-the-loop systems need operating metrics."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete problem in \"Humans own judgment and authority\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure correct escalation rate on realistic cases?",
+        "id": "chk_boundary",
+        "label": "Did \"Present review packets, not raw traces\" define the right boundary or decision?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the agent treats a judgment call as an automatic action?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_release",
+        "label": "Does \"Measure review burden and missed escapes\" provide a reviewable release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for human-review routing policy with approval and override paths. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (correct escalation rate), failure case (the agent treats a judgment call as an automatic action), owner, and the next rung after this lesson.",
+      "prompt": "Design a human approval point for an agent that can publish lesson content. Include trigger, exact review packet, approve/edit/reject actions, resume behavior, audit fields, timeout, and reviewer burden metric. Next rung: durable workflows with interrupts.",
       "scopedTo": "Human-in-the-loop Agents"
     }
   },
@@ -2277,6 +1184,27 @@
       "title": "Official documentation",
       "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
       "asOfDate": "2026-06-20"
+    },
+    "kb6": {
+      "id": "kb6",
+      "kind": "kb",
+      "title": "KB: Agent Loop, ReAct, Planning, and Reflection",
+      "url": "https://arxiv.org/abs/2210.03629",
+      "asOfDate": "2026-06-22"
+    },
+    "kb7": {
+      "id": "kb7",
+      "kind": "kb",
+      "title": "KB: LangGraph",
+      "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Agent Tool Security and Sandboxing",
+      "url": "https://genai.owasp.org/llm-top-10/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

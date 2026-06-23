@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Add Memory to an Agent: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Add Memory to an Agent is useful when you can apply it to a ticket assistant needs to remember issue facts across turns while keeping the final answer grounded, choose a design, and verify facts reused correctly in follow-up turns.",
+    "caption": "Build memory by separating thread state, accepted long-term records, scoped retrieval, traceability, and user correction.",
+    "oneLineThesis": "Adding memory to an agent is a product-state change: implement the smallest explicit memory behavior and test write, recall, and correction.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Add Memory to an Agent.",
-        "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+        "label": "Pick one memory behavior to ship",
+        "sub": "Do not start with universal remembering.",
+        "what": "Learners scope a memory feature as a narrow product slice.",
+        "relevance": "Narrow scope makes consent, tests, and correction tractable.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Target behavior connects Add Memory to an Agent to the running artifact and failure test.",
+        "orient": "Define the exact future behavior that memory should change.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+        "label": "Separate thread state, facts, and RAG",
+        "sub": "Memory should not absorb every kind of context.",
+        "what": "Learners avoid mixing memory with documents or workflow progress.",
+        "relevance": "Confusing memory with source-of-truth data creates stale and ungoverned behavior.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Architecture slice connects Add Memory to an Agent to the running artifact and failure test.",
+        "orient": "Route each data need to the right storage surface.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+        "label": "Write accepted memories with provenance",
+        "sub": "The extractor proposes records that policy can reject.",
+        "what": "Learners implement the memory write path.",
+        "relevance": "Provenance and policy are easiest to add before data exists.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Core implementation connects Add Memory to an Agent to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Capture source turn, type, status, and confidence at write time.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+        "label": "Retrieve and inject memories narrowly",
+        "sub": "Recall should be task-relevant and visible in traces.",
+        "what": "Learners code the recall path and predict output.",
+        "relevance": "Poor recall leaks data or clutters prompts with stale preferences.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Validation and tracing connects Add Memory to an Agent to the running artifact and failure test.",
+        "orient": "Filter by namespace, status, type, and current task.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+        "label": "Add correction and regression tests",
+        "sub": "Memory bugs should be caught before they persist.",
+        "what": "Learners complete the build with validation and tracing.",
+        "relevance": "Memory regressions are sticky because wrong state affects future sessions.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Hardening path connects Add Memory to an Agent to the running artifact and failure test.",
+        "orient": "Test write, no-write, recall, leakage, and deletion paths.",
         "order": 5
       }
     ],
@@ -118,34 +118,34 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Target behavior applies Add Memory to an Agent to memory-enabled agent thin slice with write, retrieve, and reject rules, with examples and checks tied to facts reused correctly in follow-up turns.",
+      "title": "Pick one memory behavior to ship",
+      "sub": "Do not start with universal remembering.",
+      "summary": "The first memory feature should be small enough to review.",
       "objectives": [
-        "Apply target behavior to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent retrieves an outdated preference and ignores the latest user correction."
+        "State the user-visible behavior memory improves.",
+        "Choose one memory type to implement first.",
+        "Write acceptance and rejection examples."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Add Memory to an Agent matters here",
+          "title": "A memory build starts with a behavior, not a database",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. The learner's job is not to memorize Add Memory to an Agent; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved facts reused correctly in follow-up turns."
+                  "text": "Problem anchor: a coding tutor should remember that a learner prefers TypeScript examples. It should not remember every emotional aside, every code snippet, or facts from retrieved docs."
                 }
               ]
             },
@@ -153,7 +153,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: memory-enabled agent thin slice with write, retrieve, and reject rules. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "The first slice accepts explicit preference statements, stores provenance, retrieves them for lesson/example tasks, and lets the learner correct them. That is enough to prove the architecture."
                 }
               ]
             },
@@ -162,143 +162,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if the agent retrieves an outdated preference and ignores the latest user correction, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Add Memory to an Agent matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Add Memory to an Agent matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure facts reused correctly in follow-up turns on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Add Memory to an Agent.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review memory-enabled agent thin slice with write, retrieve, and reject rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent retrieves an outdated preference and ignores the latest user correction. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If the feature cannot name a no-write case, it is too broad."
                 }
               ]
             }
@@ -308,23 +172,33 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "Start with one labeled drawer before buying a warehouse."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Target behavior applied to the running case",
+          "title": "Worked acceptance card for preference memory",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. This module asks what target behavior changes in the artifact."
+                  "text": "Accept: “Remember that I prefer TypeScript examples.” Reject: “I hate recursion today.” Reject: “The docs say pgvector uses HNSW.” The first is durable preference, the second transient mood, the third external knowledge for RAG."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The acceptance card becomes the regression suite seed."
                 }
               ]
             },
@@ -333,77 +207,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Choose one memory class: preference."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Write accepted and rejected examples."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve facts reused correctly in follow-up turns."
+                    "text": "Define where it affects prompts."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: the agent retrieves an outdated preference and ignores the latest user correction."
+                    "text": "Define how users edit or delete it."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For memory-enabled agent thin slice with write, retrieve, and reject rules, log or test the fields needed to debug facts reused correctly in follow-up turns. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
@@ -411,182 +233,87 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: memory-enabled agent thin slice with write, retrieve, and reject rules",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. The team wants to improve facts reused correctly in follow-up turns, but it has already seen this failure: the agent retrieves an outdated preference and ignores the latest user correction."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Request: \"A returning customer asks about a refund and mentions that they prefer email updates.\" The agent may remember the communication preference, but it must not store payment fragments, one-time codes, or raw complaint text longer than needed."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: memory-enabled agent thin slice with write, retrieve, and reject rules. It contains a memory schema, a write filter, retrieval rules, an escalation rule, and a tiny acceptance test tied to facts reused correctly in follow-up turns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: store {customer_id, preference: \"email updates\", source: \"support chat\", expires_at: \"90 days\"}; reject {card digits, passwords, medical details}; retrieve only when the current task is about support follow-up."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: agent designer. Context: A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. Task: design memory-enabled agent thin slice with write, retrieve, and reject rules. Include memory or state fields, tool permissions, retrieval rules, human review points, audit logs, and failure tests. Output: {state, allowed_actions, blocked_actions, checks, metric}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Add Memory to an Agent to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Memory to an Agent to the running case?",
+          "title": "Scope check",
+          "prompt": "Which requirement is best for a first memory slice?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and test the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+              "text": "Remember every sentence forever.",
+              "correct": false
+            },
+            {
+              "text": "Remember explicit example-language preferences and retrieve them for lesson tasks.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Store all retrieved documents as user memory.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Small typed memory is safer and easier to validate.",
           "termIds": [
             "prototype",
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb6",
+        "kb13"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Architecture slice applies Add Memory to an Agent to memory-enabled agent thin slice with write, retrieve, and reject rules, with examples and checks tied to facts reused correctly in follow-up turns.",
+      "title": "Separate thread state, facts, and RAG",
+      "sub": "Memory should not absorb every kind of context.",
+      "summary": "The build needs boundaries before code.",
       "objectives": [
-        "Apply architecture slice to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent retrieves an outdated preference and ignores the latest user correction."
+        "Distinguish thread checkpoint from long-term memory.",
+        "Use RAG for external documents.",
+        "Use databases for canonical facts."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the mechanism in the running case",
+          "title": "The memory store is not the whole context system",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Architecture slice opens the machinery behind Add Memory to an Agent. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Thread state keeps the current run coherent. Long-term memory personalizes future runs. RAG supplies grounded external facts. The app database stores canonical records. Workflow engines store exact progress."
                 }
               ]
             },
@@ -594,32 +321,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means tracking what the agent observes, remembers, decides, acts on, and writes back to state."
+                  "text": "For the TypeScript preference slice, the memory store only holds user preference records. It does not store lesson content, billing status, or source documents."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,7 +330,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is memory-enabled agent thin slice with write, retrieve, and reject rules. Which single field, trace, or test would show whether facts reused correctly in follow-up turns improved?"
+                  "text": "Add a routing table before creating tables."
                 }
               ]
             }
@@ -637,56 +340,93 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "Use the right shelf: diary, library, ledger, and task board are different things."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Context storage routing",
+          "criteria": [
+            "Need",
+            "Store",
+            "Reason"
+          ],
+          "options": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "name": "Current plan/tool results",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded"
-                    }
-                  ]
+                  "criterion": "Need",
+                  "text": "Run-local state.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Store",
+                  "text": "Thread checkpoint or graph state.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "Needed only to resume this run.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Use inside one conversation or workflow.",
+              "cost": "Low",
+              "complexity": "Medium"
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "name": "User preference",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review memory-enabled agent thin slice with write, retrieve, and reject rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
+                  "criterion": "Need",
+                  "text": "Future personalization.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Store",
+                  "text": "Long-term memory with provenance.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "Changes later agent behavior.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Use with consent and correction.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Run the failure",
-              "detail": [
+              "name": "Product documentation",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent retrieves an outdated preference and ignores the latest user correction. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "criterion": "Need",
+                  "text": "Grounded external facts.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Store",
+                  "text": "RAG/document index.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "Source of truth lives outside user memory.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Use for citeable facts.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
@@ -694,253 +434,86 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Architecture slice applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. This module asks what architecture slice changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve facts reused correctly in follow-up turns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the agent retrieves an outdated preference and ignores the latest user correction."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: filter memory before writing it",
-          "language": "python",
-          "code": "# Add Memory to an Agent: memory write gate for the running case.\nitems = [\n    {\"kind\": \"preference\", \"text\": \"prefers email updates\"},\n    {\"kind\": \"secret\", \"text\": \"card ends in 4242\"},\n    {\"kind\": \"task_fact\", \"text\": \"refund requested for invoice INV-19\"},\n]\nallowed = {\"preference\", \"task_fact\"}\n\ndef memory_write_candidates(items):\n    return [item for item in items if item[\"kind\"] in allowed]\n\nkept = memory_write_candidates(items)\nprint([item[\"kind\"] for item in kept])\nprint(\"safe to write\" if len(kept) == 2 else \"review\")",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the agent retrieves an outdated preference and ignores the latest user correction."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the list of kept item kinds and the final decision.",
-            "answer": "It prints:\n['preference', 'task_fact']\nsafe to write\n\nThe secret is filtered out before memory write. The point is not this tiny classifier; it is the boundary: memory should have an explicit write policy."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the agent retrieves an outdated preference and ignores the latest user correction. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to memory-enabled agent thin slice with write, retrieve, and reject rules: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: facts reused correctly in follow-up turns becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Add Memory to an Agent design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Memory to an Agent to the running case?",
+          "title": "Routing table",
+          "prompt": "Where should product documentation facts go?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and test the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+              "text": "In every user’s preference memory.",
+              "correct": false
+            },
+            {
+              "text": "In a RAG or document index, not as inferred user memory.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only in transient model hidden state.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "External facts need source provenance and document refresh, not personalization memory.",
           "termIds": [
             "prototype",
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb6",
+        "kb13"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Core implementation applies Add Memory to an Agent to memory-enabled agent thin slice with write, retrieve, and reject rules, with examples and checks tied to facts reused correctly in follow-up turns.",
+      "title": "Write accepted memories with provenance",
+      "sub": "The extractor proposes records that policy can reject.",
+      "summary": "The write path should make future correction possible.",
       "objectives": [
-        "Apply core implementation to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent retrieves an outdated preference and ignores the latest user correction."
+        "Extract candidate preference memories.",
+        "Reject transient or sensitive candidates.",
+        "Store source and status fields."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the choice that changes reliability",
+          "title": "Accepted memory is a typed record",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Add Memory to an Agent becomes a decision. The team must choose how much rigor memory-enabled agent thin slice with write, retrieve, and reject rules needs before it can be trusted."
+                  "text": "A minimal memory row can include namespace, type, value, source turn ID, created time, confidence, status, and optional expiration. This is enough to retrieve and correct later."
                 }
               ]
             },
@@ -948,26 +521,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves facts reused correctly in follow-up turns while making this failure visible: the agent retrieves an outdated preference and ignores the latest user correction."
+                  "text": "Avoid opaque transcript dumps. They are hard to inspect, hard to delete selectively, and likely to include sensitive or irrelevant content."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "The memory value should be short enough that a user can approve or correct it."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "A memory row should look like a clean contact card, not a shoebox of receipts."
+        },
+        {
+          "id": "m3_worked",
+          "kind": "functionalExample",
+          "title": "Case study: write path for language preference",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The user says, “Please remember: I prefer TypeScript examples.” The extractor proposes `{type: preference, value: prefers TypeScript examples}`. Policy accepts because it is explicit, future-useful, and low sensitivity."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The source turn ID is stored so the UI can later show where the memory came from."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Thin slice: prove the path on one realistic example."
+                    "text": "Parse explicit remember/forget/update intent."
                   }
                 ],
                 [
                   {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
+                    "text": "Create a candidate with type and value."
                   }
                 ],
                 [
                   {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
+                    "text": "Run policy checks."
+                  }
+                ],
+                [
+                  {
+                    "text": "Persist accepted record with provenance."
                   }
                 ]
               ]
@@ -978,357 +601,87 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review memory-enabled agent thin slice with write, retrieve, and reject rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent retrieves an outdated preference and ignores the latest user correction. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Add Memory to an Agent on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the agent retrieves an outdated preference and ignores the latest user correction.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on facts reused correctly in follow-up turns.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves facts reused correctly in follow-up turns and catches: the agent retrieves an outdated preference and ignores the latest user correction.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For memory-enabled agent thin slice with write, retrieve, and reject rules, log or test the fields needed to debug facts reused correctly in follow-up turns. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: the agent retrieves an outdated preference and ignores the latest user correction. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The agent remembers the wrong thing, forgets the important thing, or cannot distinguish user preference from sensitive data."
-                  }
-                ],
-                [
-                  {
-                    "text": "A tool call succeeds technically but changes real-world state without review."
-                  }
-                ],
-                [
-                  {
-                    "text": "The loop repeats because state was not updated after the last action."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: facts reused correctly in follow-up turns gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when facts reused correctly in follow-up turns affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the agent retrieves an outdated preference and ignores the latest user correction.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Memory to an Agent to the running case?",
+          "title": "Write record",
+          "prompt": "What field makes later correction explainable?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and test the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+              "text": "The model temperature.",
+              "correct": false
+            },
+            {
+              "text": "The source turn or event that produced the memory.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The CSS class of the chat bubble.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Users and operators need to know why a memory exists.",
           "termIds": [
             "prototype",
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Memory to an Agent: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb6",
+        "kb13"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Validation and tracing applies Add Memory to an Agent to memory-enabled agent thin slice with write, retrieve, and reject rules, with examples and checks tied to facts reused correctly in follow-up turns.",
+      "title": "Retrieve and inject memories narrowly",
+      "sub": "Recall should be task-relevant and visible in traces.",
+      "summary": "Memory retrieval is part of prompt assembly.",
       "objectives": [
-        "Apply validation and tracing to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent retrieves an outdated preference and ignores the latest user correction."
+        "Retrieve only active memories for the current user.",
+        "Inject memory as labeled context.",
+        "Trace which memory influenced the answer."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Validation and tracing: make the contract concrete",
+          "title": "Prompt injection of memory should be labeled and minimal",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Add Memory to an Agent should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "When assembling the prompt, include relevant memories under a label such as “User preferences from memory.” Do not let memory masquerade as system policy or external evidence."
                 }
               ]
             },
@@ -1336,7 +689,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For memory-enabled agent thin slice with write, retrieve, and reject rules, the sketch should prove one thing: the system can improve facts reused correctly in follow-up turns without hiding the failure where the agent retrieves an outdated preference and ignores the latest user correction."
+                  "text": "Spaced recall: from agent memory, current user instruction and safety policy outrank older memory. Retrieval should be narrow enough that this ordering remains readable."
                 }
               ]
             },
@@ -1345,7 +698,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Every memory in the prompt should appear in the trace with ID and reason."
                 }
               ]
             }
@@ -1355,162 +708,129 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review memory-enabled agent thin slice with write, retrieve, and reject rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent retrieves an outdated preference and ignores the latest user correction. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Validation and tracing applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. This module asks what validation and tracing changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve facts reused correctly in follow-up turns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the agent retrieves an outdated preference and ignores the latest user correction."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: filter memory before writing it",
+          "title": "End-to-end preference memory slice",
           "language": "python",
-          "code": "# Add Memory to an Agent: memory write gate for the running case.\nitems = [\n    {\"kind\": \"preference\", \"text\": \"prefers email updates\"},\n    {\"kind\": \"secret\", \"text\": \"card ends in 4242\"},\n    {\"kind\": \"task_fact\", \"text\": \"refund requested for invoice INV-19\"},\n]\nallowed = {\"preference\", \"task_fact\"}\n\ndef memory_write_candidates(items):\n    return [item for item in items if item[\"kind\"] in allowed]\n\nkept = memory_write_candidates(items)\nprint([item[\"kind\"] for item in kept])\nprint(\"safe to write\" if len(kept) == 2 else \"review\")",
-          "explain": [
+          "code": "store = []\n\ndef maybe_write(user_id, turn_id, text):\n    lowered = text.lower()\n    if \"remember\" in lowered and \"prefer\" in lowered:\n        value = text.split(\"remember\", 1)[1].strip(\" :.\")\n        store.append({\"ns\": (\"user\", user_id), \"type\": \"preference\", \"value\": value, \"source\": turn_id, \"status\": \"active\"})\n\ndef recall(user_id, task):\n    if \"example\" not in task.lower() and \"lesson\" not in task.lower():\n        return []\n    return [m for m in store if m[\"ns\"] == (\"user\", user_id) and m[\"status\"] == \"active\"]\n\nmaybe_write(\"u1\", \"turn-7\", \"Please remember: I prefer TypeScript examples.\")\nprint(recall(\"u1\", \"write a lesson with examples\"))\nprint(recall(\"u1\", \"check my invoice\"))",
+          "explanation": "The slice accepts an explicit preference and recalls it only for lesson/example tasks.",
+          "predictThenReveal": {
+            "prompt": "Before reading the answer, predict whether the invoice task receives the preference.",
+            "answer": "It does not. The preference is relevant to examples or lessons, not invoice checking."
+          },
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Recall injection",
+          "prompt": "How should a preference memory appear in the model prompt?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "As a hidden irreversible instruction.",
+              "correct": false
+            },
+            {
+              "text": "As labeled user preference context with provenance, not as system policy or factual evidence.",
+              "correct": true
+            },
+            {
+              "text": "As a citation to product docs.",
+              "correct": false
+            }
+          ],
+          "explanation": "Memory should influence behavior without pretending to be policy or source truth.",
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb6",
+        "kb13"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Add correction and regression tests",
+      "sub": "Memory bugs should be caught before they persist.",
+      "summary": "A memory feature ships with lifecycle tests.",
+      "objectives": [
+        "Create tests for accepted and rejected memories.",
+        "Verify correction and deletion.",
+        "Trace memory writes and recalls."
+      ],
+      "termIds": [
+        "prototype",
+        "retriever",
+        "validator",
+        "trace",
+        "acceptance_test"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "The memory test suite protects future sessions",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the agent retrieves an outdated preference and ignores the latest user correction."
+                  "text": "Tests should cover explicit remember, transient no-write, sensitive no-write, user namespace isolation, task-relevant recall, correction, deletion, and current-instruction override."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the list of kept item kinds and the final decision.",
-            "answer": "It prints:\n['preference', 'task_fact']\nsafe to write\n\nThe secret is filtered out before memory write. The point is not this tiny classifier; it is the boundary: memory should have an explicit write policy."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Traces should show memory write candidates, acceptance policy result, stored memory ID, recall query, and prompt injection reason. This makes reviews and incidents diagnosable."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Include one test where the user corrects a false memory and the next run stops using it."
+                }
+              ]
             }
           ],
           "termIds": [
@@ -1518,24 +838,24 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output after adding memory",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Add Memory to an Agent, review it against the running case before accepting it."
+                  "text": "Review memory behavior across multiple turns."
                 }
               ]
             },
@@ -1544,27 +864,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: memory-enabled agent thin slice with write, retrieve, and reject rules?"
+                    "text": "The agent stores only explicit, allowed memory types."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Rejected transient or sensitive content does not appear later."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: the agent retrieves an outdated preference and ignores the latest user correction?"
+                    "text": "Recall is scoped to user/workspace, task, status, and memory type."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug facts reused correctly in follow-up turns?"
+                    "text": "Users can inspect, correct, delete, or override stored memories."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Tests cover write, no-write, recall, leakage, correction, and deletion cases."
                   }
                 ]
               ]
@@ -1575,451 +895,55 @@
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Memory to an Agent to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and test the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Hardening path",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Hardening path applies Add Memory to an Agent to memory-enabled agent thin slice with write, retrieve, and reject rules, with examples and checks tied to facts reused correctly in follow-up turns.",
-      "objectives": [
-        "Apply hardening path to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the agent retrieves an outdated preference and ignores the latest user correction."
-      ],
-      "termIds": [
-        "prototype",
-        "retriever",
-        "validator",
-        "trace",
-        "deployment"
-      ],
-      "estMinutes": 8,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Hardening path: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how memory-enabled agent thin slice with write, retrieve, and reject rules improves facts reused correctly in follow-up turns and catches the agent retrieves an outdated preference and ignores the latest user correction, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review memory-enabled agent thin slice with write, retrieve, and reject rules: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the agent retrieves an outdated preference and ignores the latest user correction. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Add Memory to an Agent on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the agent retrieves an outdated preference and ignores the latest user correction.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on facts reused correctly in follow-up turns.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves facts reused correctly in follow-up turns and catches: the agent retrieves an outdated preference and ignores the latest user correction.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For memory-enabled agent thin slice with write, retrieve, and reject rules, log or test the fields needed to debug facts reused correctly in follow-up turns. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Add Memory to an Agent: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Add Memory to an Agent without copying the worked example. Keep the same running case - A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: facts reused correctly in follow-up turns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: the agent retrieves an outdated preference and ignores the latest user correction."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator",
-            "trace",
-            "deployment"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Add Memory to an Agent to the running case?",
+          "title": "Memory release gate",
+          "prompt": "What test catches cross-user leakage?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and test the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+              "text": "A snapshot of the final prose for one user only.",
+              "correct": false
+            },
+            {
+              "text": "A recall test that stores memory for user A and verifies user B never receives it.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A test that disables namespaces.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Namespace isolation must be tested directly.",
           "termIds": [
             "prototype",
             "retriever",
             "validator",
             "trace",
-            "deployment"
+            "acceptance_test"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Memory to an Agent: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb6",
+        "kb13"
+      ]
     }
   ],
   "glossary": {
@@ -2088,17 +1012,17 @@
     "title": "Decision prompts for Add Memory to an Agent",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Memory build slice",
         "questions": [
           {
-            "q": "What decision does Add Memory to an Agent change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships memory-enabled agent thin slice with write, retrieve, and reject rules.",
+            "q": "What is the smallest memory behavior that improves the agent and can be validated end to end?",
+            "why": "A memory feature is risky if it stores too much before proving consent, provenance, and retrieval scope.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Typed preference memory slice",
+              "Transcript vector dump",
+              "No memory; use RAG or database"
             ],
-            "rot": "Choose the smallest option that catches: the agent retrieves an outdated preference and ignores the latest user correction."
+            "rot": "Start with one typed memory class, explicit acceptance policy, and tests for no-write and correction cases."
           }
         ]
       }
@@ -2110,73 +1034,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Add Memory to an Agent using the running case: A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. Name the artifact (memory-enabled agent thin slice with write, retrieve, and reject rules), explain the mechanism, choose a design level, write the check for the agent retrieves an outdated preference and ignores the latest user correction, and say how you would measure facts reused correctly in follow-up turns."
+            "text": "Retrieval prompt: rebuild the implementation by naming memory class, extractor, acceptance policy, store, retrieval filter, prompt injection point, trace, correction path, and regression tests."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Memory build path from turn to accepted recall",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Add Memory to an Agent.",
-          "what": "Target behavior shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+          "label": "Pick one memory behavior to ship",
+          "sub": "Do not start with universal remembering.",
+          "what": "Learners scope a memory feature as a narrow product slice.",
+          "relevance": "Narrow scope makes consent, tests, and correction tractable.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Target behavior connects Add Memory to an Agent to the running artifact and failure test.",
+          "orient": "Define the exact future behavior that memory should change.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+          "label": "Separate thread state, facts, and RAG",
+          "sub": "Memory should not absorb every kind of context.",
+          "what": "Learners avoid mixing memory with documents or workflow progress.",
+          "relevance": "Confusing memory with source-of-truth data creates stale and ungoverned behavior.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Architecture slice connects Add Memory to an Agent to the running artifact and failure test.",
+          "orient": "Route each data need to the right storage surface.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+          "label": "Write accepted memories with provenance",
+          "sub": "The extractor proposes records that policy can reject.",
+          "what": "Learners implement the memory write path.",
+          "relevance": "Provenance and policy are easiest to add before data exists.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Core implementation connects Add Memory to an Agent to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Capture source turn, type, status, and confidence at write time.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+          "label": "Retrieve and inject memories narrowly",
+          "sub": "Recall should be task-relevant and visible in traces.",
+          "what": "Learners code the recall path and predict output.",
+          "relevance": "Poor recall leaks data or clutters prompts with stale preferences.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Validation and tracing connects Add Memory to an Agent to the running artifact and failure test.",
+          "orient": "Filter by namespace, status, type, and current task.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Hardening path",
-          "sub": "Decide what to ship, monitor, and improve next.",
-          "what": "Hardening path shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve facts reused correctly in follow-up turns while avoiding the failure: the agent retrieves an outdated preference and ignores the latest user correction.",
+          "label": "Add correction and regression tests",
+          "sub": "Memory bugs should be caught before they persist.",
+          "what": "Learners complete the build with validation and tracing.",
+          "relevance": "Memory regressions are sticky because wrong state affects future sessions.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Hardening path connects Add Memory to an Agent to the running artifact and failure test.",
+          "orient": "Test write, no-write, recall, leakage, and deletion paths.",
           "order": 5
         }
       ],
@@ -2184,7 +1108,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "enables"
         },
         {
           "from": "n_m2",
@@ -2199,66 +1123,56 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Target behavior",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Pick one memory behavior to ship",
+        "detail": "The first memory feature should be small enough to review."
       },
       {
         "step": 2,
-        "label": "Architecture slice",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Separate thread state, facts, and RAG",
+        "detail": "The build needs boundaries before code."
       },
       {
         "step": 3,
-        "label": "Core implementation",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Write accepted memories with provenance",
+        "detail": "The write path should make future correction possible."
       },
       {
         "step": 4,
-        "label": "Validation and tracing",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Retrieve and inject memories narrowly",
+        "detail": "Memory retrieval is part of prompt assembly."
       },
       {
         "step": 5,
-        "label": "Hardening path",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Add correction and regression tests",
+        "detail": "A memory feature ships with lifecycle tests."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete problem in \"Pick one memory behavior to ship\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure facts reused correctly in follow-up turns on realistic cases?",
+        "id": "chk_boundary",
+        "label": "Did \"Write accepted memories with provenance\" define the right boundary or decision?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the agent retrieves an outdated preference and ignores the latest user correction?",
-        "fromModuleId": "m4"
-      },
-      {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_release",
+        "label": "Does \"Add correction and regression tests\" provide a reviewable release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for memory-enabled agent thin slice with write, retrieve, and reject rules. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (facts reused correctly in follow-up turns), failure case (the agent retrieves an outdated preference and ignores the latest user correction), owner, and the next rung after this lesson.",
+      "prompt": "Implement a small preference-memory feature for an agent: accept explicit “remember my preference” statements, reject transient moods, store provenance, retrieve only for relevant tasks, expose correction, and run five tests. Next rung: add observability for memory writes and recalls.",
       "scopedTo": "Add Memory to an Agent"
     }
   },
@@ -2290,6 +1204,27 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: Agent Memory",
+      "url": "https://docs.langchain.com/oss/python/langgraph/memory",
+      "asOfDate": "2026-06-22"
+    },
+    "kb6": {
+      "id": "kb6",
+      "kind": "kb",
+      "title": "KB: Agent Loop, ReAct, Planning, and Reflection",
+      "url": "https://arxiv.org/abs/2210.03629",
+      "asOfDate": "2026-06-22"
+    },
+    "kb13": {
+      "id": "kb13",
+      "kind": "kb",
+      "title": "KB: Regression Testing for Agentic Systems",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     }
   }
 }
