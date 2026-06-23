@@ -31,6 +31,7 @@ auto-deploys to Render).
 - `GET /healthz` → `{db, dbConfigured, dbError, auth}` (live `select 1`). `db:false` = env, not code.
 - **Render prod (#1 gotcha):** dashboard env `DATABASE_URL` must be the **new** project with the password `@` as `%40`, and `SUPABASE_URL=https://kdgtlbnlyscdldogxorb.supabase.co`. `render.yaml` has `sync:false` (values live only in the dashboard). A wrong/old value ⇒ empty dashboard + failed downloads.
 - **Staging lane:** see **`STAGING.md`**. `main`→prod Render→prod Supabase (`kdgtlbnlyscdldogxorb`); `staging` branch→staging Render service→a SEPARATE staging Supabase project. ONE local repo (switch branches); local `.env` must point at **staging**, never prod. Migrations run per-DB (staging first, then prod inline). CORS needs no change (staging is same-origin; `EXTRA_ORIGINS` for cross-origin).
+- **`.env` DB vars:** `DATABASE_URL` = **STAGING** (`ydgiysthvxhlfpzxyrmy`, ap-south-1) — the app + all default tooling use this; never repoint it at prod. `PROD_DATABASE_URL` = **PROD** (`kdgtlbnlyscdldogxorb`, ap-southeast-2) — used ONLY for explicit prod data migrations, by overriding per-command: `PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`.
 - **WORKFLOW FOR CLAUDE (default):** do work on **`staging`** (or local→`staging`), push to `staging`, and let the USER verify on the staging site. **Merge `staging`→`main` ONLY after the user explicitly confirms.** Never push features straight to `main` — `main` is live (prathibhax.com, auto-deploys). Verify (`tsc`, local run) before pushing to `staging`.
 - **Staging KB:** the RAG `chunks` are reference data, so a fresh staging DB has an empty knowledge base (generations still work, just ungrounded). Populate it once with `SRC_DATABASE_URL="<prod URI>" node scripts/copy-kb.mjs` (copies documents/chunks/glossary/kb_updates prod→staging, idempotent) or re-ingest from source (`npm run ingest`).
 
@@ -92,6 +93,9 @@ src/lib/             db.ts · artifacts.ts (durable store + JSONB coercion) · l
                      uploads.ts (in-mem upload store, Array.isArray-guarded) ·
                      jobs.ts · auth.ts · hash.ts · langfuse.ts.
 src/rag/             embed · loaders · chunkers · store · retrieve · ingest (KB in Supabase `chunks`).
+services/kb-curator/ DAILY KB refresh job (GitHub Actions) — detect(24h-delta)·fetch·ipgate·synthesize·
+                     apply(reuses src/rag embed+upsertSource)·report·index; sources.yaml allowlist. See §7.
+.github/workflows/   kb-curate.yml (cron 15:30 UTC = 9pm IST; merge to main to arm). kb-build/ = Codex KB rebuild tooling (§7).
 public/              index.html (tabs Configurator/Trainer/My Lessons/Library) · app.js (Library cards
                      = image-free CSS "course tiles": renderLibrary() builds the markup, CATEGORY_STYLE
                      map {bg,icon,text,svg} drives per-category color + inline-SVG icon) · styles.css (.lib-*).
@@ -146,6 +150,134 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **📦 DEPLOY STATUS (2026-06-23) — what's on PROD vs PENDING on staging:**
+  - **ON PROD** (`main` `9a9576f` → prathibhax.com + prod Supabase `kdgtlbnlyscdldogxorb`):
+    - **Wizbit UI** redesign (live).
+    - **KB-curator service** + `documents.curator_change` flag + **`kb_curator_runs` daily run-log** (code on main; migrations
+      **0010/0011/0012 applied to the prod DB**). Cron NOT armed yet (needs only the Actions secrets now).
+    - **`kb/` corpus (88 docs) + `src/rag` ingest pipeline + `kb-build/scripts` + `KB_IP_AUDIT`/`KB_CONTENT_POLICY`** committed to
+      main (`6493ca2`) — so the curator has its "existing docs" baseline and the KB is reproducible from git; prod app retrieval
+      now uses the same pipeline that built the live chunks.
+    - **RAG KB DATA: prod = 88 docs / 214 chunks** — migrated 69/179 → 88/214 on 2026-06-23 via `replace_kb` re-ingest (clean
+      audit 88/0/0, smoke coverage ~0.9). Prod backup: `kb-build/backups/prod-2026-06-23T05-59-57-353Z.sql`. Prod retrieval now
+      grounds on the 88-doc KB. (Earlier prod backup of the 69/179 state also in `kb-build/backups/`.)
+  - **PENDING on staging (NOT on prod yet):**
+    1. **Library batch-1 (20 lessons, `v3-agent`)** — on staging (`92fc18e`) + staging DB; **prod library DB still OLD**. Awaiting review → promote.
+    2. **Library RICH enrichment (76 lessons)** — on branch **`library-rich-codex`** (`8afe6b6`, ~11 commits), **NOT merged to staging** (concurrent session finishing it). Flow: review → merge to staging → seed → promote prod. Still-skipped: `browser-computer-use-agents`, `multi-agent-orchestration`.
+    3. **Knowledge-check / Objective / "Builder"-rename app feature** (`7ec2c4b`, `f685b7b`) — on staging, **NOT on main**. Concurrent session's work; pending review → prod.
+    4. ~~`kb/` corpus not in git~~ **DONE (2026-06-23)** — `kb/` (88 docs) + `src/rag` pipeline + `kb-build/scripts` + the
+       provenance docs committed to **staging (`4681ad4`) AND main (`6493ca2`)**. Curator baseline in place; KB reproducible from git.
+    5. **Arm the KB-curator cron** — set repo Actions secrets (`DATABASE_URL` target + `ANTHROPIC_API_KEY`); user sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` on prod Render (optional, lean build). This is now the ONLY thing left before the daily 9 PM IST run works.
+  - **Git note:** the KB-curator commits are DIFFERENT hashes on staging (`689adcf`/`55f0128`/`e08b68d`) vs main (`d58084f`/`9a9576f`) — content-identical (copied via worktree, not merged), because the shared tree was busy with the concurrent library session. A future `staging→main` merge must account for this (they look divergent though the content matches).
+- **KB enrichment — MLOps / LLMOps / AI-analytics + role-based course tracks (QUEUED Jun 2026 — do via a SEPARATE Codex run; another session owns the curator, do NOT touch `services/kb-curator` or curator code for this).** Additive KB content (NOT a rebuild): new docs + embeddings pushed to **staging Supabase ONLY** (`DATABASE_URL`=staging; do NOT truncate, do NOT touch prod). Method = the established Codex pattern: dedupe against the LIVE KB first (`documents.title`/`category`), then source-priority cascade (official docs → permissive OSS [MIT/Apache/BSD/CC-BY] → reputable blogs/arXiv), ORIGINAL prose only (no verbatim, ≤1 short attributed quote), `KB_IP_AUDIT.md` (🔴 dropped), Markdown+frontmatter (title/category/url/license/verdict/as_of_date), local bge-small embed via `npm run ingest`. New categories: `MLOps & production ML`, `LLMOps`, `AI analytics`, `Course`.
+  - **Topics (skip any already covered):** MLOps overview + lifecycle (train→package→serve→monitor→retrain) · model packaging/containerization (Docker, runtime pinning) · serving & inference at scale (REST/gRPC, dynamic batching, latency↔throughput — cross-link existing vllm/litellm/ai_infrastructure_serving) · model+data versioning & registries (DVC/MLflow/lakeFS) · feature stores (Feast; when you don't need one) · CI/CD + Continuous Training + orchestration (Kubeflow/ZenML/Metaflow/Dagster/Airflow) · experiment tracking & reproducibility (MLflow/W&B) · production monitoring — data/concept drift, perf decay, alerting (Evidently/NannyML) · GPU/CPU config & cost (autoscaling, right-sizing, spot) · serving on K8s + when it's overkill (KServe/Seldon) · ML failure modes (silent degradation, training-serving skew, pipeline breakage, stale features; Hidden Technical Debt / Rules of ML / ML Test Score papers) · **LLMOps** (prompt/version mgmt, eval pipelines, RAG infra, token-cost/latency monitoring; cross-link langfuse/promptfoo) · **AI analytics** (NL-to-SQL, semantic layers, automated insights, forecasting, anomaly detection — dbt semantic layer/Vanna/Prophet).
+  - **Course tracks (kind `Course`, original curriculum outlines: who-it's-for · prerequisites · ordered modules mapping to KB · capstone):** AI Product Manager · AI Solution Architect · AI Engineer · ML/MLOps Engineer · AI Data Analyst.
+  - **Verify (staging):** retrieval smoke test on ~8 new queries; `count(*) chunks` before/after; report added-vs-skipped-as-dupe. Promote staging→prod only after user OK (same copy pattern as the library promote). The full Codex prompt + topic list lives in the chat the user has.
+- **Library content enhancement (IN PROGRESS Jun 2026 — "the hook for new users"):** the 98 prebuilt
+  lessons were authored on the OLD prompts and are pedagogically weak (no `mentalMap.structureType`, no
+  node `orient` hooks, thin on failure-modes/verify-AI/recall). We're bringing them to the SAME bar a
+  freshly-generated lesson hits. **The app Anthropic balance is EMPTY** (the pipeline route
+  `rebuild-library.ts` 400s with "credit balance too low" — and that ALSO breaks live generation on
+  prod until topped up). So we enhance via **agents** (a Workflow of subagents using the session model —
+  ZERO app-API cost), editing each `prebuilt/lessons/<slug>.json` Blueprint in place, then `seed-library.ts`
+  validates+renders+upserts. Invariant holds (agents emit Blueprint JSON, renderer makes HTML).
+  - **Infra (committed-able, reusable):** `prebuilt/ENHANCE_SPEC.md` (the quality bar + 8 schema gates +
+    per-lesson procedure — the agent brief), `scripts/validate-lesson.ts` (validates ONE file: Zod +
+    validateBlueprint + render smoke-test; agents self-check with it), `prebuilt/_exemplar.json`
+    (`the-agent-loop`, an already-enhanced lesson = the target; throwaway ref, don't seed), `prebuilt/ENHANCED.json`
+    (durable progress manifest — `done[]` slugs).
+  - **Workflow:** `enhance-library-batch` (run id `wf_4fcea690-47d`) — one agent per lesson, parallel,
+    edit-in-place + self-validate loop. Persisted script under the session `workflows/scripts/`.
+  - **Batch 1 (this session) = 20 slugs, 2 per category:** ai-vs-ml-vs-deep-learning,
+    embeddings-learned-representations, prompt-engineering-foundations, tokenization-context-windows,
+    what-is-rag, embeddings-vector-search, tool-use-action-boundaries, planning-and-reflection,
+    crewai-role-based-agents, claude-tool-use-agent-patterns, ai-evaluation-foundations, llm-as-judge,
+    image-generation-workflows, multimodal-prompting, deployment-patterns-ai-apps, model-gateways-litellm,
+    hallucinations-grounding, guardrails-validators, build-document-qa-bot, build-tool-calling-chatbot.
+  - **After a batch:** `npx tsx scripts/seed-library.ts` (to `.env`=STAGING; invalid files are skipped +
+    logged to `prebuilt/INVALID.md`, old DB row kept) → add slugs to `prebuilt/ENHANCED.json` →
+    `update prebuilt_lessons set content_version='v3-agent-2026-06' where slug = any(...)` → verify a few
+    render → **promote staging→prod when the user approves** (copy `prebuilt_lessons` staging→prod, same as
+    the KB copy pattern). `.env`/local repo currently point at STAGING (`ydgiysthvxhlfpzxyrmy`).
+  - **STATUS (Jun 2026): ~96/98 enhanced once the Codex branch merges.**
+    - Batch 1 = the 20 above, enhanced + **committed & pushed to `staging`** (`92fc18e`) + tagged
+      `content_version='v3-agent-2026-06'` + in `prebuilt/ENHANCED.json done[]`. Plus the 2 prior v2.
+    - **Codex batch = 76 lessons on branch `library-rich-codex`** (off staging), enhanced to the v4-rich bar,
+      committed there (NOT yet merged/seeded). `git diff --name-only staging..library-rich-codex -- prebuilt/lessons`
+      lists them. **Pending: review → merge to staging → seed → tag `v4-rich-2026-06`** (see the LIBRARY REVIEW
+      prompt the user has). Prefer a clean **git worktree** for the merge so the uncommitted KB working-tree files
+      don't ride along.
+    - **2 still pending (skipped by Codex — were dirty):** `browser-computer-use-agents`, `multi-agent-orchestration`
+      (currently uncommitted in the working tree — verify/finish + include them).
+    - NOT promoted to prod yet (awaits user OK after staging review).
+  - **⭐ RICHER BAR (v4-rich-2026-06) is now the standard** — after user feedback, `ENHANCE_SPEC.md` gained a
+    "CONTENT RICHNESS" section: a concrete problem-statement anchor, a BIG fully-worked example (esp.
+    beginner), real code examples, a case study, two framings per idea, substantial bodies. The hook must be
+    genuinely rich, not just structurally sound. **Batch 1's 20 are at the LIGHTER v3-agent bar** (structure +
+    hooks + a predict-then-reveal + failure/verify notes) — they likely want a rich top-up pass to v4-rich for
+    uniform quality; user to decide after reviewing staging.
+  - **RATE-LIMIT lesson (important):** a 20-wide agent fan-out tripped the SHARED model rate limit
+    ("Server is temporarily limiting requests — not your usage limit"); 6 agents never started. **Throttle
+    every enhancement workflow to ~3 concurrent** (loop slugs in chunks of 3, `parallel()` each chunk).
+    Do NOT run multiple enhancement sessions in parallel — single-session, sequential, throttled.
+  - **REMAINING: 78 lessons** (stale, NOT in `ENHANCED.json done[]`). Continue ONE session at a time at the
+    v4-rich bar — see the self-contained continuation prompt the user was given (it selects the next ~12,
+    enhances throttled, seeds, marks `v4-rich-2026-06`, and emits the next prompt). `scripts/validate-lesson.ts`
+    + `scripts/_render-sample.ts` are the per-lesson check + eyeball tools.
+- **RAG knowledge-base REBUILD (Codex, Jun 2026 — staging done, PROD PENDING):** Codex rebuilt the KB from a
+  curated registry. New tooling in **`kb-build/scripts/`**: `sources.mjs` + `fetch_sources.mjs` (curated sources),
+  `build_from_registry.mjs`, `audit_kb.mjs` (license/quality audit — expect docs:69, red:0, orange:0),
+  `backup_kb.mjs` (dumps `chunks`+`documents` to `kb-build/backups/*.sql`), `replace_kb.mjs` (truncate+reingest;
+  gated by `KB_ALLOW_DB_MUTATION=1` + `KB_STAGING_VERIFIED=1` + `KB_ENV_NAME`), `smoke_retrieve.ts` (retrieval check).
+  KB content lives in **`kb/`** (10 category dirs + `kb/manifest.yaml`); provenance in **`KB_IP_AUDIT.md`** +
+  **`KB_CONTENT_POLICY.md`**; `skipped.log` = excluded sources. `src/rag/{loaders,chunkers,ingest,retrieve}.ts`
+  were updated for the new pipeline.
+  - **STAGING KB: REPLACED from scratch (not appended) → 69 documents / 179 chunks.** Backup of the *prior* staging
+    KB at `kb-build/backups/staging-2026-06-22T15-38-51-498Z.sql`. Verify: `audit_kb.mjs` + `smoke_retrieve.ts` (chunks=179).
+  - **PROD KB: NOT touched** (still the older 39 docs / 380 chunks copied earlier). Migration = `backup_kb.mjs`
+    on prod → `replace_kb.mjs` with the gates → `smoke_retrieve.ts` on prod. See the KB→PROD prompt the user has.
+  - **Prod DB URL is in `.env` as `PROD_DATABASE_URL`** (prod ref `kdgtlbnlyscdldogxorb`, ap-southeast-2) so prod
+    migrations don't have to prompt for it. Load it explicitly for the migration commands
+    (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`). The app +
+    all default tooling still use `DATABASE_URL` (STAGING, ref `ydgiysthvxhlfpzxyrmy`) — **NEVER point the app's
+    `DATABASE_URL` at prod.**
+  - **UNCOMMITTED:** all of the above (`kb/`, `kb-build/`, `KB_*.md`, `src/rag/*`, `.gitignore`) is in the working
+    tree, not committed — commit it (its own commit, separate from the library lessons) so it's durable.
+  - **Known gotcha:** the ingest can exit nonzero from an ONNX native-teardown crash AFTER a successful run —
+    verify by DB counts + smoke retrieval, not exit code.
+- **KB CURATOR — daily GitHub Actions job (Jun 2026; PUSHED TO PROD `main` commit `d58084f`; cron PENDING only the Actions secrets):**
+  - **Added/modified flag (migration `0011`):** `documents.curator_change` = `'added'` (new documents row) | `'modified'`
+    (existing row updated) + `documents.curator_changed_at`. Stamped by `apply.ts` around `upsertSource` (existence
+    check before; UPDATE after) — `src/rag/store.ts` untouched. **0010 + 0011 applied to BOTH staging AND prod DBs.**
+    (New TOPICS still go to `kb/_pending` and aren't embedded, so DB writes are normally `modified`; `added` is set if/when
+    a pending topic is later embedded.)
+  - **Daily run-log (migration `0012`):** `kb_curator_runs` — ONE row per non-dry run (a heartbeat so a missing day shows):
+    `started_at`, `ok`, `sources_polled`, `added`/`updated`/`skipped`/`dropped`, `chunks`, `items` jsonb (the docs it brought:
+    `[{outcome,path,chunks}]`), `errors`, `dry_run`. Written by `writeRunLog` (apply.ts), called every run by index.ts even
+    on 0 changes. Applied to staging + prod. **Daily view:** `select started_at, ok, sources_polled, added, updated, dropped,
+    chunks, items from kb_curator_runs order by started_at desc;` (the existing per-run `kb_updates` audit row is kept too).
+  A SEPARATE additive service (no web-app runtime code touched) that keeps the KB fresh automatically. Path
+  **`services/kb-curator/`** (`index.ts` orchestrator + `detect`/`fetch`/`ipgate`/`synthesize`/`apply`/`report` +
+  `types.ts` + `sources.yaml`). Run: **`npm run kb:curate -- [--since 24h] [--dry-run] [--only <id>]`**.
+  - **What it does:** scans a FIXED license-vetted allowlist (`sources.yaml`, ~28 sources: github/rss/arxiv/sitemap)
+    for ONLY last-24h changes (time-gated + content-hash vs `kb_sources.last_hash`), fetches (plain fetch →
+    Playwright lazy → Firecrawl behind `KB_FETCHER=firecrawl`), IP/license-gates (`ipgate.ts`: MIT/Apache/BSD/CC-BY/
+    official-docs allow; 🔴 non-permissive → DROPPED, never embedded, logged to `KB_IP_AUDIT.md`), synthesizes
+    IP-clean notes (deterministic template; OPTIONAL Claude `ANTHROPIC_MODEL_HAIKU` when funded, token-capped),
+    embeds LOCALLY (reuses `src/rag/embed` bge-small/384 + `src/rag/store` `upsertSource` — same `documents`/`chunks`/
+    `kb_updates` schema), and upserts to `process.env.DATABASE_URL`. NEW topics → `kb/_pending/` (NOT auto-embedded).
+  - **State table:** migration **`0010_kb_sources.sql`** (per-source `last_checked`/`last_hash`; RLS on). Applied to staging.
+  - **Schedule:** `.github/workflows/kb-curate.yml` — cron `30 15 * * *` (15:30 UTC = **9 PM IST**) + `workflow_dispatch`;
+    ubuntu/node20/`npm ci`; HF model cached (`actions/cache` key `hf-bge-small-v1`, `TRANSFORMERS_CACHE=.cache/huggingface`);
+    **NO `NODE_EXTRA_CA_CERTS` in CI** (corp-MITM is local-only); secrets `DATABASE_URL`(→staging by default)/
+    `ANTHROPIC_API_KEY`/`SLACK_WEBHOOK`?/`FIRECRAWL_API_KEY`? (`GITHUB_TOKEN` auto); concurrency guard; `timeout-minutes:30`;
+    fails non-zero on any 🔴-IP item or DB error.
+  - **GO-LIVE (user):** (1) set the repo **Actions secrets** (above); (2) **merge the workflow file to `main`** —
+    GitHub cron ONLY fires from the default branch (first run = next 15:30 UTC; schedules auto-disable after 60d
+    repo inactivity); (3) keep `DATABASE_URL`=staging until trusted, then flip to prod or add a weekly prod-promote.
+  - **Verified on staging:** `tsc` clean; `0010` applied (`kb_sources`+RLS); `--dry-run --only langgraph` runs
+    end-to-end writing NOTHING to the DB, correct frontmatter/license, and the IP gate drops a planted non-permissive
+    fixture + exits non-zero. `package.json` adds `kb:curate` + `js-yaml`/`fast-xml-parser`/`playwright`.
 - **Prebuilt diagram component library (⚠️ INCOMPLETE — IN PROGRESS, NOT COMMITTED, branch `feature/diagram-component-library`):**
   - DONE so far: `src/render/diagrams.ts` (**9 templates**: neuralNetwork · pipeline · agentLoop · graph · sequence · layeredArchitecture · **tree** (hierarchy, tidy top-down layout) · **matrix** (labelled grid/heatmap, intensity-coloured) · **barProportion** (stacked proportion bar + legend) — all data-only → static inline SVG, theme-aware, escaped, `fitText` auto-wrap+auto-shrink that prefers shrinking over mid-word breaks so labels never spill); `diagram` block in schema.ts (discriminated `template` + flexible all-optional `data`, incl. recursive `tree`, `matrix{rows,cols,cells}`, `segments[]`); wired into components.ts (`diagramBlock`) + tokens.ts (`.diagram`, `.hmodal .diagram`); prompts.ts archetype→template mapping (MODULE_SYSTEM "INTERACTIVE VISUALS & DIAGRAMS" + moduleUserPrompt) covers all 9. Verified: tsc clean, fixtures 6/6 both modes, **0 overflows across 22 stress cases** (geometry-checked live), XSS-safe, dark OK. Review gallery: `scripts/diagram-gallery.ts` → `diagram-gallery.html` (throwaway, not committed).
   - **STILL TODO before commit/push:** (1) ONE real lesson generation with Visuals ON to confirm the model actually emits the right template on-topic (USES CREDITS — user runs it); (2) optional minor GAPs still open (see below) — decide if worth it; (3) Mermaid/Kroki fallback (deliverable 5, deferred). Do NOT push until the user approves the gallery + the live generation.
