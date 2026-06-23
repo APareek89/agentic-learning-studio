@@ -26,6 +26,10 @@ export interface LoadedSource {
   sourceType: string; // pdf | docx | md | txt | html | json | csv
   title: string;
   category?: string;
+  url?: string;
+  verdict?: string;
+  license?: string;
+  asOfDate?: string;
   kind: "prose" | "records";
   text?: string;
   records?: CatalogRecord[];
@@ -47,6 +51,42 @@ function stripHtml(html: string): string {
     .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+interface ParsedFrontmatter {
+  body: string;
+  meta: {
+    title?: string;
+    category?: string;
+    url?: string;
+    license?: string;
+    verdict?: string;
+    asOfDate?: string;
+  };
+}
+
+/** Parse the scalar frontmatter fields the KB contract relies on. */
+function parseFrontmatter(raw: string): ParsedFrontmatter {
+  const match = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+  if (!match) return { body: raw, meta: {} };
+
+  const meta: ParsedFrontmatter["meta"] = {};
+  const set = (key: string, value: string) => {
+    const clean = value.replace(/^['"]|['"]$/g, "").trim();
+    if (!clean) return;
+    if (key === "title") meta.title = clean;
+    else if (key === "category") meta.category = clean;
+    else if (key === "url") meta.url = clean;
+    else if (key === "license") meta.license = clean;
+    else if (key === "verdict") meta.verdict = clean;
+    else if (key === "as_of_date" || key === "asOfDate") meta.asOfDate = clean;
+  };
+
+  for (const line of match[1].split("\n")) {
+    const scalar = line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.+?)\s*$/);
+    if (scalar) set(scalar[1], scalar[2]);
+  }
+  return { body: raw.slice(match[0].length), meta };
 }
 
 /** Build one searchable sentence from a catalog record (using whatever fields exist). */
@@ -126,7 +166,23 @@ export async function loadSource(absPath: string, sourceId: string): Promise<Loa
       return { sourceId, sourceType: "docx", title, kind: "prose", text: value };
     }
     if (ext === ".md" || ext === ".txt") {
-      return { sourceId, sourceType: ext.slice(1), title, kind: "prose", text: await readFile(absPath, "utf8") };
+      const raw = await readFile(absPath, "utf8");
+      if (ext === ".md") {
+        const parsed = parseFrontmatter(raw);
+        return {
+          sourceId,
+          sourceType: "md",
+          title: parsed.meta.title ?? title,
+          category: parsed.meta.category,
+          url: parsed.meta.url,
+          verdict: parsed.meta.verdict,
+          license: parsed.meta.license,
+          asOfDate: parsed.meta.asOfDate,
+          kind: "prose",
+          text: parsed.body,
+        };
+      }
+      return { sourceId, sourceType: "txt", title, kind: "prose", text: raw };
     }
     if (ext === ".html" || ext === ".htm") {
       return { sourceId, sourceType: "html", title, kind: "prose", text: stripHtml(await readFile(absPath, "utf8")) };

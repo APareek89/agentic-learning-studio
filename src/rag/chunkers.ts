@@ -71,5 +71,9 @@ export function chunkSource(src: LoadedSource): Chunk[] {
     contentKind: "prose" as const,
     title: src.title,
     category: src.category,
+    url: src.url,
+    verdict: src.verdict,
+    license: src.license,
+    asOfDate: src.asOfDate,
   }));
 }

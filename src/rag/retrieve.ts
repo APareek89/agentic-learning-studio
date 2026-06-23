@@ -68,8 +68,8 @@ export async function retrieve(
     kw = await query<Row>(
       `select id::text, content, title, url, category, verdict, as_of_date
          from chunks
-        where content_tsv @@ plainto_tsquery('english', $1)
-        order by ts_rank(content_tsv, plainto_tsquery('english', $1)) desc
+        where to_tsvector('english', concat_ws(' ', title, title, category, content)) @@ plainto_tsquery('english', $1)
+        order by ts_rank(to_tsvector('english', concat_ws(' ', title, title, category, content)), plainto_tsquery('english', $1)) desc
         limit 20`,
       [q]
     );
