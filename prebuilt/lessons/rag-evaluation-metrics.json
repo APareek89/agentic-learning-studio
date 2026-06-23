@@ -25,100 +25,105 @@
   },
   "mentalMap": {
     "title": "RAG Evaluation Metrics: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "RAG Evaluation Metrics is useful when you can apply it to a docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation, choose a design, and verify faithfulness and context recall by question type.",
+    "caption": "Separate RAG evaluation into retrieval arrival, context usefulness, answer faithfulness, citation support, and slice-level decisions.",
+    "oneLineThesis": "RAG metrics are useful when they diagnose which part failed: evidence retrieval, context selection, answer generation, or citation support.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of RAG Evaluation Metrics.",
-        "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+        "label": "Retrieval metrics ask whether evidence arrived",
+        "sub": "Before judging answers, check the top-k context.",
+        "what": "Learners start RAG evaluation at the evidence boundary.",
+        "relevance": "This prevents prompt tuning when the retriever never found the right source.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: Mental model connects RAG Evaluation Metrics to the running artifact and failure test."
+        "orient": "Measure whether the right refund-policy evidence reaches top-k.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+        "label": "Context precision asks how much retrieved text helps",
+        "sub": "High recall can still drown the prompt in distracting chunks.",
+        "what": "Learners see that retrieving more evidence can reduce answer quality.",
+        "relevance": "This prevents over-wide top-k settings from masking rank and noise problems.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Mechanism connects RAG Evaluation Metrics to the running artifact and failure test."
+        "orient": "Balance useful refund evidence against distracting policy chunks.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+        "label": "Faithfulness and answer relevance judge generation",
+        "sub": "Once evidence is present, check whether the answer uses it correctly.",
+        "what": "Learners connect Ragas-style metrics to the answer-generation stage.",
+        "relevance": "This catches unsupported synthesis even when retrieval succeeded.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Design choices connects RAG Evaluation Metrics to the running artifact and failure test."
+        "emphasis": "normal",
+        "orient": "Judge whether the final answer follows the retrieved refund policy.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+        "label": "Citation quality ties claims to specific sources",
+        "sub": "Users need to inspect support, not just receive a confidence score.",
+        "what": "Learners implement a small metric report they can run locally.",
+        "relevance": "This catches answers that are plausible but not auditable.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Tiny implementation sketch connects RAG Evaluation Metrics to the running artifact and failure test."
+        "orient": "Code a small RAG metric report for source IDs and citations.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+        "label": "Slice dashboards prevent aggregate deception",
+        "sub": "Averages hide the queries that hurt users most.",
+        "what": "Learners turn metrics into operational decisions.",
+        "relevance": "This prevents a high average from hiding policy or long-tail failures.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Check and apply connects RAG Evaluation Metrics to the running artifact and failure test."
+        "orient": "Close with slice thresholds and failure ownership for RAG releases.",
+        "order": 5
       }
     ],
     "edges": [
       {
         "from": "n_m1",
         "to": "n_m2",
-        "label": "then"
+        "label": "precedes"
       },
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "conditions"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "supports"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hides inside"
       }
     ],
-    "structureType": "conceptual"
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "Mental model applies RAG Evaluation Metrics to RAG metric rubric for context recall, precision, faithfulness, and answer relevance, with examples and checks tied to faithfulness and context recall by question type.",
+      "title": "Retrieval metrics ask whether evidence arrived",
+      "sub": "Before judging answers, check the top-k context.",
+      "summary": "Hit rate, recall@k, MRR, and nDCG diagnose the search layer.",
       "objectives": [
-        "Apply mental model to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a single accuracy score hides whether retrieval or generation failed."
+        "Explain retrieval metrics with a concrete docs-assistant case.",
+        "Distinguish source-based evaluation from answer evaluation.",
+        "Use negative cases where no evidence should be retrieved."
       ],
       "termIds": [
         "eval",
@@ -127,19 +132,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why RAG Evaluation Metrics matters here",
+          "title": "If evidence is absent, the generator is guessing",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. The learner's job is not to memorize RAG Evaluation Metrics; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved faithfulness and context recall by question type."
+                  "text": "Problem anchor: a docs assistant answers a refund-policy question with a confident but wrong paragraph. The model might be hallucinating, or the retriever might have missed the policy page. Retrieval metrics answer the first question: did the needed evidence arrive in the context window?"
                 }
               ]
             },
@@ -147,152 +152,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: RAG metric rubric for context recall, precision, faithfulness, and answer relevance. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before reading on, predict: if a single accuracy score hides whether retrieval or generation failed, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: RAG Evaluation Metrics matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: RAG Evaluation Metrics matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure faithfulness and context recall by question type on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for RAG Evaluation Metrics.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review RAG metric rubric for context recall, precision, faithfulness, and answer relevance: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a single accuracy score hides whether retrieval or generation failed. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Use hit rate or recall@k when each query has expected source IDs. Use MRR or nDCG when rank matters. A source found at rank 20 is not useful if the prompt only includes top 5."
                 }
               ]
             }
@@ -305,97 +165,22 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb_retrieval_eval",
+            "canon_ragas_metrics",
+            "kb_rag_fundamentals"
+          ],
+          "analogy": "Retrieval metrics check whether the ingredients reached the counter before judging the meal."
         },
         {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Worked example: Mental model applied to the running case",
+          "title": "Worked retrieval row: refund cutoff question",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. This module asks what mental model changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve faithfulness and context recall by question type."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: a single accuracy score hides whether retrieval or generation failed."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For RAG metric rubric for context recall, precision, faithfulness, and answer relevance, log or test the fields needed to debug faithfulness and context recall by question type. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "Query: \"Can I get a refund after 45 days?\" Expected source: refunds.md#45. Retriever returns top five: shipping.md#12, cancellation.md#7, refunds.md#45, pricing.md#2, support.md#9. hit@5 is true, reciprocal rank is 1/3, and hit@2 is false. The answer may still fail later, but the retrieval diagnosis is specific."
                 }
               ]
             }
@@ -408,128 +193,30 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: RAG metric rubric for context recall, precision, faithfulness, and answer relevance",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. The team wants to improve faithfulness and context recall by question type, but it has already seen this failure: a single accuracy score hides whether retrieval or generation failed."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Question: \"Can I get a refund after 35 days if I lost my invoice?\" The answer must cite the exact policy chunk, not a plausible refund rule remembered by the model."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: RAG metric rubric for context recall, precision, faithfulness, and answer relevance. It specifies loaders, chunk metadata, retriever settings, prompt contract, citation format, and a faithfulness check for faithfulness and context recall by question type."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: retrieve policy-refunds-v3 section 4, quote \"30 days\" and \"invoice id required\", answer that the request probably fails the policy, and link the source chunk used."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: RAG reviewer. Context: A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. Task: inspect RAG metric rubric for context recall, precision, faithfulness, and answer relevance. Require a user question, retrieved chunks with source ids, final answer, and a claim-by-claim support check. Constraints: do not allow claims that are absent from retrieved chunks; flag stale or missing metadata. Output: {question, retrieved_sources, answer, unsupported_claims, release_decision}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties RAG Evaluation Metrics to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies RAG Evaluation Metrics to the running case?",
+          "title": "Retrieval first",
+          "prompt": "Why measure retrieval before faithfulness?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review RAG metric rubric for context recall, precision, faithfulness, and answer relevance, measure faithfulness and context recall by question type, and test the failure: a single accuracy score hides whether retrieval or generation failed.",
+              "text": "Because retrieval metrics prove the answer is well written.",
+              "correct": false
+            },
+            {
+              "text": "Because an answer cannot be grounded in evidence that never arrived.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Because top-k ranking never changes.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Separate retrieval diagnosis from generation diagnosis.",
           "termIds": [
             "eval",
             "trace",
@@ -538,28 +225,26 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_retrieval_eval",
+        "canon_ragas_metrics",
+        "kb_rag_fundamentals"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Mechanism applies RAG Evaluation Metrics to RAG metric rubric for context recall, precision, faithfulness, and answer relevance, with examples and checks tied to faithfulness and context recall by question type.",
+      "title": "Context precision asks how much retrieved text helps",
+      "sub": "High recall can still drown the prompt in distracting chunks.",
+      "summary": "Context precision catches noisy retrieval that crowds out useful evidence.",
       "objectives": [
-        "Apply mechanism to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a single accuracy score hides whether retrieval or generation failed."
+        "Explain precision versus recall in RAG context.",
+        "Identify chunking and reranking failures from noisy context.",
+        "Choose a top-k that matches the prompt budget."
       ],
       "termIds": [
         "eval",
@@ -568,19 +253,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the mechanism in the running case",
+          "title": "Recall finds the needle; precision removes hay",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism opens the machinery behind RAG Evaluation Metrics. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "A retriever can include the right refund chunk and still fail the user by surrounding it with irrelevant shipping, pricing, and cancellation chunks. Context precision asks how much of the supplied context actually helps answer the question."
                 }
               ]
             },
@@ -588,40 +273,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means separating retrieval quality from answer quality: did the system fetch the right evidence, and did the model stay faithful to that evidence?"
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Recall from module 1: the artifact is RAG metric rubric for context recall, precision, faithfulness, and answer relevance. Which single field, trace, or test would show whether faithfulness and context recall by question type improved?"
+                  "text": "In practice, this points to chunk boundaries, metadata filters, hybrid weighting, and reranking. If context recall is high but precision is low, do not immediately change the model prompt. Inspect what the retriever packed into the prompt."
                 }
               ]
             }
@@ -634,154 +286,20 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval",
+            "canon_ragas_metrics"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review RAG metric rubric for context recall, precision, faithfulness, and answer relevance: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a single accuracy score hides whether retrieval or generation failed. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Mechanism applied to the running case",
+          "title": "Two rankings with the same hit rate",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. This module asks what mechanism changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve faithfulness and context recall by question type."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: a single accuracy score hides whether retrieval or generation failed."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For RAG metric rubric for context recall, precision, faithfulness, and answer relevance, log or test the fields needed to debug faithfulness and context recall by question type. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "Ranking A puts refunds.md#45 first, followed by related cancellation policy. Ranking B puts refunds.md#45 fifth after four generic support chunks. Both have hit@5=true, but Ranking A is more likely to produce a faithful answer within a limited prompt budget."
                 }
               ]
             }
@@ -794,93 +312,89 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         },
         {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: a single accuracy score hides whether retrieval or generation failed. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to RAG metric rubric for context recall, precision, faithfulness, and answer relevance: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: faithfulness and context recall by question type becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful RAG Evaluation Metrics design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Retrieval metric diagnosis",
+          "criteria": [
+            "Metric pattern",
+            "Likely cause",
+            "First fix"
           ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies RAG Evaluation Metrics to the running case?",
-          "format": "mcq",
           "options": [
             {
-              "text": "Build or review RAG metric rubric for context recall, precision, faithfulness, and answer relevance, measure faithfulness and context recall by question type, and test the failure: a single accuracy score hides whether retrieval or generation failed.",
-              "correct": true
+              "name": "Low recall, low precision",
+              "cells": [
+                {
+                  "criterion": "Metric pattern",
+                  "text": "Low recall, low precision",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Likely cause",
+                  "text": "query/index mismatch",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First fix",
+                  "text": "embedding model, metadata, or corpus coverage",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Expected sources are absent.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
+              "name": "High recall, low precision",
+              "cells": [
+                {
+                  "criterion": "Metric pattern",
+                  "text": "High recall, low precision",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Likely cause",
+                  "text": "too much noisy context",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First fix",
+                  "text": "reranker, filters, chunking, top-k",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Right source appears with many distractors.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
+              "name": "High precision, low recall",
+              "cells": [
+                {
+                  "criterion": "Metric pattern",
+                  "text": "High precision, low recall",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Likely cause",
+                  "text": "narrow matching",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First fix",
+                  "text": "hybrid search or query expansion",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Returned chunks are good but incomplete.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
           "termIds": [
             "eval",
             "trace",
@@ -889,28 +403,25 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_retrieval_eval",
+        "canon_ragas_metrics"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Design choices applies RAG Evaluation Metrics to RAG metric rubric for context recall, precision, faithfulness, and answer relevance, with examples and checks tied to faithfulness and context recall by question type.",
+      "title": "Faithfulness and answer relevance judge generation",
+      "sub": "Once evidence is present, check whether the answer uses it correctly.",
+      "summary": "Answer metrics evaluate grounded synthesis, not retrieval alone.",
       "objectives": [
-        "Apply design choices to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a single accuracy score hides whether retrieval or generation failed."
+        "Define faithfulness and answer relevance in RAG.",
+        "Avoid mixing retrieval misses with generation failures.",
+        "Use judge metrics with spot checks and versioned rubrics."
       ],
       "termIds": [
         "eval",
@@ -919,19 +430,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the choice that changes reliability",
+          "title": "Faithfulness is about support; relevance is about answering the question",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where RAG Evaluation Metrics becomes a decision. The team must choose how much rigor RAG metric rubric for context recall, precision, faithfulness, and answer relevance needs before it can be trusted."
+                  "text": "Ragas-style metrics include signals such as faithfulness, context precision, context recall, and response relevancy. Faithfulness asks whether the answer claims are supported by retrieved context. Answer relevance asks whether the answer addresses the user question instead of merely repeating context."
                 }
               ]
             },
@@ -939,84 +450,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves faithfulness and context recall by question type while making this failure visible: a single accuracy score hides whether retrieval or generation failed."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review RAG metric rubric for context recall, precision, faithfulness, and answer relevance: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a single accuracy score hides whether retrieval or generation failed. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Keep the stage boundary clear. If the right source is absent, faithfulness may punish the answer, but the actionable fix begins in retrieval. If the source is present and the answer invents a refund exception, the fix is prompting, output constraints, or model behavior."
                 }
               ]
             }
@@ -1029,130 +463,21 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon_ragas_metrics",
+            "kb_retrieval_eval",
+            "kb_eval_frameworks"
           ]
         },
         {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of RAG Evaluation Metrics on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: a single accuracy score hides whether retrieval or generation failed.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on faithfulness and context recall by question type.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves faithfulness and context recall by question type and catches: a single accuracy score hides whether retrieval or generation failed.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
+          "id": "m3_case",
+          "kind": "functionalExample",
+          "title": "Case study: faithful but incomplete",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For RAG metric rubric for context recall, precision, faithfulness, and answer relevance, log or test the fields needed to debug faithfulness and context recall by question type. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
+                  "text": "The assistant says: \"Refunds are automatic only within 30 days.\" That is faithful to the context, but it does not answer whether a 45-day customer can escalate. A relevance check or task-completion rubric should catch the missing escalation guidance."
                 }
               ]
             }
@@ -1165,140 +490,27 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: a single accuracy score hides whether retrieval or generation failed. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Retrieved chunks mention the right keyword but not the answer-bearing paragraph."
-                  }
-                ],
-                [
-                  {
-                    "text": "The answer is relevant but unfaithful: it adds a policy or fact not present in the retrieved evidence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metadata is missing, so citations cannot be checked or reranked later."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: faithfulness and context recall by question type gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when faithfulness and context recall by question type affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: a single accuracy score hides whether retrieval or generation failed.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies RAG Evaluation Metrics to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review RAG metric rubric for context recall, precision, faithfulness, and answer relevance, measure faithfulness and context recall by question type, and test the failure: a single accuracy score hides whether retrieval or generation failed.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon_ragas_metrics",
+            "kb_retrieval_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for RAG Evaluation Metrics: baseline, production design, or advanced optimization."
+        "canon_ragas_metrics",
+        "kb_retrieval_eval",
+        "kb_eval_frameworks"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Tiny implementation sketch applies RAG Evaluation Metrics to RAG metric rubric for context recall, precision, faithfulness, and answer relevance, with examples and checks tied to faithfulness and context recall by question type.",
+      "title": "Citation quality ties claims to specific sources",
+      "sub": "Users need to inspect support, not just receive a confidence score.",
+      "summary": "Citation checks make RAG answers auditable claim by claim.",
       "objectives": [
-        "Apply tiny implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a single accuracy score hides whether retrieval or generation failed."
+        "Compute simple retrieval and citation-support metrics.",
+        "Predict how missing citations affect the report.",
+        "Verify AI-generated RAG eval code for source alignment."
       ],
       "termIds": [
         "eval",
@@ -1307,203 +519,29 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: make the contract concrete",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A useful implementation sketch for RAG Evaluation Metrics should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For RAG metric rubric for context recall, precision, faithfulness, and answer relevance, the sketch should prove one thing: the system can improve faithfulness and context recall by question type without hiding the failure where a single accuracy score hides whether retrieval or generation failed."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review RAG metric rubric for context recall, precision, faithfulness, and answer relevance: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a single accuracy score hides whether retrieval or generation failed. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Tiny implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. This module asks what tiny implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve faithfulness and context recall by question type."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: a single accuracy score hides whether retrieval or generation failed."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: require evidence before answering",
+          "title": "Tiny RAG eval report for source and citation support",
           "language": "python",
-          "code": "# RAG Evaluation Metrics: evidence gate for a RAG answer.\nquestion = \"Can I get a refund after 35 days without an invoice?\"\nchunks = [\n    {\"id\": \"refunds-v3\", \"text\": \"Refund requests require an invoice id and must arrive within 30 days.\"},\n    {\"id\": \"tone-guide\", \"text\": \"Use short, friendly support replies.\"},\n]\nrequired_terms = {\"invoice\", \"30 days\"}\n\ndef supports_answer(chunk):\n    text = chunk[\"text\"].lower()\n    return all(term in text for term in required_terms)\n\nbest = next((c for c in chunks if supports_answer(c)), None)\nprint(best[\"id\"] if best else \"no evidence\")\nprint(\"answer with citation\" if best else \"ask for more evidence\")",
-          "explain": [
+          "code": "cases = [\n    {\n        \"id\": \"refund_45_days\",\n        \"expected_sources\": {\"refunds.md#45\"},\n        \"retrieved\": [\"shipping.md#12\", \"refunds.md#45\", \"support.md#9\"],\n        \"answer_citations\": {\"refunds.md#45\"},\n        \"claims_supported\": 3,\n        \"claims_total\": 3,\n    },\n    {\n        \"id\": \"enterprise_sla\",\n        \"expected_sources\": {\"enterprise-sla.md#2\"},\n        \"retrieved\": [\"pricing.md#1\", \"support.md#9\"],\n        \"answer_citations\": set(),\n        \"claims_supported\": 1,\n        \"claims_total\": 3,\n    },\n]\n\nfor case in cases:\n    retrieved = set(case[\"retrieved\"])\n    recall_at_3 = bool(case[\"expected_sources\"] & retrieved)\n    citation_support = case[\"expected_sources\"] <= case[\"answer_citations\"]\n    faithfulness = case[\"claims_supported\"] / case[\"claims_total\"]\n    print(case[\"id\"], {\n        \"recall_at_3\": recall_at_3,\n        \"citation_support\": citation_support,\n        \"faithfulness\": round(faithfulness, 2),\n    })",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to a single accuracy score hides whether retrieval or generation failed."
+                  "text": "This is intentionally small. It separates retrieval success, citation support, and claim support so the fix is diagnosable."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "Predict the selected chunk id and the decision.",
-            "answer": "It prints:\nrefunds-v3\nanswer with citation\n\nThe code refuses to answer from vibes. It first checks that the needed facts are present in retrieved evidence."
+            "prompt": "Predict the report for enterprise_sla. Which metric points to retrieval failure?",
+            "answer": "enterprise_sla has recall_at_3 false because enterprise-sla.md#2 is absent from retrieved sources. citation_support is also false, and faithfulness is 0.33, but retrieval is the first failure to investigate."
           },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
           "termIds": [
             "eval",
             "trace",
@@ -1512,53 +550,22 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval",
+            "canon_ragas_metrics"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify AI-generated RAG metric code",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for RAG Evaluation Metrics, review it against the running case before accepting it."
+                  "text": "Checklist: expected sources are explicit; retrieved source IDs come from the real retriever; top-k matches production prompt packing; answer citations are compared to source IDs, not titles; negative cases expect no sufficient evidence; and aggregate scores can be broken down by slice."
                 }
               ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Does it name the real artifact: RAG metric rubric for context recall, precision, faithfulness, and answer relevance?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it include a realistic input and a concrete expected output?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it test or block the known failure: a single accuracy score hides whether retrieval or generation failed?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it expose enough evidence to debug faithfulness and context recall by question type?"
-                  }
-                ],
-                [
-                  {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
-                  }
-                ]
-              ]
             }
           ],
           "termIds": [
@@ -1569,60 +576,25 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies RAG Evaluation Metrics to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review RAG metric rubric for context recall, precision, faithfulness, and answer relevance, measure faithfulness and context recall by question type, and test the failure: a single accuracy score hides whether retrieval or generation failed.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
-          ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_retrieval_eval",
+        "canon_ragas_metrics"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Check and apply applies RAG Evaluation Metrics to RAG metric rubric for context recall, precision, faithfulness, and answer relevance, with examples and checks tied to faithfulness and context recall by question type.",
+      "title": "Slice dashboards prevent aggregate deception",
+      "sub": "Averages hide the queries that hurt users most.",
+      "summary": "RAG evals become release gates when metrics are sliced by task, source, and risk.",
       "objectives": [
-        "Apply check and apply to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: a single accuracy score hides whether retrieval or generation failed."
+        "Explain why aggregate RAG metrics can mislead.",
+        "Define slices for docs, policy, freshness, and no-answer cases.",
+        "Set thresholds that route fixes to retrieval or generation owners."
       ],
       "termIds": [
         "eval",
@@ -1631,37 +603,45 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Check and apply: retrieval before mastery",
+          "title": "A passing average can hide a dangerous slice",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
+                  "text": "A docs assistant can score 0.89 overall while failing every policy question updated last week. Slice by topic, source type, freshness, language, user intent, and negative no-evidence cases. Track retrieval metrics and answer metrics separately in each slice."
                 }
               ]
             },
             {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how RAG metric rubric for context recall, precision, faithfulness, and answer relevance improves faithfulness and context recall by question type and catches a single accuracy score hides whether retrieval or generation failed, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Policy slice: stricter citation and refusal threshold."
+                  }
+                ],
+                [
+                  {
+                    "text": "Freshness slice: expected source must match current version."
+                  }
+                ],
+                [
+                  {
+                    "text": "No-evidence slice: correct answer is insufficient evidence."
+                  }
+                ],
+                [
+                  {
+                    "text": "Long-tail slice: inspect manually before trusting aggregate scores."
+                  }
+                ]
               ]
             }
           ],
@@ -1673,148 +653,16 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review RAG metric rubric for context recall, precision, faithfulness, and answer relevance: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where a single accuracy score hides whether retrieval or generation failed. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval",
+            "canon_ragas_metrics"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of RAG Evaluation Metrics on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: a single accuracy score hides whether retrieval or generation failed.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on faithfulness and context recall by question type.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves faithfulness and context recall by question type and catches: a single accuracy score hides whether retrieval or generation failed.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Use RAG metrics as diagnostics, not a single trophy score.",
+          "useWhen": "Use them before changing embeddings, chunking, rerankers, prompt packing, or model settings, and whenever an index is rebuilt.",
+          "avoidWhen": "Avoid optimizing one aggregate score while ignoring no-answer cases, stale ground truth, judge variance, or category regressions.",
           "termIds": [
             "eval",
             "trace",
@@ -1823,174 +671,30 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For RAG metric rubric for context recall, precision, faithfulness, and answer relevance, log or test the fields needed to debug faithfulness and context recall by question type. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct RAG Evaluation Metrics: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply RAG Evaluation Metrics without copying the worked example. Keep the same running case - A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: faithfulness and context recall by question type."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: a single accuracy score hides whether retrieval or generation failed."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset",
-            "judge",
-            "regression"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies RAG Evaluation Metrics to the running case?",
+          "title": "Metric decision",
+          "prompt": "A RAG system has high overall faithfulness but fails no-evidence questions. What should the team do?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review RAG metric rubric for context recall, precision, faithfulness, and answer relevance, measure faithfulness and context recall by question type, and test the failure: a single accuracy score hides whether retrieval or generation failed.",
+              "text": "Declare the release safe because the average is high.",
+              "correct": false
+            },
+            {
+              "text": "Add a no-evidence slice with refusal/citation thresholds and inspect retrieval behavior.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only rewrite the UI copy.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Slices reveal failures that averages can hide.",
           "termIds": [
             "eval",
             "trace",
@@ -1999,18 +703,14 @@
             "regression"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb_retrieval_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for RAG Evaluation Metrics: baseline, production design, or advanced optimization."
+        "kb_retrieval_eval",
+        "canon_ragas_metrics"
+      ]
     }
   ],
   "glossary": {
@@ -2080,17 +780,17 @@
     "title": "Decision prompts for RAG Evaluation Metrics",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Metric selection",
         "questions": [
           {
-            "q": "What decision does RAG Evaluation Metrics change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships RAG metric rubric for context recall, precision, faithfulness, and answer relevance.",
+            "q": "Which metric identifies the failing part of this RAG answer?",
+            "why": "A low-quality answer may come from missing evidence, noisy context, unfaithful synthesis, weak citations, or a bad slice average.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Diagnostic metric by stage",
+              "One overall quality score",
+              "Manual vibes only"
             ],
-            "rot": "Choose the smallest option that catches: a single accuracy score hides whether retrieval or generation failed."
+            "rot": "Measure retrieval and generation separately before optimizing prompts or embeddings."
           }
         ]
       }
@@ -2102,151 +802,152 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct RAG Evaluation Metrics using the running case: A docs-search assistant returns confident answers and the team needs metrics that separate retrieval from generation. Name the artifact (RAG metric rubric for context recall, precision, faithfulness, and answer relevance), explain the mechanism, choose a design level, write the check for a single accuracy score hides whether retrieval or generation failed, and say how you would measure faithfulness and context recall by question type."
+            "text": "Retrieval prompt: explain RAG metrics by reconstructing hit rate or recall@k, context precision, faithfulness, answer relevance, citation support, negative cases, and slice-level thresholds."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "RAG metric path from evidence arrival to slice decision",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of RAG Evaluation Metrics.",
-          "what": "Mental model shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+          "label": "Retrieval metrics ask whether evidence arrived",
+          "sub": "Before judging answers, check the top-k context.",
+          "what": "Learners start RAG evaluation at the evidence boundary.",
+          "relevance": "This prevents prompt tuning when the retriever never found the right source.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: Mental model connects RAG Evaluation Metrics to the running artifact and failure test."
+          "orient": "Measure whether the right refund-policy evidence reaches top-k.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+          "label": "Context precision asks how much retrieved text helps",
+          "sub": "High recall can still drown the prompt in distracting chunks.",
+          "what": "Learners see that retrieving more evidence can reduce answer quality.",
+          "relevance": "This prevents over-wide top-k settings from masking rank and noise problems.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Mechanism connects RAG Evaluation Metrics to the running artifact and failure test."
+          "orient": "Balance useful refund evidence against distracting policy chunks.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+          "label": "Faithfulness and answer relevance judge generation",
+          "sub": "Once evidence is present, check whether the answer uses it correctly.",
+          "what": "Learners connect Ragas-style metrics to the answer-generation stage.",
+          "relevance": "This catches unsupported synthesis even when retrieval succeeded.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Design choices connects RAG Evaluation Metrics to the running artifact and failure test."
+          "emphasis": "normal",
+          "orient": "Judge whether the final answer follows the retrieved refund policy.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+          "label": "Citation quality ties claims to specific sources",
+          "sub": "Users need to inspect support, not just receive a confidence score.",
+          "what": "Learners implement a small metric report they can run locally.",
+          "relevance": "This catches answers that are plausible but not auditable.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Tiny implementation sketch connects RAG Evaluation Metrics to the running artifact and failure test."
+          "orient": "Code a small RAG metric report for source IDs and citations.",
+          "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Check and apply",
-          "sub": "Use active recall and a decision checklist to make it stick.",
-          "what": "Check and apply shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve faithfulness and context recall by question type while avoiding the failure: a single accuracy score hides whether retrieval or generation failed.",
+          "label": "Slice dashboards prevent aggregate deception",
+          "sub": "Averages hide the queries that hurt users most.",
+          "what": "Learners turn metrics into operational decisions.",
+          "relevance": "This prevents a high average from hiding policy or long-tail failures.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Check and apply connects RAG Evaluation Metrics to the running artifact and failure test."
+          "orient": "Close with slice thresholds and failure ownership for RAG releases.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "retrieves"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "filters"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "grounds"
         },
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "segments"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Mental model",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Retrieval metrics ask whether evidence arrived",
+        "detail": "Hit rate, recall@k, MRR, and nDCG diagnose the search layer."
       },
       {
         "step": 2,
-        "label": "Mechanism",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Context precision asks how much retrieved text helps",
+        "detail": "Context precision catches noisy retrieval that crowds out useful evidence."
       },
       {
         "step": 3,
-        "label": "Design choices",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Faithfulness and answer relevance judge generation",
+        "detail": "Answer metrics evaluate grounded synthesis, not retrieval alone."
       },
       {
         "step": 4,
-        "label": "Tiny implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Citation quality ties claims to specific sources",
+        "detail": "Citation checks make RAG answers auditable claim by claim."
       },
       {
         "step": 5,
-        "label": "Check and apply",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Slice dashboards prevent aggregate deception",
+        "detail": "RAG evals become release gates when metrics are sliced by task, source, and risk."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Retrieval metrics ask whether evidence arrived\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure faithfulness and context recall by question type on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: a single accuracy score hides whether retrieval or generation failed?",
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Citation quality ties claims to specific sources\"?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_gate",
+        "label": "Does \"Slice dashboards prevent aggregate deception\" define the release or production gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for RAG metric rubric for context recall, precision, faithfulness, and answer relevance. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (faithfulness and context recall by question type), failure case (a single accuracy score hides whether retrieval or generation failed), owner, and the next rung after this lesson.",
-      "scopedTo": "RAG Evaluation Metrics"
+      "prompt": "Build a 12-case RAG eval sheet for a docs assistant. Include expected source IDs, negative no-evidence cases, top-k retrieval output, context precision, faithfulness, citation support, and slice pass rates. Next rung: add Ragas or another evaluator and compare with manual review.",
+      "scopedTo": "RAG evaluation",
+      "checks": [
+        "Retrieval and answer metrics are separate.",
+        "Negative cases expect insufficient evidence.",
+        "Citations are checked against source IDs.",
+        "Slices reveal regressions hidden by averages."
+      ]
     }
   },
   "citations": {
@@ -2277,6 +978,34 @@
       "title": "Official documentation",
       "url": "https://langfuse.com/docs",
       "asOfDate": "2026-06-20"
+    },
+    "canon_ragas_metrics": {
+      "id": "canon_ragas_metrics",
+      "kind": "canonical",
+      "title": "Ragas available metrics",
+      "url": "https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_retrieval_eval": {
+      "id": "kb_retrieval_eval",
+      "kind": "kb",
+      "title": "KB: Retrieval Evaluation",
+      "url": "https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_rag_fundamentals": {
+      "id": "kb_rag_fundamentals",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_eval_frameworks": {
+      "id": "kb_eval_frameworks",
+      "kind": "kb",
+      "title": "KB: Eval Frameworks",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     }
   }
 }
