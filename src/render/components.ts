@@ -624,23 +624,16 @@ function renderBodyHorizontal(bp: Blueprint): string {
   const toggles = contentToggleBar(bp);
   const modal = `<div id="hmodal" class="hmodal" hidden><div class="hmodal-card"><button class="hmodal-x" type="button" aria-label="Close">×</button><div class="hmodal-title"></div><div class="hmodal-body"></div></div></div>`;
 
+  // No internal lesson top bar — the host app's Bar 2 carries the title + Dark; the lens
+  // toggles + progress live in the playground header below, next to Back/Next.
   return `
-  <div class="topbar"><div class="topbar-in">
-    <div class="tb-left"><span class="h-mode-tag">↔ Paged</span></div>
-    <div class="tb-center"><span class="brand-mini">${esc(bp.meta.title)}</span></div>
-    <div class="tb-right">
-      ${toggles}
-      <div class="progress" title="Progress"><i></i></div>
-      <button class="tbtn" id="theme">☾ Dark</button>
-    </div>
-  </div></div>
-
-  <div id="hworkbench">
+  <div id="hworkbench" class="no-topbar">
     <nav id="blocknav">${navHtml}</nav>
     <div class="h-stage">
       <div class="hx-head">
         <div class="hx-htext"><div class="hx-eyebrow" id="hx-eyebrow"></div><div class="hx-title" id="hx-title"></div></div>
         <div class="hx-grow"></div>
+        <div class="hx-tools">${toggles}<div class="progress" title="Progress"><i></i></div></div>
         <div class="hx-pos" id="hx-pos"></div>
         <button class="hx-nav hx-back" id="hx-back" type="button" hidden>← Back</button>
         <button class="hx-nav hx-next" id="hx-next" type="button">Next →</button>
@@ -711,7 +704,6 @@ export function renderBody(bp: Blueprint): string {
     <div class="tb-right">
       ${contentToggles ? `<div class="toggle-group" role="group" aria-label="Show or hide content">${contentToggles}</div>` : ""}
       <div class="progress" title="Progress"><i></i></div>
-      <button class="tbtn" id="theme">☾ Dark</button>
     </div>
   </div></div>
 

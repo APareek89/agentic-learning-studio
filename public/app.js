@@ -41,6 +41,20 @@ const editRegenBtn = document.getElementById("edit-regen");
 const editCloseBtn = document.getElementById("edit-close");
 if (genStatus) genStatus.addEventListener("click", () => switchTab("dashboard"));
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
+
+// Bar-2 Dark toggle — the lesson renders in a same-origin iframe, so we flip the shared
+// `als-theme` and post it live to the frame (its runtime applies it without a reload).
+const viewerTheme = document.getElementById("viewer-theme");
+if (viewerTheme) {
+  const reflectTheme = () => { try { viewerTheme.textContent = localStorage.getItem("als-theme") === "dark" ? "☀ Light" : "🌙 Dark"; } catch (e) {} };
+  reflectTheme();
+  viewerTheme.addEventListener("click", () => {
+    let next = "dark";
+    try { next = localStorage.getItem("als-theme") === "dark" ? "light" : "dark"; localStorage.setItem("als-theme", next); } catch (e) {}
+    try { if (viewerFrame.contentWindow) viewerFrame.contentWindow.postMessage({ type: "als-theme", value: next }, "*"); } catch (e) {}
+    reflectTheme();
+  });
+}
 askMoreBtn.addEventListener("click", () => toggleChat());
 chatCloseBtn.addEventListener("click", () => toggleChat(false));
 function toggleChat(force) {

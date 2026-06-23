@@ -28,6 +28,8 @@ export const RUNTIME_JS = String.raw`
   // ---- theme ----
   function applyTheme(t){ document.body.setAttribute("data-theme", t); document.documentElement.setAttribute("data-theme", t); var b=document.getElementById("theme"); if(b) b.textContent = t==="dark" ? "☀ Light" : "☾ Dark"; }
   applyTheme(lsGet("als-theme") || "light");
+  // The host app's Bar-2 "Dark" toggle posts the theme in (the lesson's own toggle was removed).
+  window.addEventListener("message", function(e){ var d=e&&e.data; if(d && d.type==="als-theme" && (d.value==="dark"||d.value==="light")){ applyTheme(d.value); lsSet("als-theme", d.value); } });
 
   // ---- progress (which building blocks have been opened) ----
   var moduleIds = Array.prototype.map.call(document.querySelectorAll(".navitem:not(.nav-special)"), function(b){ return b.getAttribute("data-goto"); });
