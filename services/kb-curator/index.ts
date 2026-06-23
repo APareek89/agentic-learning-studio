@@ -28,7 +28,7 @@ import { detectSource, loadState, saveState } from "./detect";
 import { fetchItem } from "./fetch";
 import { classifyLicense, appendAudit } from "./ipgate";
 import { synthesizeItem, resetSynthBudget } from "./synthesize";
-import { applyNote, tallyApply, writeRunAudit, type AppliedItem } from "./apply";
+import { applyNote, tallyApply, writeRunAudit, writeRunLog, type AppliedItem } from "./apply";
 import { printReport, postSlack } from "./report";
 
 const SOURCES_PATH = fileURLToPath(new URL("./sources.yaml", import.meta.url));
@@ -92,6 +92,7 @@ async function loadSources(): Promise<SourceDef[]> {
 /** The orchestrated run. Returns the report + whether any red item was seen. */
 export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boolean; dbError: boolean }> {
   resetSynthBudget();
+  const startedAt = new Date().toISOString();
 
   const all = await loadSources();
   const sources = cli.only ? selectOnly(all, cli.only) : all;
@@ -164,6 +165,23 @@ export async function run(cli: Cli): Promise<{ report: RunReport; redSeen: boole
   } catch (err) {
     errors.push(`audit: ${(err as Error).message}`);
     dbError = true;
+  }
+
+  // Daily run-log row (migration 0012): one per non-dry run — whether it ran + what it brought.
+  try {
+    await writeRunLog({
+      startedAt,
+      ok: !redSeen && !dbError && errors.length === 0,
+      since: cli.since,
+      only: cli.only,
+      dryRun: cli.dryRun,
+      sourcesPolled: sources.length,
+      tally,
+      applied,
+      errors,
+    });
+  } catch (err) {
+    errors.push(`runlog: ${(err as Error).message}`);
   }
 
   const report: RunReport = {
