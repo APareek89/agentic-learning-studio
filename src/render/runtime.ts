@@ -129,7 +129,7 @@ export const RUNTIME_JS = String.raw`
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
       if(ev.target.id==="hmodal"){ closeModal(); return; }
     }
-    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.h-next");
+    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf,.h-next");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
 
     if(t.matches(".h-next")){ hNext(); return; }
@@ -139,6 +139,8 @@ export const RUNTIME_JS = String.raw`
     }
     if(t.matches(".kc-opt")){ kcAnswerMcq(t); return; }
     if(t.matches(".kc-submit")){ kcAnswerFree(t); return; }
+    if(t.matches(".kc-recall-done")){ kcRevealStage(t); return; }
+    if(t.matches(".kc-conf")){ kcPickConf(t); return; }
 
     if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(PREVIEW && isStub(gid)){ previewNote(); return; } if(HORIZ){ hGoto(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
@@ -187,13 +189,37 @@ export const RUNTIME_JS = String.raw`
   function kcCheck(payload){
     return fetch("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(r){ return r.json(); });
   }
+  // Tier-A retention helpers: recall gate, confidence calibration, coarse latency.
+  function kcStamp(item){ if(!item.getAttribute("data-t0")) item.setAttribute("data-t0", String(Date.now())); }
+  function kcLatency(item){ var t0=+item.getAttribute("data-t0"); return t0 ? (Date.now()-t0) : null; }
+  function kcConf(item){ var c=item.getAttribute("data-conf"); return c===null ? undefined : +c; }
+  function kcRevealStage(btn){
+    var item=btn.closest(".kc-item"); var st=item.querySelector(".kc-reveal-stage"); if(st) st.hidden=false;
+    var rec=item.querySelector(".kc-recall"); if(rec) rec.classList.add("done");
+    btn.setAttribute("disabled","1"); kcStamp(item);
+  }
+  function kcPickConf(btn){
+    var item=btn.closest(".kc-item"); if(item.getAttribute("data-done")) return;
+    item.querySelectorAll(".kc-conf").forEach(function(o){ o.classList.remove("sel"); });
+    btn.classList.add("sel"); item.setAttribute("data-conf", btn.getAttribute("data-conf")); kcStamp(item);
+  }
+  // Block grading until the learner has committed to a confidence (when required).
+  function kcConfGuard(item){
+    if(item.getAttribute("data-conf-required") && item.getAttribute("data-conf")===null){
+      var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback no"; fb.textContent="Pick how sure you are first."; }
+      return false;
+    }
+    return true;
+  }
   function kcAnswerMcq(btn){
     var item=btn.closest(".kc-item"); if(item.getAttribute("data-done")) return;
+    if(!kcConfGuard(item)) return;
     var kc=btn.closest(".kc"), bid=item.getAttribute("data-block")||kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid"), choice=+btn.getAttribute("data-choice");
+    var conf=kcConf(item), lat=kcLatency(item);
     item.setAttribute("data-done","1");
     item.querySelectorAll(".kc-opt").forEach(function(o){ o.setAttribute("disabled","1"); });
     if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,choiceIndex:choice}).then(function(res){
+    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,choiceIndex:choice,confidence:conf,latencyMs:lat}).then(function(res){
       if(res.correct){ btn.classList.add("correct"); }
       else{ btn.classList.add("wrong"); if(typeof res.correctIndex==="number"){ var c=item.querySelectorAll(".kc-opt")[res.correctIndex]; if(c) c.classList.add("correct"); } }
       kcShow(item,!!res.correct);
@@ -201,11 +227,13 @@ export const RUNTIME_JS = String.raw`
   }
   function kcAnswerFree(btn){
     var item=btn.closest(".kc-item"), inp=item.querySelector(".kc-input"); if(!inp||!inp.value.trim()) return;
+    if(!kcConfGuard(item)) return;
     var kc=btn.closest(".kc"), bid=item.getAttribute("data-block")||kc.getAttribute("data-block"), qid=btn.getAttribute("data-qid");
+    var conf=kcConf(item), lat=kcLatency(item);
     var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback grading"; fb.textContent="Grading your answer…"; }
     btn.setAttribute("disabled","1");
     if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,text:inp.value.trim()}).then(function(res){
+    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,text:inp.value.trim(),confidence:conf,latencyMs:lat}).then(function(res){
       kcShow(item,!!res.correct,res.feedback||(res.correct?"Correct ✓":"Not quite"));
     }).catch(function(){ btn.removeAttribute("disabled"); if(fb){ fb.className="kc-feedback no"; fb.textContent="Couldn't grade — try again."; } });
   }

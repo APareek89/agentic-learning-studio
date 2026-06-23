@@ -374,6 +374,20 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 .kc-feedback.no{background:var(--danger-weak);color:var(--danger)}
 .kc-feedback.grading{background:var(--accent-weak);color:var(--accent-2)}
 .kc-explain{font-size:13.5px;color:var(--muted);margin-top:9px;padding-left:11px;border-left:2px solid var(--border-strong)}
+/* Tier-A retention: recall-first gate, confidence calibration, source link */
+.kc-recall{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.kc-recall-input{border:1px dashed var(--border-strong);border-radius:9px;font:inherit;font-size:14px;padding:9px 11px;resize:vertical;background:var(--surface);color:var(--ink)}
+.kc-recall-input:focus{outline:none;border-color:var(--accent)}
+.kc-recall-done{align-self:flex-start;border:1px solid var(--accent);background:var(--accent-weak,transparent);color:var(--accent-2,var(--accent));font:inherit;font-size:13px;font-weight:600;padding:6px 13px;border-radius:9px;cursor:pointer}
+.kc-recall-done[disabled]{opacity:.55;cursor:default}
+.kc-recall.done .kc-recall-input{opacity:.7}
+.kc-confidence{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:9px}
+.kc-conf-lab{font-size:12.5px;color:var(--muted);font-weight:600;margin-right:2px}
+.kc-conf{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;cursor:pointer;transition:border-color .12s,background .12s}
+.kc-conf:hover{border-color:var(--accent)}
+.kc-conf.sel{border-color:var(--accent);background:var(--accent-weak,var(--surface));color:var(--accent-2,var(--accent));font-weight:600}
+.kc-source{display:inline-block;margin-top:8px;border:none;background:none;color:var(--accent-2,var(--accent));font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0}
+.kc-source:hover{text-decoration:underline}
 
 /* Scroll-reveal — blocks ease in as you reach them */
 .reveal{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}

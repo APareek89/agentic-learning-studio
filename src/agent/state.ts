@@ -76,6 +76,9 @@ export const GraphState = Annotation.Root({
   // override / augment what the Profiler infers.
   industry: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
   buildGoal: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+  // Landing "Objective" — the learner's PURPOSE (learning / learn_and_apply / build /
+  // exam_prep / interview_prep / other). Curates emphasis; the Profiler validates it.
+  objective: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
   levels: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
   lessonTypes: Annotation<string[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
   // Landing "Reading" preference: "vertical" (default) or "horizontal". Renderer-only.

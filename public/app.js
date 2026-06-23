@@ -51,7 +51,7 @@ function toggleChat(force) {
 }
 
 // Selections collected from the dropdowns.
-const sel = { level: null, depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null, readingMode: null };
+const sel = { level: null, depth: [], examples: [], density: null, extras: [], lessonType: [], framework: null, readingMode: null, objective: null };
 // Combine a multi-select axis into the backend enum (e.g. both → "conceptual_technical").
 function combineAxis(arr, a, b, both) {
   const hasA = arr.includes(a), hasB = arr.includes(b);
@@ -90,8 +90,10 @@ const VALUE_LABELS = {
   visuals: "Visuals", syntax: "Syntax",
   content: "Content", knowledge_check: "Knowledge check",
   vertical: "Vertical scroll", horizontal: "Horizontal scroll",
+  learning: "Learning", learn_and_apply: "Learn & apply", build: "Build something",
+  exam_prep: "Exam prep", interview_prep: "Interview prep", other: "Other",
 };
-const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content", framework: "Pick one", readingMode: "Vertical scroll" };
+const DD_DEFAULTS = { level: "Any", depth: "Auto", examples: "Auto", density: "Balanced", extras: "None", lessonType: "Content", framework: "Pick one", readingMode: "Vertical scroll", objective: "Any" };
 
 // ---- Dropdown wiring (single + multi) ----
 document.querySelectorAll(".dd").forEach((dd) => {
@@ -293,6 +295,7 @@ function buildPayload(promptText, threadId) {
     readingMode: sel.readingMode || "vertical",
     industry: industryEl.value.trim(),
     buildGoal: buildGoalEl.value.trim(),
+    objective: sel.objective || "",
     uploadIds: uploadedDocs.map((d) => d.docId),
     referOnly: referChk.checked,
     threadId,

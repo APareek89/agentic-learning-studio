@@ -11,6 +11,23 @@
 
 import { calibrationDirective, type Level, type Density } from "./calibration";
 
+/**
+ * The learner's OBJECTIVE (landing control) curates EMPHASIS, never the subject.
+ * Returns a directive line to thread into the architect + module prompts, or "" when
+ * unset/neutral. (Subject fidelity still holds — this only tilts how the topic is taught.)
+ */
+const OBJECTIVE_DIRECTIVE: Record<string, string> = {
+  learning: "LEARNER'S OBJECTIVE — LEARNING: prioritize clear mental models and the WHY; lead with conceptual understanding over hands-on build. Examples are illustrative, not a project to ship.",
+  learn_and_apply: "LEARNER'S OBJECTIVE — LEARN & APPLY: pair each concept with a concrete worked application; emphasize WHEN and HOW to use it on a real task, not just the definition.",
+  build: "LEARNER'S OBJECTIVE — BUILD SOMETHING: make it hands-on and procedural; lead with runnable code/steps toward a working artifact, and weight failure-modes + verify-the-AI-output heavily.",
+  exam_prep: "LEARNER'S OBJECTIVE — EXAM PREP: maximize breadth and precise, testable definitions; lean hard on active recall (knowledge checks, predict-then-reveal) and crisp facts the learner must reproduce.",
+  interview_prep: "LEARNER'S OBJECTIVE — INTERVIEW PREP: emphasize tradeoffs, head-to-head comparisons, and concise talking points; surface the 'why' and the common follow-up questions an interviewer would ask.",
+  other: "",
+};
+export function objectiveDirective(objective?: string): string {
+  return (objective && OBJECTIVE_DIRECTIVE[objective]) || "";
+}
+
 export const PROFILER_SYSTEM = `You analyze a learner's request and extract BOTH who they are and EXACTLY what they're asking for.
 Return:
 - topic: a concise canonical topic title (e.g. "Agentic Frameworks", "Agent Memory").
@@ -234,6 +251,7 @@ export function moduleUserPrompt(args: {
   explainSyntax?: boolean;
   industry?: string;
   buildGoal?: string;
+  objective?: string;
   lessonFocus?: string;
   levels?: string[];
   lessonTypes?: string[];
@@ -284,7 +302,7 @@ export function moduleUserPrompt(args: {
       ? `VERIFY-AI-OUTPUT: this module involves building — add a short, concrete "how to check the AI-generated version before trusting it" element (the specific things to verify for THIS topic).`
       : "",
     knowledgeCheck
-      ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation. A selfCheckQuiz is also allowed.`
+      ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation. RETENTION (boost recall): set "freeRecallFirst":true on at least one question (the learner recalls from memory before the options/answer appear); set "confidence":true on the questions (a "how sure?" pick before grading, for calibration); add "conceptTags" listing the glossary term ids each question exercises (for interleaving). A selfCheckQuiz is also allowed.`
       : `KNOWLEDGE CHECK: OFF — emit NO quiz, self-check, or question blocks of any kind (no selfCheckQuiz, no knowledgeCheck). Teach the module without testing.`,
     `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
     beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
@@ -293,6 +311,7 @@ export function moduleUserPrompt(args: {
     `EXPLAIN SYNTAX: ${args.explainSyntax ? "on — every codeExample MUST include a syntax[] breakdown" : "off — omit syntax[]"}`,
     args.industry ? `FOCUS INDUSTRY: ${args.industry}` : "",
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",
+    objectiveDirective(args.objective),
     args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — tailor the EXAMPLES/analogies to this person; do NOT reframe the module's subject around their role.` : "",
     `GLOSSARY TERM IDS YOU MAY REFERENCE: ${args.glossary.map((g) => `${g.id} (${g.label})`).join(", ") || "(none)"}`,
   ].filter(Boolean);
@@ -320,6 +339,7 @@ export function architectUserPrompt(args: {
   explainSyntax?: boolean;
   industry?: string;
   buildGoal?: string;
+  objective?: string;
   levels?: string[];
   lessonTypes?: string[];
   framework?: string;
@@ -344,6 +364,7 @@ export function architectUserPrompt(args: {
     `DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
     `SEQUENCING: the mentalMap node order, the module order, and synthesis.buildOrder must be ONE consistent spine (not three orderings). Sequence modules so they ramp worked→completion→solo and so foundational concepts come early enough for a later module to revisit them. Give an ordered topic a single unambiguous start; leave no orphan module.`,
     args.buildGoal || args.industry ? `CONTEXTUALIZE: thread "${[args.industry, args.buildGoal].filter(Boolean).join("; ")}" through the spine so it reads as THEIR build path; aim the capstone/buildOrder at what they're building (examples/framing only — never reframe the subject).` : "",
+    objectiveDirective(args.objective),
     calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
     knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — each module's body will END with a graded knowledgeCheck block; structure modules so they're testable.` : "",

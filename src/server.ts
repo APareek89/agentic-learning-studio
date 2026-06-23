@@ -244,6 +244,7 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
   void runOverviewJob(job, {
     userPrompt: prompt, cards, uploadIds: (body.uploadIds as string[]) ?? [], referOnly: !!body.referOnly,
     industry: (body.industry as string) ?? "", buildGoal: (body.buildGoal as string) ?? "",
+    objective: (body.objective as string) ?? "",
     levels: (body.levels as string[]) ?? [], lessonTypes: (body.lessonTypes as string[]) ?? [],
     framework: (body.framework as string) ?? "", readingMode: (body.readingMode as string) ?? "",
     userProfile, userId: user?.id ?? "", userEmail: user?.email ?? "",
@@ -286,7 +287,7 @@ app.get("/api/course/:courseId", requireAuth, async (req, res) => {
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
 app.post("/api/learn", requireAuth, async (req, res) => {
-  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, levels, lessonTypes, framework, readingMode } = (req.body ?? {}) as {
+  const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, objective, levels, lessonTypes, framework, readingMode } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
     threadId?: string;
@@ -294,6 +295,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
     referOnly?: boolean;
     industry?: string;
     buildGoal?: string;
+    objective?: string;
     levels?: string[];
     lessonTypes?: string[];
     framework?: string;
@@ -347,6 +349,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
         referOnly: !!referOnly,
         industry: industry ?? "",
         buildGoal: buildGoal ?? "",
+        objective: objective ?? "",
         levels: levels ?? [],
         lessonTypes: lessonTypes ?? [],
         framework: framework ?? "",
