@@ -168,3 +168,42 @@ export async function writeRunAudit(
     )
     .catch(() => {});
 }
+
+/**
+ * Write ONE kb_curator_runs row per run (migration 0012) — the daily heartbeat:
+ * whether the run happened + what data it brought (the added/updated items). One
+ * row EVERY non-dry run, even when nothing changed, so a missing day is visible.
+ * Best-effort + no-op under dry-run / no DB.
+ */
+export async function writeRunLog(args: {
+  startedAt: string;
+  ok: boolean;
+  since: string;
+  only?: string;
+  dryRun: boolean;
+  sourcesPolled: number;
+  tally: ApplyResult;
+  applied: AppliedItem[];
+  errors: string[];
+}): Promise<void> {
+  if (args.dryRun) return;
+  const pool = rawPool();
+  if (!pool) return;
+  // "What it brought" = the docs actually added/updated (path + chunk count).
+  const items = args.applied
+    .filter((a) => a.outcome === "added" || a.outcome === "updated")
+    .map((a) => ({ outcome: a.outcome, path: a.path ?? null, chunks: a.chunks ?? 0 }));
+  const chunks = items.reduce((n, i) => n + (i.chunks ?? 0), 0);
+  await pool
+    .query(
+      `insert into kb_curator_runs
+         (started_at, ok, since_window, only_filter, sources_polled, added, updated, skipped, dropped, chunks, items, errors, dry_run)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,false)`,
+      [
+        args.startedAt, args.ok, args.since, args.only ?? null, args.sourcesPolled,
+        args.tally.added, args.tally.updated, args.tally.skipped, args.tally.dropped,
+        chunks, JSON.stringify(items), JSON.stringify(args.errors),
+      ]
+    )
+    .catch(() => {});
+}
