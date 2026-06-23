@@ -41,28 +41,44 @@ export const RUNTIME_JS = String.raw`
 
   // ---- HORIZONTAL reading mode (paged deck): nav + modal + per-page Next ----
   var HORIZ = document.body.getAttribute("data-reading")==="horizontal";
-  var hTrack = document.querySelector(".h-track");
-  var hPages = HORIZ ? Array.prototype.slice.call(document.querySelectorAll(".h-page")) : [];
-  var hOrder = hPages.map(function(p){ return p.getAttribute("data-panel"); });
-  var hIndex = 0;
+  // Left = lesson modules (panes); right = the active module's TABS. The shared header
+  // (Back/Next + n/N) pages through one module's tabs; the left nav switches modules.
+  var hPanes = HORIZ ? Array.prototype.slice.call(document.querySelectorAll(".hx-mod")) : [];
+  var hOrder = hPanes.map(function(p){ return p.getAttribute("data-hmod"); });
+  var hMod = 0, hTab = 0;
   var hModal = document.getElementById("hmodal");
-  function hRender(){
-    if(hTrack) hTrack.style.transform = "translateX(-"+(hIndex*100)+"%)";
-    hPages.forEach(function(p,i){ p.classList.toggle("active", i===hIndex); });
-    var cur = hOrder[hIndex];
-    document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-goto")===cur); });
-    markVisited(cur);
-    closePopover();
-    var body = hPages[hIndex] && hPages[hIndex].querySelector(".h-page-body"); if(body) body.scrollTop=0;
+  function curPane(){ return hPanes[hMod]; }
+  function curTabs(){ var p=curPane(); return p ? Array.prototype.slice.call(p.querySelectorAll(".hx-tab")) : []; }
+  function hDots(n,a){ var s=""; for(var i=0;i<n;i++) s+='<span class="hx-d'+(i===a?' on':'')+'"></span>'; return s; }
+  function hRenderTab(){
+    var pane=curPane(); if(!pane) return;
+    var tabs=curTabs(), t=tabs[hTab]||tabs[0];
+    tabs.forEach(function(x,i){ x.classList.toggle("hidden", i!==hTab); });
+    var eb=document.getElementById("hx-eyebrow"), ti=document.getElementById("hx-title"), pos=document.getElementById("hx-pos"), back=document.getElementById("hx-back"), next=document.getElementById("hx-next");
+    if(t){ if(eb) eb.textContent=t.getAttribute("data-eyebrow")||""; if(ti) ti.textContent=t.getAttribute("data-label")||""; }
+    var n=tabs.length;
+    if(pos) pos.innerHTML = (n>1 ? hDots(n,hTab)+'<span class="hx-poslab">'+(hTab+1)+'/'+n+'</span>' : "");
+    if(back) back.hidden = hTab<=0;
+    if(next) next.hidden = hTab>=n-1;
+    var mid=pane.getAttribute("data-hmod");
+    document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-hmod")===mid); });
+    markVisited(mid); closePopover();
+    if(t) hydrate(t);
   }
-  function hGoto(id){
-    var i = hOrder.indexOf(id);
-    if(i<0) return false;
-    hIndex=i; hRender();
-    if(isStub(id)) prioritize(id);
-    return true;
+  function showPane(mid){
+    var i=hOrder.indexOf(mid); if(i<0) return false;
+    hPanes.forEach(function(p,k){ p.classList.toggle("hidden", k!==i); });
+    hMod=i; hTab=0;
+    if(curPane() && curPane().getAttribute("data-stub")) prioritize(mid);
+    hRenderTab(); return true;
   }
-  function hNext(){ if(hIndex < hPages.length-1){ hIndex++; hRender(); var id=hOrder[hIndex]; if(isStub(id)) prioritize(id); } }
+  function hStep(d){ var n=curTabs().length, ni=hTab+d; if(ni<0||ni>=n) return; hTab=ni; hRenderTab(); }
+  // "See details" on an example box → open the FULL block in the modal.
+  function openExampleModal(btn){
+    var ex=btn.closest(".hx-ex"); if(!ex) return;
+    var c=ex.querySelector(".hx-exc"); var html=c?c.innerHTML.replace(/<div class="hx-fade"[^>]*><\/div>/,""):"";
+    openModal(btn.getAttribute("data-extitle")||"Details", html);
+  }
   // Modal: heavy/expandable blocks (examples, code, "go deeper") open here instead of inline.
   function openModal(title, html){
     if(!hModal) return;
@@ -129,10 +145,14 @@ export const RUNTIME_JS = String.raw`
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
       if(ev.target.id==="hmodal"){ closeModal(); return; }
     }
-    var t = ev.target.closest("[data-deepdive],[data-goto],#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf,.h-next");
+    var t = ev.target.closest("[data-deepdive],[data-goto],[data-hmod],#hx-next,#hx-back,.hx-see,#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
 
-    if(t.matches(".h-next")){ hNext(); return; }
+    // Horizontal: module nav (left), tab Back/Next (top-right), and example "See details".
+    if(HORIZ && t.matches("[data-hmod]")){ showPane(t.getAttribute("data-hmod")); return; }
+    if(t.matches("#hx-next")){ hStep(1); return; }
+    if(t.matches("#hx-back")){ hStep(-1); return; }
+    if(t.matches(".hx-see")){ openExampleModal(t); return; }
     if(t.matches(".collapse-h")){
       if(HORIZ){ openCollapseModal(t.closest(".collapse")); return; }
       var col=t.closest(".collapse"); var open=col.classList.toggle("open"); t.setAttribute("aria-expanded", String(open)); return;
@@ -142,7 +162,7 @@ export const RUNTIME_JS = String.raw`
     if(t.matches(".kc-recall-done")){ kcRevealStage(t); return; }
     if(t.matches(".kc-conf")){ kcPickConf(t); return; }
 
-    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(PREVIEW && isStub(gid)){ previewNote(); return; } if(HORIZ){ hGoto(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
+    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(PREVIEW && isStub(gid)){ previewNote(); return; } if(HORIZ){ showPane(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
     if(t.id==="to-overview"){ showOverview(); return; }
     if(t.matches(".term,.term-chip")){ ev.preventDefault(); ev.stopPropagation(); if(pop.classList.contains("on") && pop._for===t){ closePopover(); } else { openPopover(t); pop._for=t; } return; }
@@ -364,7 +384,7 @@ export const RUNTIME_JS = String.raw`
   hydrate(document);
   observeReveals(document);
   setProgress();
-  if(HORIZ) hRender(); // sync nav highlight + progress to the first page
+  if(HORIZ) showPane(hOrder[0]); // start on the Overview pane, first tab
   pump();             // start building the remaining modules, one by one
 })();
 `;
