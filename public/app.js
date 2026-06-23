@@ -81,6 +81,16 @@ let contribPublishId = null; // artifactId to auto-publish to Community once its
 let lastBuildArtifactId = null; // last lesson we tried to build (so a failed build can be retried)
 const lessonTabsEl = document.getElementById("lesson-tabs");
 
+// ---- Trainer tabs: up to 5 open lessons/overviews. One generation at a time; a
+// generating tab keeps running in the background (survives tab-close + page refresh).
+const MAX_TABS = 5;
+const TABS_KEY = "als-tabs-v1";
+let tabs = [];          // [{ id, type:'generating'|'overview'|'lesson'|'library'|'community', title, art, slug, prompt, building, percent }]
+let activeTabId = null;
+let genTabId = null;    // tab that owns the single in-flight generation (null once its tab is closed)
+let tabSeq = 1;
+const tabById = (id) => tabs.find((t) => t.id === id);
+
 // Friendly labels for the dropdown summary.
 const VALUE_LABELS = {
   beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced",
@@ -449,22 +459,129 @@ async function readSse(body, onEvent) {
 function showArtifact(ref) {
   openInViewer(ref.id, ref.title || "Lesson");
 }
-function openInViewer(id, title) {
-  currentArtifactId = id;
-  currentLessonOwned = true; // a saved lesson the user owns → eligible for progress + share
-  overviewArtifactId = null; setOverviewMode(false); // a real lesson, not an overview draft
-  currentViewUrl = "/api/artifact/" + id;
-  genOverlay.hidden = true;
-  viewerEmpty.hidden = true;
-  viewerFrame.hidden = false;
-  viewerFrame.src = "/api/artifact/" + id;
-  document.getElementById("viewer-title").textContent = title;
-  downloadBtn.hidden = false;
-  downloadBtn.href = "/api/artifact/" + id + "/full";
-  openWindowBtn.hidden = false;
-  askMoreBtn.hidden = false;
-  resetStars();
-  ratingEl.hidden = false;
+// Open a saved lesson the user owns (delegates into the tab manager).
+function openInViewer(id, title) { openTab({ type: "lesson", title: title, art: id }); }
+
+// ---- Tab manager ----------------------------------------------------------
+// Free a slot when at the cap by evicting the oldest tab that isn't active and
+// isn't mid-generation. Returns false only if every tab is busy.
+function makeRoomForTab() {
+  if (tabs.length < MAX_TABS) return true;
+  const victim = tabs.find((t) => t.id !== activeTabId && t.id !== genTabId && t.type !== "generating" && !t.building);
+  if (!victim) return false;
+  tabs = tabs.filter((t) => t !== victim);
+  return true;
+}
+
+// Open a descriptor as a tab — focusing an equivalent already-open tab instead of duplicating.
+function openTab(desc) {
+  const same = tabs.find((t) => (desc.art && t.art === desc.art) || (desc.slug && t.slug === desc.slug && t.type === desc.type));
+  if (same) { Object.assign(same, desc, { id: same.id }); switchTab("trainer"); activateTab(same.id); return same; }
+  if (!makeRoomForTab()) { alert("You can keep up to " + MAX_TABS + " lessons open — close one first."); return null; }
+  const t = Object.assign({ id: "t" + tabSeq++ }, desc);
+  tabs.push(t);
+  switchTab("trainer");
+  activateTab(t.id);
+  return t;
+}
+
+function closeTab(id) {
+  const t = tabById(id);
+  if (!t) return;
+  const idx = tabs.indexOf(t);
+  // If this tab owns the in-flight generation, DETACH it — the server job keeps running
+  // and the lesson shows up in My Lessons when done; we just stop showing it here.
+  if (genTabId === id) genTabId = null;
+  tabs = tabs.filter((x) => x.id !== id);
+  if (activeTabId === id) {
+    const next = tabs[idx] || tabs[idx - 1] || tabs[tabs.length - 1];
+    if (next) activateTab(next.id); else showNoTabs();
+  } else { renderTabBar(); }
+  persistTabs();
+}
+
+function showNoTabs() {
+  activeTabId = null;
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  viewerFrame.hidden = true; genOverlay.hidden = true; viewerEmpty.hidden = false;
+  downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
+  document.getElementById("viewer-title").textContent = "Lesson";
+  renderTabBar();
+}
+
+// Point the single iframe + the viewer bar at a tab, and sync the global mirrors the
+// rest of the app reads (currentArtifactId / overviewArtifactId / currentViewUrl / …).
+function activateTab(id) {
+  const t = tabById(id);
+  if (!t) return;
+  activeTabId = id;
+  toggleChat(false); chatLog.innerHTML = "";
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  basePrompt = t.prompt || t.title || "";
+  document.getElementById("viewer-title").textContent = t.title || "Lesson";
+  if (t.type === "generating") {
+    viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
+    genLabel.textContent = (t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview…";
+    downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
+  } else {
+    const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
+    currentViewUrl = url;
+    genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
+    if (viewerFrame.getAttribute("src") !== url) viewerFrame.src = url;
+    if (t.type === "overview") {
+      overviewArtifactId = t.art;
+      downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(true);
+    } else if (t.type === "lesson") {
+      currentArtifactId = t.art; currentLessonOwned = true;
+      downloadBtn.hidden = false; downloadBtn.href = "/api/artifact/" + t.art + "/full";
+      openWindowBtn.hidden = false; askMoreBtn.hidden = false; resetStars(); ratingEl.hidden = false; setOverviewMode(false);
+    } else { // library / community (public, read-only)
+      downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(false);
+    }
+  }
+  renderTabBar();
+  persistTabs();
+}
+
+function renderTabBar() {
+  lessonTabsEl.innerHTML = "";
+  lessonTabsEl.hidden = tabs.length === 0;
+  tabs.forEach((t) => {
+    const b = document.createElement("button");
+    b.className = "lesson-tab" + (t.id === activeTabId ? " active" : "");
+    const spin = (t.type === "generating" || t.building) ? '<span class="lt-spin"></span>' : "";
+    b.innerHTML = `${spin}<span class="lt-title">${escapeHtml(t.title || "Lesson")}</span><span class="lt-x" title="Close">×</span>`;
+    b.addEventListener("click", (e) => {
+      if (e.target.classList && e.target.classList.contains("lt-x")) { e.stopPropagation(); closeTab(t.id); return; }
+      activateTab(t.id);
+    });
+    lessonTabsEl.appendChild(b);
+  });
+  if (tabs.length < MAX_TABS) {
+    const add = document.createElement("button");
+    add.className = "lesson-tab lt-add"; add.type = "button"; add.title = "New lesson"; add.textContent = "+";
+    add.addEventListener("click", () => { switchTab("configurator"); if (promptEl) promptEl.focus(); });
+    lessonTabsEl.appendChild(add);
+  }
+}
+
+// Persist non-generating tabs (stable view sources) so a refresh keeps them open.
+function persistTabs() {
+  try {
+    const save = tabs.filter((t) => t.type !== "generating" && (t.art || t.slug))
+      .map((t) => ({ type: t.type, title: t.title, art: t.art || null, slug: t.slug || null, prompt: t.prompt || null }));
+    const act = tabById(activeTabId);
+    sessionStorage.setItem(TABS_KEY, JSON.stringify({ tabs: save, active: act && act.type !== "generating" ? tabs.filter((t) => t.type !== "generating" && (t.art || t.slug)).indexOf(act) : 0 }));
+  } catch { /* ignore */ }
+}
+function restoreTabs() {
+  let data; try { data = JSON.parse(sessionStorage.getItem(TABS_KEY) || "null"); } catch { data = null; }
+  if (!data || !Array.isArray(data.tabs) || !data.tabs.length) return false;
+  tabs = data.tabs.map((d) => Object.assign({ id: "t" + tabSeq++, building: false }, d));
+  const act = tabs[Math.max(0, Math.min(tabs.length - 1, data.active | 0))];
+  renderTabBar();
+  if (act) { switchTab("trainer"); activateTab(act.id); }
+  return true;
 }
 openWindowBtn.addEventListener("click", () => { const u = currentViewUrl || (currentArtifactId && "/api/artifact/" + currentArtifactId); if (u) window.open(u, "_blank"); });
 
@@ -574,11 +691,16 @@ async function loadDashboard() {
     dashGrid.innerHTML = "";
     if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
     dashEmpty.hidden = true;
-    for (const l of lessons) dashGrid.appendChild(lessonCard(l));
+    // The lesson currently building (if any) shows ONE row here with a live build badge —
+    // no separate "job card" (that's what caused the duplicate row).
+    const buildingTab = tabs.find((t) => t.building);
+    const buildingArt = buildingTab ? buildingTab.art : null;
+    const buildPct = buildingTab ? buildingTab.percent : 0;
+    for (const l of lessons) dashGrid.appendChild(lessonCard(l, l.id === buildingArt ? buildPct : null));
     dashNote.textContent = `${lessons.length} saved · Download to keep a permanent copy`;
   } catch { /* ignore */ }
 }
-function lessonCard(l) {
+function lessonCard(l, buildingPct) {
   const el = document.createElement("div");
   el.className = "lesson-row";
   const days = l.daysRemaining;
@@ -589,13 +711,16 @@ function lessonCard(l) {
   const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
   const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
   const courseBadge = isCourse ? `<span class="lc-badge">Course · ${l.courseTotal} parts</span>` : "";
-  const pct = Math.max(0, Math.min(100, l.percent || 0));
+  const building = typeof buildingPct === "number";
+  const pct = building ? Math.max(0, Math.min(100, buildingPct)) : Math.max(0, Math.min(100, l.percent || 0));
   const shared = isShared(l.id);
+  const buildBadge = building ? `<span class="lc-badge building"><span class="lt-spin"></span> Building…</span>` : "";
+  const progLabel = building ? `${pct}% built` : `${pct}% complete`;
   el.innerHTML = `
     <div class="lr-main">
       <div class="lr-title">${escapeHtml(l.title)}</div>
-      <div class="lr-meta">${expiryBadge}${courseBadge}${industry}${ratingHtml}</div>
-      <div class="lr-prog"><div class="lr-bar"><i style="width:${pct}%"></i></div><span class="lr-pct">${pct}% complete</span></div>
+      <div class="lr-meta">${buildBadge}${expiryBadge}${courseBadge}${industry}${ratingHtml}</div>
+      <div class="lr-prog"><div class="lr-bar"><i style="width:${pct}%"></i></div><span class="lr-pct">${progLabel}</span></div>
     </div>
     <div class="lr-actions">
       <button class="ghost lr-open" type="button">${isCourse ? "Open course" : "Open"}</button>
@@ -712,19 +837,7 @@ function renderLibrary() {
 }
 libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
 
-function openLibraryLesson(slug, title) {
-  switchTab("trainer");
-  chatLog.innerHTML = "";
-  toggleChat(false);
-  overviewArtifactId = null; setOverviewMode(false);
-  lessonTabsEl.hidden = true; currentCourse = null;
-  genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
-  viewerFrame.src = "/api/lesson/" + slug;
-  document.getElementById("viewer-title").textContent = title;
-  currentArtifactId = null; currentLessonOwned = false; currentViewUrl = "/api/lesson/" + slug;
-  ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
-  openWindowBtn.hidden = false;
-}
+function openLibraryLesson(slug, title) { openTab({ type: "library", title: title, slug: slug }); }
 
 // ============================================================================
 // Community courses — learner-shared lessons (public browse), likes, and the
@@ -831,19 +944,7 @@ function renderCommunity() {
 }
 commSearch.addEventListener("input", () => { if (commLoaded) renderCommunity(); });
 
-function openCommunityLesson(slug, title) {
-  switchTab("trainer");
-  chatLog.innerHTML = "";
-  toggleChat(false);
-  overviewArtifactId = null; setOverviewMode(false);
-  lessonTabsEl.hidden = true; currentCourse = null;
-  genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
-  viewerFrame.src = "/api/community/lesson/" + slug;
-  document.getElementById("viewer-title").textContent = title;
-  currentArtifactId = null; currentLessonOwned = false; currentViewUrl = "/api/community/lesson/" + slug;
-  ratingEl.hidden = true; downloadBtn.hidden = true; askMoreBtn.hidden = true;
-  openWindowBtn.hidden = false;
-}
+function openCommunityLesson(slug, title) { openTab({ type: "community", title: title, slug: slug }); }
 
 // ---- Share flow: confirm a display name → POST /api/community/share → show the code ----
 const shareOverlay = document.getElementById("share-overlay");
@@ -1084,27 +1185,28 @@ document.getElementById("bc-generate").addEventListener("click", () => {
 // Generate only the overview (skeleton), land on the Trainer, show progress, then
 // render the overview with two CTAs: Generate Lesson / Edit overview.
 async function startOverview(payload) {
+  if (activeJobId) { alert("One lesson generates at a time — let the current one finish, then start the next."); return; }
   lastOverviewPayload = payload;
+  // Open a "generating" tab — it shows progress and can be left and returned to.
+  const title = payload && payload.prompt ? String(payload.prompt).slice(0, 48) : "New lesson…";
+  const t = openTab({ type: "generating", title, percent: 0 });
+  if (!t) return;
+  genTabId = t.id;
   let jobId;
-  // Land on the Trainer and show overview-generation progress over the viewer.
-  switchTab("trainer");
-  lessonTabsEl.hidden = true; currentCourse = null;
-  toggleChat(false);
-  setOverviewMode(false);
-  viewerFrame.hidden = true; viewerEmpty.hidden = true;
-  downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
-  genOverlay.hidden = false;
-  genLabel.textContent = "Designing your overview…";
   try {
     const res = await fetch("/api/overview", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(payload) });
-    if (res.status === 401) { genOverlay.hidden = true; openAuth("signin"); return; }
+    if (res.status === 401) { genTabId = null; closeTab(t.id); openAuth("signin"); return; }
     const data = await res.json();
     if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the overview.");
     jobId = data.jobId;
-  } catch (e) { genOverlay.hidden = true; viewerEmpty.hidden = false; viewerEmpty.innerHTML = "⚠️ " + escapeHtml(e.message); return; }
+  } catch (e) {
+    genTabId = null;
+    if (t.id === activeTabId) showGenError(escapeHtml(e.message), () => startOverview(payload)); else closeTab(t.id);
+    return;
+  }
   activeJobId = jobId;
-  promptEl.value = "";
-  pollOverview(jobId);
+  if (promptEl) promptEl.value = "";
+  pollOverview(jobId, t.id);
 }
 
 // Show a generation failure in the viewer with a one-click "Try again".
@@ -1115,7 +1217,9 @@ function showGenError(msg, retryFn) {
   if (b && retryFn) b.addEventListener("click", retryFn);
 }
 
-function pollOverview(jobId) {
+// Poll an overview job; updates ITS tab (not whatever's on screen) so the user can read
+// another tab meanwhile. On done the tab becomes an overview draft with the gate CTAs.
+function pollOverview(jobId, tabId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);
   const tick = async () => {
     if (activeJobId !== jobId) return;
@@ -1123,25 +1227,22 @@ function pollOverview(jobId) {
     try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) throw new Error("lost"); job = await r.json(); }
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
     const l = job.lessons && job.lessons[0];
-    if (job.status === "error") { activeJobId = null; showGenError(job.error || "The AI was busy — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); }); return; }
-    if (job.status === "done" && l && l.artifactId) { activeJobId = null; openOverviewDraft(l.artifactId, l.title); return; }
-    genLabel.textContent = l && l.status === "designing" ? "Designing the lesson outline…" : "Generating your overview…";
+    const t = tabById(tabId); // may be null if the user closed the tab
+    if (job.status === "error") {
+      activeJobId = null; genTabId = null;
+      if (t && t.id === activeTabId) showGenError(job.error || "The AI was busy — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
+      else if (t) closeTab(t.id);
+      return;
+    }
+    if (job.status === "done" && l && l.artifactId) {
+      activeJobId = null; genTabId = null;
+      if (t) { t.type = "overview"; t.art = l.artifactId; t.title = l.title || t.title; if (t.id === activeTabId) activateTab(t.id); else { renderTabBar(); persistTabs(); } }
+      return;
+    }
+    if (t) { t.percent = (l && l.percent) || 8; if (t.id === activeTabId) genLabel.textContent = l && l.status === "designing" ? "Designing the lesson outline…" : "Generating your overview…"; renderTabBar(); }
     activeJobTimer = setTimeout(tick, 2000);
   };
   tick();
-}
-
-// Show the overview draft with the approve/refine CTAs (no Ask/Download/Rate — it's free, not a full lesson yet).
-function openOverviewDraft(id, title) {
-  overviewArtifactId = id;
-  currentArtifactId = null; // not a real lesson yet → Ask-more etc. stay off
-  currentViewUrl = "/api/artifact/" + id;
-  genOverlay.hidden = true; viewerEmpty.hidden = true;
-  viewerFrame.hidden = false; viewerFrame.src = "/api/artifact/" + id;
-  document.getElementById("viewer-title").textContent = title || "Overview";
-  downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true;
-  openWindowBtn.hidden = false;
-  setOverviewMode(true);
 }
 
 // Toggle the overview-gate CTAs (Generate Lesson / Edit overview).
@@ -1150,8 +1251,9 @@ function setOverviewMode(on) {
   if (editOverviewBtn) editOverviewBtn.hidden = !on;
 }
 
-// ---- STAGE 2: approve → build the full lesson, then go to My Lessons (current flow) ----
+// ---- STAGE 2: approve → build the full lesson IN ITS TAB (readable as modules fill in) ----
 async function startBuild(artifactId) {
+  if (activeJobId) { alert("One lesson generates at a time — let the current one finish first."); return; }
   let jobId;
   try {
     const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
@@ -1159,16 +1261,16 @@ async function startBuild(artifactId) {
     const data = await res.json();
     if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the lesson build.");
     jobId = data.jobId;
-  } catch (e) { dashActive.innerHTML = `<div class="job-card"><div class="job-meta">⚠️ ${escapeHtml(e.message)}</div></div>`; switchTab("dashboard"); return; }
+  } catch (e) { showGenError(escapeHtml(e.message), () => startBuild(artifactId)); return; }
   activeJobId = jobId;
   lastBuildArtifactId = artifactId; // remember for a retry if the build fails
   if (contribBuild) contribPublishId = artifactId; // auto-publish this one to Community when built
-  overviewArtifactId = null;
-  setOverviewMode(false);
-  // Send the learner to My Lessons, where the build progresses and opens when ready.
+  // Promote the overview tab into a (building) lesson tab and open it — readable as it builds.
+  let t = tabs.find((x) => x.art === artifactId) || tabById(activeTabId);
+  if (t) { t.type = "lesson"; t.art = artifactId; t.building = true; t.percent = 30; t.prompt = t.prompt || basePrompt; genTabId = t.id; activateTab(t.id); }
+  else { t = openTab({ type: "lesson", title: "Building…", art: artifactId, building: true, percent: 30 }); genTabId = t ? t.id : null; }
   updateGenStatus(true);
-  switchTab("dashboard");
-  pollJob(jobId);
+  pollJob(jobId, genTabId);
 }
 
 // Auto-publish a finished contributor course to the Community (no discount popup).
@@ -1200,29 +1302,27 @@ function openEditOverview() {
 // The "⏳ generating" pill in the Trainer's bar (links to My Lessons for progress).
 function updateGenStatus(active) { if (genStatus) genStatus.hidden = !active; }
 
-function pollJob(jobId) {
+// Poll a BUILD job; updates its tab's progress + My Lessons. A closed tab (genTabId
+// cleared) keeps building server-side and just shows up in My Lessons when done.
+function pollJob(jobId, tabId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);
   const tick = async () => {
     if (activeJobId !== jobId) return;
     let job;
-    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) { dashActive.innerHTML = ""; activeJobId = null; loadDashboard(); return; } job = await r.json(); }
+    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) { activeJobId = null; genTabId = null; const tt = tabById(tabId); if (tt) { tt.building = false; renderTabBar(); } loadDashboard(); return; } job = await r.json(); }
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
-    renderJobCard(job);
-    if (currentCourse && job.courseId && currentCourse.courseId === job.courseId) refreshCourseTabs(job.lessons);
+    const l = job.lessons && job.lessons[0];
+    const t = tabById(tabId);
+    if (t) { t.percent = (l && l.percent) || t.percent; renderTabBar(); }
+    if (!document.getElementById("tab-dashboard").hidden) loadDashboard();
     if (job.status === "done" || job.status === "error") {
-      activeJobId = null; dashActive.innerHTML = ""; updateGenStatus(false);
+      activeJobId = null; genTabId = null; updateGenStatus(false);
+      if (t) { t.building = false; renderTabBar(); persistTabs(); }
       // Contributor course finished → auto-publish it to the Community (credited to them).
       if (job.status === "done" && contribBuild && contribPublishId) {
-        const lid = contribPublishId; contribBuild = false; contribPublishId = null;
-        autoPublishContributor(lid);
-        if (!currentArtifactId) viewerEmpty.innerHTML = "✓ Your course is built and published to <strong>Community Courses</strong> — also saved in <strong>My Lessons</strong>.";
-      } else if (!currentArtifactId) {
-        // If the Trainer is still on the generating empty-state (nothing opened), nudge the user.
-        if (job.status === "done") {
-          viewerEmpty.innerHTML = "✓ Your lesson is ready — open it from <strong>My Lessons</strong>.";
-        } else {
-          showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
-        }
+        const lid = contribPublishId; contribBuild = false; contribPublishId = null; autoPublishContributor(lid);
+      } else if (job.status === "error" && t && t.id === activeTabId) {
+        showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
       }
       loadDashboard(); loadSuggestions(); return;
     }
@@ -1231,81 +1331,20 @@ function pollJob(jobId) {
   tick();
 }
 
-function renderJobCard(job) {
-  const first = job.lessons && job.lessons[0];
-  const pct = first ? first.percent : (job.status === "planning" ? 5 : 8);
-  const openable = !!(first && first.artifactId);
-  let parts = "";
-  if (job.isCourse) {
-    parts = `<div class="job-parts">` + job.lessons.map((l) => {
-      const ico = l.status === "done" ? "✓" : (l.artifactId ? "▸" : (l.status === "designing" || l.status === "building" ? "⏳" : "·"));
-      const pctTxt = (l.status !== "pending" && l.status !== "done") ? ` · ${l.percent}%` : "";
-      return `<div class="job-part ${l.status === "done" ? "done" : ""}"><span class="jp-ico">${ico}</span>${escapeHtml(l.title)}${pctTxt}</div>`;
-    }).join("") + `</div>`;
-  }
-  const headline = job.isCourse ? `Course · ${job.lessons.length} lessons` : (first && first.title ? first.title : "Designing your lesson…");
-  const statusText = job.status === "error" ? ("⚠️ " + (job.error || "Generation failed")) :
-    openable ? (job.isCourse ? "Kick-off ready — open while the rest build" : "Overview ready — open and read while modules build") : "Designing your lesson…";
-  dashActive.innerHTML = `<div class="job-card">
-      <div class="job-title"><span class="job-spin"></span>${escapeHtml(headline)}</div>
-      <div class="job-bar"><i style="width:${pct}%"></i></div>
-      <div class="job-meta"><span>${escapeHtml(statusText)}</span><button class="job-open" ${openable ? "" : "disabled"}>${openable ? "Open →" : pct + "%"}</button></div>
-      ${parts}
-    </div>`;
-  const btn = dashActive.querySelector(".job-open");
-  if (btn && openable) btn.addEventListener("click", () => openFromJob(job));
-}
-
-function openFromJob(job) {
-  if (job.isCourse) openCourse(job.courseId, job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status })), 0);
-  else { const f = job.lessons[0]; if (f && f.artifactId) openLessonInWorkspace(f.artifactId, f.title); }
-}
-
-// ---- Course view (lesson-tab strip) ----
-function openLessonInWorkspace(id, title, prompt) {
-  switchTab("trainer");
-  chatLog.innerHTML = "";
-  toggleChat(false);
-  lessonTabsEl.hidden = true; currentCourse = null;
-  basePrompt = prompt || title;
-  openInViewer(id, title);
-}
+// Open a lesson (own/course) into a Trainer tab.
+function openLessonInWorkspace(id, title, prompt) { openTab({ type: "lesson", title, art: id, prompt }); }
+// Courses open their first lesson as a single tab (the old course sub-strip is retired).
 function openCourse(courseId, lessons, activeIndex) {
-  switchTab("trainer");
-  chatLog.innerHTML = "";
-  toggleChat(false);
-  currentCourse = { courseId, lessons, activeIndex: activeIndex || 0 };
-  renderLessonTabs();
-  const a = lessons[currentCourse.activeIndex];
-  if (a && a.artifactId) openInViewer(a.artifactId, a.title);
-}
-function renderLessonTabs() {
-  if (!currentCourse) { lessonTabsEl.hidden = true; return; }
-  lessonTabsEl.hidden = false;
-  lessonTabsEl.innerHTML = "";
-  currentCourse.lessons.forEach((l, i) => {
-    const ready = !!l.artifactId;
-    const b = document.createElement("button");
-    b.className = "lesson-tab" + (i === currentCourse.activeIndex ? " active" : "");
-    if (!ready) b.disabled = true;
-    const ico = l.status === "done" || ready ? "" : "⏳ ";
-    b.innerHTML = `${ico}<b>${i + 1}.</b> ${escapeHtml(l.title)}`;
-    b.addEventListener("click", () => { if (ready) { currentCourse.activeIndex = i; renderLessonTabs(); openInViewer(l.artifactId, l.title); } });
-    lessonTabsEl.appendChild(b);
-  });
-}
-function refreshCourseTabs(jobLessons) {
-  if (!currentCourse) return;
-  // merge artifactIds/status as later lessons come online
-  currentCourse.lessons = jobLessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status }));
-  renderLessonTabs();
+  const a = (lessons || [])[activeIndex || 0] || (lessons || [])[0];
+  if (a && a.artifactId) openTab({ type: "lesson", title: a.title, art: a.artifactId });
 }
 async function openCourseById(courseId, title) {
   try {
     const res = await fetch("/api/course/" + courseId, { headers: authHeaders() });
     const { lessons } = await res.json();
     if (!lessons || !lessons.length) return;
-    openCourse(courseId, lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.id, status: "done" })), 0);
+    const a = lessons[0];
+    openTab({ type: "lesson", title: a.title || title, art: a.id });
   } catch { /* ignore */ }
 }
 
@@ -1565,3 +1604,5 @@ async function maybeOnboard() {
 }
 
 bootAuth();
+// Re-open any Trainer tabs the learner had before a refresh (sessionStorage).
+restoreTabs();
