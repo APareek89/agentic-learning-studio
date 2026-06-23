@@ -609,8 +609,14 @@ export async function runDeepDive(
   repairBlueprint(bp);
   // Density enforcement (RULE 2): verify the prose against the tier; repair the
   // over-ceiling sentences in one pass; log any residual (never block on it).
+  // A2 — only run the (extra LLM) repair when prose is MEANINGFULLY over the tier, not on a
+  // stray long sentence or two. The old `overCeiling > 0` fired on essentially every module,
+  // adding a second serial Sonnet call (~7-24s) each time. Trigger now: ≥3 over-ceiling
+  // sentences OR ≥25% of the module's sentences over. (Density is a verbosity knob, not
+  // correctness — a slightly-long sentence isn't worth doubling the build time.)
   try {
-    if (measureModule(module, p.density).overCeiling > 0) {
+    const dstats = measureModule(module, p.density);
+    if (dstats.overCeiling >= 3 || dstats.pctOver >= 0.25) {
       const { repaired, residual } = await repairDensity(bp, moduleId, p.density, config);
       if (residual > 0) console.warn(`[density] "${moduleId}" (${p.density}): ${residual} sentence(s) over ceiling after repairing ${repaired} block(s)`);
       repairBlueprint(bp); // re-fix any refs the rewrite touched

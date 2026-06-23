@@ -6,6 +6,21 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
+## Generation latency (2026-06-23)
+- **529/overload resilience (`runDeepDive`, on staging + prod):** Anthropic `overloaded_error` (529) was failing whole
+  builds — the old 3-attempt/~3s retry burned out during a transient overload (clears in 30-90s) → 0 modules, empty lesson.
+  Now: detect overload/rate (529/429/overloaded/rate-limit) and ride it out with long JITTERED backoff
+  (2/5/12/25/40s, +0-30%), 6 attempts (~84s). Jitter also de-syncs the parallel builds below.
+- **Parallel module build (`runBuildJob`, A1+A4):** module bodies build in PARALLEL (cap `MAX_MODULE_CONCURRENCY`, default
+  **3**) instead of one-at-a-time, in spine order so Module 1 lands in the first wave; persists serially per-completion so the
+  lesson grows monotonically as modules finish. ~13.5 min → ~5-6 min. Safe to share `bp`: each module writes only its own
+  slot; `repairBlueprint()` is synchronous (atomic in Node) + skips stubs. Cap kept low so parallel calls don't burst the
+  Anthropic rate/overload limit. (Module-body ~145s each is still the per-unit cost — next levers: shrink output / templatize
+  framing / Haiku for simple modules.)
+- **Relaxed density repair (A2, `runDeepDive`):** the extra "TIGHTEN prose" Sonnet call now fires only when prose is
+  meaningfully over the tier (≥3 over-ceiling sentences OR ≥25% over), not on a stray long sentence (which fired ~every
+  module). Density is a verbosity knob, not correctness — saves ~7-24s/module.
+
 ## Repo cleanup (2026-06-23)
 - **Module-cache correctness fix:** `moduleCacheKey` (`src/lib/hash.ts`) + its call site (`src/server.ts`) now include
   `objective`/`buildGoal`/`framework`/`lessonTypes`. Before, two lessons differing only in those inputs collided on the
