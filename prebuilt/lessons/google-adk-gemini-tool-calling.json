@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "Google ADK and Gemini Tool Calling: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "Google ADK and Gemini Tool Calling is useful when you can apply it to a Gemini-based assistant schedules meetings and reads docs through approved tools, choose a design, and verify valid tool calls with required arguments.",
+    "caption": "Use Google ADK and Gemini tool calling by separating model-selected function calls, ADK agents/tools, session state, and deterministic workflow control.",
+    "oneLineThesis": "Gemini function calling supplies structured tool requests; ADK wraps that into agents, tools, sessions, and workflow patterns that still need host-side execution policy.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Google ADK and Gemini Tool Calling in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+        "label": "Gemini function calling returns structured action requests",
+        "sub": "The model selects a function and arguments; your code executes.",
+        "what": "Learners understand Gemini function calling as structured intent.",
+        "relevance": "This prevents treating model-produced calls as already authorized actions.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+        "orient": "Start with the boundary between model output and real tool execution.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+        "label": "ADK LlmAgent packages model, instruction, and tools",
+        "sub": "An ADK agent gives tool calling a reusable product wrapper.",
+        "what": "Learners map ADK agent objects to product behavior.",
+        "relevance": "This distinguishes direct Gemini API calls from ADK agent runtime structure.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+        "orient": "Use LlmAgent when instructions, tools, and sessions belong together.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+        "label": "Session state and workflows add control",
+        "sub": "ADK can carry state and compose deterministic agent workflows.",
+        "what": "Learners understand ADK session state and workflow patterns.",
+        "relevance": "State and loops can create subtle bugs without stop rules and ownership.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Use state templating and workflow agents deliberately, not as memory magic.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+        "label": "Code a narrow FunctionTool-style agent",
+        "sub": "A small example should expose tool arguments and policy.",
+        "what": "Learners write a concrete ADK/Gemini-style tool example.",
+        "relevance": "Runnable-looking examples make the model/runtime boundary tangible.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+        "orient": "Build the toy path so tool selection and execution are inspectable.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+        "label": "Evaluate tool calls, not just final replies",
+        "sub": "ADK/Gemini apps need traces, malformed-argument tests, and policy checks.",
+        "what": "Learners define production checks for ADK tool use.",
+        "relevance": "A final answer can hide wrong tool selection or unsafe arguments.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+        "orient": "Review events, tool args, session state, and final answer together.",
         "order": 5
       }
     ],
@@ -118,34 +118,35 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies Google ADK and Gemini Tool Calling to Google ADK tool-calling contract with schemas and review gates, with examples and checks tied to valid tool calls with required arguments.",
+      "title": "Gemini function calling returns structured action requests",
+      "sub": "The model selects a function and arguments; your code executes.",
+      "summary": "Function calling bridges natural language to application code.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model invents a tool argument that the backend never accepts."
+        "Define Gemini function calling.",
+        "Separate function declaration from executor.",
+        "Name validation and approval responsibilities."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why Google ADK and Gemini Tool Calling matters here",
+          "title": "The model proposes; the runtime disposes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: A Gemini-based assistant schedules meetings and reads docs through approved tools. The learner's job is not to memorize Google ADK and Gemini Tool Calling; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved valid tool calls with required arguments."
+                  "text": "Problem anchor: a user asks “Schedule a project review with Maya tomorrow.” Gemini function calling can return a structured request such as `schedule_meeting(attendees, time)`, but the app must validate calendar access, time zone, conflicts, and approval."
                 }
               ]
             },
@@ -153,7 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: Google ADK tool-calling contract with schemas and review gates. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "Official Gemini docs frame function calling as connecting models to external tools and APIs. The model determines when to call a function and supplies parameters; client code performs the real action."
                 }
               ]
             },
@@ -162,143 +163,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if the model invents a tool argument that the backend never accepts, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: Google ADK and Gemini Tool Calling matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: Google ADK and Gemini Tool Calling matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure valid tool calls with required arguments on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Google ADK and Gemini Tool Calling.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A Gemini-based assistant schedules meetings and reads docs through approved tools"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Google ADK tool-calling contract with schemas and review gates: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model invents a tool argument that the backend never accepts. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "Never execute a function call before validating arguments and user authority."
                 }
               ]
             }
@@ -308,23 +173,35 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
+          ],
+          "analogy": "Function calling is a filled-out work order, not the work itself."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Worked function call boundary",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A Gemini-based assistant schedules meetings and reads docs through approved tools. This module asks what what the tool owns changes in the artifact."
+                  "text": "The model may return a meeting function with attendee and time fields. The app parses the call, validates required fields, checks policy, then either executes or asks the user to confirm."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If the model invents an attendee email or vague time, the app should request clarification rather than guessing."
                 }
               ]
             },
@@ -333,77 +210,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Declare function name, description, and parameters."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Let Gemini propose a call when user intent matches."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve valid tool calls with required arguments."
+                    "text": "Validate arguments and authority in application code."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: the model invents a tool argument that the backend never accepts."
+                    "text": "Return tool result as context for final response."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Google ADK tool-calling contract with schemas and review gates, log or test the fields needed to debug valid tool calls with required arguments. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
@@ -411,182 +236,93 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: Google ADK tool-calling contract with schemas and review gates",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: A Gemini-based assistant schedules meetings and reads docs through approved tools. The team wants to improve valid tool calls with required arguments, but it has already seen this failure: the model invents a tool argument that the backend never accepts."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Request: \"Triage this support ticket, search the docs, draft the answer, and escalate if confidence is low.\" The framework is useful only if it makes each handoff and stop condition explicit."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: Google ADK tool-calling contract with schemas and review gates. It names the state fields, nodes, tools, retry policy, human-review edge, trace fields, and the acceptance test for valid tool calls with required arguments."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: state = {ticket, route, evidence, draft, risk, done}; nodes = classify, retrieve, draft, validate, escalate; stop when validation passes or risk requires a human."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: agent framework architect. Context: A Gemini-based assistant schedules meetings and reads docs through approved tools. Task: produce the minimal workflow for Google ADK tool-calling contract with schemas and review gates. Include state fields, nodes, tools, edges, retry policy, human handoff, trace fields, and acceptance tests. Output: {state, nodes, edges, tools, stop_rules, tests}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties Google ADK and Gemini Tool Calling to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Google ADK and Gemini Tool Calling to the running case?",
+          "title": "Function-call boundary",
+          "prompt": "Who should execute the real calendar API call?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Google ADK tool-calling contract with schemas and review gates, measure valid tool calls with required arguments, and test the failure: the model invents a tool argument that the backend never accepts.",
+              "text": "The model weights directly.",
+              "correct": false
+            },
+            {
+              "text": "Application code after validation and policy checks.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The function description by itself.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Function calling returns structured intent; the runtime owns execution.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon3",
+        "canon4",
+        "canon5",
+        "kb10"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies Google ADK and Gemini Tool Calling to Google ADK tool-calling contract with schemas and review gates, with examples and checks tied to valid tool calls with required arguments.",
+      "title": "ADK LlmAgent packages model, instruction, and tools",
+      "sub": "An ADK agent gives tool calling a reusable product wrapper.",
+      "summary": "ADK turns a model-plus-tools pattern into an agent object.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model invents a tool argument that the backend never accepts."
+        "Name LlmAgent fields such as model, instruction, description, and tools.",
+        "Explain FunctionTool wrapping.",
+        "Recognize when ADK is useful."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "LlmAgent is the named tool-using worker",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind Google ADK and Gemini Tool Calling. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "Google ADK docs show `LlmAgent` configured with a model, name, description, instruction, and tools. Python can accept a native function directly as a tool, while other languages may use explicit FunctionTool wrappers or annotations."
                 }
               ]
             },
@@ -594,32 +330,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means making the workflow explicit: state fields, nodes, edges, tools, retries, and termination."
+                  "text": "The LLM uses tool names, descriptions, docstrings, and parameter schemas to decide which tool to call. That means tool naming and docstrings are behavioral design, not decoration."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,7 +339,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is Google ADK tool-calling contract with schemas and review gates. Which single field, trace, or test would show whether valid tool calls with required arguments improved?"
+                  "text": "A tool description should say when not to use the tool as clearly as when to use it."
                 }
               ]
             }
@@ -637,80 +349,35 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
+          ],
+          "analogy": "An ADK LlmAgent is a job role plus a tool belt."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A Gemini-based assistant schedules meetings and reads docs through approved tools"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Google ADK tool-calling contract with schemas and review gates: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model invents a tool argument that the backend never accepts. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
+          "title": "Case study: capital-city demo grows into product agent",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, A Gemini-based assistant schedules meetings and reads docs through approved tools. This module asks what core workflow changes in the artifact."
+                  "text": "A simple agent answers capital-city questions with a function. In a product setting, the same pattern becomes a support agent with tools for KB search, ticket lookup, and draft reply creation."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The risk rises with tools: a search tool is low risk; a ticket update tool needs policy and approval."
                 }
               ]
             },
@@ -719,80 +386,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Define a focused agent instruction."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Attach narrow tools with typed parameters."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve valid tool calls with required arguments."
+                    "text": "Run sample prompts that should and should not call tools."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: the model invents a tool argument that the backend never accepts."
+                    "text": "Inspect tool call arguments before execution."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
-          "language": "python",
-          "code": "# Google ADK and Gemini Tool Calling: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the model invents a tool argument that the backend never accepts."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
             }
           ],
           "termIds": [
@@ -800,147 +412,93 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: the model invents a tool argument that the backend never accepts. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to Google ADK tool-calling contract with schemas and review gates: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: valid tool calls with required arguments becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful Google ADK and Gemini Tool Calling design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Google ADK and Gemini Tool Calling to the running case?",
+          "title": "ADK object",
+          "prompt": "What does an ADK LlmAgent combine?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Google ADK tool-calling contract with schemas and review gates, measure valid tool calls with required arguments, and test the failure: the model invents a tool argument that the backend never accepts.",
+              "text": "Only a database index.",
+              "correct": false
+            },
+            {
+              "text": "Model, name/description, instruction, and available tools.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Only a CSS layout.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The agent object packages model behavior and tool access.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon3",
+        "canon4",
+        "canon5",
+        "kb10"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies Google ADK and Gemini Tool Calling to Google ADK tool-calling contract with schemas and review gates, with examples and checks tied to valid tool calls with required arguments.",
+      "title": "Session state and workflows add control",
+      "sub": "ADK can carry state and compose deterministic agent workflows.",
+      "summary": "ADK state and workflows are application control surfaces.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model invents a tool argument that the backend never accepts."
+        "Explain session.state injection into instructions.",
+        "Compare LlmAgent, AgentTool, Sequential/Parallel/Loop patterns.",
+        "Set termination conditions for loops."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "State is explicit context, not hidden intuition",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where Google ADK and Gemini Tool Calling becomes a decision. The team must choose how much rigor Google ADK tool-calling contract with schemas and review gates needs before it can be trusted."
+                  "text": "ADK session state can be injected into LlmAgent instructions with template keys such as `{topic}`. This is powerful for context-aware behavior, but values should be controlled product state, not random transcript leftovers."
                 }
               ]
             },
@@ -948,84 +506,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves valid tool calls with required arguments while making this failure visible: the model invents a tool argument that the backend never accepts."
+                  "text": "ADK also documents workflow-style agents such as sequential, parallel, and loop patterns. Loop workflows need explicit termination mechanisms or max iterations."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Thin slice: prove the path on one realistic example."
-                  }
-                ],
-                [
-                  {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
-                  }
-                ],
-                [
-                  {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A Gemini-based assistant schedules meetings and reads docs through approved tools"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Google ADK tool-calling contract with schemas and review gates: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model invents a tool argument that the backend never accepts. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "For every state key used in instructions, name who writes it and when it expires."
                 }
               ]
             }
@@ -1035,300 +525,188 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
+          ],
+          "analogy": "Session state is a labeled control panel, not a junk drawer."
         },
         {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
+          "title": "ADK control choices",
           "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
+            "Choice",
+            "Use when",
+            "Risk"
           ],
           "options": [
             {
-              "name": "Thin slice",
+              "name": "Direct function call",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Google ADK and Gemini Tool Calling on one realistic case.",
+                  "criterion": "Choice",
+                  "text": "Single model request with declared functions.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
+                  "criterion": "Use when",
+                  "text": "One-shot tool use is enough.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the model invents a tool argument that the backend never accepts.",
+                  "criterion": "Risk",
+                  "text": "App owns more orchestration.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when the team is still learning what matters.",
+              "whenToUse": "Use for small integrations.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production path",
+              "name": "LlmAgent with tools",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on valid tool calls with required arguments.",
+                  "criterion": "Choice",
+                  "text": "Reusable agent with instructions and tools.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
+                  "criterion": "Use when",
+                  "text": "Behavior and toolset repeat across sessions.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Tool descriptions shape behavior.",
                   "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
+              "whenToUse": "Use for product agents.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Workflow/multi-agent pattern",
               "cells": [
                 {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
+                  "criterion": "Choice",
+                  "text": "Sequential, parallel, loop, or delegated agents.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
+                  "criterion": "Use when",
+                  "text": "Control flow has real structure.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
+                  "criterion": "Risk",
+                  "text": "Loops need termination and eval.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
+              "whenToUse": "Use after simple agent is insufficient.",
+              "cost": "Medium",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that improves valid tool calls with required arguments and catches: the model invents a tool argument that the backend never accepts.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Google ADK tool-calling contract with schemas and review gates, log or test the fields needed to debug valid tool calls with required arguments. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: the model invents a tool argument that the backend never accepts. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The workflow has nodes but no clear state contract, so later steps read stale or missing data."
-                  }
-                ],
-                [
-                  {
-                    "text": "Retries repeat the same bad action because the failure is not written into state."
-                  }
-                ],
-                [
-                  {
-                    "text": "A handoff occurs without enough context for the next actor to act safely."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: valid tool calls with required arguments gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when valid tool calls with required arguments affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: the model invents a tool argument that the backend never accepts.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Google ADK and Gemini Tool Calling to the running case?",
+          "title": "State ownership",
+          "prompt": "What should you know before injecting `{topic}` into an ADK instruction?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Google ADK tool-calling contract with schemas and review gates, measure valid tool calls with required arguments, and test the failure: the model invents a tool argument that the backend never accepts.",
+              "text": "The color of the terminal.",
+              "correct": false
+            },
+            {
+              "text": "Who wrote `session.state[\"topic\"]`, why it is trusted, and when it expires.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Whether the model can see all user files by default.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "State injection affects model behavior and needs ownership.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Google ADK and Gemini Tool Calling: baseline, production design, or advanced optimization."
+        "canon3",
+        "canon4",
+        "canon5",
+        "kb10"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies Google ADK and Gemini Tool Calling to Google ADK tool-calling contract with schemas and review gates, with examples and checks tied to valid tool calls with required arguments.",
+      "title": "Code a narrow FunctionTool-style agent",
+      "sub": "A small example should expose tool arguments and policy.",
+      "summary": "The useful example validates the call before the side effect.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model invents a tool argument that the backend never accepts."
+        "Declare a simple tool function.",
+        "Attach it to an agent.",
+        "Predict tool output and validation behavior."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
+          "title": "Tool functions should stay small and typed",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for Google ADK and Gemini Tool Calling should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "For teaching, use a harmless function such as looking up a capital or checking availability. For product work, wrap side effects in policy and approval."
                 }
               ]
             },
@@ -1336,7 +714,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For Google ADK tool-calling contract with schemas and review gates, the sketch should prove one thing: the system can improve valid tool calls with required arguments without hiding the failure where the model invents a tool argument that the backend never accepts."
+                  "text": "Spaced recall: from structured outputs, schemas help shape arguments but do not prove intent. Keep executor validation close to the function."
                 }
               ]
             },
@@ -1345,7 +723,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Add one malformed argument test before adding more tools."
                 }
               ]
             }
@@ -1355,162 +733,137 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A Gemini-based assistant schedules meetings and reads docs through approved tools"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Google ADK tool-calling contract with schemas and review gates: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model invents a tool argument that the backend never accepts. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, A Gemini-based assistant schedules meetings and reads docs through approved tools. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve valid tool calls with required arguments."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: the model invents a tool argument that the backend never accepts."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
+          "title": "Minimal ADK LlmAgent with a function tool",
           "language": "python",
-          "code": "# Google ADK and Gemini Tool Calling: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
+          "code": "from google.adk.agents import LlmAgent\n\ndef get_capital_city(country: str) -> str:\n    \"\"\"Retrieves the capital city for a supported country.\"\"\"\n    capitals = {\"france\": \"Paris\", \"japan\": \"Tokyo\", \"canada\": \"Ottawa\"}\n    return capitals.get(country.lower(), f\"Unknown country: {country}\")\n\ncapital_agent = LlmAgent(\n    model=\"gemini-flash-latest\",\n    name=\"capital_agent\",\n    description=\"Answers capital-city questions for supported countries.\",\n    instruction=\"Use the tool for capital-city lookups. Do not invent unsupported capitals.\",\n    tools=[get_capital_city],\n)\n\n# In a real app, inspect the tool call and result in the ADK event stream.\nprint(get_capital_city(\"Japan\"))",
+          "explanation": "The function is harmless and typed. A real ADK run would let the agent request it, while the application inspects events and tool results.",
+          "predictThenReveal": {
+            "prompt": "Before reading the answer, predict the printed output.",
+            "answer": "It prints `Tokyo` because the function lowercases the country and finds `japan` in the dictionary."
+          },
+          "termIds": [
+            "framework",
+            "graph",
+            "checkpoint",
+            "handoff",
+            "sdk",
+            "orchestration"
+          ],
+          "sources": [
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Tool example",
+          "prompt": "Why is this lookup safer than a calendar-scheduling tool?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "It has no function name.",
+              "correct": false
+            },
+            {
+              "text": "It has no external side effect and uses a small local mapping.",
+              "correct": true
+            },
+            {
+              "text": "It bypasses all argument validation.",
+              "correct": false
+            }
+          ],
+          "explanation": "Risk depends on side effects and authority.",
+          "termIds": [
+            "framework",
+            "graph",
+            "checkpoint",
+            "handoff",
+            "sdk",
+            "orchestration"
+          ],
+          "sources": [
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
+          ]
+        }
+      ],
+      "citations": [
+        "canon3",
+        "canon4",
+        "canon5",
+        "kb10"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Evaluate tool calls, not just final replies",
+      "sub": "ADK/Gemini apps need traces, malformed-argument tests, and policy checks.",
+      "summary": "Tool-calling quality lives in the call trace.",
+      "objectives": [
+        "Test tool selection and no-call cases.",
+        "Assert validation and approval behavior.",
+        "Monitor session state and loop termination."
+      ],
+      "termIds": [
+        "framework",
+        "graph",
+        "checkpoint",
+        "handoff",
+        "sdk",
+        "orchestration"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "The tool trace is the evidence",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to the model invents a tool argument that the backend never accepts."
+                  "text": "For Gemini function calling and ADK agents, evaluation should inspect whether the model chose the right tool, produced valid arguments, handled tool errors, respected session state, and avoided tools when it should answer directly."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "For side effects, test approval gates and idempotency. For workflows, test loop termination and state updates. For integrations, date-stamp API assumptions because ADK versions and supported languages can evolve."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Include a prompt that looks like a tool request but lacks required details. The agent should ask for clarification."
+                }
+              ]
             }
           ],
           "termIds": [
@@ -1518,24 +871,26 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from Google ADK/Gemini tool calling",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for Google ADK and Gemini Tool Calling, review it against the running case before accepting it."
+                  "text": "Review the event or tool trace with the final answer."
                 }
               ]
             },
@@ -1544,27 +899,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: Google ADK tool-calling contract with schemas and review gates?"
+                    "text": "The selected function/tool matched the user intent and description."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Arguments passed schema and application policy before execution."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: the model invents a tool argument that the backend never accepts?"
+                    "text": "Session state used in instructions had a trusted writer and lifetime."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug valid tool calls with required arguments?"
+                    "text": "Side-effecting tools required approval or safe idempotency."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Loop or multi-agent workflows had explicit termination and eval cases."
                   }
                 ]
               ]
@@ -1575,451 +930,60 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Google ADK and Gemini Tool Calling to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review Google ADK tool-calling contract with schemas and review gates, measure valid tool calls with required arguments, and test the failure: the model invents a tool argument that the backend never accepts.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies Google ADK and Gemini Tool Calling to Google ADK tool-calling contract with schemas and review gates, with examples and checks tied to valid tool calls with required arguments.",
-      "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: the model invents a tool argument that the backend never accepts."
-      ],
-      "termIds": [
-        "framework",
-        "graph",
-        "checkpoint",
-        "handoff",
-        "sdk"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how Google ADK tool-calling contract with schemas and review gates improves valid tool calls with required arguments and catches the model invents a tool argument that the backend never accepts, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "A Gemini-based assistant schedules meetings and reads docs through approved tools"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review Google ADK tool-calling contract with schemas and review gates: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where the model invents a tool argument that the backend never accepts. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of Google ADK and Gemini Tool Calling on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: the model invents a tool argument that the backend never accepts.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on valid tool calls with required arguments.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves valid tool calls with required arguments and catches: the model invents a tool argument that the backend never accepts.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For Google ADK tool-calling contract with schemas and review gates, log or test the fields needed to debug valid tool calls with required arguments. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct Google ADK and Gemini Tool Calling: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply Google ADK and Gemini Tool Calling without copying the worked example. Keep the same running case - A Gemini-based assistant schedules meetings and reads docs through approved tools - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: valid tool calls with required arguments."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: the model invents a tool argument that the backend never accepts."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies Google ADK and Gemini Tool Calling to the running case?",
+          "title": "Tool-call eval",
+          "prompt": "What should a malformed scheduling request trigger?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review Google ADK tool-calling contract with schemas and review gates, measure valid tool calls with required arguments, and test the failure: the model invents a tool argument that the backend never accepts.",
+              "text": "A guessed time and automatic booking.",
+              "correct": false
+            },
+            {
+              "text": "Clarification or validation failure before any calendar side effect.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Deletion of the tool schema.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "The runtime should not execute vague or invalid tool calls.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "canon3",
+            "canon4",
+            "canon5",
+            "kb10"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Google ADK and Gemini Tool Calling: baseline, production design, or advanced optimization."
+        "canon3",
+        "canon4",
+        "canon5",
+        "kb10"
+      ]
     }
   ],
   "glossary": {
@@ -2089,17 +1053,17 @@
     "title": "Decision prompts for Google ADK and Gemini Tool Calling",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "Google ADK tool design",
         "questions": [
           {
-            "q": "What decision does Google ADK and Gemini Tool Calling change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships Google ADK tool-calling contract with schemas and review gates.",
+            "q": "Should this Gemini app use direct function calling or an ADK agent workflow?",
+            "why": "Direct function calling is simpler for one tool; ADK helps when agents, sessions, tools, and workflows become product structure.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "Direct Gemini function calling",
+              "ADK LlmAgent with FunctionTool",
+              "ADK workflow or multi-agent pattern"
             ],
-            "rot": "Choose the smallest option that catches: the model invents a tool argument that the backend never accepts."
+            "rot": "Start with direct function calling for one step; move to ADK when session state, tools, agent delegation, or workflow control matter."
           }
         ]
       }
@@ -2111,73 +1075,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct Google ADK and Gemini Tool Calling using the running case: A Gemini-based assistant schedules meetings and reads docs through approved tools. Name the artifact (Google ADK tool-calling contract with schemas and review gates), explain the mechanism, choose a design level, write the check for the model invents a tool argument that the backend never accepts, and say how you would measure valid tool calls with required arguments."
+            "text": "Retrieval prompt: reconstruct Google ADK by naming Gemini function calling, FunctionTool, LlmAgent, session state, AgentTool, workflow agents, and host execution policy."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "Google ADK path from Gemini function call to agent workflow",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Google ADK and Gemini Tool Calling in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+          "label": "Gemini function calling returns structured action requests",
+          "sub": "The model selects a function and arguments; your code executes.",
+          "what": "Learners understand Gemini function calling as structured intent.",
+          "relevance": "This prevents treating model-produced calls as already authorized actions.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+          "orient": "Start with the boundary between model output and real tool execution.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+          "label": "ADK LlmAgent packages model, instruction, and tools",
+          "sub": "An ADK agent gives tool calling a reusable product wrapper.",
+          "what": "Learners map ADK agent objects to product behavior.",
+          "relevance": "This distinguishes direct Gemini API calls from ADK agent runtime structure.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+          "orient": "Use LlmAgent when instructions, tools, and sessions belong together.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+          "label": "Session state and workflows add control",
+          "sub": "ADK can carry state and compose deterministic agent workflows.",
+          "what": "Learners understand ADK session state and workflow patterns.",
+          "relevance": "State and loops can create subtle bugs without stop rules and ownership.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Use state templating and workflow agents deliberately, not as memory magic.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+          "label": "Code a narrow FunctionTool-style agent",
+          "sub": "A small example should expose tool arguments and policy.",
+          "what": "Learners write a concrete ADK/Gemini-style tool example.",
+          "relevance": "Runnable-looking examples make the model/runtime boundary tangible.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+          "orient": "Build the toy path so tool selection and execution are inspectable.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve valid tool calls with required arguments while avoiding the failure: the model invents a tool argument that the backend never accepts.",
+          "label": "Evaluate tool calls, not just final replies",
+          "sub": "ADK/Gemini apps need traces, malformed-argument tests, and policy checks.",
+          "what": "Learners define production checks for ADK tool use.",
+          "relevance": "A final answer can hide wrong tool selection or unsafe arguments.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects Google ADK and Gemini Tool Calling to the running artifact and failure test.",
+          "orient": "Review events, tool args, session state, and final answer together.",
           "order": 5
         }
       ],
@@ -2185,7 +1149,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "enables"
         },
         {
           "from": "n_m2",
@@ -2200,66 +1164,56 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "Gemini function calling returns structured action requests",
+        "detail": "Function calling bridges natural language to application code."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "ADK LlmAgent packages model, instruction, and tools",
+        "detail": "ADK turns a model-plus-tools pattern into an agent object."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Session state and workflows add control",
+        "detail": "ADK state and workflows are application control surfaces."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Code a narrow FunctionTool-style agent",
+        "detail": "The useful example validates the call before the side effect."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Evaluate tool calls, not just final replies",
+        "detail": "Tool-calling quality lives in the call trace."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_fit",
+        "label": "Can you justify the fit described in \"Gemini function calling returns structured action requests\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure valid tool calls with required arguments on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: the model invents a tool argument that the backend never accepts?",
+        "id": "chk_impl",
+        "label": "Can you inspect the implementation surface in \"Code a narrow FunctionTool-style agent\"?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_release",
+        "label": "Does \"Evaluate tool calls, not just final replies\" define production checks?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for Google ADK tool-calling contract with schemas and review gates. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (valid tool calls with required arguments), failure case (the model invents a tool argument that the backend never accepts), owner, and the next rung after this lesson.",
+      "prompt": "Build a small Gemini/ADK design for a calendar assistant: one function declaration, one LlmAgent, session state key, approval rule before scheduling, and a test for malformed arguments. Next rung: compare ADK workflows with LangGraph.",
       "scopedTo": "Google ADK and Gemini Tool Calling"
     }
   },
@@ -2291,6 +1245,34 @@
       "title": "Official documentation",
       "url": "https://langchain-ai.github.io/langgraph/",
       "asOfDate": "2026-06-20"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "Google ADK LlmAgent docs",
+      "url": "https://google.github.io/adk-docs/agents/llm-agents/",
+      "asOfDate": "2026-06-23"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "Gemini API function calling docs",
+      "url": "https://ai.google.dev/gemini-api/docs/function-calling",
+      "asOfDate": "2026-06-23"
+    },
+    "canon5": {
+      "id": "canon5",
+      "kind": "canonical",
+      "title": "Google ADK custom and function tools",
+      "url": "https://google.github.io/adk-docs/tools-custom/",
+      "asOfDate": "2026-06-23"
+    },
+    "kb10": {
+      "id": "kb10",
+      "kind": "kb",
+      "title": "KB: Tool and Plugin Standards",
+      "url": "https://spec.openapis.org/oas/latest.html",
+      "asOfDate": "2026-06-22"
     }
   }
 }

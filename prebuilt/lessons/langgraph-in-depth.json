@@ -25,67 +25,67 @@
   },
   "mentalMap": {
     "title": "LangGraph in Depth: mental map",
-    "caption": "Follow the running case from problem framing to mechanism, design choice, implementation check, and solo application.",
-    "oneLineThesis": "LangGraph in Depth is useful when you can apply it to an incident triage agent needs explicit state, branching, retries, and human approval, choose a design, and verify correct branch chosen after failed tool calls.",
+    "caption": "Teach LangGraph as explicit state-machine control for agents: state schema, nodes, edges, checkpoints, interrupts, and tested routes.",
+    "oneLineThesis": "LangGraph is the right lesson when agent behavior must be modeled as inspectable, resumable control flow rather than an opaque loop.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place LangGraph in Depth in the system map.",
-        "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+        "label": "StateGraph makes control flow visible",
+        "sub": "Nodes and edges replace an opaque agent loop.",
+        "what": "Learners see LangGraph as explicit workflow modeling.",
+        "relevance": "This prevents using graph machinery without a state problem to solve.",
         "moduleId": "m1",
-        "layer": "Path",
+        "layer": "Problem",
         "emphasis": "spine",
-        "orient": "Frame the case: What the tool owns connects LangGraph in Depth to the running artifact and failure test.",
+        "orient": "Start with the state fields the graph must carry.",
         "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+        "label": "Reducers and state shape prevent junk drawers",
+        "sub": "Graph state needs typed ownership and merge rules.",
+        "what": "Learners design graph state safely.",
+        "relevance": "Unstructured state makes routes brittle and privacy harder.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Open the mechanism: Core workflow connects LangGraph in Depth to the running artifact and failure test.",
+        "orient": "Keep state small, typed, and intentionally merged.",
         "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+        "label": "Checkpoints and interrupts enable resume",
+        "sub": "Thread IDs and persisted state make human review practical.",
+        "what": "Learners understand persistence and interrupt flow.",
+        "relevance": "Approval gates break if state cannot resume safely.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine",
-        "orient": "Choose the design: Fit and alternatives connects LangGraph in Depth to the running artifact and failure test.",
+        "emphasis": "normal",
+        "orient": "Use checkpoints before pausing for external input.",
         "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+        "label": "Code a tiny conditional route",
+        "sub": "A small graph can make routing behavior testable.",
+        "what": "Learners see graph decisions in runnable code.",
+        "relevance": "Route bugs can silently skip safety nodes.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal",
-        "orient": "Build and verify: Implementation sketch connects LangGraph in Depth to the running artifact and failure test.",
+        "orient": "Implement route logic before adding many model calls.",
         "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-        "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+        "label": "Test graphs as workflows, not prompts",
+        "sub": "Production confidence comes from path coverage and traces.",
+        "what": "Learners define LangGraph release checks.",
+        "relevance": "A graph can render valid output while hiding skipped nodes or bad state merges.",
         "moduleId": "m5",
-        "layer": "Path",
+        "layer": "Synthesis",
         "emphasis": "spine",
-        "orient": "Apply solo: Production checklist connects LangGraph in Depth to the running artifact and failure test.",
+        "orient": "Validate nodes, edges, checkpoints, and resume behavior.",
         "order": 5
       }
     ],
@@ -118,34 +118,35 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Start with the real scenario and the complete worked artifact.",
-      "summary": "What the tool owns applies LangGraph in Depth to LangGraph state machine with conditional edges and durable checkpoints, with examples and checks tied to correct branch chosen after failed tool calls.",
+      "title": "StateGraph makes control flow visible",
+      "sub": "Nodes and edges replace an opaque agent loop.",
+      "summary": "LangGraph gives agent apps named state transitions.",
       "objectives": [
-        "Apply what the tool owns to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: state updates are incomplete, so later nodes make decisions from stale data."
+        "Define StateGraph, nodes, edges, START, and END.",
+        "Explain partial state updates.",
+        "Choose graph control for branchy workflows."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Why LangGraph in Depth matters here",
+          "title": "A graph is a contract for state movement",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Problem statement: An incident triage agent needs explicit state, branching, retries, and human approval. The learner's job is not to memorize LangGraph in Depth; it is to decide what to build or change, what evidence the system may use, and how to tell whether the change improved correct branch chosen after failed tool calls."
+                  "text": "Problem anchor: a tutor must retrieve sources, answer, run a citation check, and ask for human review when the check fails. A single loop hides those stages. A graph names them."
                 }
               ]
             },
@@ -153,7 +154,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Running case: LangGraph state machine with conditional edges and durable checkpoints. We will keep this same case through the lesson so each idea has a job: frame the problem, explain the mechanism, choose a design, test the implementation, and decide what to do next."
+                  "text": "LangGraph nodes read and update shared state; edges decide the next node. The compiled graph runs until END, and checkpoints can persist thread state."
                 }
               ]
             },
@@ -162,143 +163,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Before reading on, predict: if state updates are incomplete, so later nodes make decisions from stale data, where would you look first - the input, the state or data, the model boundary, the validation check, or the release process?"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The lesson assumes you can learn the vocabulary, then spends its effort on integration choices, failure signals, and checks that make the idea usable in a real system."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Product framing: LangGraph in Depth matters when it changes a user-visible decision, release gate, or operational workflow."
-                  }
-                ],
-                [
-                  {
-                    "text": "Engineering framing: LangGraph in Depth matters when it changes data, state, prompts, model behavior, tools, schemas, traces, or runtime constraints."
-                  }
-                ],
-                [
-                  {
-                    "text": "Validation framing: the lesson is not complete until the team can measure correct branch chosen after failed tool calls on examples that resemble the real workload."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for LangGraph in Depth.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An incident triage agent needs explicit state, branching, retries, and human approval"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LangGraph state machine with conditional edges and durable checkpoints: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where state updates are incomplete, so later nodes make decisions from stale data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "text": "If every step is linear and deterministic, a simple chain may be enough."
                 }
               ]
             }
@@ -308,23 +173,33 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb6",
+            "kb7"
+          ],
+          "analogy": "LangGraph is a subway map for agent state."
         },
         {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Worked example: What the tool owns applied to the running case",
+          "title": "Worked graph: answer then review",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "In the running case, An incident triage agent needs explicit state, branching, retries, and human approval. This module asks what what the tool owns changes in the artifact."
+                  "text": "State fields include question, evidence, draft, review_status, and final_answer. Nodes retrieve, draft, review, and either finish or request revision."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The graph makes the failure branch visible: unsupported citations route back to retrieval or revision instead of slipping into final output."
                 }
               ]
             },
@@ -333,77 +208,25 @@
               "items": [
                 [
                   {
-                    "text": "State the current assumption in one sentence."
+                    "text": "Define typed state."
                   }
                 ],
                 [
                   {
-                    "text": "Name the evidence or state field that proves it."
+                    "text": "Write one node per meaningful transformation."
                   }
                 ],
                 [
                   {
-                    "text": "Choose the smallest next action that can improve correct branch chosen after failed tool calls."
+                    "text": "Add direct and conditional edges."
                   }
                 ],
                 [
                   {
-                    "text": "Add a check for: state updates are incomplete, so later nodes make decisions from stale data."
+                    "text": "Test every route."
                   }
                 ]
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LangGraph state machine with conditional edges and durable checkpoints, log or test the fields needed to debug correct branch chosen after failed tool calls. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
             }
           ],
           "termIds": [
@@ -411,182 +234,87 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m1_worked_artifact",
-          "kind": "functionalExample",
-          "title": "Fully worked example: LangGraph state machine with conditional edges and durable checkpoints",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Scenario: An incident triage agent needs explicit state, branching, retries, and human approval. The team wants to improve correct branch chosen after failed tool calls, but it has already seen this failure: state updates are incomplete, so later nodes make decisions from stale data."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Here is the worked artifact at design-review depth: concrete enough to inspect, small enough to build as a thin slice."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete worked artifact"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Request: \"Triage this support ticket, search the docs, draft the answer, and escalate if confidence is low.\" The framework is useful only if it makes each handoff and stop condition explicit."
-                  }
-                ],
-                [
-                  {
-                    "text": "Artifact: LangGraph state machine with conditional edges and durable checkpoints. It names the state fields, nodes, tools, retry policy, human-review edge, trace fields, and the acceptance test for correct branch chosen after failed tool calls."
-                  }
-                ],
-                [
-                  {
-                    "text": "Worked output: state = {ticket, route, evidence, draft, risk, done}; nodes = classify, retrieve, draft, validate, escalate; stop when validation passes or risk requires a human."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Complete AI-assistant prompt for this artifact"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Role: agent framework architect. Context: An incident triage agent needs explicit state, branching, retries, and human approval. Task: produce the minimal workflow for LangGraph state machine with conditional edges and durable checkpoints. Include state fields, nodes, tools, edges, retry policy, human handoff, trace fields, and acceptance tests. Output: {state, nodes, edges, tools, stop_rules, tests}."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Why this is richer than a definition"
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The example ties LangGraph in Depth to a specific input, output, decision, failure mode, and metric. That is the move you should repeat when applying the lesson to your own system."
-                }
-              ]
-            }
+            "kb6",
+            "kb7"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LangGraph in Depth to the running case?",
+          "title": "Graph fit",
+          "prompt": "What makes LangGraph a good fit?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LangGraph state machine with conditional edges and durable checkpoints, measure correct branch chosen after failed tool calls, and test the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+              "text": "The app only needs one text completion.",
+              "correct": false
+            },
+            {
+              "text": "The app needs explicit state transitions, branching, checkpoints, or interrupts.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "The UI needs a landing page.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "LangGraph is for control flow.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb6",
+        "kb7"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the mechanism so the artifact is more than a checklist.",
-      "summary": "Core workflow applies LangGraph in Depth to LangGraph state machine with conditional edges and durable checkpoints, with examples and checks tied to correct branch chosen after failed tool calls.",
+      "title": "Reducers and state shape prevent junk drawers",
+      "sub": "Graph state needs typed ownership and merge rules.",
+      "summary": "State design is the heart of LangGraph.",
       "objectives": [
-        "Apply core workflow to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: state updates are incomplete, so later nodes make decisions from stale data."
+        "Choose state fields deliberately.",
+        "Use reducers or merge rules for accumulated data.",
+        "Avoid storing secrets or huge prompts."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the mechanism in the running case",
+          "title": "Graph state is product data",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Core workflow opens the machinery behind LangGraph in Depth. In the running case, the important question is: what exactly changes between the user's request and the final output?"
+                  "text": "It is tempting to put every message, scratch note, tool result, and prompt into state. That creates a junk drawer. Keep exact user requirements, durable decisions, needed evidence IDs, and route status; store bulky artifacts elsewhere by reference."
                 }
               ]
             },
@@ -594,32 +322,8 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Mechanism means making the workflow explicit: state fields, nodes, edges, tools, retries, and termination."
+                  "text": "Reducers or merge rules matter when nodes append messages, evidence, or findings. Without them, later nodes may overwrite or duplicate data silently."
                 }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Two framings for the same idea"
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Plain framing: imagine a reviewer following a checklist. They need to see what came in, what was considered, what was rejected, and why the final answer is safe to use."
-                  }
-                ],
-                [
-                  {
-                    "text": "Technical framing: imagine a trace. It should expose inputs, state, external evidence, model or algorithm output, validation result, and owner for exceptions."
-                  }
-                ]
               ]
             },
             {
@@ -627,7 +331,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Recall from module 1: the artifact is LangGraph state machine with conditional edges and durable checkpoints. Which single field, trace, or test would show whether correct branch chosen after failed tool calls improved?"
+                  "text": "For each field, name which node writes it and which node reads it."
                 }
               ]
             }
@@ -637,56 +341,93 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
+            "kb6",
+            "kb7"
+          ],
+          "analogy": "State is a shared workbench; label every tray."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "LangGraph state fields",
+          "criteria": [
+            "Field type",
+            "Keep when",
+            "Risk"
+          ],
+          "options": [
             {
-              "label": "Anchor the case",
-              "detail": [
+              "name": "Exact constraints",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An incident triage agent needs explicit state, branching, retries, and human approval"
-                    }
-                  ]
+                  "criterion": "Field type",
+                  "text": "User requirements and approval decisions.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Keep when",
+                  "text": "Needed by later routes.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Summaries can erase them.",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Keep in typed state.",
+              "cost": "Low",
+              "complexity": "Medium"
             },
             {
-              "label": "Inspect the artifact",
-              "detail": [
+              "name": "Evidence IDs",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LangGraph state machine with conditional edges and durable checkpoints: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
+                  "criterion": "Field type",
+                  "text": "Source IDs and snippets.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Keep when",
+                  "text": "Review/final answer needs grounding.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Too much text bloats state.",
+                  "rating": "ok"
                 }
-              ]
+              ],
+              "whenToUse": "Store IDs plus compact snippets.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Run the failure",
-              "detail": [
+              "name": "Secrets/full prompts",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where state updates are incomplete, so later nodes make decisions from stale data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
+                  "criterion": "Field type",
+                  "text": "Credentials or giant prompt dumps.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Keep when",
+                  "text": "Almost never.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Privacy, retention, replay bloat.",
+                  "rating": "bad"
                 }
-              ]
+              ],
+              "whenToUse": "Use references or secure stores instead.",
+              "cost": "High",
+              "complexity": "High"
             }
           ],
           "termIds": [
@@ -694,253 +435,86 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Core workflow applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, An incident triage agent needs explicit state, branching, retries, and human approval. This module asks what core workflow changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct branch chosen after failed tool calls."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: state updates are incomplete, so later nodes make decisions from stale data."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
-          "language": "python",
-          "code": "# LangGraph in Depth: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to state updates are incomplete, so later nodes make decisions from stale data."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
-            },
-            {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
-            },
-            {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m2_case_study",
-          "kind": "functionalExample",
-          "title": "Case study: what changed after the first review",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The first prototype works on the demo path. Then a reviewer runs the uncomfortable case: state updates are incomplete, so later nodes make decisions from stale data. The output still looks confident, which is exactly why the lesson needs a richer artifact."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The team does not restart from scratch. It adds one missing control to LangGraph state machine with conditional edges and durable checkpoints: a stricter input contract, better source metadata, a validation assertion, a human-review edge, a rollback trigger, or an audit log depending on where the failure appeared."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Decision made: keep the thin slice, but block release until the failure is observable and repeatable."
-                  }
-                ],
-                [
-                  {
-                    "text": "Evidence added: the artifact now shows the input, intermediate evidence, final output, and pass/fail reason."
-                  }
-                ],
-                [
-                  {
-                    "text": "Metric promoted: correct branch chosen after failed tool calls becomes part of the release gate instead of a dashboard someone checks later."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Case-study takeaway: a useful LangGraph in Depth design makes the wrong answer inspectable before it reaches users."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LangGraph in Depth to the running case?",
+          "title": "State owner",
+          "prompt": "What question should you ask for every state field?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LangGraph state machine with conditional edges and durable checkpoints, measure correct branch chosen after failed tool calls, and test the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+              "text": "Can it be made invisible forever?",
+              "correct": false
+            },
+            {
+              "text": "Which node writes it, which node reads it, and how it is merged or retained.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Does it make the graph diagram colorful?",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "State needs ownership and lifecycle.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb6",
+        "kb7"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Choose a level of rigor by comparing fit, burden, and failure visibility.",
-      "summary": "Fit and alternatives applies LangGraph in Depth to LangGraph state machine with conditional edges and durable checkpoints, with examples and checks tied to correct branch chosen after failed tool calls.",
+      "title": "Checkpoints and interrupts enable resume",
+      "sub": "Thread IDs and persisted state make human review practical.",
+      "summary": "LangGraph interrupts turn waiting into resumable control flow.",
       "objectives": [
-        "Apply fit and alternatives to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: state updates are incomplete, so later nodes make decisions from stale data."
+        "Explain checkpointers and thread_id.",
+        "Use interrupt for approval.",
+        "Avoid non-idempotent side effects before interrupt."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the choice that changes reliability",
+          "title": "An interrupt is a pause with state",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is where LangGraph in Depth becomes a decision. The team must choose how much rigor LangGraph state machine with conditional edges and durable checkpoints needs before it can be trusted."
+                  "text": "With a checkpointer, a graph run can be associated with a `thread_id` and resumed later. Interrupts surface a JSON-serializable request to the caller and continue when the graph is invoked with a resume command."
                 }
               ]
             },
@@ -948,26 +522,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "The wrong move is to jump straight to the fanciest option. The useful move is to ask which option improves correct branch chosen after failed tool calls while making this failure visible: state updates are incomplete, so later nodes make decisions from stale data."
+                  "text": "Avoid irreversible side effects immediately before an interrupt, because resume semantics and retries can surprise you. Put side effects after approval or behind idempotent tools."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "The interrupt payload should contain exactly what the human needs to decide."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "framework",
+            "graph",
+            "checkpoint",
+            "handoff",
+            "sdk",
+            "orchestration"
+          ],
+          "sources": [
+            "kb6",
+            "kb7"
+          ],
+          "analogy": "A checkpoint is a save point before the boss fight."
+        },
+        {
+          "id": "m3_worked",
+          "kind": "functionalExample",
+          "title": "Case study: approval before publishing",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The graph drafts lesson content, runs a citation check, then interrupts with the draft, sources, and risk summary. The human approves or requests revision."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The resumed graph branches to publish only if approval is explicit."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Thin slice: prove the path on one realistic example."
+                    "text": "Compile graph with checkpointer."
                   }
                 ],
                 [
                   {
-                    "text": "Production path: add owners, validation, monitoring, and rollback."
+                    "text": "Invoke with stable thread_id."
                   }
                 ],
                 [
                   {
-                    "text": "Advanced optimization: tune only after traces or evals show the baseline is insufficient."
+                    "text": "Interrupt before risky action."
+                  }
+                ],
+                [
+                  {
+                    "text": "Resume with structured approval decision."
                   }
                 ]
               ]
@@ -978,357 +602,87 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An incident triage agent needs explicit state, branching, retries, and human approval"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LangGraph state machine with conditional edges and durable checkpoints: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where state updates are incomplete, so later nodes make decisions from stale data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb6",
+            "kb7"
           ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of LangGraph in Depth on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: state updates are incomplete, so later nodes make decisions from stale data.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct branch chosen after failed tool calls.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct branch chosen after failed tool calls and catches: state updates are incomplete, so later nodes make decisions from stale data.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LangGraph state machine with conditional edges and durable checkpoints, log or test the fields needed to debug correct branch chosen after failed tool calls. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_failure_modes",
-          "kind": "note",
-          "tone": "warn",
-          "title": "How this breaks in practice",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The failure mode to keep in view is concrete: state updates are incomplete, so later nodes make decisions from stale data. Use it as a diagnostic lens while reading every design choice."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "The workflow has nodes but no clear state contract, so later steps read stale or missing data."
-                  }
-                ],
-                [
-                  {
-                    "text": "Retries repeat the same bad action because the failure is not written into state."
-                  }
-                ],
-                [
-                  {
-                    "text": "A handoff occurs without enough context for the next actor to act safely."
-                  }
-                ],
-                [
-                  {
-                    "text": "The broad warning sign: correct branch chosen after failed tool calls gets worse even though the final answer or artifact still looks polished."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "warn",
-              "spans": [
-                {
-                  "text": "Debugging rule: inspect the earliest place where bad evidence can enter and the latest place where validation should have stopped it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m3_decision_callout",
-          "kind": "decisionCallout",
-          "useWhen": "Use the production path when correct branch chosen after failed tool calls affects users, trust, safety, cost, or compliance.",
-          "avoidWhen": "Avoid advanced optimization while the team still cannot reproduce or detect: state updates are incomplete, so later nodes make decisions from stale data.",
-          "ruleOfThumb": "Make the failure visible before making the system more sophisticated.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LangGraph in Depth to the running case?",
+          "title": "Interrupt rule",
+          "prompt": "What should happen before an irreversible publish action?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LangGraph state machine with conditional edges and durable checkpoints, measure correct branch chosen after failed tool calls, and test the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+              "text": "Publish first and ask later.",
+              "correct": false
+            },
+            {
+              "text": "Interrupt for approval with persisted state, then publish only after approval.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "Store approval only in hidden model text.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Interrupts protect side effects when paired with checkpoints.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for LangGraph in Depth: baseline, production design, or advanced optimization."
+        "kb6",
+        "kb7"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "Make the contract runnable or reviewable, then verify generated work.",
-      "summary": "Implementation sketch applies LangGraph in Depth to LangGraph state machine with conditional edges and durable checkpoints, with examples and checks tied to correct branch chosen after failed tool calls.",
+      "title": "Code a tiny conditional route",
+      "sub": "A small graph can make routing behavior testable.",
+      "summary": "Conditional edges deserve unit tests.",
       "objectives": [
-        "Apply implementation sketch to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: state updates are incomplete, so later nodes make decisions from stale data."
+        "Write route logic from state.",
+        "Predict the next node.",
+        "Test both pass and fail paths."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "sdk",
+        "orchestration"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Implementation sketch: make the contract concrete",
+          "title": "Routing is application logic",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "A useful implementation sketch for LangGraph in Depth should be small enough to inspect and real enough to fail. That means it needs a realistic input, an explicit decision boundary, and a visible output."
+                  "text": "The model may produce a draft, but route functions decide whether the graph ends, retries, or interrupts. Treat them like production code with tests."
                 }
               ]
             },
@@ -1336,7 +690,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "For LangGraph state machine with conditional edges and durable checkpoints, the sketch should prove one thing: the system can improve correct branch chosen after failed tool calls without hiding the failure where state updates are incomplete, so later nodes make decisions from stale data."
+                  "text": "Spaced recall: from evaluation, hard assertions should catch missing citations or invalid schema before final output. Route based on those checks, not vibes."
                 }
               ]
             },
@@ -1345,7 +699,7 @@
               "tone": "info",
               "spans": [
                 {
-                  "text": "Predict before the code: should the system answer, retrieve more evidence, block, escalate, or mark the case inconclusive when this failure appears?"
+                  "text": "Every conditional edge should have at least one test case."
                 }
               ]
             }
@@ -1355,162 +709,129 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An incident triage agent needs explicit state, branching, retries, and human approval"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LangGraph state machine with conditional edges and durable checkpoints: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where state updates are incomplete, so later nodes make decisions from stale data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Worked example: Implementation sketch applied to the running case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "In the running case, An incident triage agent needs explicit state, branching, retries, and human approval. This module asks what implementation sketch changes in the artifact."
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "State the current assumption in one sentence."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the evidence or state field that proves it."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose the smallest next action that can improve correct branch chosen after failed tool calls."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add a check for: state updates are incomplete, so later nodes make decisions from stale data."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This example is deliberately practical: it turns the concept into a reviewable artifact, not just a label."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Runnable check: simulate a workflow state transition",
+          "title": "Toy LangGraph-style route function",
           "language": "python",
-          "code": "# LangGraph in Depth: tiny workflow transition.\nstate = {\"ticket\": \"refund missing invoice\", \"evidence\": [], \"risk\": \"low\", \"draft\": None}\n\ndef next_node(state):\n    if not state[\"evidence\"]:\n        return \"retrieve\"\n    if state[\"risk\"] == \"high\":\n        return \"human_review\"\n    return \"draft\"\n\nprint(next_node(state))\nstate[\"evidence\"].append(\"refund policy: invoice id required\")\nprint(next_node(state))",
-          "explain": [
+          "code": "def review_answer(state):\n    citations_ok = all(claim in state[\"evidence\"] for claim in state[\"claims\"])\n    return {**state, \"review_status\": \"pass\" if citations_ok else \"needs_revision\"}\n\ndef route(state):\n    if state[\"review_status\"] == \"pass\":\n        return \"final\"\n    return \"revise\"\n\nstate = {\"claims\": [\"LangGraph uses nodes\"], \"evidence\": [\"LangGraph uses nodes\"], \"review_status\": None}\nreviewed = review_answer(state)\nprint(route(reviewed))\n",
+          "explanation": "The code isolates review and routing so both can be tested without a full framework run.",
+          "predictThenReveal": {
+            "prompt": "Before reading the answer, predict the route.",
+            "answer": "It prints `final` because every claim appears in the evidence list."
+          },
+          "termIds": [
+            "framework",
+            "graph",
+            "checkpoint",
+            "handoff",
+            "sdk",
+            "orchestration"
+          ],
+          "sources": [
+            "kb6",
+            "kb7"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Route test",
+          "prompt": "Why test conditional routes?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Routes are never application logic.",
+              "correct": false
+            },
+            {
+              "text": "A wrong route can skip review, approval, or revision without obvious errors.",
+              "correct": true
+            },
+            {
+              "text": "Testing routes prevents all model drift.",
+              "correct": false
+            }
+          ],
+          "explanation": "Routing controls safety and completion paths.",
+          "termIds": [
+            "framework",
+            "graph",
+            "checkpoint",
+            "handoff",
+            "sdk",
+            "orchestration"
+          ],
+          "sources": [
+            "kb6",
+            "kb7"
+          ]
+        }
+      ],
+      "citations": [
+        "kb6",
+        "kb7"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Test graphs as workflows, not prompts",
+      "sub": "Production confidence comes from path coverage and traces.",
+      "summary": "LangGraph eval includes topology behavior.",
+      "objectives": [
+        "Assert required nodes run.",
+        "Test resume and interruption.",
+        "Trace state updates and tool calls."
+      ],
+      "termIds": [
+        "framework",
+        "graph",
+        "checkpoint",
+        "handoff",
+        "sdk",
+        "orchestration"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "The graph trace is the lesson artifact",
+          "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This is a runnable miniature, not the whole production system. It makes the lesson's contract visible: input, decision rule, output, and a check related to state updates are incomplete, so later nodes make decisions from stale data."
+                  "text": "Trace representative runs and assert that retrieval, review, approval, and final nodes appear when expected. Compare graph outcomes against a simpler baseline to justify complexity."
                 }
               ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "Predict the two nodes printed before revealing.",
-            "answer": "It prints:\nretrieve\ndraft\n\nThe transition depends on explicit state. Frameworks help when state, edges, and stop rules are visible enough to test."
-          },
-          "syntax": [
-            {
-              "part": "input data",
-              "explains": "The realistic facts the system is allowed to use before making a decision."
             },
             {
-              "part": "decision rule",
-              "explains": "The explicit boundary that turns evidence into an action."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Failure modes include junk-drawer state, wrong conditional routes, non-idempotent side effects before interrupts, stale checkpoints, and overlong state histories."
+                }
+              ]
             },
             {
-              "part": "print(...)",
-              "explains": "A visible result so you predict behavior before trusting the code."
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "A release run should show path, state diff, tool calls, interrupt payload, and final output."
+                }
+              ]
             }
           ],
           "termIds": [
@@ -1518,24 +839,24 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         },
         {
-          "id": "rich_m4_verify_ai_output",
-          "kind": "note",
-          "tone": "info",
-          "title": "Verify AI-generated work before trusting it",
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from LangGraph",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "If an AI assistant drafts code, a prompt, a workflow, or a policy for LangGraph in Depth, review it against the running case before accepting it."
+                  "text": "Review the graph trace with final answer."
                 }
               ]
             },
@@ -1544,27 +865,27 @@
               "items": [
                 [
                   {
-                    "text": "Does it name the real artifact: LangGraph state machine with conditional edges and durable checkpoints?"
+                    "text": "State schema fields have owners, readers, and retention rules."
                   }
                 ],
                 [
                   {
-                    "text": "Does it include a realistic input and a concrete expected output?"
+                    "text": "Every conditional route has pass and fail tests."
                   }
                 ],
                 [
                   {
-                    "text": "Does it test or block the known failure: state updates are incomplete, so later nodes make decisions from stale data?"
+                    "text": "Checkpoints and thread IDs resume the intended run."
                   }
                 ],
                 [
                   {
-                    "text": "Does it expose enough evidence to debug correct branch chosen after failed tool calls?"
+                    "text": "Interrupts happen before risky side effects with reviewable payloads."
                   }
                 ],
                 [
                   {
-                    "text": "Does it define what happens when evidence is missing: retry, refuse, ask a human, roll back, or mark the case inconclusive?"
+                    "text": "Final claims are supported by evidence carried through state."
                   }
                 ]
               ]
@@ -1575,451 +896,54 @@
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LangGraph in Depth to the running case?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "Build or review LangGraph state machine with conditional edges and durable checkpoints, measure correct branch chosen after failed tool calls, and test the failure: state updates are incomplete, so later nodes make decisions from stale data.",
-              "correct": true
-            },
-            {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
-              "correct": false
-            }
+            "kb6",
+            "kb7"
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Production checklist",
-      "sub": "Reconstruct the lesson from memory and apply it without scaffolding.",
-      "summary": "Production checklist applies LangGraph in Depth to LangGraph state machine with conditional edges and durable checkpoints, with examples and checks tied to correct branch chosen after failed tool calls.",
-      "objectives": [
-        "Apply production checklist to the running scenario instead of reciting a definition.",
-        "Name the evidence, state, or design boundary this module changes.",
-        "Use a concrete check to catch the failure: state updates are incomplete, so later nodes make decisions from stale data."
-      ],
-      "termIds": [
-        "framework",
-        "graph",
-        "checkpoint",
-        "handoff",
-        "sdk"
-      ],
-      "estMinutes": 8,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Production checklist: retrieval before mastery",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Close the lesson by rebuilding the path from memory: scenario, mechanism, design choice, implementation check, failure mode, and next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "If you can explain how LangGraph state machine with conditional edges and durable checkpoints improves correct branch chosen after failed tool calls and catches state updates are incomplete, so later nodes make decisions from stale data, you have learned the lesson at the level that matters for real work."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "info",
-              "spans": [
-                {
-                  "text": "Before continuing, write your own five-line plan from memory. Then compare it with the capstone checklist."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "Walkthrough: scenario, artifact, failure test",
-          "steps": [
-            {
-              "label": "Anchor the case",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "An incident triage agent needs explicit state, branching, retries, and human approval"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Inspect the artifact",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Review LangGraph state machine with conditional edges and durable checkpoints: inputs, evidence, decision rule, output, and owner."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Run the failure",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the case where state updates are incomplete, so later nodes make decisions from stale data. If the artifact cannot expose that failure, it is not ready."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision matrix: choose the right level of rigor",
-          "criteria": [
-            "Fit to real user need",
-            "Operational burden",
-            "Failure visibility"
-          ],
-          "options": [
-            {
-              "name": "Thin slice",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Proves the core behavior of LangGraph in Depth on one realistic case.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Fast to build and easy to discard if the assumption is wrong.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Acceptable only if it includes the known failure: state updates are incomplete, so later nodes make decisions from stale data.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when the team is still learning what matters.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production path",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Appropriate when users or reviewers depend on correct branch chosen after failed tool calls.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Requires ownership, monitoring, validation, and rollback.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Makes evidence, decisions, and exceptions inspectable.",
-                  "rating": "good"
-                }
-              ],
-              "whenToUse": "Use when the behavior affects real users, money, compliance, or trust.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit to real user need",
-                  "text": "Useful only after the bottleneck or failure pattern is measured.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds tuning, infrastructure, or specialist evaluation.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Failure visibility",
-                  "text": "Can hide new failures unless evals expand with the optimization.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use after the production path is observable and still insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that improves correct branch chosen after failed tool calls and catches: state updates are incomplete, so later nodes make decisions from stale data.",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note: make the boundary inspectable",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to expose the boundary where the system changes behavior: prompt, schema, state, feature, retrieved evidence, model version, tool arguments, or release gate."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "For LangGraph state machine with conditional edges and durable checkpoints, log or test the fields needed to debug correct branch chosen after failed tool calls. If a reviewer would need it during an incident, it belongs in the artifact or trace."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "Good implementations make the boring evidence easy to find."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_recall",
-          "kind": "note",
-          "tone": "info",
-          "title": "Recall-first synthesis",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Before the capstone, close the lesson and reconstruct LangGraph in Depth: problem, mechanism, design choice, implementation check, failure mode, and next step. Then reopen and compare."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
-        },
-        {
-          "id": "rich_m5_solo_capstone",
-          "kind": "functionalExample",
-          "title": "Solo build: one-page release plan",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Now apply LangGraph in Depth without copying the worked example. Keep the same running case - An incident triage agent needs explicit state, branching, retries, and human approval - but make the design decisions yourself."
-                }
-              ]
-            },
-            {
-              "t": "h",
-              "level": 4,
-              "spans": [
-                {
-                  "text": "Your deliverable"
-                }
-              ]
-            },
-            {
-              "t": "ol",
-              "items": [
-                [
-                  {
-                    "text": "Write the problem statement in one sentence and name the success metric: correct branch chosen after failed tool calls."
-                  }
-                ],
-                [
-                  {
-                    "text": "Sketch the mechanism as input, state or evidence, decision step, output, and validation check."
-                  }
-                ],
-                [
-                  {
-                    "text": "Choose thin slice, production path, or advanced optimization, and explain why that level of rigor fits the risk."
-                  }
-                ],
-                [
-                  {
-                    "text": "Add one test that reproduces this failure: state updates are incomplete, so later nodes make decisions from stale data."
-                  }
-                ],
-                [
-                  {
-                    "text": "Name the next rung: deeper evals, observability, safety review, scale testing, or a framework-specific implementation."
-                  }
-                ]
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "A strong capstone can be reviewed by someone else. They should know what will be built, what evidence proves it works, what remains risky, and what should happen after the lesson."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint",
-            "handoff",
-            "sdk"
-          ],
-          "sources": [
-            "kb1",
-            "kb2"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which answer best applies LangGraph in Depth to the running case?",
+          "title": "Graph release",
+          "prompt": "What should block release of a LangGraph agent?",
           "format": "mcq",
           "options": [
             {
-              "text": "Build or review LangGraph state machine with conditional edges and durable checkpoints, measure correct branch chosen after failed tool calls, and test the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+              "text": "A clear state schema.",
+              "correct": false
+            },
+            {
+              "text": "A trace showing a safety or review node was skipped on a route that needed it.",
               "correct": true
             },
             {
-              "text": "Memorize the definition and choose the most advanced option available.",
-              "correct": false
-            },
-            {
-              "text": "Ship the demo once the happy path produces a fluent result.",
+              "text": "A checkpointed approval path.",
               "correct": false
             }
           ],
-          "explanation": "The useful skill is applying the idea to an artifact, metric, and failure test.",
+          "explanation": "Topology correctness is part of answer correctness.",
           "termIds": [
             "framework",
             "graph",
             "checkpoint",
             "handoff",
-            "sdk"
+            "sdk",
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "kb2"
+            "kb6",
+            "kb7"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for LangGraph in Depth: baseline, production design, or advanced optimization."
+        "kb6",
+        "kb7"
+      ]
     }
   ],
   "glossary": {
@@ -2089,17 +1013,17 @@
     "title": "Decision prompts for LangGraph in Depth",
     "themes": [
       {
-        "name": "Release-readiness check",
+        "name": "LangGraph design choice",
         "questions": [
           {
-            "q": "What decision does LangGraph in Depth change for this case?",
-            "why": "A good lesson changes how the learner builds, reviews, or ships LangGraph state machine with conditional edges and durable checkpoints.",
+            "q": "Does the workflow need explicit branches, checkpointed state, interrupts, or resumable tool steps?",
+            "why": "LangGraph adds graph design work, so use it when control flow itself matters.",
             "opts": [
-              "Thin slice",
-              "Production path",
-              "Advanced optimization"
+              "StateGraph with checkpoints",
+              "LangChain create_agent only",
+              "Durable workflow engine underneath"
             ],
-            "rot": "Choose the smallest option that catches: state updates are incomplete, so later nodes make decisions from stale data."
+            "rot": "Use LangGraph when branch/control structure is the core app logic; add a durable engine when long external orchestration dominates."
           }
         ]
       }
@@ -2111,73 +1035,73 @@
         "t": "p",
         "spans": [
           {
-            "text": "From memory, reconstruct LangGraph in Depth using the running case: An incident triage agent needs explicit state, branching, retries, and human approval. Name the artifact (LangGraph state machine with conditional edges and durable checkpoints), explain the mechanism, choose a design level, write the check for state updates are incomplete, so later nodes make decisions from stale data, and say how you would measure correct branch chosen after failed tool calls."
+            "text": "Retrieval prompt: reconstruct LangGraph by naming state schema, nodes, updates, edges, conditional routing, checkpointer, thread_id, interrupt, and route tests."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path through the lesson",
+      "title": "LangGraph path from state schema to checked route",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place LangGraph in Depth in the system map.",
-          "what": "What the tool owns shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+          "label": "StateGraph makes control flow visible",
+          "sub": "Nodes and edges replace an opaque agent loop.",
+          "what": "Learners see LangGraph as explicit workflow modeling.",
+          "relevance": "This prevents using graph machinery without a state problem to solve.",
           "moduleId": "m1",
-          "layer": "Path",
+          "layer": "Problem",
           "emphasis": "spine",
-          "orient": "Frame the case: What the tool owns connects LangGraph in Depth to the running artifact and failure test.",
+          "orient": "Start with the state fields the graph must carry.",
           "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+          "label": "Reducers and state shape prevent junk drawers",
+          "sub": "Graph state needs typed ownership and merge rules.",
+          "what": "Learners design graph state safely.",
+          "relevance": "Unstructured state makes routes brittle and privacy harder.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Open the mechanism: Core workflow connects LangGraph in Depth to the running artifact and failure test.",
+          "orient": "Keep state small, typed, and intentionally merged.",
           "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+          "label": "Checkpoints and interrupts enable resume",
+          "sub": "Thread IDs and persisted state make human review practical.",
+          "what": "Learners understand persistence and interrupt flow.",
+          "relevance": "Approval gates break if state cannot resume safely.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine",
-          "orient": "Choose the design: Fit and alternatives connects LangGraph in Depth to the running artifact and failure test.",
+          "emphasis": "normal",
+          "orient": "Use checkpoints before pausing for external input.",
           "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+          "label": "Code a tiny conditional route",
+          "sub": "A small graph can make routing behavior testable.",
+          "what": "Learners see graph decisions in runnable code.",
+          "relevance": "Route bugs can silently skip safety nodes.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal",
-          "orient": "Build and verify: Implementation sketch connects LangGraph in Depth to the running artifact and failure test.",
+          "orient": "Implement route logic before adding many model calls.",
           "order": 4
         },
         {
           "id": "n_m5",
-          "label": "Production checklist",
-          "sub": "Harden versioning, evals, and operations.",
-          "what": "Production checklist shows how this part of the lesson changes a practical decision in the running case.",
-          "relevance": "It helps the learner improve correct branch chosen after failed tool calls while avoiding the failure: state updates are incomplete, so later nodes make decisions from stale data.",
+          "label": "Test graphs as workflows, not prompts",
+          "sub": "Production confidence comes from path coverage and traces.",
+          "what": "Learners define LangGraph release checks.",
+          "relevance": "A graph can render valid output while hiding skipped nodes or bad state merges.",
           "moduleId": "m5",
-          "layer": "Path",
+          "layer": "Synthesis",
           "emphasis": "spine",
-          "orient": "Apply solo: Production checklist connects LangGraph in Depth to the running artifact and failure test.",
+          "orient": "Validate nodes, edges, checkpoints, and resume behavior.",
           "order": 5
         }
       ],
@@ -2185,7 +1109,7 @@
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "enables"
         },
         {
           "from": "n_m2",
@@ -2200,66 +1124,56 @@
         {
           "from": "n_m4",
           "to": "n_m5",
-          "label": "then"
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "What the tool owns",
-        "detail": "Start with the real scenario and the complete worked artifact."
+        "label": "StateGraph makes control flow visible",
+        "detail": "LangGraph gives agent apps named state transitions."
       },
       {
         "step": 2,
-        "label": "Core workflow",
-        "detail": "Trace the mechanism so the artifact is more than a checklist."
+        "label": "Reducers and state shape prevent junk drawers",
+        "detail": "State design is the heart of LangGraph."
       },
       {
         "step": 3,
-        "label": "Fit and alternatives",
-        "detail": "Choose a level of rigor by comparing fit, burden, and failure visibility."
+        "label": "Checkpoints and interrupts enable resume",
+        "detail": "LangGraph interrupts turn waiting into resumable control flow."
       },
       {
         "step": 4,
-        "label": "Implementation sketch",
-        "detail": "Make the contract runnable or reviewable, then verify generated work."
+        "label": "Code a tiny conditional route",
+        "detail": "Conditional edges deserve unit tests."
       },
       {
         "step": 5,
-        "label": "Production checklist",
-        "detail": "Reconstruct the lesson from memory and apply it without scaffolding."
+        "label": "Test graphs as workflows, not prompts",
+        "detail": "LangGraph eval includes topology behavior."
       }
     ],
     "checklist": [
       {
-        "id": "chk_problem",
-        "label": "Can you state the concrete user problem without buzzwords?",
+        "id": "chk_fit",
+        "label": "Can you justify the fit described in \"StateGraph makes control flow visible\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_artifact",
-        "label": "Does the artifact show input, evidence or state, decision, output, and owner?",
-        "fromModuleId": "m2"
-      },
-      {
-        "id": "chk_metric",
-        "label": "Can you measure correct branch chosen after failed tool calls on realistic cases?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_failure",
-        "label": "Does a test reproduce this failure: state updates are incomplete, so later nodes make decisions from stale data?",
+        "id": "chk_impl",
+        "label": "Can you inspect the implementation surface in \"Code a tiny conditional route\"?",
         "fromModuleId": "m4"
       },
       {
-        "id": "chk_next",
-        "label": "Is the next rung clear after the first reliable version?",
+        "id": "chk_release",
+        "label": "Does \"Test graphs as workflows, not prompts\" define production checks?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Create a one-page release-ready plan for LangGraph state machine with conditional edges and durable checkpoints. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (correct branch chosen after failed tool calls), failure case (state updates are incomplete, so later nodes make decisions from stale data), owner, and the next rung after this lesson.",
+      "prompt": "Sketch a LangGraph tutor workflow with plan, retrieve, answer, review, and interrupt-before-publish nodes. Define state fields, routes, checkpoint key, tests, and what must stay out of state. Next rung: build agent workflows with LangGraph.",
       "scopedTo": "LangGraph in Depth"
     }
   },
@@ -2291,6 +1205,20 @@
       "title": "Official documentation",
       "url": "https://langchain-ai.github.io/langgraph/",
       "asOfDate": "2026-06-20"
+    },
+    "kb6": {
+      "id": "kb6",
+      "kind": "kb",
+      "title": "KB: LangGraph",
+      "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "kb7": {
+      "id": "kb7",
+      "kind": "kb",
+      "title": "KB: LlamaIndex",
+      "url": "https://developers.llamaindex.ai/python/framework/",
+      "asOfDate": "2026-06-22"
     }
   }
 }
