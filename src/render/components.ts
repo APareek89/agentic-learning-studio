@@ -158,20 +158,48 @@ function collapsible(label: string, icon: string, inner: string): string {
 // ---- knowledge check (graded; MCQ checked vs the stored Blueprint, freeText by the LLM) ----
 type KCQuestion = Extract<Block, { kind: "knowledgeCheck" }>["questions"][number];
 
+// A 3-point confidence picker — calibration before grading (Tier A retention).
+function kcConfidenceRow(): string {
+  return `<div class="kc-confidence"><span class="kc-conf-lab">How sure are you?</span><button class="kc-conf" type="button" data-conf="0">Guessing</button><button class="kc-conf" type="button" data-conf="1">Fairly sure</button><button class="kc-conf" type="button" data-conf="2">Certain</button></div>`;
+}
+
 /** One graded question. `blockId` is stamped on the item so the runtime can grade it
- *  even when questions from several blocks are mixed onto one page (horizontal mode). */
+ *  even when questions from several blocks are mixed onto one page (horizontal mode).
+ *  Tier-A retention: when `freeRecallFirst`, the answer is hidden behind a recall gate
+ *  (recall beats recognition); when `confidence`, a 3-point pick is required before
+ *  grading (calibration). The MCQ options still carry NO correctness flag — grading
+ *  stays server-side against the stored Blueprint. */
 function kcItemHtml(blockId: string, q: KCQuestion, i: number): string {
   const head = `<div class="kc-q"><span class="kc-n">Q${i + 1}</span>${esc(q.prompt)}</div>`;
-  let body = "";
+  let answer = "";
   if (q.kind === "mcq" && q.options) {
     // No correctness in the DOM — the server verifies against the Blueprint ("by DB").
-    body = `<div class="kc-opts">${q.options
+    answer = `<div class="kc-opts">${q.options
       .map((o, oi) => `<button class="kc-opt" data-qid="${escAttr(q.id)}" data-choice="${oi}">${esc(o.text)}</button>`)
       .join("")}</div>`;
   } else {
-    body = `<div class="kc-free"><textarea class="kc-input" data-qid="${escAttr(q.id)}" rows="2" placeholder="Type your answer…"></textarea><button class="kc-submit" data-qid="${escAttr(q.id)}">Check</button></div>`;
+    answer = `<div class="kc-free"><textarea class="kc-input" data-qid="${escAttr(q.id)}" rows="2" placeholder="Type your answer…"></textarea><button class="kc-submit" data-qid="${escAttr(q.id)}">Check</button></div>`;
   }
-  return `<div class="kc-item" data-qid="${escAttr(q.id)}" data-kind="${q.kind}" data-block="${escAttr(blockId)}"><div class="kc-feedback" hidden></div>${head}${body}<div class="kc-explain" hidden>${esc(q.explanation)}</div></div>`;
+  // The answer (+ optional confidence pick) lives in a "reveal stage" hidden behind the
+  // recall gate when freeRecallFirst is set; otherwise it's shown immediately.
+  const stage = `<div class="kc-reveal-stage"${q.freeRecallFirst ? " hidden" : ""}>${q.confidence ? kcConfidenceRow() : ""}${answer}</div>`;
+  const recall = q.freeRecallFirst
+    ? `<div class="kc-recall"><textarea class="kc-recall-input" rows="2" placeholder="First, recall from memory — jot what you remember…"></textarea><button class="kc-recall-done" type="button">I've thought about it →</button></div>`
+    : "";
+  const srcLink = q.sourceModuleId
+    ? `<button class="kc-source" type="button" data-goto="${escAttr(q.sourceModuleId)}">Review the source →</button>`
+    : "";
+  const tags = (q.conceptTags ?? []).join(",");
+  const attrs = [
+    `data-qid="${escAttr(q.id)}"`,
+    `data-kind="${q.kind}"`,
+    `data-block="${escAttr(blockId)}"`,
+    q.sourceModuleId ? `data-module="${escAttr(q.sourceModuleId)}"` : "",
+    tags ? `data-tags="${escAttr(tags)}"` : "",
+    q.freeRecallFirst ? `data-recall-first="1"` : "",
+    q.confidence ? `data-conf-required="1"` : "",
+  ].filter(Boolean).join(" ");
+  return `<div class="kc-item" ${attrs}><div class="kc-feedback" hidden></div>${head}${recall}${stage}<div class="kc-explain" hidden>${esc(q.explanation)}${srcLink}</div></div>`;
 }
 
 function knowledgeCheck(b: Extract<Block, { kind: "knowledgeCheck" }>): string {
@@ -179,10 +207,11 @@ function knowledgeCheck(b: Extract<Block, { kind: "knowledgeCheck" }>): string {
   return `<div class="kc" data-block="${escAttr(b.id)}">${b.title ? `<h3>🧠 ${esc(b.title)}</h3>` : `<h3>🧠 Knowledge check</h3>`}${b.intro ? `<p class="kc-intro">${esc(b.intro)}</p>` : ""}<div class="kc-score" hidden>Score: <b>0</b>/${b.questions.length}</div>${qs}</div>`;
 }
 
-/** Horizontal mode's FINAL page: one consolidated 4–5 question check drawn across the
- *  modules' knowledgeCheck blocks (round-robin so it spans the lesson). Each item keeps
- *  its source blockId so grading via /api/check still resolves. */
-function horizontalCheckPage(bp: Blueprint): string {
+/** Round-robin a cumulative 4–5 question set ACROSS the modules' knowledgeCheck blocks
+ *  (so it spans the whole lesson — interleaving aids retention). Each item keeps its
+ *  SOURCE blockId so grading via /api/check still resolves to the right question.
+ *  Shared by horizontal mode's final page and (later) a vertical end-of-lesson set. */
+function cumulativeCheckItems(bp: Blueprint, max = 5): { blockId: string; q: KCQuestion }[] {
   const groups: { blockId: string; q: KCQuestion }[][] = [];
   for (const m of bp.modules) {
     for (const b of m.blocks) {
@@ -190,13 +219,19 @@ function horizontalCheckPage(bp: Blueprint): string {
     }
   }
   const flat: { blockId: string; q: KCQuestion }[] = [];
-  for (let i = 0; flat.length < 5; i++) {
+  for (let i = 0; flat.length < max; i++) {
     let advanced = false;
     for (const g of groups) {
-      if (g[i]) { flat.push(g[i]); advanced = true; if (flat.length >= 5) break; }
+      if (g[i]) { flat.push(g[i]); advanced = true; if (flat.length >= max) break; }
     }
     if (!advanced) break;
   }
+  return flat;
+}
+
+/** Horizontal mode's FINAL page: the cumulative interleaved check across the lesson. */
+function horizontalCheckPage(bp: Blueprint): string {
+  const flat = cumulativeCheckItems(bp, 5);
   if (!flat.length) {
     return `<div class="kc kc-pending"><h3>🧠 Knowledge check</h3><p class="kc-intro">Your knowledge check appears here once the lesson finishes building — give the pages a moment, then come back.</p></div>`;
   }

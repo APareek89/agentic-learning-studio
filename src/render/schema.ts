@@ -39,6 +39,11 @@ export const LearnerProfileSchema = z.object({
   topic: z.string(),
   industry: z.string().optional(),
   buildGoal: z.string().optional(),
+  /** the learner's PURPOSE for the lesson (landing "Objective" control). Curates emphasis,
+   *  not subject: learning = concepts/mental-models; learn_and_apply = worked application;
+   *  build = how-to + code toward an artifact; exam_prep = breadth + recall + definitions;
+   *  interview_prep = tradeoffs + talking points; other = neutral. */
+  objective: z.enum(["learning", "learn_and_apply", "build", "exam_prep", "interview_prep", "other"]).optional(),
   /** the learner's role + the role they aspire to (from sign-up) — personalize tone/depth. */
   role: z.string().optional(),
   aspiringRole: z.string().optional(),
@@ -337,9 +342,22 @@ export const BlockSchema = z.discriminatedUnion("kind", [
           options: z.array(z.object({ text: z.string(), correct: z.boolean().optional() })).optional(),
           acceptableAnswer: z.string().optional(), // freeText: the model-graded reference answer
           explanation: z.string(),
+          /** retention (Tier A): make the learner RECALL from memory before the options/answer
+           *  appear — a textarea + "I've thought about it" gate. Recall beats recognition. */
+          freeRecallFirst: z.boolean().optional(),
+          /** retention (Tier A): require a 3-point confidence pick before grading, so the
+           *  learner calibrates (confidently-wrong is the highest-value review signal). */
+          confidence: z.boolean().optional(),
+          /** concept/term ids this question exercises — for interleaving + future spaced review.
+           *  Free-form (NOT validated against the glossary) so prebuilt lessons can't break. */
+          conceptTags: z.array(z.string()).optional(),
+          /** the module this question came from — feedback links back to "review the source". */
+          sourceModuleId: z.string().optional(),
         })
       )
       .min(3),
+    /** marks the end-of-lesson interleaved retrieval set (questions mixed across modules). */
+    cumulative: z.boolean().optional(),
   }),
 ]);
 export type Block = z.infer<typeof BlockSchema>;

@@ -147,6 +147,12 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   // the request left open — it must NEVER reframe the subject (that stays the ask).
   const industry = (state.industry ?? "").trim() || inf.industry || up.industry || undefined;
   const buildGoal = (state.buildGoal ?? "").trim() || inf.buildGoal || undefined;
+  // Learner's PURPOSE (landing "Objective"): curates emphasis, never the subject. Only a
+  // valid enum value rides through; anything else falls back to neutral (undefined).
+  const OBJECTIVES = ["learning", "learn_and_apply", "build", "exam_prep", "interview_prep", "other"] as const;
+  const objective = (OBJECTIVES as readonly string[]).includes((state.objective ?? "").trim())
+    ? ((state.objective as string).trim() as LearnerProfile["objective"])
+    : undefined;
   // Code-example framework only matters when code examples are in play.
   const codeWanted = examples === "code" || examples === "functional_code";
   const framework = codeWanted ? ((state.framework ?? "").trim() || undefined) : undefined;
@@ -168,6 +174,7 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     topic: inf.topic,
     industry,
     buildGoal,
+    objective,
     role: up.role || undefined,
     aspiringRole: up.aspiringRole || undefined,
     framework,
@@ -373,6 +380,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             explainSyntax: p.explainSyntax,
             industry: p.industry,
             buildGoal: p.buildGoal,
+            objective: p.objective,
             levels: p.levels,
             lessonTypes: p.lessonTypes,
             framework: p.framework,
@@ -511,6 +519,7 @@ export async function runDeepDive(
         explainSyntax: p.explainSyntax,
         industry: p.industry,
         buildGoal: p.buildGoal,
+        objective: p.objective,
         levels: p.levels,
         lessonTypes: p.lessonTypes,
         framework: p.framework,
@@ -555,6 +564,13 @@ export async function runDeepDive(
   if (!wantsKnowledgeCheck) {
     const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
     if (noQuiz.length) blocks = noQuiz; // keep at least one block if the model returned only a quiz
+  }
+
+  // Tier-A retention: deterministically stamp each knowledgeCheck question with its source
+  // module id, so the lesson's feedback can link back to where it was taught (regardless of
+  // whether the model set it). Safe no-op when there are no knowledgeCheck blocks.
+  for (const b of blocks) {
+    if (b.kind === "knowledgeCheck") for (const q of b.questions) q.sourceModuleId = q.sourceModuleId || moduleId;
   }
 
   // Merge focused sources into citations so any [S#]/[U#] in the new blocks resolves,

@@ -35,6 +35,7 @@ export interface GenerateInput {
   referOnly?: boolean;
   industry?: string;
   buildGoal?: string;
+  objective?: string;
   levels?: string[];
   lessonTypes?: string[];
   framework?: string;
@@ -62,7 +63,7 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
   try {
     const st: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
-      industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
+      industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", objective: input.objective ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
       framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
