@@ -496,7 +496,7 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 [data-reading="horizontal"] .reveal{opacity:1!important;transform:none!important}
 #hworkbench{display:grid;grid-template-columns:248px 1fr;align-items:stretch}
 #hworkbench #blocknav{position:sticky;top:53px;align-self:start;max-height:calc(100vh - 53px);overflow:auto;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:3px;background:var(--surface)}
-.h-stage{position:relative;overflow:hidden;height:calc(100dvh - 55px)}
+.h-stage{position:relative;overflow:hidden;height:calc(100dvh - 55px);display:flex;flex-direction:column}
 .h-track{display:flex;height:100%;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform}
 @media (prefers-reduced-motion:reduce){.h-track{transition:none}}
 .h-page{flex:0 0 100%;width:100%;height:100%;display:flex;flex-direction:column;min-width:0}
@@ -522,12 +522,49 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 .hmodal-body .deeper-toggle{display:none}
 .kc-pending .kc-intro{color:var(--muted)}
 
+/* ---- horizontal v2: left = lesson modules; right = the active module's TABS ---- */
+.hx-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex:none}
+.hx-eyebrow{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-2)}
+.hx-title{font-family:var(--font-head);font-weight:700;font-size:18px;letter-spacing:-.01em;line-height:1.2}
+.hx-grow{flex:1}
+.hx-pos{display:flex;align-items:center;gap:5px}
+.hx-d{width:7px;height:7px;border-radius:50%;background:var(--border-strong)}
+.hx-d.on{background:var(--accent);width:18px;border-radius:999px}
+.hx-poslab{font-size:12px;color:var(--muted);font-weight:600;margin-left:4px}
+.hx-nav{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:7px 14px;border-radius:10px;cursor:pointer}
+.hx-nav[hidden]{display:none}
+.hx-next{border-color:var(--accent);color:var(--accent-2);background:var(--accent-weak);animation:hxpulse 1.2s ease-in-out infinite}
+.hx-next:hover{filter:brightness(1.03)}
+@keyframes hxpulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}50%{box-shadow:0 0 0 4px rgba(37,99,235,.14)}}
+@media (prefers-reduced-motion:reduce){.hx-next{animation:none}}
+.hx-panes{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column}
+.hx-mod{flex:1;min-height:0;display:flex;flex-direction:column}
+.hx-mod.hidden,.hx-tab.hidden{display:none}
+.hx-tab{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:20px 28px}
+.hx-concept,.hx-examples{width:100%;max-width:1040px;margin-left:auto;margin-right:auto}
+.hx-concept{flex:none}
+.hx-concept>.block:first-child{margin-top:0}
+.hx-examples{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;gap:14px;min-height:200px}
+.hx-examples.one{grid-template-columns:1fr}
+.hx-ex{border:1px solid var(--border-strong);border-radius:12px;background:var(--surface);display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.hx-exh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex:none}
+.hx-ic{width:19px;height:19px;border-radius:6px;background:var(--accent-weak);color:var(--accent-2);display:grid;place-items:center;font-size:11px}
+.hx-t{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.hx-exc{flex:1;padding:12px 14px;position:relative;overflow:hidden;min-height:0}
+.hx-exc>.block{margin:0}
+.hx-fade{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(transparent,var(--surface) 80%);pointer-events:none}
+.hx-exf{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-top:1px solid var(--border);flex:none}
+.hx-ell{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
+.hx-see{border:1px solid var(--accent);background:transparent;color:var(--accent-2);font:inherit;font-weight:600;font-size:12.5px;padding:6px 13px;border-radius:9px;cursor:pointer}
+.hx-see:hover{background:var(--accent-weak)}
+
 @media (max-width:820px){
   #hworkbench{grid-template-columns:1fr}
   #hworkbench #blocknav{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:none;border-right:none;border-bottom:1px solid var(--border);gap:6px;padding:10px}
   #hworkbench #blocknav .navitem{flex:0 0 auto}
   .h-stage{height:calc(100dvh - 112px)}
-  .h-page-body{padding:18px 18px}
-  .h-page .h-next{margin:8px 18px 14px auto}
+  .hx-head{padding:10px 16px}
+  .hx-tab{padding:14px 16px}
+  .hx-examples{grid-template-columns:1fr}
 }
 `;

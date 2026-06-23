@@ -519,18 +519,67 @@ function metaBitsFor(bp: Blueprint): string[] {
   ].filter(Boolean);
 }
 
-// ---- a module rendered as a HORIZONTAL PAGE (keeps the stub/data-module structure so
-//      the background build queue fills it in place, just like the vertical panel). ----
-function modulePageH(m: Module, bp: Blueprint, active: string): string {
-  if (isBuilt(m)) {
-    return `<section class="h-page${active}" data-panel="${escAttr(m.id)}" data-module="${escAttr(m.id)}" id="hp-${escAttr(m.id)}"><div class="h-page-body">${moduleInner(m, bp)}</div></section>`;
+// ---- HORIZONTAL example box: a functional/code example shown BELOW the concept on a tab,
+//      as a preview the runtime clamps + fades; "See details" opens the FULL block in the modal. ----
+function exampleBoxH(b: Block, bp: Blueprint): string {
+  const isCode = b.kind === "codeExample";
+  const lab = isCode ? "Code example" : "Functional example";
+  const ic = isCode ? "⟨⟩" : "▦";
+  return `<div class="hx-ex"><div class="hx-exh"><span class="hx-ic">${ic}</span><span class="hx-t">${esc(lab)}</span></div>`
+    + `<div class="hx-exc">${block(b, bp)}<div class="hx-fade"></div></div>`
+    + `<div class="hx-exf"><span class="hx-ell">preview</span><button class="hx-see" type="button" data-extitle="${escAttr(lab)}">See details →</button></div></div>`;
+}
+
+type HTab = { label: string; eyebrow: string; html: string; check?: boolean };
+
+/** Paginate ONE module's blocks into horizontal tabs: ≤5 concept tabs (examples rendered
+ *  as boxes BELOW the concept, in original order) + a final per-module knowledge-check tab. */
+function moduleTabsH(m: Module, bp: Blueprint): HTab[] {
+  const MAJOR = new Set(["conceptual", "technical", "diagram", "decisionMatrix", "decisionTree", "scenario", "walkthrough", "taxonomy", "steppedFlow", "interactiveScatter", "interactiveSlider"]);
+  const groups: { concept: Block[]; examples: Block[] }[] = [];
+  let cur: { concept: Block[]; examples: Block[] } | null = null;
+  const kcBlocks: Block[] = [];
+  for (const b of m.blocks) {
+    if (b.kind === "knowledgeCheck") { kcBlocks.push(b); continue; }
+    if (b.kind === "functionalExample" || b.kind === "codeExample") { (cur ??= { concept: [], examples: [] }).examples.push(b); continue; }
+    // a new MAJOR concept block starts a new tab once the current one already holds one (cap 5)
+    const startNew = cur && b.kind && MAJOR.has(b.kind) && cur.concept.some((c) => MAJOR.has(c.kind)) && groups.length < 4;
+    if (!cur || startNew) { if (cur) groups.push(cur); cur = { concept: [], examples: [] }; }
+    cur.concept.push(b);
   }
-  const head = `<div class="module-head"><div class="num">${m.order}${m.icon ? " · " + esc(m.icon) : ""}</div><h2>${esc(m.title)}</h2>${m.sub ? `<p class="sub">${esc(m.sub)}</p>` : ""}</div>`;
-  const obj = m.objectives.length
-    ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`
-    : "";
-  const forces = m.decisionItForces ? `<div class="decision-forces"><strong>Decision this forces:</strong> ${esc(m.decisionItForces)}</div>` : "";
-  return `<section class="h-page is-stub${active}" data-panel="${escAttr(m.id)}" data-module="${escAttr(m.id)}" id="hp-${escAttr(m.id)}"><div class="h-page-body">${head}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}<div class="building"><span class="bspin"></span> Building this section… <span class="muted">it'll fill in shortly</span></div></div></div></section>`;
+  if (cur) groups.push(cur);
+  if (!groups.length) groups.push({ concept: [], examples: [] });
+
+  const tabs: HTab[] = groups.map((g, i) => {
+    const conceptHtml = g.concept.map((b) => block(b, bp)).join("") || `<p class="muted">${esc(m.summary)}</p>`;
+    const exHtml = g.examples.length
+      ? `<div class="hx-examples${g.examples.length === 1 ? " one" : ""}">${g.examples.map((b) => exampleBoxH(b, bp)).join("")}</div>`
+      : "";
+    // tab title: first major block's title, else module title + part
+    const titled = g.concept.find((b) => "title" in b && (b as { title?: string }).title) as { title?: string } | undefined;
+    const label = i === 0 ? (titled?.title || m.title) : (titled?.title || `${m.title} · part ${i + 1}`);
+    const eyebrow = groups.length > 1 ? `Module ${m.order} · part ${i + 1} of ${groups.length}` : `Module ${m.order}`;
+    return { label, eyebrow, html: `<div class="hx-concept">${conceptHtml}</div>${exHtml}` };
+  });
+  // per-module knowledge check = the module's last tab
+  if (kcBlocks.length) {
+    tabs.push({ label: "Knowledge check", eyebrow: `Module ${m.order} · knowledge check`, check: true, html: `<div class="hx-concept">${kcBlocks.map((b) => block(b, bp)).join("")}</div>` });
+  }
+  return tabs;
+}
+
+// ---- a module rendered as a HORIZONTAL tabbed PANE (concept tabs + examples-below + a
+//      per-module knowledge-check tab). The runtime pages through tabs via the top-right
+//      Next/Back; switching modules is the left nav. Stub modules show a building notice. ----
+function modulePaneH(m: Module, bp: Blueprint, activeMod: boolean): string {
+  const hidden = activeMod ? "" : " hidden";
+  if (!isBuilt(m)) {
+    const obj = m.objectives.length ? `<div class="objectives"><b>After this you'll be able to</b><ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>` : "";
+    return `<section class="hx-mod${hidden}" data-hmod="${escAttr(m.id)}" data-module="${escAttr(m.id)}" data-stub="1"><div class="hx-tab" data-ti="0" data-label="${escAttr(m.title)}" data-eyebrow="Module ${m.order}"><div class="hx-concept"><p>${esc(m.summary)}</p>${obj}<div class="building"><span class="bspin"></span> Building this section… <span class="muted">it'll fill in shortly</span></div></div></div></section>`;
+  }
+  const tabs = moduleTabsH(m, bp);
+  const tabHtml = tabs.map((t, i) => `<div class="hx-tab${i === 0 ? "" : " hidden"}" data-ti="${i}" data-label="${escAttr(t.label)}" data-eyebrow="${escAttr(t.eyebrow)}"${t.check ? ' data-check="1"' : ""}>${t.html}</div>`).join("");
+  return `<section class="hx-mod${hidden}" data-hmod="${escAttr(m.id)}" data-module="${escAttr(m.id)}" data-tabs="${tabs.length}">${tabHtml}</section>`;
 }
 
 /**
@@ -544,33 +593,33 @@ function renderBodyHorizontal(bp: Blueprint): string {
   const metaBits = metaBitsFor(bp);
   const hasCitations = Object.keys(bp.citations).length > 0;
 
-  type Page = { id: string; label: string; icon?: string; num?: number; module?: boolean; special?: boolean; html?: string; last?: boolean };
-  const pages: Page[] = [];
-  pages.push({ id: "_map", label: "Overview", icon: "🗺", special: true, html: `${heroInner(bp, metaBits)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}` });
-  for (const m of bp.modules) pages.push({ id: m.id, label: m.title, num: m.order, module: true });
-  pages.push({ id: "_synth", label: "Putting it together", icon: "✦", special: true, html: synthesisInner(bp) });
-  if (hasCitations) pages.push({ id: "_sources", label: "Sources", icon: "⌕", special: true, html: citationsInner(bp) });
-  pages.push({ id: "_check", label: "Knowledge check", icon: "🧠", special: true, html: horizontalCheckPage(bp), last: true });
+  // Special single-tab pane (overview / synthesis / sources) — uniform with module panes.
+  const specialPane = (id: string, label: string, eyebrow: string, html: string) =>
+    `<section class="hx-mod hidden" data-hmod="${escAttr(id)}"><div class="hx-tab" data-ti="0" data-label="${escAttr(label)}" data-eyebrow="${escAttr(eyebrow)}"><div class="hx-concept">${html}</div></div></section>`;
 
-  // Left TOC — module items are normal (counted toward progress); the rest are special.
-  const nav = pages
-    .map((pg) => {
-      const badge = pg.module ? `<span class="ni-num">${pg.num}</span>` : `<span class="ni-num">${esc(pg.icon || "•")}</span>`;
-      const building = pg.module && !isBuilt(bp.modules.find((x) => x.id === pg.id)!) ? " building" : "";
-      const cls = `navitem${pg.special ? " nav-special" : ""}${building}`;
-      return `<button class="${cls}" data-goto="${escAttr(pg.id)}">${badge}<span class="ni-label">${esc(pg.label)}</span><span class="ni-status" aria-hidden="true"></span></button>`;
+  type Nav = { id: string; label: string; icon?: string; num?: number; module?: boolean };
+  const nav: Nav[] = [];
+  nav.push({ id: "_map", label: "Overview", icon: "🗺" });
+  for (const m of bp.modules) nav.push({ id: m.id, label: m.title, num: m.order, module: true });
+  nav.push({ id: "_synth", label: "Putting it together", icon: "✦" });
+  if (hasCitations) nav.push({ id: "_sources", label: "Sources", icon: "⌕" });
+
+  // Left nav: Overview, then the LESSON MODULES, then synthesis/sources.
+  const navHtml = nav
+    .map((n) => {
+      const badge = n.module ? `<span class="ni-num">${n.num}</span>` : `<span class="ni-num">${esc(n.icon || "•")}</span>`;
+      const building = n.module && !isBuilt(bp.modules.find((x) => x.id === n.id)!) ? " building" : "";
+      return `<button class="navitem${n.module ? "" : " nav-special"}${building}" data-hmod="${escAttr(n.id)}">${badge}<span class="ni-label">${esc(n.label)}</span><span class="ni-status" aria-hidden="true"></span></button>`;
     })
     .join("");
 
-  // The horizontal track of pages (only the first is active at load).
-  const track = pages
-    .map((pg, i) => {
-      const active = i === 0 ? " active" : "";
-      if (pg.module) return modulePageH(bp.modules.find((x) => x.id === pg.id)!, bp, active);
-      const next = pg.last ? "" : `<button class="h-next" type="button">Next →</button>`;
-      return `<section class="h-page${active}" data-panel="${escAttr(pg.id)}"><div class="h-page-body">${pg.html ?? ""}</div>${next}</section>`;
-    })
-    .join("");
+  // Panes: overview (active), each module (tabbed), synthesis, sources. The runtime shows
+  // one pane + one tab at a time and drives the shared header's Back/Next.
+  const panes =
+    `<section class="hx-mod" data-hmod="_map"><div class="hx-tab" data-ti="0" data-label="Overview" data-eyebrow="Lesson overview"><div class="hx-concept">${heroInner(bp, metaBits)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}</div></div></section>` +
+    bp.modules.map((m) => modulePaneH(m, bp, false)).join("") +
+    specialPane("_synth", "Putting it together", "Synthesis", synthesisInner(bp)) +
+    (hasCitations ? specialPane("_sources", "Sources", "Provenance", citationsInner(bp)) : "");
 
   const toggles = contentToggleBar(bp);
   const modal = `<div id="hmodal" class="hmodal" hidden><div class="hmodal-card"><button class="hmodal-x" type="button" aria-label="Close">×</button><div class="hmodal-title"></div><div class="hmodal-body"></div></div></div>`;
@@ -587,8 +636,17 @@ function renderBodyHorizontal(bp: Blueprint): string {
   </div></div>
 
   <div id="hworkbench">
-    <nav id="blocknav">${nav}</nav>
-    <div class="h-stage"><div class="h-track">${track}</div></div>
+    <nav id="blocknav">${navHtml}</nav>
+    <div class="h-stage">
+      <div class="hx-head">
+        <div class="hx-htext"><div class="hx-eyebrow" id="hx-eyebrow"></div><div class="hx-title" id="hx-title"></div></div>
+        <div class="hx-grow"></div>
+        <div class="hx-pos" id="hx-pos"></div>
+        <button class="hx-nav hx-back" id="hx-back" type="button" hidden>← Back</button>
+        <button class="hx-nav hx-next" id="hx-next" type="button">Next →</button>
+      </div>
+      <div class="hx-panes" id="hx-panes">${panes}</div>
+    </div>
   </div>
   ${modal}`;
 }
