@@ -886,6 +886,17 @@ const CATEGORY_STYLE = {
   "Build Projects":  { bg: "#FAECE7", icon: "#D85A30", text: "#712B13", svg: svgIcon(`<path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.4l-5.6 5.6 1.5 1.5 5.6-5.6a3.6 3.6 0 0 0 4.4-4.9l-2.1 2.1-1.6-.4-.4-1.6z"/>`) },
 };
 const DEFAULT_STYLE = { bg: "#EEF2F6", icon: "#64748B", text: "#334155", svg: svgIcon(`<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>`) };
+
+// Per-category thumbnail BACKGROUND templates (PixelBin CDN, delivered optimized:
+// ~640px wide, webp, compressed → ~20-40KB each). Used as the lib-cover background behind
+// the existing card content. Library + Community both read this via catStyle().
+const THUMB_BASE = "https://cdn.pixelbin.io/v2/round-dust-e06b92/t.resize(w:640)~t.toFormat(f:webp)~t.compress()/lesson-thumbs/";
+const CATEGORY_IMG = {
+  "Agents": "agents", "RAG": "rag", "LLMs": "llms", "Frameworks": "frameworks", "Generative": "generative",
+  "Evaluation": "evaluation", "Infrastructure": "infrastructure", "Safety": "safety", "Foundations": "foundations", "Build Projects": "build",
+};
+for (const [cat, key] of Object.entries(CATEGORY_IMG)) { if (CATEGORY_STYLE[cat]) CATEGORY_STYLE[cat].img = THUMB_BASE + key + ".png"; }
+
 function catStyle(cat) { return CATEGORY_STYLE[cat] || DEFAULT_STYLE; }
 async function loadLibrary() {
   if (libLoaded) { renderLibrary(); return; }
@@ -921,6 +932,7 @@ function renderLibrary() {
     el.style.setProperty("--cov-bg", s.bg);
     el.style.setProperty("--cov-icon", s.icon);
     el.style.setProperty("--cov-text", s.text);
+    if (s.img) el.style.setProperty("--cov-img", `url("${s.img}")`);
     el.innerHTML =
       `<div class="lib-cover">` +
         `<span class="lib-ico" aria-hidden="true">${s.svg}</span>` +
@@ -977,6 +989,7 @@ function communityTile(l) {
   el.style.setProperty("--cov-bg", s.bg);
   el.style.setProperty("--cov-icon", s.icon);
   el.style.setProperty("--cov-text", s.text);
+  if (s.img) el.style.setProperty("--cov-img", `url("${s.img}")`);
   el.innerHTML =
     `<button class="lib-open" type="button" aria-label="Open ${escapeHtml(l.title)}">` +
       `<div class="lib-cover"><span class="lib-ico" aria-hidden="true">${s.svg}</span>` +
