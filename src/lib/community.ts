@@ -14,6 +14,9 @@ import { randomUUID, randomBytes } from "node:crypto";
 import { dbEnabled, query } from "./db";
 import { getArtifact } from "./artifacts";
 import { renderArtifact } from "../render/index";
+import { z } from "zod";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import { makeLLM } from "../agent/llm";
 
 export interface CommunityCard {
   slug: string;
@@ -47,6 +50,29 @@ const CATEGORY_KEYWORDS: [string, RegExp][] = [
 function deriveCategory(text: string): string {
   for (const [cat, re] of CATEGORY_KEYWORDS) if (re.test(text)) return cat;
   return "Community";
+}
+
+// The 10 canonical categories that have a thumbnail template (see CATEGORY_STYLE in app.js).
+const THUMB_CATS = ["Agents", "RAG", "LLMs", "Frameworks", "Generative", "Evaluation", "Infrastructure", "Safety", "Foundations", "Build Projects"] as const;
+
+/**
+ * Pick one of the 10 thumbnail categories for a newly-shared lesson, so the Community card
+ * gets a background image. Keyword match first (free, instant); only on a miss does a cheap
+ * model (Haiku) classify; the final fallback is a real category so a shared lesson NEVER
+ * lands as the image-less "Community". This is the "simple agent tags the thumbnail" step.
+ */
+async function classifyThumbCategory(title: string, topic: string, description: string): Promise<string> {
+  const kw = deriveCategory(`${topic} ${title} ${description}`);
+  if ((THUMB_CATS as readonly string[]).includes(kw)) return kw;
+  try {
+    const llm = makeLLM("haiku", 0).withStructuredOutput(z.object({ category: z.enum(THUMB_CATS) }), { name: "thumb_category" });
+    const out = await llm.invoke([
+      new SystemMessage(`Classify this AI/ML lesson into EXACTLY one of these 10 categories for its thumbnail image: ${THUMB_CATS.join(", ")}. Pick the single closest. Return only the category.`),
+      new HumanMessage(`Title: ${title}\nTopic: ${topic}\nDescription: ${description}`.slice(0, 1500)),
+    ]);
+    if (out?.category && (THUMB_CATS as readonly string[]).includes(out.category)) return out.category;
+  } catch { /* model unavailable → fall through to the default */ }
+  return "Foundations";
 }
 
 function slugify(s: string): string {
@@ -136,7 +162,7 @@ export async function shareLesson(
   const description = bp.meta.thesis ?? null;
   const level = bp.learnerProfile?.level ?? null;
   const estMinutes = bp.meta.estTotalMinutes ?? null;
-  const category = deriveCategory(`${bp.meta.topic ?? ""} ${title}`);
+  const category = await classifyThumbCategory(title, bp.meta.topic ?? "", description ?? "");
   // Contributor publish credits their registered name; regular share uses the given name / email handle.
   let name = (displayName || "").trim().slice(0, 60);
   if (opts.contributor) {
