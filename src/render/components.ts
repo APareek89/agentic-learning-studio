@@ -20,6 +20,11 @@ export function esc(s: string): string {
 function escAttr(s: string): string {
   return esc(s).replace(/"/g, "&quot;");
 }
+// Only treat real http(s) URLs as linkable sources (Bug 5) — guards against a non-URL string
+// (e.g. a bare title, "knowledge base", or a javascript:/data: scheme) being rendered as a link.
+function isHttpUrl(u: string | undefined | null): boolean {
+  return typeof u === "string" && /^https?:\/\/\S+/i.test(u.trim());
+}
 
 // ---- inline spans (term references become (i) buttons) ----
 function spanHtml(s: { text: string; term?: string; em?: boolean; strong?: boolean; code?: boolean }, bp: Blueprint): string {
@@ -476,7 +481,15 @@ function citationsInner(bp: Blueprint): string {
   const items = ids
     .map((id) => {
       const c = bp.citations[id];
-      const link = c.url ? `<a href="${escAttr(c.url)}">${esc(c.title)}</a>` : esc(c.title);
+      // BUG 5: a Source must link to the ORIGINAL source it was drawn from (the website/blog/
+      // GitHub repo). kb + canonical citations carry the source doc's `url`; the learner's own
+      // uploads carry none. Link ONLY when a real url is present (http/https) — never fabricate a
+      // URL when it's absent (render plain text then). Open in a new tab with noopener/noreferrer
+      // so the lesson tab is never navigated away from or exposed via window.opener.
+      const href = isHttpUrl(c.url) ? c.url! : "";
+      const link = href
+        ? `<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${esc(c.title)}</a>`
+        : esc(c.title);
       const tag = c.kind === "upload" ? "your document" : c.kind === "kb" ? "knowledge base" : c.kind === "liveSearch" ? "web" : "reference";
       const cls = c.kind === "upload" ? "src-upload" : "";
       return `<li class="${cls}">${link} <span class="muted">· ${tag}${c.asOfDate ? " · " + esc(c.asOfDate) : ""}</span></li>`;
@@ -589,9 +602,29 @@ function modulePaneH(m: Module, bp: Blueprint, activeMod: boolean): string {
  * Each page has a Next button; heavy blocks open in a modal (the runtime owns that).
  * Vertical mode is completely untouched — this is a separate, additive layout.
  */
-function renderBodyHorizontal(bp: Blueprint): string {
+function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {}): string {
   const metaBits = metaBitsFor(bp);
   const hasCitations = Object.keys(bp.citations).length > 0;
+
+  // BUG 2 FIX — OVERVIEW PREVIEW PARITY. Before a lesson is built (the free overview draft,
+  // `previewOnly`), the horizontal layout used to render the full left module-list nav + the
+  // per-module page deck, while the VERTICAL preview shows ONLY the concept/process map. The
+  // overview preview must look the SAME in both modes — the concept map only; the module-page
+  // deck belongs to the BUILT lesson. So in preview we emit just the overview concept map (no
+  // left nav, no module/synthesis/sources panes, no pager), mirroring vertical's #overview view.
+  if (opts.previewOnly) {
+    return `
+  <div id="overview" class="hx-preview">
+    <main class="shell">
+      ${heroInner(bp, metaBits)}
+      ${recapBanner(bp)}
+      ${provenanceBanner(bp)}
+      ${whatsNew(bp)}
+      ${mentalMap(bp)}
+      <p class="ov-hint">This is the free overview — click “Generate Lesson” to build the full interactive lesson.</p>
+    </main>
+  </div>`;
+  }
 
   // Special single-tab pane (overview / synthesis / sources) — uniform with module panes.
   const specialPane = (id: string, label: string, eyebrow: string, html: string) =>
@@ -654,8 +687,8 @@ function renderBodyHorizontal(bp: Blueprint): string {
  * The learner's "Reading" preference picks the layout: "horizontal" → a paged deck
  * (renderBodyHorizontal); anything else → the classic vertical lesson below.
  */
-export function renderBody(bp: Blueprint): string {
-  if (bp.learnerProfile.readingMode === "horizontal") return renderBodyHorizontal(bp);
+export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}): string {
+  if (bp.learnerProfile.readingMode === "horizontal") return renderBodyHorizontal(bp, opts);
   const p = bp.learnerProfile;
   const metaBits = [
     bp.meta.course ? `Part ${bp.meta.course.index} of ${bp.meta.course.total}` : "",
