@@ -85,38 +85,41 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
    would otherwise override the UA [hidden] rule and break the overview↔workbench swap). */
 [hidden]{display:none!important}
 
-/* ===== Overview = ONE non-scrolling screen; the concept/process map is centred =====
-   The overview must fit the viewport with NO scrolling. #overview is a fixed, clipped flex
-   column; the square-block map (.map-path / .map-concept / .map-options — styled in the
-   "Overview structure" block below) is centred in the remaining space and the squares shrink
-   on smaller screens so the whole map stays on one screen. The narrow-screen media query
-   lets the page scroll rather than clip when the viewport is genuinely too small.
-   Scoped to :not([hidden]) so it only applies while the overview is the active view. */
-#overview:not([hidden]){height:calc(100dvh - 54px);overflow:hidden;display:flex;flex-direction:column}
+/* ===== Overview = a comfortable, FLEXIBLE screen — concept/process map + a short
+   "what you'll cover" summary =====
+   It FILLS the viewport and stays on one screen when it fits, but FLOWS (the page scrolls)
+   instead of clipping/cramming when the content is genuinely tall (e.g. a 5-card map + the
+   covers list on a short window). Uses min-height (not a hard height) + natural overflow so the
+   blocks always get their room and the layout adjusts. Scoped to :not([hidden]). */
+#overview:not([hidden]){min-height:calc(100dvh - 54px);display:flex;flex-direction:column}
 /* width:100% so the auto side-margins don't shrink the shell to content width. */
-#overview .shell{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;overflow:hidden;padding:14px 26px}
+#overview .shell{flex:1;width:100%;display:flex;flex-direction:column;padding:16px 26px 24px}
 #overview .hero{flex:none;padding:2px 0 0}
 #overview .hero h1{font-size:25px;margin:.05em 0 .1em}
 #overview .thesis{font-size:14.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #overview .meta-line{margin-top:6px;font-size:12.5px}
-#overview .ov-hint{flex:none;margin:8px 0 0}
-#overview .map{flex:1;min-height:0;display:flex;flex-direction:column;margin:12px 0 0;overflow:hidden;padding:14px 16px}
+#overview .ov-hint{flex:none;margin:12px 0 0;font-size:12.5px}
+/* the map takes the available space and centres its cards; flex 1 1 auto so it GROWS for tall
+   content rather than clipping. A generous min-height keeps the cards roomy when space is tight. */
+#overview .map{flex:1 1 auto;min-height:320px;display:flex;flex-direction:column;margin:14px 0 0;padding:18px}
 #overview .map h2{font-size:14px}
-#overview .map .cap{margin:0 0 8px}
-/* centre the map and clip anything that would overflow the one-screen budget */
-#overview .map-body{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
-#overview .map-path,#overview .map-concept,#overview .map-options{
-  width:100%;max-height:100%;justify-content:center;align-content:center;align-items:center;
-}
-/* squares shrink a touch in the overview so more fit on one screen */
-#overview .map .map-node{width:clamp(132px,13vw,176px)}
-/* narrow screens: let the page scroll rather than clip the map */
+#overview .map .cap{margin:0 0 10px}
+#overview .map-body{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0}
+#overview .map-path,#overview .map-concept,#overview .map-options{width:100%;justify-content:center;align-content:center;align-items:stretch;}
+/* roomier squares so the cards aren't cramped; scale down on narrower windows */
+#overview .map .map-node{width:clamp(162px,14.5vw,204px)}
+@media(max-width:1100px){ #overview .map .map-node{width:clamp(150px,22vw,204px)} }
 @media(max-width:820px){
-  #overview:not([hidden]){height:auto;overflow:visible}
-  #overview .shell,#overview .map,#overview .map-body{overflow:visible;min-height:0}
   #overview .map-body{align-items:flex-start}
-  #overview .map .map-node{width:clamp(128px,40vw,176px)}
+  #overview .map .map-node{width:clamp(150px,44vw,204px)}
 }
+/* "This lesson will cover" — a compact ≤4-bullet summary below the map. */
+#overview .ov-covers{flex:none;margin:14px 0 0;border-top:1px solid var(--border);padding-top:12px}
+.ov-covers .ovc-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:700;margin:0 0 8px}
+.ov-covers ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}
+.ov-covers li{font-size:13px;color:var(--ink-soft);line-height:1.4;padding-left:18px;position:relative}
+.ov-covers li::before{content:"✓";position:absolute;left:0;top:0;color:var(--accent);font-weight:800;font-size:11px}
+@media(max-width:820px){ .ov-covers ul{grid-template-columns:1fr} }
 
 /* ---- overview / workbench (Fix 2 layout) ---- */
 .ov-hint{text-align:center;color:var(--muted);font-size:13.5px;margin:18px 0 0}

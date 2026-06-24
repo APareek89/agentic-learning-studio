@@ -28,7 +28,7 @@ import {
 import type { Blueprint, Block } from "../render/schema";
 import { renderArtifact } from "../render/index";
 import { registerArtifact } from "../lib/artifacts";
-import { PROFILER_SYSTEM, PLANNER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, plannerUserPrompt, architectUserPrompt, moduleUserPrompt } from "./prompts";
+import { PROFILER_SYSTEM, PLANNER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, OVERVIEW_PROSE_SYSTEM, plannerUserPrompt, architectUserPrompt, moduleUserPrompt, overviewProseUserPrompt } from "./prompts";
 import { measureModule, repairDensity } from "./density";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled } from "../lib/db";
@@ -331,6 +331,16 @@ function coerceSkeleton(input: unknown, profile: LearnerProfile): Blueprint {
     return v && typeof v === "object" ? (v as Record<string, any>) : {}; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
   o.glossary = toRecord(o.glossary);
+  // DEFERRED DEFINITIONS: the overview architect now emits glossary terms with an EMPTY
+  // laymanDefinition (the real definitions are written during the build, in parallel). Ensure the
+  // required field exists so the draft validates; writeOverviewProse fills the empties later.
+  for (const k of Object.keys(o.glossary)) {
+    const g = o.glossary[k];
+    if (!g || typeof g !== "object") { delete o.glossary[k]; continue; }
+    if (!g.id) g.id = k;
+    if (!g.label) g.label = k;
+    if (typeof g.laymanDefinition !== "string") g.laymanDefinition = "";
+  }
   // citations: the writer (esp. Sonnet) sometimes emits bare entries missing the schema-required
   // id/kind/title — the app REFILLS these from retrieved sources right after, so don't fail the
   // whole parse over them; fill safe defaults (or drop a hopeless entry).
@@ -680,6 +690,77 @@ export async function runDeepDive(
     }
   } catch { /* never block on density */ }
   return { ok: true, sources };
+}
+
+// ============================================================================
+// writeOverviewProse — fills the glossary DEFINITIONS + SYNTHESIS that the overview
+// architect now DEFERS (they're never shown in the free preview). Runs during the BUILD,
+// in parallel with the module bodies. Idempotent: only fills EMPTY definitions / a missing
+// synthesis, so re-runs and old (full) drafts are left untouched. Mutates `bp` in place.
+// ============================================================================
+const OverviewProseSchema = z.object({
+  glossary: z.array(z.object({ id: z.string(), definition: z.string(), acronymExpansion: z.string().optional() })).default([]),
+  recap: z.string().default(""),
+  buildOrder: z.array(z.object({ step: z.number(), label: z.string() })).default([]),
+  checklist: z.array(z.object({ label: z.string() })).default([]),
+  capstonePrompt: z.string().default(""),
+  capstoneNext: z.string().optional(),
+});
+
+export async function writeOverviewProse(bp: Blueprint, opts: { config?: RunnableConfig } = {}): Promise<void> {
+  const p = bp.learnerProfile;
+  const config = opts.config;
+  // Terms whose definition is still empty (the deferred ones).
+  const needDefs = Object.entries(bp.glossary).filter(([, t]) => !((t.laymanDefinition as string) || "").trim());
+  const syn = bp.synthesis as { recap?: unknown; buildOrder?: unknown[] } | undefined;
+  const needSynthesis = !(syn?.buildOrder && syn.buildOrder.length) && !syn?.recap;
+  if (!needDefs.length && !needSynthesis) return; // already filled (old draft / re-run)
+
+  const out = await withOverloadRetry(() =>
+    moduleLLM.withStructuredOutput(OverviewProseSchema, { name: "overview_prose" }).invoke(
+      [
+        new SystemMessage(OVERVIEW_PROSE_SYSTEM),
+        new HumanMessage(
+          overviewProseUserPrompt({
+            topic: bp.meta.topic,
+            level: p.level,
+            density: p.density,
+            buildGoal: p.buildGoal,
+            objective: p.objective,
+            terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
+            modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces })),
+            needSynthesis,
+          })
+        ),
+      ],
+      config ?? {}
+    )
+  ).catch((err: unknown) => {
+    console.warn("[overview-prose] failed:", (err instanceof Error ? err.message : String(err)).slice(0, 160));
+    return null;
+  });
+  if (!out) return;
+
+  // Merge glossary definitions (only fill empties).
+  for (const g of out.glossary ?? []) {
+    const entry = bp.glossary[g.id];
+    if (!entry) continue;
+    if (!((entry.laymanDefinition as string) || "").trim() && g.definition?.trim()) entry.laymanDefinition = g.definition.trim();
+    if (g.acronymExpansion && !entry.acronymExpansion) entry.acronymExpansion = g.acronymExpansion;
+  }
+  // Merge synthesis (only when it was empty).
+  if (needSynthesis) {
+    const s = (bp.synthesis = bp.synthesis ?? ({} as Blueprint["synthesis"]));
+    const recap = (out.recap ?? "").trim();
+    const buildOrder = out.buildOrder ?? [];
+    const checklist = out.checklist ?? [];
+    const capstonePrompt = (out.capstonePrompt ?? "").trim();
+    if (recap) s.recap = [{ t: "p", spans: [{ text: recap }] }];
+    if (buildOrder.length) s.buildOrder = buildOrder;
+    if (checklist.length) s.checklist = checklist.map((c, i) => ({ id: `c${i + 1}`, label: c.label }));
+    if (capstonePrompt) s.capstone = { prompt: capstonePrompt + (out.capstoneNext?.trim() ? ` Next: ${out.capstoneNext.trim()}` : "") };
+  }
+  repairBlueprint(bp); // re-resolve any term/citation refs the new prose touched
 }
 
 // ============================================================================

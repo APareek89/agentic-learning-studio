@@ -85,7 +85,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "30mb" })); // base64-encoded uploads ride in the JSON body
+app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
 app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js, styles.css)
 
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
@@ -633,8 +633,8 @@ app.post("/api/upload", heavyLimiter, async (req, res) => {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
     return;
   }
-  // Per-file cap (~10MB): base64 is ~1.33× the byte size, so ~14M chars ≈ 10MB.
-  if (dataBase64.length > 14_000_000) { res.status(413).json({ error: "That file is too large (max ~10MB)." }); return; }
+  // Per-file cap (25MB): base64 is ~1.33× the byte size, so ~35M chars ≈ 25MB.
+  if (dataBase64.length > 35_000_000) { res.status(413).json({ error: "That file is too large (max 25MB)." }); return; }
   const ext = extname(filename).toLowerCase();
   const tmp = `${tmpdir()}/als-upload-${randomUUID()}${ext}`;
   try {

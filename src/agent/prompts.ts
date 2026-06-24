@@ -440,7 +440,7 @@ export function architectUserPrompt(args: {
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
     hasPlan
-      ? `STRUCTURAL PLAN — a planner has ALREADY decided the structure. FOLLOW IT EXACTLY: keep the same modules, ids, order, titles, sub, decisionItForces, termIds, the mentalMap nodes/edges/structureType, and the glossary term ids+labels. Do NOT re-classify or re-order. YOUR JOB IS TO WRITE THE PROSE the plan omits: each mentalMap node's "orient" (a 10-15 word description), each module's "summary" (1-2 sentences) + "objectives" (2-4 "After this you'll be able to…"), each glossary term's "laymanDefinition" (one plain sentence), and the full "synthesis" (recap + buildOrder mirroring the module order + checklist from the decisions + a capstone tied to their goal). Output the COMPLETE Blueprint (the plan's structure + your prose). PLAN:\n${JSON.stringify(args.plan)}`
+      ? `STRUCTURAL PLAN — a planner has ALREADY decided the structure. FOLLOW IT EXACTLY: keep the same modules, ids, order, titles, sub, decisionItForces, termIds, the mentalMap nodes/edges/structureType, and the glossary term ids+labels. Do NOT re-classify or re-order. YOUR JOB IS TO WRITE ONLY THE OVERVIEW-PREVIEW PROSE (the part the learner reviews before building): each mentalMap node's "orient" (a 10-15 word description of what that block covers) and each module's "summary" (1-2 sentences) + "objectives" (2-4 "After this you'll be able to…"). For the glossary, output EVERY term with its id + label and "laymanDefinition" set to "" (EMPTY string) — the definitions are written later during the build, not now. OMIT the "synthesis" object entirely — it is also written during the build. ALSO write "mentalMap.willCover" = a short learner-facing list of AT MOST 4 bullets (each ≤10 words) summarizing what the lesson covers — e.g. the key concepts, the main how-to, a worked example, and when to use it (phrase them as the things they'll learn, not module titles). Do NOT write glossary definitions or synthesis here; writing them now only slows the free preview. Output the Blueprint = the plan's structure + your orient/summary/objective prose + willCover + the empty-definition glossary. PLAN:\n${JSON.stringify(args.plan)}`
       : "",
     `TOPIC: ${args.topic}`,
     args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
@@ -485,5 +485,45 @@ export function architectUserPrompt(args: {
       ...args.repairErrors.map((e) => `- ${e}`)
     );
   }
+  return lines.join("\n");
+}
+
+/**
+ * The OVERVIEW-PROSE writer (SONNET, runs during the BUILD, in parallel with the module bodies).
+ * Writes the two pieces DEFERRED out of the overview so the free preview is fast: the glossary
+ * DEFINITIONS (the (i) popovers, only seen inside built modules) and the SYNTHESIS (the lesson's
+ * closing section). The preview never showed either, so writing them at build time is zero-impact.
+ */
+export const OVERVIEW_PROSE_SYSTEM = `You write two closing pieces of an interactive agentic-AI lesson — DATA ONLY.
+1. GLOSSARY definitions: for each term given (id — label), write a ONE-sentence plain "laymanDefinition" — concrete, for the learner's level (beginner/intermediate: don't explain jargon with more jargon; use an everyday frame). Add "acronymExpansion" only for ALL-CAPS terms.
+2. SYNTHESIS (only when asked): the lesson's closing consolidation.
+   - recap: a RETRIEVAL prompt (ask the learner to reconstruct the build order / key structure FROM MEMORY before it's shown — 1-2 sentences, not a re-read).
+   - buildOrder: the spine as ordered steps, mirroring the module order exactly.
+   - checklist: the key decisions (from the modules' decision points).
+   - capstonePrompt: a SOLO build tied to the learner's goal/buildGoal.
+   - capstoneNext: the NEXT rung — what to learn or build next, so the lesson ends with momentum.
+Keep everything tight, concrete, and accurate.`;
+
+/** Human message for the overview-prose writer: the terms to define + (optionally) the module spine. */
+export function overviewProseUserPrompt(args: {
+  topic: string;
+  level: string;
+  density?: string;
+  buildGoal?: string;
+  objective?: string;
+  terms: { id: string; label: string }[];
+  modules: { order: number; title: string; decisionItForces?: string }[];
+  needSynthesis: boolean;
+}): string {
+  const lines = [
+    `LESSON TOPIC: ${args.topic}`,
+    `LEVEL: ${args.level}${args.density ? ` · DENSITY: ${args.density}` : ""}`,
+    args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",
+    objectiveDirective(args.objective),
+    args.terms.length ? `GLOSSARY TERMS TO DEFINE (id — label): ${args.terms.map((t) => `${t.id} — ${t.label}`).join("; ")}` : "GLOSSARY: (none to define)",
+    args.needSynthesis
+      ? `ALSO WRITE THE SYNTHESIS. MODULE SPINE (use for buildOrder + checklist, mirror this order): ${args.modules.map((m) => `${m.order}. ${m.title}${m.decisionItForces ? ` [decision: ${m.decisionItForces}]` : ""}`).join(" | ")}`
+      : "Do NOT write synthesis (it already exists) — return empty recap/buildOrder/checklist and an empty capstonePrompt.",
+  ].filter(Boolean);
   return lines.join("\n");
 }

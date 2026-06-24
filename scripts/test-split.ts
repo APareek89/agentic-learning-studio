@@ -5,7 +5,7 @@
  * Run: NODE_EXTRA_CA_CERTS=... npx tsx scripts/test-split.ts   (USES CREDITS — one overview)
  */
 import "dotenv/config";
-import { profiler, retriever, planner, architect } from "../src/agent/nodes";
+import { profiler, retriever, planner, architect, writeOverviewProse } from "../src/agent/nodes";
 import { rawPool } from "../src/lib/db";
 
 const PROMPT = "explain langchain and langgraph to build a customer support agent";
@@ -48,6 +48,21 @@ async function main() {
     console.log("  bp modules:", mods.map((m: any) => `${m.order}.${m.title}`).join(" | "));   // eslint-disable-line @typescript-eslint/no-explicit-any
     console.log("  sample orient:", nodes[1]?.orient || nodes[0]?.orient || "(none)");
     console.log("  follows plan structure:", plan && mods.length === (plan.modules || []).length ? "module count matches ✓" : "⚠️ count differs");
+
+    // DEFER CHECK: after the overview, glossary defs + synthesis should be EMPTY (deferred to build).
+    const defsEmptyAfterOverview = glossary.filter((g: any) => !((g.laymanDefinition || "").trim())).length;   // eslint-disable-line @typescript-eslint/no-explicit-any
+    const synEmpty = !(bp.synthesis?.buildOrder?.length) && !bp.synthesis?.recap;
+    console.log(`\nDEFER — after overview: glossary defs EMPTY ${defsEmptyAfterOverview}/${glossary.length} (want all empty) · synthesis empty: ${synEmpty}`);
+    // Now run the build-time prose writer and confirm it FILLS them.
+    s = Date.now();
+    await writeOverviewProse(bp, {});
+    const proseMs = Date.now() - s;
+    const glossary2 = Object.values(bp.glossary || {});
+    const defsFilled2 = glossary2.filter((g: any) => (g.laymanDefinition || "").trim()).length;   // eslint-disable-line @typescript-eslint/no-explicit-any
+    const synFilled = !!(bp.synthesis?.buildOrder?.length) || !!bp.synthesis?.recap;
+    console.log(`writeOverviewProse: ${t(proseMs)} (SONNET, runs IN PARALLEL with module builds) → glossary defs filled ${defsFilled2}/${glossary2.length} · synthesis filled: ${synFilled}`);
+    console.log("  sample def:", (bp.glossary[(Object.keys(bp.glossary)[0])] as any)?.laymanDefinition || "(none)");   // eslint-disable-line @typescript-eslint/no-explicit-any
+    console.log(`\n>>> NEW overview wall-clock (profiler+planner+architect): ${t(planMs + archMs)}  (architect was ${t(archMs)}; the deferred defs/synthesis no longer block the preview)`);
   }
   await rawPool()?.end().catch(() => {});
   setTimeout(() => process.exit(0), 300).unref();

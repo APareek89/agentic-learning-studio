@@ -321,6 +321,24 @@ function miniMap(nodes: { id: string; label: string; sub?: string }[], _edges: u
   return `<div class="map-row">${nodes.map((n) => `<div class="map-node"><div class="mn-title">${esc(n.label)}</div>${n.sub ? `<div class="mn-sub">${esc(n.sub)}</div>` : ""}</div>`).join("")}</div>`;
 }
 
+// ---- "This lesson will cover" — up to 4 short bullets below the overview map ----
+// Uses mentalMap.willCover when the writer supplied it; otherwise derives from the module
+// titles (the spine) so every lesson — old or new — shows the summary. Kept to ≤4 so the
+// overview stays no-scroll.
+function coversList(bp: Blueprint): string {
+  let items = (bp.mentalMap.willCover ?? []).map((s) => String(s).trim()).filter(Boolean).slice(0, 4);
+  if (!items.length) {
+    items = bp.modules
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((m) => (m.title || "").trim())
+      .filter(Boolean)
+      .slice(0, 4);
+  }
+  if (!items.length) return "";
+  return `<div class="ov-covers"><div class="ovc-h">This lesson will cover</div><ul>${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`;
+}
+
 // ---- the mental map — an ADVANCE ORGANIZER laid out by the topic's true STRUCTURE ----
 function mentalMap(bp: Blueprint): string {
   const mm = bp.mentalMap;
@@ -621,6 +639,7 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
       ${provenanceBanner(bp)}
       ${whatsNew(bp)}
       ${mentalMap(bp)}
+      ${coversList(bp)}
       <p class="ov-hint">This is the free overview — click “Generate Lesson” to build the full interactive lesson.</p>
     </main>
   </div>`;
@@ -752,6 +771,7 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
       ${provenanceBanner(bp)}
       ${whatsNew(bp)}
       ${mentalMap(bp)}
+      ${coversList(bp)}
       <p class="ov-hint">Pick a building block above to dive in — or use the menu that appears on the left.</p>
     </main>
   </div>

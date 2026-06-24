@@ -225,11 +225,45 @@ const referWrap = document.getElementById("refer-only-wrap");
 const referChk = document.getElementById("refer-only");
 const uploadHint = document.getElementById("upload-hint");
 
+// ---- Upload gating + size cap ----
+// A file/repo is parsed + chunked + embedded ON THE SERVER; the front-end only learns its
+// docId once that finishes. So while ANY upload is in flight we DISABLE "Generate Overview" —
+// otherwise a click mid-upload sends an empty uploadIds and the lesson is generated WITHOUT the
+// just-added grounding (the reported bug). 25MB hard cap, checked client- and server-side.
+const MAX_UPLOAD_MB = 25;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+let pendingUploads = 0;
+function setUploadPending(delta) {
+  pendingUploads = Math.max(0, pendingUploads + delta);
+  refreshUploadGate();
+}
+function refreshUploadGate() {
+  const busy = pendingUploads > 0;
+  if (generateBtn) {
+    generateBtn.disabled = busy;
+    generateBtn.classList.toggle("waiting-upload", busy);
+    generateBtn.title = busy ? "Finishing reading your file/repo…" : "";
+  }
+  if (busy) {
+    uploadHint.hidden = false;
+    uploadHint.textContent = "Reading your file/repo on the server… Generate unlocks once it's ready, so your lesson includes it.";
+  } else {
+    updateUploadUI();
+  }
+}
+
 addDocsBtn.addEventListener("click", () => fileInput.click());
 referChk.addEventListener("change", updateUploadUI);
 fileInput.addEventListener("change", async () => {
   for (const file of Array.from(fileInput.files)) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const c = addChip(file.name, `✕ too large — max ${MAX_UPLOAD_MB}MB`);
+      c.classList.remove("uploading");
+      c.classList.add("failed");
+      continue;
+    }
     const chip = addChip(file.name, "uploading…");
+    setUploadPending(1);
     try {
       const dataBase64 = await fileToBase64(file);
       const res = await fetch("/api/upload", {
@@ -250,6 +284,8 @@ fileInput.addEventListener("change", async () => {
     } catch (e) {
       chip.classList.add("failed");
       chip.querySelector(".chip-meta").textContent = "✕ " + e.message;
+    } finally {
+      setUploadPending(-1);
     }
   }
   fileInput.value = "";
@@ -263,6 +299,7 @@ addRepoBtn.addEventListener("click", async () => {
   if (!url) { repoUrlEl.focus(); return; }
   const chip = addChip(url.replace(/^https?:\/\//, ""), "cloning & reading…");
   addRepoBtn.disabled = true;
+  setUploadPending(1);
   try {
     const res = await fetch("/api/upload-repo", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ repoUrl: url }) });
     if (res.status === 401) { openAuth("signin"); throw new Error("Sign in to add a repo."); }
@@ -278,7 +315,7 @@ addRepoBtn.addEventListener("click", async () => {
   } catch (e) {
     chip.classList.add("failed");
     chip.querySelector(".chip-meta").textContent = "✕ " + e.message;
-  } finally { addRepoBtn.disabled = false; }
+  } finally { addRepoBtn.disabled = false; setUploadPending(-1); }
 });
 repoUrlEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addRepoBtn.click(); } });
 
@@ -308,6 +345,7 @@ function addChip(name, meta) {
 function updateUploadUI() {
   const n = uploadedDocs.length;
   referWrap.hidden = n === 0;
+  if (pendingUploads > 0) return; // refreshUploadGate owns the hint + button while an upload is in flight
   uploadHint.hidden = n === 0;
   if (n) {
     uploadHint.textContent = referChk.checked
@@ -344,6 +382,7 @@ function buildPayload(promptText, threadId) {
 
 // ---- Submit ----
 generateBtn.addEventListener("click", () => {
+  if (pendingUploads > 0) return; // button is disabled while uploads finish; belt-and-suspenders
   const p = promptEl.value.trim();
   if (!p) { promptEl.focus(); return; }
   if (authRequiredAndOut()) { openAuth("signup"); return; }
