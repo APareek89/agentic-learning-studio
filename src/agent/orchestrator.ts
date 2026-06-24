@@ -16,7 +16,7 @@
  * course artifacts still render and open fine.)
  */
 
-import { profiler, retriever, architect, runDeepDive } from "./nodes";
+import { profiler, retriever, planner, architect, runDeepDive } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
@@ -76,6 +76,9 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await retriever(st as any));
+    // OPUS plans the STRUCTURE (lean/fast); the architect (Sonnet) then WRITES the prose from it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.assign(st, await planner(st as any, config as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await architect(st as any, config as any));
     // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no

@@ -112,8 +112,44 @@ Prefer ONE excellent visual for the hardest concept over many shallow ones.
 COMPLETENESS (critical): return ONE complete object with ALL fields populated: meta, learnerProfile, mentalMap, modules (4–6 with blocks), glossary (every term), synthesis, citations. A response with only meta + mentalMap is INVALID. Do not stop after the mental map. Keep prose tight so the whole object fits — completeness beats length.`;
 
 /**
+ * The PLANNER system prompt (OPUS). Designs the lesson STRUCTURE only — no prose. The
+ * architect (Sonnet) writes the descriptions/definitions/objectives/synthesis from this plan.
+ * Keeping Opus to structure-only makes it fast + cheap; the writing goes to the cheaper model.
+ */
+export const PLANNER_SYSTEM = `You are a master curriculum designer. You design the STRUCTURE of an interactive agentic-AI lesson — a compact PLAN, DATA ONLY (one JSON object). You do the THINKING: what to teach, in what order, how the pieces relate, and what each module covers. A SEPARATE writer then fills in all the prose. So you write NO descriptions, NO definitions, NO objective sentences, NO synthesis prose — STRUCTURE ONLY.
+
+== INTENT FIDELITY (most important) ==
+Answer the learner's ACTUAL question; the structure must mirror their goal.
+- compare_and_choose: the spine IS the comparison of the SPECIFIC named options in mustCover (+ the selection criteria + a recommendation); at most ONE prerequisites module. Do NOT default to a generic "what is an agent / agent loop / memory" tour.
+- understand_mechanism: a DEEP single-subject lesson — what / why / pieces / how / failure-modes / next.
+- how_to_build: the modules ARE the build steps; if a buildGoal is given, aim the WHOLE spine at THAT artifact (capstone = their thing).
+- survey: the broad map.
+Honor mustCover — every item is a first-class module or a comparison row.
+
+== SUBJECT FIDELITY ==
+The subject is EXACTLY what the learner asked about. Role/industry are CONTEXT for examples only — NEVER retitle or restructure the lesson "for <role>" or "for <industry>".
+
+== ONE SPINE + RAMP + THE 7 QUESTIONS ==
+The mental-map node order, the module order, and the synthesis are ONE consistent spine. Shape it to the topic: procedural → ordered steps with a single START (entryNodeId = the order-1 node); conceptual → the REAL relationships (OMIT order — do not fake a line); comparative → the options weighed along shared dimensions. Sequence so WHAT/WHY/PIECES land early, HOW in the middle, WHEN-IT-BREAKS late, and KNOW-IT/WHAT-NEXT in the synthesis. ONE idea per module; cut anything that doesn't earn its place. No orphan module.
+
+== WHAT TO PRODUCE (structure ONLY — NO prose) ==
+- meta: { topic, title, thesis (ONE sentence) }
+- structureType: "procedural" | "dependency" | "conceptual" | "comparative"
+- mentalMap:
+    nodes: [{ id, label (a 4-6 word HEADLINE, not a sentence), icon (one fitting emoji), order (number — ONLY if procedural/dependency), moduleId }]
+    edges: [{ from, to }]   (the REAL relationships)
+    entryNodeId   (the order-1 node — ONLY for procedural)
+  Do NOT include "orient", "what", or "relevance" — the writer adds those.
+- modules: 4-5 [{ id, order, title, sub (ONE short phrase: how it follows from the previous module), covers (ONE short line naming what this module covers — a hint for the writer, NOT prose), decisionItForces (ONLY if it involves a choice), termIds (the glossary ids this module will use) }]. For compare_and_choose, the LAST module is the head-to-head pick. Do NOT include "summary" or "objectives".
+- glossaryTerms: the 8-12 MOST IMPORTANT terms only: [{ id, label, acronymExpansion (ONLY for ALL-CAPS terms) }]. NO definitions — the writer adds them.
+
+CRITICAL: STRUCTURE ONLY — no prose, no definitions, no objective sentences, no synthesis text. Keep it COMPACT. Return ONE complete JSON object. Match the learner's level when choosing terms (beginner/intermediate: don't pick obscure jargon as a node label).`;
+
+/**
  * The Skeleton system prompt. Phase 1: design the OUTLINE only (no block bodies),
- * so it's small + fast + reliable. The module bodies are written separately.
+ * so it's small + fast + reliable. The module bodies are written separately. When a
+ * structural PLAN is supplied (from the OPUS planner), this prompt's owner (now Sonnet)
+ * FOLLOWS that structure and only WRITES the prose (see architectUserPrompt's plan block).
  */
 export const SKELETON_SYSTEM = `You are a master curriculum designer. You design the OUTLINE of an interactive agentic-AI lesson as a structured "Blueprint" — DATA ONLY, never HTML/CSS/JS.
 
@@ -328,7 +364,50 @@ export function moduleUserPrompt(args: {
   return lines.join("\n");
 }
 
-/** Build the Architect's human message (profile + intent + sources + optional repair errors). */
+/** Build the PLANNER's human message (OPUS): the context it needs to design the STRUCTURE only. */
+export function plannerUserPrompt(args: {
+  topic: string;
+  level: string;
+  depth: string;
+  examples: string;
+  industry?: string;
+  buildGoal?: string;
+  objective?: string;
+  levels?: string[];
+  lessonTypes?: string[];
+  userPrompt: string;
+  learningGoal?: string;
+  lessonFocus?: string;
+  mustCover?: string[];
+  sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
+}): string {
+  const lines = [
+    `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
+    `TOPIC: ${args.topic}`,
+    args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
+    args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
+    args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
+    `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    args.levels && args.levels.length > 1 ? `AUDIENCE SPANS LEVELS: ${args.levels.join(", ")}` : "",
+    args.industry ? `FOCUS INDUSTRY (context for later examples only — do NOT reframe the subject): ${args.industry}` : "",
+    args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal} — aim the spine + final module at this` : "",
+    objectiveDirective(args.objective),
+    `Design the STRUCTURE only (no prose): 4-5 modules, ONE consistent spine, classify structureType, and list the 8-12 key glossary terms.`,
+  ].filter(Boolean);
+  const up = (args.sources ?? []).filter((s) => s.origin === "upload");
+  const kb = (args.sources ?? []).filter((s) => s.origin !== "upload");
+  if (up.length) {
+    lines.push("", "LEARNER'S OWN UPLOADS — shape the structure around these:");
+    for (const s of up) lines.push(`[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 400)}`);
+  }
+  if (kb.length) {
+    lines.push("", "KNOWLEDGE-BASE NOTES (use to name the right options/terms):");
+    for (const s of kb) lines.push(`[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 300)}`);
+  }
+  return lines.join("\n");
+}
+
+/** Build the Architect's human message (profile + intent + sources + optional repair errors + plan). */
 export function architectUserPrompt(args: {
   topic: string;
   level: string;
@@ -352,11 +431,17 @@ export function architectUserPrompt(args: {
   mustCover?: string[];
   sources?: { sid: string; title?: string; content: string; asOfDate?: string; origin?: "kb" | "upload" }[];
   repairErrors?: string[];
+  /** The OPUS planner's structural plan. When present, FOLLOW it and only WRITE the prose. */
+  plan?: unknown;
 }): string {
   const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const beginnerish = args.level === "beginner" || args.level === "intermediate";
+  const hasPlan = args.plan && typeof args.plan === "object";
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
+    hasPlan
+      ? `STRUCTURAL PLAN — a planner has ALREADY decided the structure. FOLLOW IT EXACTLY: keep the same modules, ids, order, titles, sub, decisionItForces, termIds, the mentalMap nodes/edges/structureType, and the glossary term ids+labels. Do NOT re-classify or re-order. YOUR JOB IS TO WRITE THE PROSE the plan omits: each mentalMap node's "orient" (a 10-15 word description), each module's "summary" (1-2 sentences) + "objectives" (2-4 "After this you'll be able to…"), each glossary term's "laymanDefinition" (one plain sentence), and the full "synthesis" (recap + buildOrder mirroring the module order + checklist from the decisions + a capstone tied to their goal). Output the COMPLETE Blueprint (the plan's structure + your prose). PLAN:\n${JSON.stringify(args.plan)}`
+      : "",
     `TOPIC: ${args.topic}`,
     args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
     args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
