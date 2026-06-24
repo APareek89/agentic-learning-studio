@@ -20,7 +20,7 @@ import { profiler, retriever, planner, architect, runDeepDive, writeOverviewPros
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
-import { makeLangfuseHandler } from "../lib/langfuse";
+import { makeRootedLangfuseHandler } from "../lib/langfuse";
 import type { Blueprint } from "../render/schema";
 
 /** Drafts (un-approved overviews) carry this kind so My Lessons can hide them. */
@@ -54,12 +54,13 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
   // Per-job Langfuse handler (null when keys absent → tracing skipped). Wires the
   // LIVE path into Langfuse so real lesson generations are traced (the legacy
   // /api/learn SSE route has its own handler).
-  const langfuse = makeLangfuseHandler();
-  const config = {
-    callbacks: langfuse ? [langfuse] : [],
-    runName: `lesson:${input.userPrompt?.slice(0, 60) ?? ""}`,
-    metadata: { langfuseTags: ["live-generation"], stage: "overview" },
-  };
+  // ONE root trace per generation → every node nests under it as a labelled CHILD (an expandable
+  // TREE in Langfuse, not N flat top-level traces). `cfg(name)` names each child observation.
+  const langfuse = makeRootedLangfuseHandler(
+    `lesson:${input.userPrompt?.slice(0, 60) ?? ""}`,
+    { langfuseTags: ["live-generation"], stage: "overview" }
+  );
+  const cfg = (runName: string) => ({ callbacks: langfuse ? [langfuse] : [], runName });
   try {
     const st: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
@@ -67,7 +68,7 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
       framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await profiler(st as any, config as any));
+    Object.assign(st, await profiler(st as any, cfg("profiler") as any));
     job.status = "running";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = st.profile as any;
@@ -78,16 +79,16 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     Object.assign(st, await retriever(st as any));
     // OPUS plans the STRUCTURE (lean/fast); the architect (Sonnet) then WRITES the prose from it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await planner(st as any, config as any));
+    Object.assign(st, await planner(st as any, cfg("planner") as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await architect(st as any, config as any));
+    Object.assign(st, await architect(st as any, cfg("architect") as any));
     // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
     // usable blueprint). A validation-GATE miss already carries a repairBlueprint()-fixed
     // best-effort skeleton — ship it rather than pay a second ~56s Opus call. The overview is a
     // FREE, user-reviewed preview (editable via "Edit overview"), so best-effort is the right
     // default; a genuine parse/shape failure (architect returns no blueprint) still re-gens.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
+    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, cfg("architect") as any));
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
@@ -118,19 +119,22 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
  */
 export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
   job.stage = "build";
-  // Per-job Langfuse handler (null when keys absent → tracing skipped). Traces
-  // the LIVE build path so each module body's model calls appear in Langfuse.
-  const langfuse = makeLangfuseHandler();
+  // Declared here so the `finally` can flush it; CREATED inside the try (below) once we have the
+  // title — which also means a Langfuse-ctor throw can't leak the gen slot (releaseGenSlot's
+  // finally now covers it).
+  let langfuse: ReturnType<typeof makeRootedLangfuseHandler> = null;
   try {
     const art = await getArtifact(artifactId);
     const bp = art?.blueprint;
     if (!art || !bp) { job.status = "error"; job.error = "That overview wasn't found (it may have expired)."; return; }
 
-    const config = {
-      callbacks: langfuse ? [langfuse] : [],
-      runName: `lesson:${bp.meta.title?.slice(0, 60) ?? ""}`,
-      metadata: { langfuseTags: ["live-generation"], stage: "build" },
-    };
+    // ONE root trace for the whole build; each module body + the prose writer nests under it as a
+    // labelled child (a tree in Langfuse). `cfg(name)` names each child observation.
+    langfuse = makeRootedLangfuseHandler(
+      `lesson:${bp.meta.title?.slice(0, 60) ?? ""}`,
+      { langfuseTags: ["live-generation"], stage: "build" }
+    );
+    const cfg = (runName: string) => ({ callbacks: langfuse ? [langfuse] : [], runName });
 
     // Promote draft → real lesson so it appears in My Lessons from now on.
     if (art.kind !== LESSON_KIND) await updateArtifact(artifactId, { kind: LESSON_KIND });
@@ -171,7 +175,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
       for (;;) {
         const idx = cursor++;
         if (idx >= pending.length) return;
-        await runDeepDive(bp, pending[idx].id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config });
+        await runDeepDive(bp, pending[idx].id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config: cfg(`module ${pending[idx].order}: ${pending[idx].title}`) });
         jl.builtModules++;
         jl.percent = lessonPercent(jl);
         await persist();
@@ -182,7 +186,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     // add ~0 to the build wall-clock (the preview never showed them). Independent of module blocks.
     const proseTask = (async () => {
       try {
-        await writeOverviewProse(bp, { config });
+        await writeOverviewProse(bp, { config: cfg("glossary+synthesis") });
         await persist();
       } catch (e) {
         console.warn("[runBuildJob] overview-prose:", e instanceof Error ? e.message : String(e));
