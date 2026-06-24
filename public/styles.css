@@ -206,7 +206,11 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .lib-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--border-strong); }
 /* The cover: a flat category fill (no gradient/image/shadow). Swap the aspect-ratio line
    below for 4/5 if the grid feels too tall. */
-.lib-cover { position: relative; aspect-ratio: 3 / 4; padding: 16px; display: flex; align-items: flex-end; overflow: hidden; background: var(--cov-bg, #eef2f6); }
+.lib-cover { position: relative; aspect-ratio: 3 / 4; padding: 16px; display: flex; align-items: flex-end; overflow: hidden; background-color: var(--cov-bg, #eef2f6); background-image: var(--cov-img, none); background-size: cover; background-position: center; background-repeat: no-repeat; }
+/* Legibility scrim: tint the bottom (where title/desc sit) toward the category color so the
+   dark title stays readable over the image, while the top of the image shows through. With no
+   --cov-img the tint matches --cov-bg, so image-free cards look unchanged. */
+.lib-cover::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, color-mix(in srgb, var(--cov-bg, #eef2f6) 94%, transparent), color-mix(in srgb, var(--cov-bg, #eef2f6) 55%, transparent) 38%, transparent 72%); }
 .lib-ico { position: absolute; top: 12px; right: 12px; width: 58px; height: 58px; color: var(--cov-icon, #64748b); opacity: 0.4; pointer-events: none; }
 .lib-ico svg { width: 100%; height: 100%; display: block; }
 .lib-cover-text { position: relative; z-index: 1; width: 100%; }
