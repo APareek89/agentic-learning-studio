@@ -78,8 +78,13 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     Object.assign(st, await retriever(st as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await architect(st as any, config as any));
+    // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
+    // usable blueprint). A validation-GATE miss already carries a repairBlueprint()-fixed
+    // best-effort skeleton — ship it rather than pay a second ~56s Opus call. The overview is a
+    // FREE, user-reviewed preview (editable via "Edit overview"), so best-effort is the right
+    // default; a genuine parse/shape failure (architect returns no blueprint) still re-gens.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.validation as any)?.ok && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
+    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, config as any));
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
@@ -130,14 +135,48 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
 
     const jl: JobLesson = { index: 1, title: bp.meta.title, artifactId, status: "building", builtModules: 0, totalModules: bp.modules.length, percent: 30 };
     job.lessons = [jl];
+
+    // Modules already built (a re-run, or a seeded Module 1) count immediately. The rest build
+    // in SPINE ORDER so Module 1 lands in the first wave (A4: the learner can start reading it
+    // while the others finish).
+    const pending = bp.modules
+      .filter((m) => !(m.loadState === "full" && m.blocks.length > 0))
+      .sort((a, b) => a.order - b.order);
+    jl.builtModules = bp.modules.length - pending.length;
     jl.percent = lessonPercent(jl);
 
-    for (const m of bp.modules) {
-      if (m.loadState === "full" && m.blocks.length > 0) { jl.builtModules++; jl.percent = lessonPercent(jl); continue; }
-      await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config });
-      jl.builtModules++; jl.percent = lessonPercent(jl);
-      await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) });
-    }
+    // A1 — build module bodies in PARALLEL with a small concurrency cap (was one-at-a-time).
+    // Cap is low so we don't burst the Anthropic rate/overload limit (a wide fan-out trips it;
+    // the per-call jittered backoff de-syncs the rest). Sharing `bp` is safe: each module writes
+    // only its own slot, and the bp-wide repairBlueprint() is synchronous (atomic in Node) and
+    // skips stub modules, so concurrent builds can't corrupt each other.
+    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 3);
+
+    // Persist serially in completion order (A4 — incremental render) so the stored lesson grows
+    // monotonically and the front-end shows each module as soon as it's ready. renderArtifact is
+    // evaluated when the chain runs, so it always captures the latest blueprint state.
+    let persistChain: Promise<void> = Promise.resolve();
+    const persist = () => {
+      persistChain = persistChain.then(() =>
+        updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) }).then(() => {}).catch(() => {})
+      );
+      return persistChain;
+    };
+
+    let cursor = 0;
+    const buildNext = async (): Promise<void> => {
+      for (;;) {
+        const idx = cursor++;
+        if (idx >= pending.length) return;
+        await runDeepDive(bp, pending[idx].id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config });
+        jl.builtModules++;
+        jl.percent = lessonPercent(jl);
+        await persist();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(MODULE_CONCURRENCY, pending.length) }, () => buildNext()));
+    await persistChain; // make sure the final, complete state is written
+
     jl.status = "done"; jl.percent = 100;
     job.status = "done";
   } catch (e) {

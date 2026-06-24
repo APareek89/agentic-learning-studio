@@ -14,7 +14,7 @@
 import { z } from "zod";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { makeLLM } from "./llm";
+import { makeLLM, withOverloadRetry } from "./llm";
 import type { GraphStateType, LearnerProfile } from "./state";
 import {
   BlueprintSchema,
@@ -112,9 +112,12 @@ const InferenceSchema = z.object({
 // ============================================================================
 export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const cards = state.cards ?? {};
-  const inf = await profilerLLM
-    .withStructuredOutput(InferenceSchema, { name: "infer" })
-    .invoke([new SystemMessage(PROFILER_SYSTEM), new HumanMessage(state.userPrompt)], config);
+  // Ride out a transient Anthropic 529/overload during the (free) overview rather than failing it.
+  const inf = await withOverloadRetry(() =>
+    profilerLLM
+      .withStructuredOutput(InferenceSchema, { name: "infer" })
+      .invoke([new SystemMessage(PROFILER_SYSTEM), new HumanMessage(state.userPrompt)], config)
+  );
 
   // Level can now be MULTI-select on the landing. The base `level` (used for the
   // 27-combo gating + acronym policy) is the LEAST-advanced selected, so a mixed
@@ -366,7 +369,8 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   // below still enforces the shape (Zod), so an off-shape parse routes through the repair edge.
   let candidate: Blueprint;
   try {
-    const raw = await skeletonLLM.invoke(
+    // Ride out a transient Anthropic 529/overload on the Opus skeleton rather than failing the overview.
+    const raw = await withOverloadRetry(() => skeletonLLM.invoke(
       [
         new SystemMessage(SKELETON_SYSTEM),
         new HumanMessage(
@@ -397,7 +401,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
         ),
       ],
       config
-    );
+    ));
     const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
     candidate = coerceSkeleton(extractJsonObject(text), p);
   } catch (err) {
@@ -609,8 +613,14 @@ export async function runDeepDive(
   repairBlueprint(bp);
   // Density enforcement (RULE 2): verify the prose against the tier; repair the
   // over-ceiling sentences in one pass; log any residual (never block on it).
+  // A2 — only run the (extra LLM) repair when prose is MEANINGFULLY over the tier, not on a
+  // stray long sentence or two. The old `overCeiling > 0` fired on essentially every module,
+  // adding a second serial Sonnet call (~7-24s) each time. Trigger now: ≥3 over-ceiling
+  // sentences OR ≥25% of the module's sentences over. (Density is a verbosity knob, not
+  // correctness — a slightly-long sentence isn't worth doubling the build time.)
   try {
-    if (measureModule(module, p.density).overCeiling > 0) {
+    const dstats = measureModule(module, p.density);
+    if (dstats.overCeiling >= 3 || dstats.pctOver >= 0.25) {
       const { repaired, residual } = await repairDensity(bp, moduleId, p.density, config);
       if (residual > 0) console.warn(`[density] "${moduleId}" (${p.density}): ${residual} sentence(s) over ceiling after repairing ${repaired} block(s)`);
       repairBlueprint(bp); // re-fix any refs the rewrite touched

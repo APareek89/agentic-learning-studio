@@ -87,3 +87,34 @@ export function makeLLM(
 
   return chat;
 }
+
+/**
+ * `withOverloadRetry` — wrap a model call so a transient Anthropic OVERLOAD (529) or rate-limit
+ * (429) doesn't fail it outright. These clear in ~30-90s, so we RIDE THEM OUT with long, JITTERED
+ * backoff instead of the SDK's fast give-up. Non-overload errors (e.g. a malformed response) keep
+ * a short retry. This is the same resilience used inside the module build (`runDeepDive`), shared
+ * so profiler / architect / module calls all behave identically.
+ *
+ * @param fn   the async call to run (e.g. `() => llm.invoke(msgs, config)`).
+ * Re-throws the last error only after exhausting all attempts.
+ */
+export async function withOverloadRetry<T>(fn: () => Promise<T>): Promise<T> {
+  const isOverloadOrRate = (m: string) =>
+    /overloaded|529|rate.?limit|\b429\b|too many requests/i.test(m);
+  const OVERLOAD_BACKOFF_MS = [2000, 5000, 12000, 25000, 40000]; // ~84s total across the waits
+  const MAX_ATTEMPTS = 6;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt >= MAX_ATTEMPTS - 1) break;
+      const msg = (err instanceof Error ? err.message : String(err)) || "";
+      const base = isOverloadOrRate(msg) ? (OVERLOAD_BACKOFF_MS[attempt] ?? 40000) : 800 * (attempt + 1);
+      const wait = base + Math.floor(base * 0.3 * Math.random()); // +0-30% jitter de-syncs parallel calls
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}

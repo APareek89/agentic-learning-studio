@@ -46,8 +46,19 @@ export function moduleCacheKey(parts: {
   density?: string;
   visuals?: boolean;
   syntax?: boolean;
+  // These ALSO change a module's CONTENT, so they belong in the key — else two
+  // lessons that differ only in objective/buildGoal/framework/lessonTypes collide
+  // and a cache hit serves the wrong fragment (silently dropping those inputs).
+  objective?: string;
+  buildGoal?: string;
+  framework?: string;
+  lessonTypes?: string[];
 }): string {
   const industry = (parts.industry ?? "general").trim().toLowerCase();
+  const objective = (parts.objective ?? "").trim().toLowerCase();
+  const buildGoal = (parts.buildGoal ?? "").trim().toLowerCase();
+  const framework = (parts.framework ?? "").trim().toLowerCase();
+  const lessonTypes = [...(parts.lessonTypes ?? [])].sort().join(",");
   // density/visuals/syntax change the module's CONTENT, so they MUST be in the key —
   // else a reader gets a wrong-density or wrong-feature fragment served from cache.
   return sha256(
@@ -61,6 +72,10 @@ export function moduleCacheKey(parts: {
       parts.density ?? "medium",
       parts.visuals ? "v1" : "v0",
       parts.syntax ? "s1" : "s0",
+      objective,
+      buildGoal,
+      framework,
+      lessonTypes,
     ].join("|")
   );
 }

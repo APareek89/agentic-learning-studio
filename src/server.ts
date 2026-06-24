@@ -441,6 +441,7 @@ app.post("/api/module", async (req, res) => {
   const cacheKey = moduleCacheKey({
     topic: bp.meta.topic, moduleId, level: p.level, depth: p.depth, examples: p.examples,
     industry: p.industry, density: p.density, visuals: p.visualsRequested, syntax: p.explainSyntax,
+    objective: p.objective, buildGoal: p.buildGoal, framework: p.framework, lessonTypes: p.lessonTypes,
   });
 
   try {
