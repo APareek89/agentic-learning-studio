@@ -4,8 +4,8 @@
     "topic": "Securing Tool-Using Agents",
     "title": "Securing Tool-Using Agents",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 34,
-    "thesis": "Securing Tool-Using Agents becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 38,
+    "thesis": "Securing Tool-Using Agents is practical when learners can apply it to this concrete case: A refund agent can call payment and CRM tools, so every action must be authorized and auditable. By the end, they should be able to build or review tool-security policy with least privilege, confirmation, and logging, measure unsafe tool calls blocked before execution, and catch the failure where prompt injection turns a read-only support session into a payment action."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Securing Tool-Using Agents: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Securing Tool-Using Agents by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Inventory capabilities, validate tool calls, scope credentials, sandbox execution, require approvals, and audit side effects.",
+    "oneLineThesis": "Tool-using agents are secure when model intent is mediated by typed APIs, least privilege, sandboxing, approval gates, and durable audit logs.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Securing Tool-Using Agents.",
-        "what": "Mental model turns Securing Tool-Using Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+        "label": "Inventory capabilities before adding intelligence",
+        "sub": "List every tool, action, permission, data class, side effect, and owner.",
+        "what": "Agent security starts by knowing what the agent can read, change, send, spend, or execute.",
+        "relevance": "Build a tool inventory with capability tiers.",
         "moduleId": "m1",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "List every tool capability, data class, side effect, and owner.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Securing Tool-Using Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+        "label": "Expose narrow typed tools",
+        "sub": "Use schemas, enums, allowlists, and business rules instead of broad raw power.",
+        "what": "Secure agents call purpose-built APIs, not arbitrary shells, browsers, or email tools by default.",
+        "relevance": "Design narrow tool schemas.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Constrain tool calls with schemas, allowlists, and business rules.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Securing Tool-Using Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+        "label": "Scope credentials and sandbox execution",
+        "sub": "Bind authority server-side and isolate filesystem, network, browser, time, and package access.",
+        "what": "The model should never carry broad secrets; the tool runner should mint narrow authority after policy checks.",
+        "relevance": "Explain scoped credentials and TTLs.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Mint narrow credentials and isolate execution environments by default.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Securing Tool-Using Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+        "label": "Put approvals and audits on side effects",
+        "sub": "Require explicit human confirmation for external, irreversible, expensive, or sensitive actions.",
+        "what": "Approval gates turn risky model plans into reviewable human decisions before impact.",
+        "relevance": "Write an approval policy check.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Require approvals and audits for side effects that matter.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Securing Tool-Using Agents into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+        "label": "Operate tools through tests and incident review",
+        "sub": "Close with regression attacks, audit sampling, and a solo capability manifest.",
+        "what": "Tool security must update when tools, credentials, prompts, models, or connectors change.",
+        "relevance": "Recall the secure tool-use loop.",
         "moduleId": "m5",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "spine",
+        "orient": "Keep tool policies tested as capabilities and connectors evolve.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,43 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Securing Tool-Using Agents.",
-      "summary": "Build the simplest useful picture of Securing Tool-Using Agents. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Inventory capabilities before adding intelligence",
+      "sub": "List every tool, action, permission, data class, side effect, and owner.",
+      "summary": "Agent security starts by knowing what the agent can read, change, send, spend, or execute.",
       "objectives": [
-        "Explain the role of mental model in Securing Tool-Using Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Build a tool inventory with capability tiers.",
+        "Explain why read-only can still be sensitive.",
+        "Identify side effects and owners."
       ],
       "termIds": [
-        "hallucination",
-        "prompt_injection",
         "guardrail",
+        "hallucination",
+        "owasp",
         "privacy",
-        "owasp"
+        "prompt_injection",
+        "risk_register"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Agents fail by acting with too much authority",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This safety lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Securing Tool-Using Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: an agent can browse course pages, read local lesson files, update a CMS, email instructors, and run shell commands. A prompt-injected page tells it to publish a fake lesson. Without a capability inventory, the team cannot tell which action should have been impossible."
                 }
               ]
             },
@@ -148,146 +154,18 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "hallucination",
-                  "term": "hallucination"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Inventory each tool by capability tier: read-only, private read, write draft, external send, money movement, code execution, admin, or credential access. Record data classes, side effects, idempotency, owner, approval requirement, sandbox, and audit fields."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Securing Tool-Using Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Securing Tool-Using Agents.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Securing Tool-Using Agents, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1",
@@ -295,93 +173,60 @@
           ]
         },
         {
-          "id": "m1_example",
+          "id": "m1_artifact",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked artifact: tool inventory row",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for securing tool-using agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Tool: `publish_lesson`. Tier: external write/public publish. Inputs: lesson_id, target_channel, version. Side effect: public content update. Required role: editor. Approval: human confirmation with diff preview. Credential: scoped CMS token, 5-minute TTL. Sandbox: no filesystem access. Audit: user, model, args, approval, result digest, policy version."
                 }
               ]
             }
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
+            "risk_register"
           ],
           "sources": [
             "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
           ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Tool capability manifest"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Securing Tool-Using Agents?",
+          "title": "Read-only risk",
+          "prompt": "Why can a read-only tool still be high risk?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Read-only tools always have no security impact.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It can expose private data that the model may leak through outputs, logs, or later tool calls.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It cannot be used in prompt injection.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Confidentiality risk exists even without write side effects.",
           "termIds": [
+            "guardrail",
             "hallucination",
-            "prompt_injection"
+            "owasp",
+            "privacy",
+            "prompt_injection",
+            "risk_register"
           ],
           "sources": [
             "kb1"
@@ -390,49 +235,41 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon1"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Expose narrow typed tools",
+      "sub": "Use schemas, enums, allowlists, and business rules instead of broad raw power.",
+      "summary": "Secure agents call purpose-built APIs, not arbitrary shells, browsers, or email tools by default.",
       "objectives": [
-        "Explain the role of mechanism in Securing Tool-Using Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Design narrow tool schemas.",
+        "Explain the difference between tool descriptions and permissions.",
+        "Use OpenAPI or JSON Schema thinking for validation."
       ],
       "termIds": [
-        "hallucination",
-        "prompt_injection",
         "guardrail",
+        "hallucination",
+        "owasp",
         "privacy",
-        "owasp"
+        "prompt_injection",
+        "risk_register"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "A tool description is not permission",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This safety lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Securing Tool-Using Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "The model sees tool names and descriptions as text. That text can guide planning, but it is not an authorization boundary. The runner must validate arguments, check user permission, enforce business rules, and decide whether approval is required before execution."
                 }
               ]
             },
@@ -440,189 +277,138 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "hallucination",
-                  "term": "hallucination"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Narrow tools reduce blast radius. `create_lesson_draft(lesson_id)` is safer than a general shell command. `send_invoice_reminder(customer_id)` is safer than arbitrary email with free-form recipient and body."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Securing Tool-Using Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Securing Tool-Using Agents, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "canon2"
           ]
         },
         {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for securing tool-using agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Broad tool to safer workflow",
+          "criteria": [
+            "Broad tool",
+            "Safer shape",
+            "Reason"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "hallucination",
-            "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Securing Tool-Using Agents?",
-          "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
+              "name": "Arbitrary email",
+              "cells": [
+                {
+                  "criterion": "Broad tool",
+                  "text": "recipient, subject, body free-form",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Safer shape",
+                  "text": "approved template plus customer_id and preview approval",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "prevents injected recipients and hidden content",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for external sends.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
+              "name": "Shell command",
+              "cells": [
+                {
+                  "criterion": "Broad tool",
+                  "text": "any command in repo",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Safer shape",
+                  "text": "named build, test, or validation command with fixed args",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "limits file and network impact",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for developer agents.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
+              "name": "Browser automation",
+              "cells": [
+                {
+                  "criterion": "Broad tool",
+                  "text": "click anything in logged-in session",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Safer shape",
+                  "text": "domain allowlist, read-only scrape, no purchase or submit actions",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "reduces unintended external side effects",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for web tasks.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
           "termIds": [
+            "guardrail",
             "hallucination",
-            "prompt_injection"
+            "owasp",
+            "privacy",
+            "prompt_injection",
+            "risk_register"
+          ],
+          "sources": [
+            "kb1",
+            "canon2"
+          ]
+        },
+        {
+          "id": "m2_case",
+          "kind": "functionalExample",
+          "title": "Case study: retry duplicated a side effect",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "An agent times out after calling a payment-refund tool and retries because the model thinks nothing happened. The customer receives two refunds. Secure tool design marks non-idempotent tools, records request IDs, and forces confirmation or idempotency keys before retry."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "guardrail",
+            "hallucination",
+            "owasp",
+            "privacy",
+            "prompt_injection",
+            "risk_register"
           ],
           "sources": [
             "kb1"
@@ -631,49 +417,41 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
         "canon2"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Scope credentials and sandbox execution",
+      "sub": "Bind authority server-side and isolate filesystem, network, browser, time, and package access.",
+      "summary": "The model should never carry broad secrets; the tool runner should mint narrow authority after policy checks.",
       "objectives": [
-        "Explain the role of design choices in Securing Tool-Using Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain scoped credentials and TTLs.",
+        "Design filesystem and network sandbox rules.",
+        "Connect prompt injection to sandbox escape risk."
       ],
       "termIds": [
-        "hallucination",
-        "prompt_injection",
         "guardrail",
+        "hallucination",
+        "owasp",
         "privacy",
-        "owasp"
+        "prompt_injection",
+        "risk_register"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Secrets do not belong in prompts",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This safety lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Securing Tool-Using Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "An agent that sees a long-lived API key can leak it by mistake, through injection, through logs, or through a tool result. Instead, the server checks the user and tool policy, then mints a scoped token for the specific action with short lifetime and limited resources."
                 }
               ]
             },
@@ -681,248 +459,64 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "hallucination",
-                  "term": "hallucination"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Sandboxing limits what happens if the model plan, dependency, page, or tool result is malicious. Useful dimensions include filesystem roots, process limits, network egress, timeouts, memory, package installation, browser profile, and environment variables."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Securing Tool-Using Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
+            "risk_register"
+          ],
+          "sources": [
+            "kb1",
+            "kb2"
+          ]
+        },
+        {
+          "id": "m3_policy",
+          "kind": "functionalExample",
+          "title": "Worked sandbox policy for a coding agent",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Filesystem: repo working directory and temp only, no home secrets. Network: package registry and approved docs domains, no arbitrary POST. Process: test and build commands, 10-minute timeout, memory cap. Credentials: none by default; deployment token minted only after human approval. Browser: isolated profile without personal cookies. Audit: command, files touched, network destinations, exit code."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "guardrail",
+            "hallucination",
+            "owasp",
+            "privacy",
+            "prompt_injection",
+            "risk_register"
           ],
           "sources": [
             "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Securing Tool-Using Agents, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
           ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agent sandbox policy"
         },
         {
           "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Grant authority at execution time, not planning time.",
+          "useWhen": "Use scoped tokens, sandboxes, and egress rules for tools that read private data, write files, call APIs, browse, or execute code.",
+          "avoidWhen": "Avoid long-lived credentials, unrestricted network, shared browser sessions, or broad filesystem mounts.",
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Securing Tool-Using Agents?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1"
@@ -931,146 +525,59 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Securing Tool-Using Agents: baseline, production design, or advanced optimization."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Put approvals and audits on side effects",
+      "sub": "Require explicit human confirmation for external, irreversible, expensive, or sensitive actions.",
+      "summary": "Approval gates turn risky model plans into reviewable human decisions before impact.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Securing Tool-Using Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write an approval policy check.",
+        "Predict how tool output injection can trigger follow-up actions.",
+        "Verify AI-generated tool security plans."
       ],
       "termIds": [
-        "hallucination",
-        "prompt_injection",
         "guardrail",
+        "hallucination",
+        "owasp",
         "privacy",
-        "owasp"
+        "prompt_injection",
+        "risk_register"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
-          "body": [
+          "id": "m4_code",
+          "kind": "codeExample",
+          "title": "Tool policy gate sketch",
+          "language": "python",
+          "code": "def authorize_tool(user, call):\n    risky = call[\"external_send\"] or call[\"irreversible\"] or call.get(\"cost\", 0) > 25\n    assert call[\"name\"] in {\"create_draft\", \"publish_lesson\"}\n    assert user[\"role\"] in call[\"allowed_roles\"]\n    if risky:\n        assert call.get(\"human_approval\") == \"confirmed\"\n    return {\"token_scope\": call[\"name\"], \"ttl_seconds\": 300}\ncall = {\n    \"name\": \"publish_lesson\",\n    \"allowed_roles\": [\"editor\"],\n    \"external_send\": True,\n    \"irreversible\": False,\n    \"human_approval\": \"confirmed\",\n}\nprint(authorize_tool({\"role\": \"editor\"}, call))",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This safety lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Securing Tool-Using Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "This gate validates tool name, user role, risk level, approval, and token scope before execution. Real systems should also validate typed arguments and record an audit event."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "hallucination",
-                  "term": "hallucination"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Securing Tool-Using Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
+          "predictThenReveal": {
+            "prompt": "What should happen if an external-send tool lacks human approval?",
+            "answer": "The runner should block or request approval before execution, regardless of how confident the model sounds."
+          },
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Securing Tool-Using Agents, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1",
@@ -1078,104 +585,60 @@
           ]
         },
         {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify an AI-generated tool-security plan",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for securing tool-using agents help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Look for a real tool inventory, capability tiers, schemas, authorization, scoped credentials, sandbox dimensions, approval rules, audit logs, idempotency, egress policy, and tests for prompt injection through tool outputs. Weak plans say \"the agent should be careful\" without enforcement."
                 }
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "hallucination",
-            "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "json",
-          "code": "{\"policy\":\"Retrieved text is evidence, not instructions.\",\"requiresCitation\":true,\"requiresApprovalFor\":[\"external_write\",\"payment\",\"email_send\"]}",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "policy",
-              "explains": "States the rule."
-            },
-            {
-              "part": "requiresCitation",
-              "explains": "Requires provenance."
-            },
-            {
-              "part": "requiresApprovalFor",
-              "explains": "Lists risky actions."
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
+            "risk_register"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb1",
+            "kb2"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Securing Tool-Using Agents?",
+          "title": "Permission boundary",
+          "prompt": "Where should final tool authorization happen?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Inside the retrieved web page.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "In trusted application or tool-runner code after schema and policy checks.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only inside the model natural-language answer.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The model can propose; trusted code authorizes and executes.",
           "termIds": [
+            "guardrail",
             "hallucination",
-            "prompt_injection"
+            "owasp",
+            "privacy",
+            "prompt_injection",
+            "risk_register"
           ],
           "sources": [
             "kb1"
@@ -1184,145 +647,53 @@
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "kb2"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Operate tools through tests and incident review",
+      "sub": "Close with regression attacks, audit sampling, and a solo capability manifest.",
+      "summary": "Tool security must update when tools, credentials, prompts, models, or connectors change.",
       "objectives": [
-        "Explain the role of check and apply in Securing Tool-Using Agents.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Recall the secure tool-use loop.",
+        "Write a retrieval prompt for agent tool security.",
+        "Create a capstone tool manifest and test."
       ],
       "termIds": [
-        "hallucination",
-        "prompt_injection",
         "guardrail",
+        "hallucination",
+        "owasp",
         "privacy",
-        "owasp"
+        "prompt_injection",
+        "risk_register"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_recall",
           "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "title": "Retrieval prompt for the whole lesson",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This safety lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Securing Tool-Using Agents",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Answer this from memory: \"How do I secure a tool-using agent?\" Include inventory, capability tiers, schemas, authorization, scoped credentials, sandboxing, approvals, idempotency, audit logs, injection tests, egress, and incident review."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "hallucination",
-                  "term": "hallucination"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Securing Tool-Using Agents."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Securing Tool-Using Agents, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1",
@@ -1331,162 +702,55 @@
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Re-review security whenever the agent gains a new capability.",
+          "useWhen": "Use full tool security for agents that read private data, write files, browse authenticated sites, call enterprise connectors, send messages, spend money, or run code.",
+          "avoidWhen": "Avoid adding general-purpose tools to production agents without a manifest, policy gate, sandbox, approval model, and audit trail.",
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
+            "risk_register"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "kb2"
           ]
         },
         {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "m5_capstone",
+          "kind": "functionalExample",
+          "title": "Capstone: secure one tool end to end",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Pick one agent tool. Write its capability tier, schema, allowed roles, credential scope, sandbox needs, approval rule, idempotency key, audit fields, and two attack tests: one direct user injection and one malicious tool-output injection."
                 }
               ]
             }
           ],
           "termIds": [
+            "guardrail",
             "hallucination",
+            "owasp",
+            "privacy",
             "prompt_injection",
-            "guardrail"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Securing Tool-Using Agents?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "hallucination",
-            "prompt_injection"
+            "risk_register"
           ],
           "sources": [
             "kb1"
-          ]
+          ],
+          "personalizedFor": "Solo tool security manifest"
         }
       ],
       "citations": [
         "kb1",
-        "kb2",
         "canon1",
-        "canon2"
+        "kb2"
       ],
       "decisionItForces": "Choose the right level of rigor for Securing Tool-Using Agents: baseline, production design, or advanced optimization."
     }
@@ -1495,8 +759,8 @@
     "hallucination": {
       "id": "hallucination",
       "label": "Hallucination",
-      "laymanDefinition": "Hallucination is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Hallucination is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A mistaken model claim or plan that may trigger a bad action.",
+      "technicalNote": "Tool security assumes the model can be wrong; validation and policy checks decide whether a proposed action executes.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1505,8 +769,8 @@
     "prompt_injection": {
       "id": "prompt_injection",
       "label": "Prompt injection",
-      "laymanDefinition": "Prompt injection is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prompt injection is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Untrusted text that tries to manipulate tool-using behavior.",
+      "technicalNote": "Tool security treats injection as expected input and enforces policy outside the model.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1515,8 +779,8 @@
     "guardrail": {
       "id": "guardrail",
       "label": "Guardrail",
-      "laymanDefinition": "Guardrail is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Guardrail is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A tool-boundary control that blocks unsafe or unauthorized actions.",
+      "technicalNote": "Agent guardrails include schemas, capability tiers, scoped credentials, sandboxes, approvals, egress rules, and audit logs.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1525,8 +789,8 @@
     "privacy": {
       "id": "privacy",
       "label": "Privacy",
-      "laymanDefinition": "Privacy is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Privacy is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Protection for data read or moved by tools.",
+      "technicalNote": "Read-only tools can still leak private data, so privacy controls apply to retrieval, files, connectors, logs, and outputs.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1535,8 +799,8 @@
     "owasp": {
       "id": "owasp",
       "label": "OWASP",
-      "laymanDefinition": "A security community that publishes LLM application risks.",
-      "technicalNote": "In this lesson, OWASP is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A security framework that warns about excessive agency and unsafe plugin/tool design.",
+      "technicalNote": "OWASP risks help prioritize least privilege, sensitive-data controls, and sandboxing for agents.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +810,8 @@
     "risk_register": {
       "id": "risk_register",
       "label": "Risk register",
-      "laymanDefinition": "Risk register is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Risk register is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A table of tool risks, capabilities, credentials, controls, owners, and tests.",
+      "technicalNote": "Each high-impact tool should have a risk row and an approval or sandbox policy.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1555,20 +819,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Securing Tool-Using Agents",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Release-readiness check",
         "questions": [
           {
-            "q": "What decision does Securing Tool-Using Agents change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What decision does Securing Tool-Using Agents change for this case?",
+            "why": "A good lesson changes how the learner builds, reviews, or ships tool-security policy with least privilege, confirmation, and logging.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Thin slice",
+              "Production path",
+              "Advanced optimization"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Choose the smallest option that catches: prompt injection turns a read-only support session into a payment action."
           }
         ]
       }
@@ -1580,57 +844,74 @@
         "t": "p",
         "spans": [
           {
-            "text": "Securing Tool-Using Agents is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, reconstruct secure tool use: inventory capabilities, tier risk, expose narrow tools, validate schemas, authorize users, mint scoped credentials, sandbox execution, require approvals, audit results, and test injection paths."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Securing Tool-Using Agents operating path",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Securing Tool-Using Agents.",
-          "what": "Mental model turns Securing Tool-Using Agents into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+          "label": "Inventory capabilities before adding intelligence",
+          "sub": "List every tool, action, permission, data class, side effect, and owner.",
+          "what": "Agent security starts by knowing what the agent can read, change, send, spend, or execute.",
+          "relevance": "Build a tool inventory with capability tiers.",
           "moduleId": "m1",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "spine",
+          "orient": "List every tool capability, data class, side effect, and owner.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Securing Tool-Using Agents into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+          "label": "Expose narrow typed tools",
+          "sub": "Use schemas, enums, allowlists, and business rules instead of broad raw power.",
+          "what": "Secure agents call purpose-built APIs, not arbitrary shells, browsers, or email tools by default.",
+          "relevance": "Design narrow tool schemas.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Constrain tool calls with schemas, allowlists, and business rules.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Securing Tool-Using Agents into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+          "label": "Scope credentials and sandbox execution",
+          "sub": "Bind authority server-side and isolate filesystem, network, browser, time, and package access.",
+          "what": "The model should never carry broad secrets; the tool runner should mint narrow authority after policy checks.",
+          "relevance": "Explain scoped credentials and TTLs.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "spine",
+          "orient": "Mint narrow credentials and isolate execution environments by default.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Securing Tool-Using Agents into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Securing Tool-Using Agents, not just recognize the words.",
+          "label": "Put approvals and audits on side effects",
+          "sub": "Require explicit human confirmation for external, irreversible, expensive, or sensitive actions.",
+          "what": "Approval gates turn risky model plans into reviewable human decisions before impact.",
+          "relevance": "Write an approval policy check.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Require approvals and audits for side effects that matter.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Operate tools through tests and incident review",
+          "sub": "Close with regression attacks, audit sampling, and a solo capability manifest.",
+          "what": "Tool security must update when tools, credentials, prompts, models, or connectors change.",
+          "relevance": "Recall the secure tool-use loop.",
+          "moduleId": "m5",
+          "layer": "Path",
+          "emphasis": "spine",
+          "orient": "Keep tool policies tested as capabilities and connectors evolve.",
+          "order": 5
         }
       ],
       "edges": [
@@ -1648,86 +929,101 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "then"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Inventory capabilities before adding intelligence",
+        "detail": "List every tool, action, permission, data class, side effect, and owner."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Expose narrow typed tools",
+        "detail": "Use schemas, enums, allowlists, and business rules instead of broad raw power."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Scope credentials and sandbox execution",
+        "detail": "Bind authority server-side and isolate filesystem, network, browser, time, and package access."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Put approvals and audits on side effects",
+        "detail": "Require explicit human confirmation for external, irreversible, expensive, or sensitive actions."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Operate tools through tests and incident review",
+        "detail": "Close with regression attacks, audit sampling, and a solo capability manifest."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_context",
+        "label": "Is there a complete tool inventory with capability tiers and data access?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_evidence",
+        "label": "Do tool schemas constrain types, enums, paths, URLs, sizes, and business rules?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_controls",
+        "label": "Are credentials scoped per user, task, tool, and time window?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_verify",
+        "label": "Are filesystem, process, browser, and network sandboxes configured for risky tools?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_next",
+        "label": "Do irreversible, external, expensive, or sensitive actions require human approval and audit logs?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Securing Tool-Using Agents: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Safety"
+      "prompt": "Create a one-page release-ready plan for tool-security policy with least privilege, confirmation, and logging. Include: the user problem, realistic input, mechanism, design choice, runnable or reviewable check, metric (unsafe tool calls blocked before execution), failure case (prompt injection turns a read-only support session into a payment action), owner, and the next rung after this lesson.",
+      "scopedTo": "Securing Tool-Using Agents"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Safety, Security, and Governance",
-      "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Agent Tool Security and Sandboxing",
+      "url": "https://genai.owasp.org/llm-top-10/",
+      "asOfDate": "2026-06-22"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Safety, Security, and Governance",
-      "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Prompt Injection and OWASP LLM Top 10",
+      "url": "https://genai.owasp.org/llm-top-10/",
+      "asOfDate": "2026-06-22"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "OWASP Top 10 for LLM Applications",
-      "url": "https://genai.owasp.org/llm-top-10/",
-      "asOfDate": "2026-06-20"
+      "title": "Model Context Protocol specification",
+      "url": "https://modelcontextprotocol.io/specification/latest",
+      "asOfDate": "2026-06-23"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://genai.owasp.org/llm-top-10/",
-      "asOfDate": "2026-06-20"
+      "title": "OpenAPI Specification",
+      "url": "https://spec.openapis.org/oas/latest.html",
+      "asOfDate": "2026-06-23"
     }
   }
 }

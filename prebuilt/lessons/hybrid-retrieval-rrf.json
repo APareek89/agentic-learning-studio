@@ -4,8 +4,8 @@
     "topic": "Hybrid Retrieval and RRF",
     "title": "Hybrid Retrieval and RRF",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 34,
-    "thesis": "Hybrid Retrieval and RRF becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 40,
+    "thesis": "Hybrid Retrieval and RRF is practical when learners can apply it to this concrete case: A search feature must combine exact keyword matches with semantic matches for product docs. By the end, they should be able to build or review hybrid retrieval plan using BM25, vectors, and reciprocal rank fusion, measure top-k recall across exact and paraphrased questions, and catch the failure where vector search misses exact version numbers while keyword search misses paraphrases."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Hybrid Retrieval and RRF: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Hybrid Retrieval and RRF by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Combine lexical exactness and dense semantic recall, then fuse rankings with a method that does not pretend scores are comparable.",
+    "oneLineThesis": "Hybrid retrieval uses multiple imperfect search signals so exact identifiers and paraphrased intent can both reach the generator.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Hybrid Retrieval and RRF.",
-        "what": "Mental model turns Hybrid Retrieval and RRF into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+        "label": "Dense and sparse fail differently",
+        "sub": "Hybrid search starts by respecting each retriever’s strengths.",
+        "what": "Learners distinguish semantic similarity from literal matching.",
+        "relevance": "This prevents teams from blaming the model when retrieval lost the exact symbol.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Compare paraphrase recall with exact identifier recall on the same question.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Hybrid Retrieval and RRF into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+        "label": "RRF fuses ranks, not scores",
+        "sub": "Reciprocal rank fusion avoids score-scale mismatches.",
+        "what": "Learners compute why high ranks from either list matter.",
+        "relevance": "Rank fusion is easier to debug than weighted score math across unrelated retrievers.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Merge result lists without pretending BM25 and cosine scores share units.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Hybrid Retrieval and RRF into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+        "label": "Filters and analyzers decide what enters the race",
+        "sub": "Hybrid retrieval still needs metadata and lexical tuning.",
+        "what": "Learners place filters and analyzers before fusion.",
+        "relevance": "Unfiltered hybrid retrieval can confidently retrieve the wrong tenant, version, or product area.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Constrain the candidate pool before dense and sparse signals compete.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Hybrid Retrieval and RRF into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+        "label": "Implement RRF in a small test harness",
+        "sub": "A few lines can expose duplicate handling and rank effects.",
+        "what": "Learners implement rank fusion and predict its output.",
+        "relevance": "A tiny harness makes fusion behavior inspectable and regression-testable.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Write fusion code before wiring it into the full RAG stack.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Hybrid Retrieval and RRF into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+        "label": "Evaluate hybrid retrieval by failure bucket",
+        "sub": "The metric should reveal which signal fixed which miss.",
+        "what": "Learners design evals that prove hybrid retrieval earned its latency.",
+        "relevance": "Without bucketed eval, hybrid search can add complexity without improving shipped answers.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Measure exact-term misses separately from paraphrase and permission misses.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,42 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Hybrid Retrieval and RRF.",
-      "summary": "Build the simplest useful picture of Hybrid Retrieval and RRF. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Dense and sparse fail differently",
+      "sub": "Hybrid search starts by respecting each retriever’s strengths.",
+      "summary": "Vector search and keyword search are complementary, not rivals.",
       "objectives": [
-        "Explain the role of mental model in Hybrid Retrieval and RRF.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why dense retrieval helps paraphrase.",
+        "Explain why BM25 helps exact terms and identifiers.",
+        "Recognize mixed queries that need both."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "reranker",
+        "rrf",
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Two signals catch two kinds of relevance",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Hybrid Retrieval and RRF",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a learner asks “Why does HNSW index creation fail for vector(1536)?” Dense search finds general vector database notes, while lexical search finds the exact HNSW migration error. Neither path alone is dependable."
                 }
               ]
             },
@@ -148,33 +153,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Sparse retrieval rewards literal overlap: product names, stack traces, model IDs, legal clauses, and version numbers. Dense retrieval rewards meaning: “cite sources” can match “provenance,” and “wrong answer from docs” can match “retrieval miss.”"
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Label each term in a query as exact, semantic, or filter-worthy before choosing a retriever."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "Dense search hears the melody; sparse search reads the sheet music."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Case study: API error code plus plain-English intent",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A docs assistant receives “How do I fix ERR_EMBED_DIM after switching bge-small to text-embedding-3-small?” The exact code and model names matter, but the user also wants migration guidance."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Sparse search catches ERR_EMBED_DIM and model names. Dense search catches the migration explanation even if it says “dimension mismatch.” RRF lets both pieces compete fairly."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Hybrid Retrieval and RRF."
+                    "text": "Run dense retrieval for semantic migration context."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Run sparse retrieval for exact error and model identifiers."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Fuse by rank rather than raw score."
+                  }
+                ],
+                [
+                  {
+                    "text": "Inspect whether the fused top-k contains both diagnosis and fix."
                   }
                 ]
               ]
@@ -183,256 +232,92 @@
           "termIds": [
             "rag",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Hybrid Retrieval and RRF.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Hybrid Retrieval and RRF, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for hybrid retrieval and rrf help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Hybrid Retrieval and RRF"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Hybrid Retrieval and RRF?",
+          "title": "Signal diagnosis",
+          "prompt": "A vector retriever misses an exact error code. What is the most direct retrieval fix?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Increase model temperature.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Add or tune a sparse lexical path and fuse it with dense results.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Remove exact identifiers from documents.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The error code is a lexical signal; generation settings cannot retrieve it.",
           "termIds": [
             "rag",
-            "embedding"
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "RRF fuses ranks, not scores",
+      "sub": "Reciprocal rank fusion avoids score-scale mismatches.",
+      "summary": "RRF rewards documents that appear near the top of one or more retrieval lists.",
       "objectives": [
-        "Explain the role of mechanism in Hybrid Retrieval and RRF.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Define reciprocal rank fusion.",
+        "Explain why raw dense and sparse scores should not be added blindly.",
+        "Tune top-k and deduplication for fused lists."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "reranker",
+        "rrf",
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "The rank is the common currency",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Hybrid Retrieval and RRF",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "BM25 scores and vector similarities are produced by different systems. A score of 12.4 from one index and 0.78 from another do not mean comparable confidence. RRF sidesteps that by using rank position."
                 }
               ]
             },
@@ -440,33 +325,77 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "A common form adds 1/(k + rank) for each list. The constant k smooths the contribution so the first few ranks matter without making lower ranks worthless."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If the same chunk appears through both paths, dedupe it before generation but keep the evidence that both retrievers agreed."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "RRF is a voting rule: each retriever submits an ordered ballot."
+        },
+        {
+          "id": "m2_worked",
+          "kind": "functionalExample",
+          "title": "Worked fusion: dense finds meaning, sparse finds the symbol",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Dense top three: migration guide, vector dimensions note, pgvector overview. Sparse top three: ERR_EMBED_DIM troubleshooting, vector dimensions note, changelog."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "RRF lifts “vector dimensions note” because both retrievers ranked it, while still keeping the exact troubleshooting page and the broader migration guide. The final set is better than either list alone."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Hybrid Retrieval and RRF."
+                    "text": "Assign each hit a stable chunk ID."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "For every retrieval list, add reciprocal-rank points by position."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Merge duplicate chunk IDs by summed score."
+                  }
+                ],
+                [
+                  {
+                    "text": "Sort fused scores and pass a bounded candidate set to reranking or prompt packing."
                   }
                 ]
               ]
@@ -475,205 +404,92 @@
           "termIds": [
             "rag",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Hybrid Retrieval and RRF, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon3"
           ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for hybrid retrieval and rrf help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Hybrid Retrieval and RRF"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Hybrid Retrieval and RRF?",
+          "title": "Fusion math",
+          "prompt": "Why is RRF often safer than adding dense and BM25 scores directly?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "It asks the LLM to rewrite every document.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It uses rank positions, so it avoids incompatible score scales.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It removes the need for deduplication.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Fusion still needs dedupe and evaluation; it just avoids score-unit confusion.",
           "termIds": [
             "rag",
-            "embedding"
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Filters and analyzers decide what enters the race",
+      "sub": "Hybrid retrieval still needs metadata and lexical tuning.",
+      "summary": "Good fusion starts with eligible candidates.",
       "objectives": [
-        "Explain the role of design choices in Hybrid Retrieval and RRF.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Use metadata filters before ranking.",
+        "Tune analyzers for symbols, casing, and code.",
+        "Explain how filters interact with dense recall."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "reranker",
+        "rrf",
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Hybrid is not a substitute for eligibility",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Hybrid Retrieval and RRF",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A fused ranker should not decide whether a learner is allowed to see a source. Tenant, language, product, date, and document status filters belong before scoring."
                 }
               ]
             },
@@ -681,211 +497,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Hybrid Retrieval and RRF."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Hybrid Retrieval and RRF, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Sparse analyzers also matter. Lowercasing may help ordinary prose but damage case-sensitive code symbols. Tokenizing on punctuation may break API names. These choices decide whether exact search really catches exactness."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "If a query includes a version number, make the expected version a filter or a strongly preserved lexical token."
                 }
               ]
             }
@@ -893,88 +514,186 @@
           "termIds": [
             "rag",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "analogy": "Before judging the race, make sure only eligible runners are on the track."
+        },
+        {
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "Hybrid retrieval decisions",
+          "criteria": [
+            "Decision",
+            "Use when",
+            "Risk"
+          ],
+          "options": [
+            {
+              "name": "Metadata filter first",
+              "cells": [
+                {
+                  "criterion": "Decision",
+                  "text": "Apply tenant, product, status, and version constraints before search.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Documents have permissions or versioned facts.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Overly strict filters can hide valid evidence.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use as the default for production KBs.",
+              "cost": "Low",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Analyzer tuning",
+              "cells": [
+                {
+                  "criterion": "Decision",
+                  "text": "Preserve symbols, casing, hyphens, and model IDs.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Queries include code, APIs, SKUs, or error strings.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Bad analyzers make sparse search look worse than it is.",
+                  "rating": "bad"
+                }
+              ],
+              "whenToUse": "Use for technical docs and logs.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Dense top-k expansion",
+              "cells": [
+                {
+                  "criterion": "Decision",
+                  "text": "Retrieve more semantic candidates before fusion.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Use when",
+                  "text": "Paraphrase recall is low.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "More candidates increase latency and reranking cost.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use after checking filters and chunk quality.",
+              "cost": "Medium",
+              "complexity": "Low"
+            }
+          ],
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Hybrid Retrieval and RRF?",
+          "title": "Eligibility check",
+          "prompt": "Hybrid retrieval returns a highly relevant chunk from a private customer document. What failed first?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "RRF always leaks private chunks.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Eligibility filtering or permission metadata, not the fusion formula.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The model should ignore private text automatically.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Retrieval must prevent unauthorized evidence from reaching the prompt.",
           "termIds": [
             "rag",
-            "embedding"
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Hybrid Retrieval and RRF: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Implement RRF in a small test harness",
+      "sub": "A few lines can expose duplicate handling and rank effects.",
+      "summary": "Hybrid retrieval becomes understandable when you can print the fused list.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Hybrid Retrieval and RRF.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Implement RRF over lists of chunk IDs.",
+        "Predict which chunks rise after agreement.",
+        "Separate fusion from reranking."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
-        "chunk",
-        "reranker"
+        "reranker",
+        "rrf",
+        "chunk"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "RRF is simple enough to unit test",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Hybrid Retrieval and RRF",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A production stack may involve vector stores, full-text indexes, and rerankers, but the fusion step should be small and deterministic. Keep it separate so you can test duplicate IDs and rank effects."
                 }
               ]
             },
@@ -982,463 +701,16 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Hybrid Retrieval and RRF."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Hybrid Retrieval and RRF, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for hybrid retrieval and rrf help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Hybrid Retrieval and RRF?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Hybrid Retrieval and RRF.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Hybrid Retrieval and RRF",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Hybrid Retrieval and RRF."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Hybrid Retrieval and RRF, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Spaced recall: from chunking, remember that chunk IDs must be stable. Fusion depends on stable IDs to dedupe dense and sparse hits."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "If a chunk appears twice because overlap created near-duplicates with different IDs, fix chunk identity or dedupe by source span."
                 }
               ]
             }
@@ -1446,57 +718,259 @@
           "termIds": [
             "rag",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         },
         {
-          "id": "m5_quiz",
+          "id": "m4_code",
+          "kind": "codeExample",
+          "title": "Runnable RRF over dense and sparse hit IDs",
+          "language": "python",
+          "code": "def rrf(lists, k=60):\n    scores = {}\n    for hits in lists:\n        for rank, chunk_id in enumerate(hits, start=1):\n            scores[chunk_id] = scores.get(chunk_id, 0.0) + 1.0 / (k + rank)\n    return sorted(scores.items(), key=lambda item: item[1], reverse=True)\n\ndense = [\"migration-guide\", \"vector-dimensions\", \"pgvector-overview\"]\nsparse = [\"err-embed-dim\", \"vector-dimensions\", \"changelog\"]\n\nfor chunk_id, score in rrf([dense, sparse]):\n    print(chunk_id, round(score, 5))",
+          "explanation": "The shared “vector-dimensions” chunk rises because both lists ranked it, while unique exact and semantic hits remain available.",
+          "predictThenReveal": {
+            "prompt": "Before running it, predict whether “vector-dimensions” beats the first item from each individual list.",
+            "answer": "With k=60, agreement helps but does not completely erase top-ranked unique hits; this is why you still evaluate the final packed top-k."
+          },
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        },
+        {
+          "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Hybrid Retrieval and RRF?",
+          "title": "RRF implementation",
+          "prompt": "What bug appears if dense and sparse use different chunk IDs for the same source span?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The LLM will automatically merge them before retrieval.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Fusion cannot recognize agreement, so duplicates crowd the candidate list.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The sparse retriever stops returning exact matches.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Stable identity is part of retrieval engineering.",
           "termIds": [
             "rag",
-            "embedding"
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon3"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Evaluate hybrid retrieval by failure bucket",
+      "sub": "The metric should reveal which signal fixed which miss.",
+      "summary": "Hybrid retrieval is justified when it fixes known recall holes.",
+      "objectives": [
+        "Create exactness and paraphrase eval buckets.",
+        "Measure packed top-k, not only candidate top-k.",
+        "Decide when reranking is worth the cost."
       ],
-      "decisionItForces": "Choose the right level of rigor for Hybrid Retrieval and RRF: baseline, production design, or advanced optimization."
+      "termIds": [
+        "rag",
+        "embedding",
+        "vector_search",
+        "reranker",
+        "rrf",
+        "chunk"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Hybrid should fix named failures",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Do not add sparse search because it sounds more production-grade. Add it because the eval set contains exact identifiers that dense search misses, or because sparse-only search misses paraphrased user intent."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A good report separates “dense found it,” “sparse found it,” “fusion found it,” and “none found it.” That tells you whether to tune analyzers, chunking, embeddings, or reranking."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If hybrid improves top-50 but not the top-6 that enter the prompt, the generator still cannot use the improvement."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output after adding RRF",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A fused list should improve evidence, not just logs."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Exact identifier questions retrieve the expected source within the packed context budget."
+                  }
+                ],
+                [
+                  {
+                    "text": "Paraphrased questions still retrieve semantically relevant chunks after sparse results are added."
+                  }
+                ],
+                [
+                  {
+                    "text": "Duplicate chunks are removed without losing source agreement signals."
+                  }
+                ],
+                [
+                  {
+                    "text": "Permission, product, and version filters are applied before fusion."
+                  }
+                ],
+                [
+                  {
+                    "text": "Answer citations point to chunks that actually support the generated sentences."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ],
+          "personalizedFor": "Agentic Learning Studio production review"
+        },
+        {
+          "id": "m5_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Hybrid release bar",
+          "prompt": "Hybrid retrieval improves top-30 recall but not top-6 answer evidence. What should you inspect next?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "The UI color of citation links.",
+              "correct": false
+            },
+            {
+              "text": "Reranking, prompt packing, and whether fused candidates are being trimmed before generation.",
+              "correct": true
+            },
+            {
+              "text": "Whether the model can memorize the missing document.",
+              "correct": false
+            }
+          ],
+          "explanation": "The model only sees what the final packing stage sends.",
+          "termIds": [
+            "rag",
+            "embedding",
+            "vector_search",
+            "reranker",
+            "rrf",
+            "chunk"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon3"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb4",
+        "canon3"
+      ]
     }
   ],
   "glossary": {
     "rag": {
       "id": "rag",
       "label": "RAG",
-      "laymanDefinition": "Retrieving evidence before generation.",
-      "technicalNote": "In this lesson, RAG is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Retrieving relevant evidence before generation so answers can be grounded in sources.",
+      "technicalNote": "RAG quality depends on corpus freshness, chunking, embeddings, filters, ranking, citation handling, and faithfulness evaluation.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +980,8 @@
     "embedding": {
       "id": "embedding",
       "label": "Embedding",
-      "laymanDefinition": "Embedding is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Embedding is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A numeric vector representation of text used for semantic comparison.",
+      "technicalNote": "Embedding choices fix dimension, distance metric, query/passage formatting, model version, and migration requirements for retrieval.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +990,8 @@
     "vector_search": {
       "id": "vector_search",
       "label": "Vector search",
-      "laymanDefinition": "Vector search is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Vector search is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Finding nearby vectors to retrieve semantically related chunks.",
+      "technicalNote": "Vector search needs metadata filters, recall tests, index tuning, and fallback for exact terms, IDs, and rare phrases.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +1000,8 @@
     "chunk": {
       "id": "chunk",
       "label": "Chunk",
-      "laymanDefinition": "Chunk is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Chunk is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A source text segment stored and retrieved as a unit.",
+      "technicalNote": "Chunk design balances semantic completeness, citation accuracy, token budget, overlap, metadata, and update/delete behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +1010,8 @@
     "reranker": {
       "id": "reranker",
       "label": "Reranker",
-      "laymanDefinition": "Reranker is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Reranker is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A second-stage model or method that reorders retrieved candidates by relevance.",
+      "technicalNote": "Rerankers improve top-result precision when candidate recall is adequate, but add latency, cost, and evaluation complexity.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1020,8 @@
     "rrf": {
       "id": "rrf",
       "label": "RRF",
-      "laymanDefinition": "A rank-based method for merging retrieval results.",
-      "technicalNote": "In this lesson, RRF is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A rank-fusion method that merges multiple result lists by reciprocal rank.",
+      "technicalNote": "RRF is useful for hybrid retrieval because it combines lexical and vector rankings without requiring comparable raw scores.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,20 +1030,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Hybrid Retrieval and RRF",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Retrieval fusion choice",
         "questions": [
           {
-            "q": "What decision does Hybrid Retrieval and RRF change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "When should a RAG system add sparse search and RRF instead of tuning embeddings only?",
+            "why": "Dense search can miss exact names, versions, and error codes even while finding semantically related passages.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Dense plus BM25 fused with RRF",
+              "Dense-only retrieval with larger top-k",
+              "Keyword-only search"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Add hybrid retrieval when real queries contain identifiers or when the right answer appears in one retriever but not consistently near the top."
           }
         ]
       }
@@ -1581,64 +1055,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Hybrid Retrieval and RRF is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: from memory, explain the two retrieval paths, why raw scores should not be merged casually, how RRF boosts agreement, and how reranking fits after fusion."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Hybrid retrieval path from query to fused evidence",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Hybrid Retrieval and RRF.",
-          "what": "Mental model turns Hybrid Retrieval and RRF into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+          "label": "Dense and sparse fail differently",
+          "sub": "Hybrid search starts by respecting each retriever’s strengths.",
+          "what": "Learners distinguish semantic similarity from literal matching.",
+          "relevance": "This prevents teams from blaming the model when retrieval lost the exact symbol.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Compare paraphrase recall with exact identifier recall on the same question.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Hybrid Retrieval and RRF into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+          "label": "RRF fuses ranks, not scores",
+          "sub": "Reciprocal rank fusion avoids score-scale mismatches.",
+          "what": "Learners compute why high ranks from either list matter.",
+          "relevance": "Rank fusion is easier to debug than weighted score math across unrelated retrievers.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Merge result lists without pretending BM25 and cosine scores share units.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Hybrid Retrieval and RRF into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+          "label": "Filters and analyzers decide what enters the race",
+          "sub": "Hybrid retrieval still needs metadata and lexical tuning.",
+          "what": "Learners place filters and analyzers before fusion.",
+          "relevance": "Unfiltered hybrid retrieval can confidently retrieve the wrong tenant, version, or product area.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Constrain the candidate pool before dense and sparse signals compete.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Hybrid Retrieval and RRF into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Hybrid Retrieval and RRF, not just recognize the words.",
+          "label": "Implement RRF in a small test harness",
+          "sub": "A few lines can expose duplicate handling and rank effects.",
+          "what": "Learners implement rank fusion and predict its output.",
+          "relevance": "A tiny harness makes fusion behavior inspectable and regression-testable.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Write fusion code before wiring it into the full RAG stack.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Evaluate hybrid retrieval by failure bucket",
+          "sub": "The metric should reveal which signal fixed which miss.",
+          "what": "Learners design evals that prove hybrid retrieval earned its latency.",
+          "relevance": "Without bucketed eval, hybrid search can add complexity without improving shipped answers.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Measure exact-term misses separately from paraphrase and permission misses.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -1649,57 +1140,62 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Take ten production-like questions with product names, acronyms, or version numbers. Run dense-only, sparse-only, and RRF-fused retrieval; record which expected sources appear in packed top-k and decide whether a reranker is needed. Next rung: study reranking for better answers.",
+      "scopedTo": "Hybrid Retrieval and RRF"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Dense and sparse fail differently",
+        "detail": "Vector search and keyword search are complementary, not rivals."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "RRF fuses ranks, not scores",
+        "detail": "RRF rewards documents that appear near the top of one or more retrieval lists."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Filters and analyzers decide what enters the race",
+        "detail": "Good fusion starts with eligible candidates."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Implement RRF in a small test harness",
+        "detail": "Hybrid retrieval becomes understandable when you can print the fused list."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Evaluate hybrid retrieval by failure bucket",
+        "detail": "Hybrid retrieval is justified when it fixes known recall holes."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Dense and sparse fail differently” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Filters and analyzers decide what enters the race” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Evaluate hybrid retrieval by failure bucket”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Design a one-page implementation plan for Hybrid Retrieval and RRF: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -1729,6 +1225,41 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon5": {
+      "id": "canon5",
+      "kind": "canonical",
+      "title": "Sentence Transformers retrieve and rerank",
+      "url": "https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html",
+      "asOfDate": "2026-06-22"
     }
   }
 }

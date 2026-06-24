@@ -98,6 +98,9 @@ export const GraphState = Annotation.Root({
   // ---- produced by the nodes ----
   profile: Annotation<LearnerProfile | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),
   intent: Annotation<Intent | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),
+  // The OPUS planner's lean STRUCTURAL plan (modules/order/terms/mental-map shape, no prose).
+  // The architect (Sonnet) writes the skeleton's prose following it. null → architect plans + writes.
+  plan: Annotation<unknown>({ reducer: (_o, n) => n ?? _o, default: () => null }),
   retrieved: Annotation<RetrievedSource[]>({ reducer: (_o, n) => n ?? _o, default: () => [] }),
   coverage: Annotation<number>({ reducer: (_o, n) => n ?? _o ?? 0, default: () => 0 }),
   blueprint: Annotation<Blueprint | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),

@@ -5,7 +5,7 @@
     "title": "Deployment Patterns for AI Apps",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 34,
-    "thesis": "Deployment Patterns for AI Apps becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Deploying an AI app means choosing how the model is served, fronting it with a gateway, and placing yourself deliberately on the latency/throughput/cost tradeoff so it survives real load."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,55 +25,77 @@
   },
   "mentalMap": {
     "title": "Deployment Patterns for AI Apps: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Deployment Patterns for AI Apps by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Follow the path top to bottom: each step is what you build before the next.",
+    "oneLineThesis": "Shipping an AI app means choosing how the model is served, fronting it with a gateway, and tuning the latency/throughput/cost tradeoff under real load.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Deployment Patterns for AI Apps.",
-        "what": "Mental model turns Deployment Patterns for AI Apps into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+        "label": "Why deployment is its own problem",
+        "sub": "An AI model that runs in a notebook is not a deployed app.",
+        "order": 1,
+        "orient": "Why serving a model is harder than calling it, and what a deployment owns.",
+        "icon": "🚀",
+        "what": "Frames deployment as turning a working model into a service that survives real traffic.",
+        "relevance": "Every later choice (serving engine, gateway, scaling) only makes sense once you see what production load demands.",
+        "laymanExplanation": "A model in a notebook is a home-cooked meal; deploying it is opening a restaurant that serves hundreds of orders at once.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Deployment Patterns for AI Apps into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+        "label": "How serving actually works",
+        "sub": "GPU, serving engine, and gateway — the moving parts of a request.",
+        "order": 2,
+        "orient": "How a request travels from client through gateway to a GPU-backed serving engine.",
+        "icon": "⚙️",
+        "what": "Traces the request path and names the three layers that every AI deployment has.",
+        "relevance": "You cannot reason about latency, cost, or failures without knowing which layer owns each.",
+        "laymanExplanation": "Like seeing the kitchen behind the counter: the gateway is the host, the serving engine is the line cook, the GPU is the stove.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Deployment Patterns for AI Apps into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+        "label": "Choosing a deployment pattern",
+        "sub": "Real-time, batch, or self-hosted vs managed — the tradeoff that drives cost.",
+        "order": 3,
+        "orient": "How to pick a serving pattern by weighing latency, throughput, cost, and operational burden.",
+        "icon": "⚖️",
+        "what": "Compares the main deployment patterns and the latency/throughput/cost tradeoffs each forces.",
+        "relevance": "This is the decision that determines your GPU bill and whether users wait seconds or milliseconds.",
+        "laymanExplanation": "Choosing between a fast-food drive-through, a catering kitchen, and a private chef — each fits a different demand.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Deployment Patterns for AI Apps into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+        "label": "A minimal serving setup",
+        "sub": "Stand up a real-time endpoint and the autoscaling rule behind it.",
+        "order": 4,
+        "orient": "How a thin real-time serving endpoint and an autoscaling rule fit together in code.",
+        "icon": "🛠️",
+        "what": "Sketches the smallest runnable serving endpoint plus the autoscaling logic that protects the GPU.",
+        "relevance": "Connecting the pattern to a concrete artifact is what turns the concept into something you can ship.",
+        "laymanExplanation": "Opening the restaurant on day one with one stove and a rule for when to call in a second cook.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Deployment Patterns for AI Apps into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+        "label": "Hardening and knowing it works",
+        "sub": "Catch the failure modes, verify generated config, and decide your rigor level.",
+        "order": 5,
+        "orient": "How deployments break under load and what to verify before you trust the setup.",
+        "icon": "🛡️",
+        "what": "Names the production failure modes and the checks that prove a deployment is actually ready.",
+        "relevance": "Most outages come from cold starts, queue overflow, and version skew — this is where you defend against them.",
+        "laymanExplanation": "The dry run before the grand opening: stress the kitchen, check the freezer, confirm last night's menu is the one on the counter.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine"
@@ -106,13 +128,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Deployment Patterns for AI Apps.",
-      "summary": "Build the simplest useful picture of Deployment Patterns for AI Apps. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Why deployment is its own problem",
+      "sub": "Starts the spine: the gap between a model that runs and a model that serves.",
+      "summary": "A model that returns one prediction in a notebook is not a deployed app. This module frames what changes when real users, concurrency, and uptime enter the picture — and why that demands deliberate deployment patterns.",
       "objectives": [
-        "Explain the role of mental model in Deployment Patterns for AI Apps.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why running a model and serving a model are different problems.",
+        "Name the three things production traffic adds that a notebook never tests.",
+        "Identify the first tradeoff every deployment forces: latency versus cost."
       ],
       "termIds": [
         "gpu",
@@ -127,20 +149,19 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Why a model that runs isn't a model that's deployed",
+          "analogy": "A model in a notebook is a home-cooked meal; deploying it is opening a restaurant — the recipe is the easy part, surviving the dinner rush is the job.",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, predict: "
                 },
                 {
-                  "text": "Deployment Patterns for AI Apps",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "em": true,
+                  "text": "your model gives a great answer in a notebook in 200 ms. What three new problems appear the moment 500 users hit it at once?"
                 }
               ]
             },
@@ -148,14 +169,29 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "In a notebook you call the model once and read the result. Nothing competes for the "
                 },
                 {
                   "text": "gpu",
                   "term": "gpu"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ", nothing fails halfway, and there is no \"how many requests per second\" to worry about. A deployed app has to answer for all of that. "
+                },
+                {
+                  "text": "Deployment patterns",
+                  "strong": true
+                },
+                {
+                  "text": " exist precisely because the gap between \"it works for me\" and \"it works for everyone\" is where AI apps break."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Production traffic adds three things a single notebook call never tests:"
                 }
               ]
             },
@@ -164,26 +200,60 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Deployment Patterns for AI Apps."
+                    "text": "Concurrency",
+                    "strong": true
+                  },
+                  {
+                    "text": " — many requests arrive at once and contend for the same GPU."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Variability",
+                    "strong": true
+                  },
+                  {
+                    "text": " — traffic spikes, prompts vary in length, and "
+                  },
+                  {
+                    "text": "latency",
+                    "term": "latency"
+                  },
+                  {
+                    "text": " stops being a single number."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Failure",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a node dies, a queue overflows, or a new model version ships a regression."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The first tradeoff you will meet over and over: making each answer faster usually means keeping expensive GPUs warm, while keeping cost low usually means accepting more "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": ". You cannot escape it — you can only place yourself on it deliberately."
+                }
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency"
           ],
           "sources": [
             "kb1"
@@ -192,24 +262,24 @@
         {
           "id": "m1_visual",
           "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Deployment Patterns for AI Apps.",
+          "title": "Click through one production request",
+          "caption": "What happens to a single inference request once your model is deployed — not just 'call model, get answer'.",
           "steps": [
             {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
+              "label": "Request arrives",
+              "detail": "A client sends a prompt to your public endpoint. It hits the gateway first, not the model."
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
+              "label": "Route & queue",
+              "detail": "The gateway authenticates, rate-limits, and routes to a serving replica — queuing if all GPUs are busy."
             },
             {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
+              "label": "GPU inference",
+              "detail": "The serving engine batches the request with others and runs it on the GPU; this is where latency is spent."
             },
             {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
+              "label": "Stream back",
+              "detail": "Tokens stream back through the gateway to the client; meanwhile autoscaling watches the queue depth."
             }
           ],
           "min": 1,
@@ -219,22 +289,23 @@
             {
               "at": 1,
               "label": "Intuition",
-              "note": "Good for orientation."
+              "note": "Good enough to picture: request in, answer out, GPU in the middle."
             },
             {
               "at": 3,
               "label": "Working model",
-              "note": "Enough detail to predict failures."
+              "note": "Enough detail to predict where queuing and cold starts add latency."
             },
             {
               "at": 5,
               "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "note": "Adds batching, autoscaling, and the gateway's auth/rate-limit responsibilities."
             }
           ],
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "gateway"
           ],
           "sources": [
             "kb1"
@@ -243,42 +314,56 @@
         {
           "id": "m1_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How to frame any deployment decision",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Name the load",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Deployment Patterns for AI Apps, write one sentence that says what this part owns and what it does not own."
+                      "text": "Write one sentence: how many requests per second do you expect at peak, and how fast must each one come back? This single number shapes every later choice."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Place yourself on the tradeoff",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Decide which matters more for THIS app: tail "
+                    },
+                    {
+                      "text": "latency",
+                      "term": "latency"
+                    },
+                    {
+                      "text": " (a user is waiting) or "
+                    },
+                    {
+                      "text": "throughput",
+                      "term": "throughput"
+                    },
+                    {
+                      "text": " per GPU-dollar (a batch job at 3am). You rarely get both."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Choose a failure to catch",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Pick the one outage you most fear — a cold-start spike, a saturated queue, a bad model version — and make sure your design has an answer for it before you ship."
                     }
                   ]
                 }
@@ -286,8 +371,8 @@
             }
           ],
           "termIds": [
-            "gpu",
-            "serving"
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1",
@@ -297,13 +382,20 @@
         {
           "id": "m1_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: the same model, two deployments",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for deployment patterns for ai apps help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Team A serves a chat assistant: users wait on every token, so they keep two GPUs warm and optimize tail "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": ". The GPUs sit half-idle, but answers feel instant."
                 }
               ]
             },
@@ -311,7 +403,14 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Team B runs the same model to summarize a million documents overnight. Nobody is waiting, so they pack requests into large batches for maximum "
+                },
+                {
+                  "text": "throughput",
+                  "term": "throughput"
+                },
+                {
+                  "text": " per dollar and let any single job take seconds. Same weights, opposite deployment — because the load is different."
                 }
               ]
             }
@@ -319,8 +418,8 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "gpu",
-            "serving",
-            "gateway"
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1"
@@ -329,13 +428,13 @@
         {
           "id": "m1_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: latency is a distribution, not a number",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "In production you never report \"average latency\" alone — you track percentiles (p50, p95, p99). A model with a great average can still have a p99 that times out for one user in a hundred, and that user is the one who complains."
                 }
               ]
             },
@@ -344,15 +443,14 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Set your latency target as a percentile under a stated load, e.g. 'p95 under 800 ms at 50 requests/second' — a number you can actually test against."
                 }
               ]
             }
           ],
           "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1",
@@ -362,23 +460,23 @@
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Deployment Patterns for AI Apps?",
+          "prompt": "What is the core reason deploying an AI model is harder than calling it in a notebook?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Deployed models use different weights than notebook models.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Production adds concurrency, traffic variability, and failure — none of which a single call tests.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Notebooks cannot run on a GPU.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The weights are identical. What changes is the environment: many concurrent requests, spiky load, and the need to survive failures — which is exactly what deployment patterns address.",
           "termIds": [
             "gpu",
             "serving"
@@ -398,13 +496,13 @@
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "How serving actually works",
+      "sub": "Follows module 1: open up the request path you just framed.",
+      "summary": "Now that you know production load is the problem, this module traces the request path and names the three layers — gateway, serving engine, GPU — that every AI deployment is built from.",
       "objectives": [
-        "Explain the role of mechanism in Deployment Patterns for AI Apps.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Trace an inference request through gateway, serving engine, and GPU.",
+        "Explain what each layer owns and why batching lives in the serving engine.",
+        "Identify which layer to inspect first when latency or errors spike."
       ],
       "termIds": [
         "gpu",
@@ -417,65 +515,121 @@
       "loadState": "full",
       "blocks": [
         {
+          "id": "m2_recall",
+          "kind": "note",
+          "tone": "info",
+          "body": [
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, recall from module 1: "
+                },
+                {
+                  "em": true,
+                  "text": "what were the three things production traffic adds that a single notebook call never tests?"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "(Concurrency, traffic variability, and failure.) The three layers below exist to absorb exactly those three pressures — keep that mapping in mind as you read."
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "The three layers of every AI deployment",
+          "analogy": "Like a restaurant: the gateway is the host who seats and paces guests, the serving engine is the line cook batching tickets, and the GPU is the single hot stove everything competes for.",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deployment Patterns for AI Apps",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Almost every AI deployment, however fancy, is three layers stacked in front of the model weights."
                 }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Gateway",
+                    "term": "gateway",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the public front door. It authenticates callers, enforces rate limits, and routes each request to a healthy replica. It owns nothing about the model itself."
+                  }
+                ],
+                [
+                  {
+                    "text": "Serving",
+                    "term": "serving",
+                    "strong": true
+                  },
+                  {
+                    "text": " engine — the process that holds the loaded model and turns a request into tokens. It batches concurrent requests together so the GPU stays busy."
+                  }
+                ],
+                [
+                  {
+                    "text": "GPU",
+                    "term": "gpu",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the scarce, expensive hardware that does the actual matrix math. Everything above exists to keep this one resource fed and never idle."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "The key insight: "
                 },
                 {
-                  "text": "gpu",
-                  "term": "gpu"
+                  "text": "batching lives in the serving engine, not the gateway",
+                  "strong": true
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ". The engine waits a few milliseconds to gather several requests, runs them through the GPU in one pass, and so trades a little "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": " for much higher "
+                },
+                {
+                  "text": "throughput",
+                  "term": "throughput"
+                },
+                {
+                  "text": ". That single decision is the heart of AI serving."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deployment Patterns for AI Apps."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1"
@@ -484,42 +638,70 @@
         {
           "id": "m2_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Follow one request through the layers",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Gateway checks and routes",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Deployment Patterns for AI Apps, write one sentence that says what this part owns and what it does not own."
+                      "text": "The request hits the "
+                    },
+                    {
+                      "text": "gateway",
+                      "term": "gateway"
+                    },
+                    {
+                      "text": " first: it verifies the API key, checks the caller is under their rate limit, and picks a serving replica that is alive and not overloaded."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Serving engine batches",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "The "
+                    },
+                    {
+                      "text": "serving",
+                      "term": "serving"
+                    },
+                    {
+                      "text": " engine groups your request with other in-flight ones and schedules them onto the GPU together, so the hardware processes many sequences per pass."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "GPU computes, tokens stream back",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "The "
+                    },
+                    {
+                      "text": "gpu",
+                      "term": "gpu"
+                    },
+                    {
+                      "text": " runs the forward passes; tokens stream back up through the gateway to the client. Time spent here is most of your "
+                    },
+                    {
+                      "text": "latency",
+                      "term": "latency"
+                    },
+                    {
+                      "text": "."
                     }
                   ]
                 }
@@ -527,8 +709,10 @@
             }
           ],
           "termIds": [
+            "gateway",
+            "serving",
             "gpu",
-            "serving"
+            "latency"
           ],
           "sources": [
             "kb1",
@@ -538,13 +722,34 @@
         {
           "id": "m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: where does the latency go?",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for deployment patterns for ai apps help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "A user reports a 4-second response. Knowing the three layers tells you exactly where to look: was the request queued at the "
+                },
+                {
+                  "text": "gateway",
+                  "term": "gateway"
+                },
+                {
+                  "text": " because every replica was busy (a scaling problem), did it wait in the "
+                },
+                {
+                  "text": "serving",
+                  "term": "serving"
+                },
+                {
+                  "text": " engine's batch window (a batching-config problem), or was the "
+                },
+                {
+                  "text": "gpu",
+                  "term": "gpu"
+                },
+                {
+                  "text": " genuinely slow on a long prompt (a model/hardware problem)?"
                 }
               ]
             },
@@ -552,7 +757,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Without the layered model you guess. With it, you instrument each boundary and the 4 seconds resolves into 'queued for 3.5s' — and now you know to add capacity, not a faster GPU."
                 }
               ]
             }
@@ -561,7 +766,8 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency"
           ],
           "sources": [
             "kb1"
@@ -570,13 +776,20 @@
         {
           "id": "m2_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: why batching changes everything",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "GPUs are massively parallel but have high fixed cost per kernel launch. Running one request at a time leaves most of the chip idle. Continuous batching (as in vLLM) keeps slotting new requests into the running batch as others finish, pushing "
+                },
+                {
+                  "text": "throughput",
+                  "term": "throughput"
+                },
+                {
+                  "text": " several-fold higher at the cost of a small, bounded wait."
                 }
               ]
             },
@@ -585,7 +798,7 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "When you tune a serving engine, the two dials that matter most are max batch size and max wait time — they directly trade latency for throughput."
                 }
               ]
             }
@@ -593,7 +806,7 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "throughput"
           ],
           "sources": [
             "kb1",
@@ -603,26 +816,27 @@
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Deployment Patterns for AI Apps?",
+          "prompt": "In an AI serving stack, which layer is responsible for batching concurrent requests together?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The gateway, because it sees all incoming traffic.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The serving engine, because it holds the model and schedules work onto the GPU.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The GPU driver, automatically.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The gateway authenticates and routes; the GPU does math. Batching — deciding which requests run together — lives in the serving engine, which is where the latency/throughput trade is made.",
           "termIds": [
+            "serving",
             "gpu",
-            "serving"
+            "gateway"
           ],
           "sources": [
             "kb1"
@@ -639,13 +853,13 @@
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Choosing a deployment pattern",
+      "sub": "Follows module 2: with the layers clear, pick how to run them.",
+      "summary": "With the request path understood, this module is the central decision: which deployment pattern fits your app. Each pattern places you differently on the latency, throughput, cost, and operational-burden tradeoff.",
       "objectives": [
-        "Explain the role of design choices in Deployment Patterns for AI Apps.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish real-time, batch, and serverless serving patterns.",
+        "Weigh self-hosted versus managed inference against cost and control.",
+        "Choose the smallest pattern that meets your latency and load target."
       ],
       "termIds": [
         "gpu",
@@ -660,35 +874,14 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "The patterns you actually choose between",
+          "analogy": "Real-time is a drive-through (fast, one car at a time, costly to keep open); batch is a catering kitchen (cook everything at once, cheap per plate, nobody waiting); serverless is a pop-up that appears only when a customer arrives (no idle cost, slow first plate).",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deployment Patterns for AI Apps",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Once you know the layers, deployment becomes a small set of recurring patterns. Three cover most cases."
                 }
               ]
             },
@@ -697,26 +890,82 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Deployment Patterns for AI Apps."
+                    "text": "Real-time serving",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a warm endpoint answers each request as it arrives. Lowest "
+                  },
+                  {
+                    "text": "latency",
+                    "term": "latency"
+                  },
+                  {
+                    "text": ", highest idle cost. Use for interactive apps."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Batch / offline",
+                    "strong": true
+                  },
+                  {
+                    "text": " — collect inputs and run them in big batches when convenient. Best "
+                  },
+                  {
+                    "text": "throughput",
+                    "term": "throughput"
+                  },
+                  {
+                    "text": " per GPU-dollar, no one waiting. Use for bulk jobs."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Serverless / scale-to-zero",
+                    "strong": true
+                  },
+                  {
+                    "text": " — spin a "
+                  },
+                  {
+                    "text": "gpu",
+                    "term": "gpu"
+                  },
+                  {
+                    "text": " up on demand, pay nothing when idle, but eat a cold-start delay on the first request. Use for spiky or low-volume traffic."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Cutting across all three is a second axis: "
+                },
+                {
+                  "text": "self-hosted versus managed",
+                  "strong": true
+                },
+                {
+                  "text": ". Self-hosting your own "
+                },
+                {
+                  "text": "serving",
+                  "term": "serving"
+                },
+                {
+                  "text": " engine gives full control and lower per-token cost at scale, but you own the GPUs, patches, and pager. A managed API trades that control for someone else carrying the operational weight."
+                }
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1"
@@ -725,42 +974,63 @@
         {
           "id": "m3_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How to pick a pattern",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Is anyone waiting?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Deployment Patterns for AI Apps, write one sentence that says what this part owns and what it does not own."
+                      "text": "If a human is staring at a spinner, you need real-time serving and must optimize "
+                    },
+                    {
+                      "text": "latency",
+                      "term": "latency"
+                    },
+                    {
+                      "text": ". If it is an offline job, batch wins on cost."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "How steady is the traffic?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Steady high volume justifies always-warm GPUs. Spiky or rare traffic makes scale-to-zero attractive — you stop paying for idle "
+                    },
+                    {
+                      "text": "gpu",
+                      "term": "gpu"
+                    },
+                    {
+                      "text": " time, accepting a cold start."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Do you have the ops capacity?",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Before choosing self-hosted, ask honestly: can your team run a "
+                    },
+                    {
+                      "text": "serving",
+                      "term": "serving"
+                    },
+                    {
+                      "text": " engine on GPUs at 3am? If not, a managed endpoint is the smaller, safer choice until volume forces the move."
                     }
                   ]
                 }
@@ -769,7 +1039,8 @@
           ],
           "termIds": [
             "gpu",
-            "serving"
+            "serving",
+            "latency"
           ],
           "sources": [
             "kb1",
@@ -779,88 +1050,89 @@
         {
           "id": "m3_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Real-time vs batch vs serverless",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Latency",
+            "Cost efficiency",
+            "Operational burden"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Real-time serving",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "criterion": "Latency",
+                  "text": "Lowest — endpoint stays warm, no cold start.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
+                  "criterion": "Cost efficiency",
+                  "text": "Poor at low traffic — you pay for idle GPUs.",
+                  "rating": "bad"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
+                  "text": "Needs autoscaling, health checks, and monitoring.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
+              "whenToUse": "Use when a human is waiting on the response (chat, search, assistants).",
+              "cost": "High (always-on GPUs)",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Batch / offline",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "criterion": "Latency",
+                  "text": "Irrelevant — jobs finish minutes to hours later.",
+                  "rating": "bad"
+                },
+                {
+                  "criterion": "Cost efficiency",
+                  "text": "Best — large batches keep the GPU fully utilized.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "text": "Simple — a queue and a worker, no uptime SLA.",
+                  "rating": "good"
+                }
+              ],
+              "whenToUse": "Use for bulk processing where no user is waiting (nightly summaries, embeddings).",
+              "cost": "Low per item",
+              "complexity": "Low"
+            },
+            {
+              "name": "Serverless / scale-to-zero",
+              "cells": [
+                {
+                  "criterion": "Latency",
+                  "text": "Good when warm, but cold starts add seconds.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Cost efficiency",
+                  "text": "Excellent for spiky traffic — zero idle cost.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Operational burden",
+                  "text": "Platform handles scaling; you tune cold-start behavior.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
+              "whenToUse": "Use for low-volume or bursty traffic where idle cost would dominate.",
+              "cost": "Pay-per-use",
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Pick the smallest pattern whose latency column meets your user requirement. If nobody is waiting, batch almost always wins on cost.",
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency",
+            "throughput"
           ],
           "sources": [
             "kb1",
@@ -870,13 +1142,13 @@
         {
           "id": "m3_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: the hidden cost of scale-to-zero",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "A serverless GPU endpoint must load multi-gigabyte model weights into VRAM before it can answer. That cold start can take 10–60 seconds. The fix is not 'never use serverless' — it is keeping a small warm pool, or accepting cold starts only on traffic that tolerates them."
                 }
               ]
             },
@@ -885,7 +1157,7 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Measure cold-start time for YOUR model before committing to scale-to-zero — a 30-second first request is fine for a batch trigger and unacceptable for a chat UI."
                 }
               ]
             }
@@ -893,7 +1165,7 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency"
           ],
           "sources": [
             "kb1",
@@ -903,26 +1175,26 @@
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Deployment Patterns for AI Apps?",
+          "prompt": "You need to generate embeddings for 5 million documents overnight; no user is waiting. Which pattern fits best?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Real-time serving, for the lowest latency.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Batch / offline, for the best throughput per GPU-dollar.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A larger GPU, regardless of pattern.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Latency doesn't matter when nobody is waiting, so you optimize cost. Large batches keep the GPU fully utilized, giving the best throughput per dollar — exactly what batch serving is for.",
           "termIds": [
-            "gpu",
-            "serving"
+            "throughput",
+            "gpu"
           ],
           "sources": [
             "kb1"
@@ -935,18 +1207,18 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Deployment Patterns for AI Apps: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the deployment pattern for your AI app: real-time serving, batch/offline, or serverless scale-to-zero."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "A minimal serving setup",
+      "sub": "Follows module 3: turn the chosen pattern into a runnable artifact.",
+      "summary": "With a pattern chosen, this module sketches the smallest real-time serving endpoint and the autoscaling rule that protects the GPU. It is the worked-to-completion ramp: read the endpoint, then predict the missing scaling logic.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Deployment Patterns for AI Apps.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Read a minimal real-time serving endpoint and name what each part does.",
+        "Explain the autoscaling rule that decides when to add or drop a replica.",
+        "Verify an AI-generated serving config before trusting it in production."
       ],
       "termIds": [
         "gpu",
@@ -961,63 +1233,65 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "The two pieces of a real-time endpoint",
+          "analogy": "Like opening the restaurant on day one: you need one cook taking orders (the endpoint) and a rule for when to phone a second cook before the queue gets out of hand (autoscaling).",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "A minimal real-time deployment is two pieces. First, a "
                 },
                 {
-                  "text": "Deployment Patterns for AI Apps",
+                  "text": "serving",
+                  "term": "serving"
+                },
+                {
+                  "text": " endpoint: a process that loads the model once, then answers requests on a port. Second, an "
+                },
+                {
+                  "text": "autoscaling rule",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
+                  "text": ": logic that watches load and adds or removes replicas so the "
                 },
                 {
                   "text": "gpu",
                   "term": "gpu"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " is neither idle nor drowning."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deployment Patterns for AI Apps."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The scaling signal that matters for AI serving is usually "
+                },
+                {
+                  "text": "queue depth",
+                  "strong": true
+                },
+                {
+                  "text": " (requests waiting), not CPU. A GPU can sit at modest CPU while its request queue — and your "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": " — climbs."
+                }
               ]
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency"
           ],
           "sources": [
             "kb1"
@@ -1026,42 +1300,56 @@
         {
           "id": "m4_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Build it up one piece at a time",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Load the model once",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Deployment Patterns for AI Apps, write one sentence that says what this part owns and what it does not own."
+                      "text": "Load weights into the "
+                    },
+                    {
+                      "text": "gpu",
+                      "term": "gpu"
+                    },
+                    {
+                      "text": " at startup, never per request — loading is the slow part, so do it once and reuse."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Expose a predict endpoint",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Accept a prompt, run inference, return tokens. This is the unit your "
+                    },
+                    {
+                      "text": "gateway",
+                      "term": "gateway"
+                    },
+                    {
+                      "text": " will route to and your autoscaler will replicate."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Decide when to scale",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Watch queue depth: above a high-water mark, add a replica; below a low-water mark for a while, drop one. The code below leaves that rule for you to predict."
                     }
                   ]
                 }
@@ -1070,6 +1358,7 @@
           ],
           "termIds": [
             "gpu",
+            "gateway",
             "serving"
           ],
           "sources": [
@@ -1080,13 +1369,34 @@
         {
           "id": "m4_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: a single warm endpoint",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for deployment patterns for ai apps help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Picture one GPU pod running a vLLM "
+                },
+                {
+                  "text": "serving",
+                  "term": "serving"
+                },
+                {
+                  "text": " engine behind a "
+                },
+                {
+                  "text": "gateway",
+                  "term": "gateway"
+                },
+                {
+                  "text": ". At 10 requests/second it keeps p95 "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": " under target. Traffic doubles at lunchtime; the queue grows, p95 creeps up, and the autoscaler spins a second pod — bringing latency back down without anyone paging an engineer."
                 }
               ]
             },
@@ -1094,7 +1404,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "That self-healing behavior is the whole point of pairing an endpoint with an autoscaling rule. The endpoint serves; the rule keeps it from falling over."
                 }
               ]
             }
@@ -1103,7 +1413,8 @@
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "gateway",
+            "latency"
           ],
           "sources": [
             "kb1"
@@ -1112,41 +1423,41 @@
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Completion problem: the autoscaling rule",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
+          "code": "# A minimal real-time serving endpoint + the autoscaling decision.\nmodel = load_model_to_gpu()  # done ONCE at startup, not per request\n\ndef handle_request(prompt):\n    return model.generate(prompt)\n\ndef should_scale(queue_depth, replicas, high=20, low=5):\n    # TODO: return \"up\", \"down\", or \"hold\" based on queue_depth\n    if queue_depth > high:\n        return \"up\"\n    if queue_depth < low and replicas > 1:\n        return \"down\"\n    return \"hold\"",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "The endpoint loads the model once and answers requests; the autoscaler scales on queue depth, not CPU. Treat this as the smallest runnable shape — real deployments add health checks, timeouts, and metrics."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before you read should_scale: if queue_depth is 25 with 1 replica (high=20), what should it return — and why queue depth rather than CPU usage?",
+            "answer": "It returns \"up\": 25 exceeds the high-water mark of 20, so a replica is added. Queue depth is the right signal because a GPU can show low CPU while requests pile up and latency climbs — CPU would never trigger the scale-up that latency actually needs."
           },
           "syntax": [
             {
-              "part": "def",
-              "explains": "Defines a function."
+              "part": "load_model_to_gpu()",
+              "explains": "Loads weights into GPU memory once at startup so requests don't pay that cost."
             },
             {
-              "part": "if",
-              "explains": "Branches on readiness."
+              "part": "queue_depth",
+              "explains": "How many requests are waiting — the load signal that tracks latency for GPU serving."
             },
             {
-              "part": "return",
-              "explains": "Hands back the result."
+              "part": "high / low",
+              "explains": "High- and low-water marks: thresholds that add a replica or remove one."
             }
           ],
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency"
           ],
           "sources": [
             "canon1",
@@ -1154,28 +1465,78 @@
           ]
         },
         {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If you let an AI assistant generate serving or autoscaling config, check these four things before trusting it — they are the ones models get wrong most often:"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Is the model loaded once at startup, not inside the request handler? A per-request load silently kills throughput.",
+                    "strong": false
+                  }
+                ],
+                [
+                  {
+                    "text": "Does the autoscaler scale on queue depth or latency — not CPU? CPU-based rules under-scale GPU workloads."
+                  }
+                ],
+                [
+                  {
+                    "text": "Is there a max-replica cap and a request timeout? Without them a traffic spike can burn unbounded GPU spend or hang forever."
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it pin the model version, so a redeploy can't silently swap weights? (More on this next module.)"
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "serving",
+            "throughput"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Deployment Patterns for AI Apps?",
+          "prompt": "For a GPU-backed real-time endpoint, which signal should the autoscaler watch?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "CPU utilization, the standard web-server metric.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Request queue depth (or latency), because a GPU can be saturated while CPU stays low.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Total disk usage on the node.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "GPU inference work doesn't show up as CPU load, so CPU-based autoscaling under-reacts. Queue depth (or measured latency) directly reflects whether the GPU is keeping up with demand.",
           "termIds": [
             "gpu",
-            "serving"
+            "latency"
           ],
           "sources": [
             "kb1"
@@ -1192,13 +1553,13 @@
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Hardening and knowing it works",
+      "sub": "Follows module 4: stress the setup you built and prove it survives.",
+      "summary": "The final module is the WHEN-IT-BREAKS step: the production failure modes that take AI deployments down, and the checks that prove a setup is ready. It ends by deciding how much rigor your app actually needs.",
       "objectives": [
-        "Explain the role of check and apply in Deployment Patterns for AI Apps.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name the three failure modes that cause most AI deployment outages.",
+        "Recall how the request path and autoscaling rule defend against each.",
+        "Decide the right level of deployment rigor for a given app."
       ],
       "termIds": [
         "gpu",
@@ -1211,22 +1572,20 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "id": "m5_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This infrastructure lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, recall from module 4: "
                 },
                 {
-                  "text": "Deployment Patterns for AI Apps",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "em": true,
+                  "text": "what signal did we say a GPU autoscaler should watch, and why not CPU?"
                 }
               ]
             },
@@ -1234,86 +1593,166 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "gpu",
-                  "term": "gpu"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "(Queue depth or latency — a GPU can be saturated while CPU stays low.) Two of the failure modes below are exactly what happens when that defense is missing or mis-tuned."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deployment Patterns for AI Apps."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
-          ],
-          "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "How AI deployments break in practice",
+          "analogy": "The grand-opening disasters: the kitchen is cold when the first guest arrives (cold start), tickets pile up faster than the cook can plate (queue overflow), and the menu on the counter isn't the one the kitchen is cooking (version skew).",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Knowing the happy path isn't enough. Three failure modes cause most AI deployment outages — recognize them and you defend against them."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "1. Cold-start latency spikes"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A scaled-to-zero or freshly-added replica must load weights into the "
+                },
+                {
+                  "text": "gpu",
+                  "term": "gpu"
+                },
+                {
+                  "text": " before it can answer. The first requests hit a 10–60 second wall. Defense: a small warm pool, or pre-warming before predicted spikes."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "2. Queue overflow under load"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Traffic outruns capacity, the request queue grows unbounded, and "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": " climbs until requests time out. Defense: autoscale on queue depth (module 4), cap the queue, and shed load gracefully rather than hanging."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "3. Version skew (the non-obvious one)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A redeploy swaps the model weights but a cached prompt template, tokenizer, or downstream parser still expects the old version. Outputs look plausible but are subtly wrong. Defense: pin and log the model "
+                },
+                {
+                  "text": "versioning",
+                  "term": "versioning"
+                },
+                {
+                  "text": " so every response is traceable to exact weights, and roll out behind a canary."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "gpu",
+            "latency",
+            "versioning",
+            "serving"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
           "id": "m5_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "A pre-launch readiness check",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Load-test to your target",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Deployment Patterns for AI Apps, write one sentence that says what this part owns and what it does not own."
+                      "text": "Drive traffic at your stated peak and confirm p95 "
+                    },
+                    {
+                      "text": "latency",
+                      "term": "latency"
+                    },
+                    {
+                      "text": " holds. If it doesn't, you found a queue-overflow risk before users did."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Trigger a cold start on purpose",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Scale a replica from zero and time the first response. Decide whether that delay is acceptable for this app, or whether you need a warm pool."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Verify version traceability",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Confirm every response can be tied to an exact model "
+                    },
+                    {
+                      "text": "versioning",
+                      "term": "versioning"
+                    },
+                    {
+                      "text": " tag, so a bad rollout can be caught and reverted fast."
                     }
                   ]
                 }
@@ -1321,8 +1760,8 @@
             }
           ],
           "termIds": [
-            "gpu",
-            "serving"
+            "latency",
+            "versioning"
           ],
           "sources": [
             "kb1",
@@ -1332,88 +1771,88 @@
         {
           "id": "m5_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "How much deployment rigor does this app need?",
           "criteria": [
             "Fit",
             "Operational burden",
-            "Risk"
+            "Outage risk"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Prototype (single endpoint)",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "text": "Great for a demo or to prove value fast.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "text": "Minimal — one replica, no autoscaling.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
+                  "criterion": "Outage risk",
+                  "text": "High under real load; no defense against spikes.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Use while traffic is tiny and an outage costs nothing.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "Production (autoscaled + monitored)",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "text": "Right when real users depend on uptime.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "text": "Needs autoscaling, version pinning, dashboards.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
+                  "criterion": "Outage risk",
+                  "text": "Low — defends against queue overflow and skew.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use once the app is on the critical path for users.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Optimized (multi-region, tuned batching)",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "text": "Best only after a measured cost or latency bottleneck.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
+                  "text": "High — specialist tuning and more infra to run.",
+                  "rating": "bad"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Outage risk",
+                  "text": "Low, but added complexity is its own risk source.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use only after metrics prove the production tier is insufficient.",
               "cost": "High",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Pick the smallest tier that meets your uptime and latency requirement. Jumping to 'optimized' before you have metrics adds risk without evidence.",
           "termIds": [
             "gpu",
             "serving",
-            "gateway"
+            "latency"
           ],
           "sources": [
             "kb1",
@@ -1423,13 +1862,27 @@
         {
           "id": "m5_technical",
           "kind": "technical",
-          "title": "Technical note",
+          "title": "Technical note: make every deployment observable",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "The single habit that prevents most of these failures is observability: log the model "
+                },
+                {
+                  "text": "versioning",
+                  "term": "versioning"
+                },
+                {
+                  "text": " tag, queue depth, and per-percentile "
+                },
+                {
+                  "text": "latency",
+                  "term": "latency"
+                },
+                {
+                  "text": " on every request. You cannot catch version skew or queue overflow you cannot see."
                 }
               ]
             },
@@ -1438,15 +1891,15 @@
               "tone": "good",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "If a deployment claim would matter in a production review — 'p95 is under 800 ms', 'we're on model v3' — attach a metric or a log line that proves it."
                 }
               ]
             }
           ],
           "termIds": [
-            "gpu",
-            "serving",
-            "gateway"
+            "versioning",
+            "latency",
+            "serving"
           ],
           "sources": [
             "kb1",
@@ -1456,25 +1909,25 @@
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Deployment Patterns for AI Apps?",
+          "prompt": "A redeploy ships new weights, but responses are subtly wrong even though no error is thrown. Which failure mode is this?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Cold-start latency spike.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Version skew — a cached template, tokenizer, or parser still expects the old model.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Queue overflow.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "No error plus plausible-but-wrong output is the signature of version skew. Pinning and logging the model version (and rolling out behind a canary) is how you catch and revert it fast.",
           "termIds": [
-            "gpu",
+            "versioning",
             "serving"
           ],
           "sources": [
@@ -1488,15 +1941,15 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Deployment Patterns for AI Apps: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the right level of deployment rigor: prototype, production, or optimized — sized to the app's real uptime and latency needs."
     }
   ],
   "glossary": {
     "gpu": {
       "id": "gpu",
       "label": "GPU",
-      "laymanDefinition": "A parallel accelerator for tensor computation.",
-      "technicalNote": "In this lesson, GPU is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The scarce, expensive parallel processor that runs the model's math — the resource every deployment is built to keep busy.",
+      "technicalNote": "GPUs are massively parallel but costly per kernel launch, which is why serving engines batch requests to keep them fully utilized.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +1959,8 @@
     "serving": {
       "id": "serving",
       "label": "Serving",
-      "laymanDefinition": "Serving is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Serving is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Running a trained model as a live service that answers requests, rather than calling it once in a script.",
+      "technicalNote": "The serving engine (e.g. vLLM) loads the model, batches concurrent requests, and schedules them onto the GPU.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +1969,8 @@
     "gateway": {
       "id": "gateway",
       "label": "Gateway",
-      "laymanDefinition": "Gateway is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Gateway is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The public front door of a deployment: it authenticates callers, rate-limits, and routes requests to a healthy replica.",
+      "technicalNote": "The gateway owns auth, rate limiting, and load balancing — not the model. It never runs inference itself.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +1979,8 @@
     "latency": {
       "id": "latency",
       "label": "Latency",
-      "laymanDefinition": "Latency is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latency is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "How long one request takes to come back — reported as percentiles (p50, p95, p99), not a single average.",
+      "technicalNote": "Tail latency (p95/p99) under a stated load is the meaningful target; an average hides the slow requests users notice.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +1989,8 @@
     "throughput": {
       "id": "throughput",
       "label": "Throughput",
-      "laymanDefinition": "Throughput is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Throughput is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "How many requests the system handles per unit time — the dial you raise with batching, often at the cost of latency.",
+      "technicalNote": "Higher batch sizes raise throughput per GPU-dollar but add a bounded wait, trading directly against latency.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1999,8 @@
     "versioning": {
       "id": "versioning",
       "label": "Versioning",
-      "laymanDefinition": "Versioning is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Versioning is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Tracking exactly which model weights produced each response, so a bad rollout can be traced and reverted.",
+      "technicalNote": "Pin and log the model version end to end; mismatched template/tokenizer/weights cause silent version skew.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1580,10 +2033,7 @@
         "t": "p",
         "spans": [
           {
-            "text": "Deployment Patterns for AI Apps is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, reconstruct the path: name the three layers a request passes through, then the three deployment patterns and the one tradeoff that separates them. Finally, recall the three failure modes that take AI deployments down and the defense for each."
           }
         ]
       }
@@ -1594,40 +2044,40 @@
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Deployment Patterns for AI Apps.",
-          "what": "Mental model turns Deployment Patterns for AI Apps into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+          "label": "Why deployment is its own problem",
+          "sub": "Production adds concurrency, variability, and failure.",
+          "what": "Frames the gap between a model that runs and a model that serves real traffic.",
+          "relevance": "Every later choice only makes sense once you see what production load demands.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine"
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Deployment Patterns for AI Apps into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+          "label": "How serving works",
+          "sub": "Gateway, serving engine, and GPU — the three layers.",
+          "what": "Traces the request path so you can reason about latency, cost, and failures.",
+          "relevance": "You cannot debug or tune what you cannot locate in the request path.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal"
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Deployment Patterns for AI Apps into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+          "label": "Choosing a pattern",
+          "sub": "Real-time, batch, or serverless against the cost tradeoff.",
+          "what": "Picks the serving pattern that fits the app's latency and load.",
+          "relevance": "This is the decision that determines the GPU bill and how fast users get answers.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine"
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Deployment Patterns for AI Apps into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deployment Patterns for AI Apps, not just recognize the words.",
+          "label": "A minimal serving setup",
+          "sub": "A real-time endpoint plus its autoscaling rule.",
+          "what": "Turns the chosen pattern into the smallest runnable serving artifact.",
+          "relevance": "Connecting the pattern to code is what makes it shippable.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal"
@@ -1654,49 +2104,49 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Frame the load",
+        "detail": "State expected peak requests/second and the latency target as a percentile."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Map the layers",
+        "detail": "Identify the gateway, serving engine, and GPU your request will pass through."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Choose the pattern",
+        "detail": "Pick real-time, batch, or serverless based on whether anyone is waiting."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Stand up a thin slice",
+        "detail": "Run a single endpoint plus an autoscaling rule on queue depth."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Harden and verify",
+        "detail": "Load-test, test a cold start, pin the version, and add observability before launch."
       }
     ],
     "checklist": [
       {
         "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "label": "Can you state peak load and a percentile latency target?",
         "fromModuleId": "m1"
       },
       {
         "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "label": "Did you pick the smallest pattern that meets the latency need?",
         "fromModuleId": "m3"
       },
       {
         "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "label": "Can a reviewer see version, queue depth, and p95 latency per request?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Deployment Patterns for AI Apps: goal, inputs, core component, validation, and one risk.",
+      "prompt": "Solo build: take one AI feature you want to ship and write its one-page deployment plan — peak load and p95 target, the chosen pattern (real-time/batch/serverless) with its tradeoff, a minimal endpoint plus an autoscaling signal, and the one failure mode you'll defend against first. NEXT rung: implement the thin slice on a managed GPU endpoint, load-test it to your target, then study autoscaling and canary rollouts to graduate from prototype to the production tier.",
       "scopedTo": "Infrastructure"
     }
   },

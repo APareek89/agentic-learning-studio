@@ -1,0 +1,4736 @@
+{
+  "meta": {
+    "title": "The Agent Loop: Observe, Decide, Act, Update",
+    "topic": "The Agent Loop",
+    "thesis": "A tool-using agent is an LLM wrapped in a repeating cycle that perceives state, chooses an action, runs a tool, and folds the result back in until the goal is reached or it safely stops.",
+    "estTotalMinutes": 32
+  },
+  "modules": [
+    {
+      "id": "m_intro",
+      "sub": "Starts the spine: the problem the cycle solves.",
+      "order": 1,
+      "title": "Why agents need a loop",
+      "blocks": [
+        {
+          "id": "why-loop-conceptual",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A plain chatbot works in one shot. You send a message, the "
+                },
+                {
+                  "term": "llm",
+                  "text": "large language model"
+                },
+                {
+                  "text": " (LLM) replies, and the conversation ends. That works for simple questions. It breaks down when a task needs real-world data or multiple steps."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Imagine asking a chatbot to book a flight. It can't check live prices, confirm seat availability, or retry a sold-out option — all in one call. It needs to "
+                },
+                {
+                  "term": "act",
+                  "text": "act"
+                },
+                {
+                  "text": " on the world, observe what happened, then decide what to do next."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "An ",
+                  "strong": true
+                },
+                {
+                  "term": "agent",
+                  "text": "agent",
+                  "strong": true
+                },
+                {
+                  "text": " solves this by running in a loop. Each "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": " it observes the situation and decides on an action. It then acts — usually by calling a "
+                },
+                {
+                  "term": "tool",
+                  "text": "tool"
+                },
+                {
+                  "text": " — and updates its knowledge before the next iteration."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "em": true,
+                  "text": "what would go wrong if an agent tried to complete a multi-step task in a single LLM call?"
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Why one LLM call isn't enough",
+          "analogy": "A single LLM call is like asking a friend one question and hanging up — an agent loop is like staying on the call so they can look things up and report back.",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "agent-loop-steps-conceptual",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The ",
+                  "strong": true
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "agent loop",
+                  "strong": true
+                },
+                {
+                  "text": " has four repeating steps. Each step feeds directly into the next, and the cycle continues until the "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": " is reached or a stopping condition fires."
+                }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "term": "observe",
+                    "text": "Observe",
+                    "strong": true
+                  },
+                  {
+                    "text": " — take in the current "
+                  },
+                  {
+                    "term": "context",
+                    "text": "context"
+                  },
+                  {
+                    "text": ": the goal, any tool results from the last turn, and the conversation history."
+                  }
+                ],
+                [
+                  {
+                    "term": "decide",
+                    "text": "Decide",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the LLM reasons about what to do next. This "
+                  },
+                  {
+                    "term": "reasoning",
+                    "text": "reasoning"
+                  },
+                  {
+                    "text": " step picks the best action given what was just observed."
+                  }
+                ],
+                [
+                  {
+                    "term": "act",
+                    "text": "Act",
+                    "strong": true
+                  },
+                  {
+                    "text": " — execute the chosen action, usually a "
+                  },
+                  {
+                    "term": "tool_call",
+                    "text": "tool call"
+                  },
+                  {
+                    "text": " to an "
+                  },
+                  {
+                    "term": "external_system",
+                    "text": "external system"
+                  },
+                  {
+                    "text": " like a search engine or database."
+                  }
+                ],
+                [
+                  {
+                    "term": "update",
+                    "text": "Update",
+                    "strong": true
+                  },
+                  {
+                    "text": " — write the result back into "
+                  },
+                  {
+                    "term": "state",
+                    "text": "state"
+                  },
+                  {
+                    "text": " (the agent's working "
+                  },
+                  {
+                    "term": "memory",
+                    "text": "memory"
+                  },
+                  {
+                    "text": ") so the next turn starts with fresh information."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The loop repeats until "
+                },
+                {
+                  "term": "termination",
+                  "text": "termination"
+                },
+                {
+                  "text": ": the model decides the goal is met, or a "
+                },
+                {
+                  "term": "turn_budget",
+                  "text": "turn budget"
+                },
+                {
+                  "text": " limit is hit. Without a budget, a stuck agent can spin forever."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "The four steps of the agent loop",
+          "analogy": "The loop works like a chef reading a recipe mid-cook: check what's in the pan (observe), decide the next move (decide), stir or add heat (act), then taste and update your plan (update).",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "agent-loop-diagram",
+          "data": {
+            "steps": [
+              {
+                "sub": "Read goal + tool results + history",
+                "label": "Observe"
+              },
+              {
+                "sub": "LLM reasons: what action next?",
+                "label": "Decide"
+              },
+              {
+                "sub": "Call a tool or external system",
+                "label": "Act"
+              },
+              {
+                "sub": "Write result back into state",
+                "label": "Update"
+              }
+            ]
+          },
+          "kind": "diagram",
+          "title": "The agent loop — one full cycle",
+          "caption": "Each arrow feeds the next step. The loop exits when the goal is met or the turn budget runs out.",
+          "template": "agentLoop"
+        },
+        {
+          "id": "agent-loop-functional-example",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Goal: "
+                },
+                {
+                  "em": true,
+                  "text": "\"What is the population of Tokyo, and how does it compare to New York?\""
+                },
+                {
+                  "text": " A single LLM call can't answer this reliably — training data may be stale. An agent loops instead."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Turn 1"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Observe",
+                    "strong": true
+                  },
+                  {
+                    "text": ": goal received; no tool results yet; history is empty."
+                  }
+                ],
+                [
+                  {
+                    "text": "Decide",
+                    "strong": true
+                  },
+                  {
+                    "text": ": \"I need live population data. I'll search for Tokyo's population.\""
+                  }
+                ],
+                [
+                  {
+                    "text": "Act",
+                    "strong": true
+                  },
+                  {
+                    "text": ": calls the web-search tool with query \"Tokyo population 2024\"."
+                  }
+                ],
+                [
+                  {
+                    "text": "Update",
+                    "strong": true
+                  },
+                  {
+                    "text": ": stores result — \"Tokyo: ~13.96 million (city proper)\" — in state."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Turn 2"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Observe",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Tokyo figure is in state; New York figure is still missing."
+                  }
+                ],
+                [
+                  {
+                    "text": "Decide",
+                    "strong": true
+                  },
+                  {
+                    "text": ": \"I still need New York's population before I can compare.\""
+                  }
+                ],
+                [
+                  {
+                    "text": "Act",
+                    "strong": true
+                  },
+                  {
+                    "text": ": calls the web-search tool with query \"New York City population 2024\"."
+                  }
+                ],
+                [
+                  {
+                    "text": "Update",
+                    "strong": true
+                  },
+                  {
+                    "text": ": stores result — \"New York: ~8.34 million\" — in state."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Turn 3"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Observe",
+                    "strong": true
+                  },
+                  {
+                    "text": ": both figures are in state; the goal can now be answered."
+                  }
+                ],
+                [
+                  {
+                    "text": "Decide",
+                    "strong": true
+                  },
+                  {
+                    "text": ": \"I have everything. I'll write the final answer.\""
+                  }
+                ],
+                [
+                  {
+                    "text": "Act",
+                    "strong": true
+                  },
+                  {
+                    "text": ": generates the comparison answer and returns it to the user."
+                  }
+                ],
+                [
+                  {
+                    "text": "Update",
+                    "strong": true
+                  },
+                  {
+                    "text": ": marks goal as complete — loop terminates."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Each turn's "
+                },
+                {
+                  "term": "update",
+                  "text": "update"
+                },
+                {
+                  "text": " step directly shapes what the next "
+                },
+                {
+                  "term": "observe",
+                  "text": "observe"
+                },
+                {
+                  "text": " step sees. Without that handoff, the agent would repeat the same search forever."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "Worked example: a research agent answering a question",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "agent-loop-failure-modes",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Knowing the happy path isn't enough — these are the most common ways the loop goes wrong."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Infinite spin (no termination condition).",
+                    "strong": true
+                  },
+                  {
+                    "text": " The model never decides the goal is met and keeps calling tools. Always set a "
+                  },
+                  {
+                    "term": "turn_budget",
+                    "text": "turn budget"
+                  },
+                  {
+                    "text": "."
+                  }
+                ],
+                [
+                  {
+                    "text": "Stale state (update step skipped or partial).",
+                    "strong": true
+                  },
+                  {
+                    "text": " If a tool result isn't written to "
+                  },
+                  {
+                    "term": "state",
+                    "text": "state"
+                  },
+                  {
+                    "text": ", the next turn re-observes old information and repeats the same action."
+                  }
+                ],
+                [
+                  {
+                    "text": "Context overflow.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Every turn adds to the "
+                  },
+                  {
+                    "term": "context",
+                    "text": "context"
+                  },
+                  {
+                    "text": " window. After many turns, older information gets pushed out and the model \"forgets\" earlier results."
+                  }
+                ],
+                [
+                  {
+                    "text": "Goal drift.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Without the original goal anchored in state, the model can wander off-task after several tool calls."
+                  }
+                ]
+              ]
+            }
+          ],
+          "kind": "note",
+          "tone": "warn",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "agent-loop-knowledge-check",
+          "kind": "knowledgeCheck",
+          "intro": "These questions cover the three objectives for this module. Try to answer from memory before reading the explanation.",
+          "title": "Check your understanding: the agent loop",
+          "sources": [
+            "S1"
+          ],
+          "questions": [
+            {
+              "id": "kc-q1",
+              "kind": "mcq",
+              "prompt": "Why can't a single LLM call complete a task that requires checking live data and then making a decision based on it?",
+              "options": [
+                {
+                  "text": "LLMs are too slow to handle multiple steps.",
+                  "correct": false
+                },
+                {
+                  "text": "A single call produces one output and stops — it can't act on a result and then decide again.",
+                  "correct": true
+                },
+                {
+                  "text": "LLMs can't read tool outputs at all.",
+                  "correct": false
+                },
+                {
+                  "text": "Single calls always time out on complex tasks.",
+                  "correct": false
+                }
+              ],
+              "explanation": "A single call ends after generating one response. It has no mechanism to receive a tool result, reason about it, and take another action. That's exactly what the loop adds."
+            },
+            {
+              "id": "kc-q2",
+              "kind": "mcq",
+              "prompt": "What is the correct order of the four steps in the agent loop?",
+              "options": [
+                {
+                  "text": "Decide → Observe → Act → Update",
+                  "correct": false
+                },
+                {
+                  "text": "Act → Observe → Update → Decide",
+                  "correct": false
+                },
+                {
+                  "text": "Observe → Decide → Act → Update",
+                  "correct": true
+                },
+                {
+                  "text": "Observe → Act → Decide → Update",
+                  "correct": false
+                }
+              ],
+              "explanation": "The agent first observes its current context, then decides what to do, then acts (e.g. calls a tool), then updates state with the result — before the next turn begins."
+            },
+            {
+              "id": "kc-q3",
+              "kind": "mcq",
+              "prompt": "In the research-agent example, why did the agent need three turns instead of one?",
+              "options": [
+                {
+                  "text": "The LLM forgot the goal between turns.",
+                  "correct": false
+                },
+                {
+                  "text": "Each search tool call could only return one piece of data, so two searches were needed before the final answer could be written.",
+                  "correct": true
+                },
+                {
+                  "text": "The turn budget forced it to stop after each step.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent re-observed the same state each time.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The agent needed Tokyo's population (turn 1), then New York's (turn 2), before it had everything required to write the comparison (turn 3). Each turn's update fed the next observe."
+            },
+            {
+              "id": "kc-q4",
+              "kind": "freeText",
+              "prompt": "In your own words, explain what the 'update' step does and why skipping it would break the loop.",
+              "explanation": "State is the agent's working memory. Without updating it, each turn starts blind — the loop can't make progress because it never accumulates new information.",
+              "acceptableAnswer": "The update step writes the tool result (or any new information) back into the agent's state so the next turn can see it. If it's skipped, the next observe step reads stale data and the agent may repeat the same action or lose track of what it already found."
+            },
+            {
+              "id": "kc-q5",
+              "kind": "mcq",
+              "prompt": "Which failure mode does a 'turn budget' directly prevent?",
+              "options": [
+                {
+                  "text": "Context overflow",
+                  "correct": false
+                },
+                {
+                  "text": "Goal drift",
+                  "correct": false
+                },
+                {
+                  "text": "Infinite spin",
+                  "correct": true
+                },
+                {
+                  "text": "Stale state",
+                  "correct": false
+                }
+              ],
+              "explanation": "A turn budget sets a hard limit on how many times the loop can repeat. Without it, an agent that never decides the goal is met will keep calling tools indefinitely."
+            }
+          ]
+        }
+      ],
+      "summary": "A plain chatbot answers once; an agent repeats observe→decide→act→update so it can use tools and adapt. This module frames the whole cycle before we open up each step.",
+      "termIds": [
+        "agent",
+        "agent_loop",
+        "llm",
+        "tool",
+        "turn"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to explain why one LLM call isn't enough for tool-using tasks.",
+        "After this you'll be able to name the four steps of the agent loop in order.",
+        "After this you'll be able to describe how each turn feeds the next."
+      ]
+    },
+    {
+      "id": "m_observe",
+      "sub": "First step of the cycle introduced in module 1.",
+      "order": 2,
+      "title": "Observe: reading the current state",
+      "blocks": [
+        {
+          "id": "spaced-retrieval-recall",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Before reading on, predict from memory: ",
+                  "strong": true
+                },
+                {
+                  "em": false,
+                  "text": "In module 1 you met the agent loop. What is the "
+                },
+                {
+                  "text": "one thing",
+                  "strong": true
+                },
+                {
+                  "text": " that makes an agent different from a regular chatbot?"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": true,
+                  "text": "Think of your answer, then continue. (The answer: a regular chatbot replies once and stops. An "
+                },
+                {
+                  "term": "agent",
+                  "text": "agent"
+                },
+                {
+                  "em": true,
+                  "text": " is wired into a "
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "loop"
+                },
+                {
+                  "em": true,
+                  "text": " — it can call "
+                },
+                {
+                  "term": "tool",
+                  "text": "tools"
+                },
+                {
+                  "em": true,
+                  "text": ", read what comes back, and keep going until the task is done.)"
+                }
+              ]
+            }
+          ],
+          "kind": "note",
+          "tone": "info",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "observe-conceptual",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Every "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "em": false,
+                  "text": " of the agent loop starts with the same question: "
+                },
+                {
+                  "text": "what do I know right now?",
+                  "strong": true
+                },
+                {
+                  "em": false,
+                  "text": " The step that answers that question is called "
+                },
+                {
+                  "term": "observe",
+                  "text": "Observe"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Three things make up what the agent observes."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "em": false,
+                    "text": "The "
+                  },
+                  {
+                    "term": "goal",
+                    "text": "goal"
+                  },
+                  {
+                    "text": " — the original task the user gave it."
+                  }
+                ],
+                [
+                  {
+                    "em": false,
+                    "text": "The "
+                  },
+                  {
+                    "term": "context",
+                    "text": "context"
+                  },
+                  {
+                    "text": " — the full conversation so far, plus any background information."
+                  }
+                ],
+                [
+                  {
+                    "em": false,
+                    "text": "The "
+                  },
+                  {
+                    "term": "state",
+                    "text": "state"
+                  },
+                  {
+                    "text": " — the results of actions already taken this session."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Think of "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "em": false,
+                  "text": " as the agent's short-term notebook and "
+                },
+                {
+                  "term": "state",
+                  "text": "state"
+                },
+                {
+                  "text": " as the scoreboard showing what has already happened."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Everything the agent decides later — which tool to call, whether to stop — depends on what it observed here.",
+                  "strong": false
+                },
+                {
+                  "text": " A bad observation leads to a bad decision, even if the reasoning is perfect."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Context vs. State — the key difference"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "term": "context",
+                  "text": "Context",
+                  "strong": true
+                },
+                {
+                  "em": false,
+                  "text": " is "
+                },
+                {
+                  "em": true,
+                  "text": "what the agent was told"
+                },
+                {
+                  "text": " (the conversation, the instructions, background docs)."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "term": "state",
+                  "text": "State",
+                  "strong": true
+                },
+                {
+                  "em": false,
+                  "text": " is "
+                },
+                {
+                  "em": true,
+                  "text": "what the agent has done and found out"
+                },
+                {
+                  "text": " (tool results, intermediate answers, flags it set itself)."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Both live inside the "
+                },
+                {
+                  "term": "memory",
+                  "text": "memory"
+                },
+                {
+                  "text": " the agent carries into each turn."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "What 'Observe' means — and why it comes first",
+          "analogy": "Observation is like a chef glancing at the order ticket, the half-finished dish, and the clock before deciding what to do next — without that glance, every action is a guess.",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "observe",
+            "state",
+            "context",
+            "goal",
+            "turn",
+            "memory"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "observe-functional-example",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Imagine an agent whose "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "em": false,
+                  "text": " is: "
+                },
+                {
+                  "text": "\"Book the cheapest flight from London to Tokyo for next Friday.\"",
+                  "strong": true
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "At the start of turn 2, the agent pauses to "
+                },
+                {
+                  "term": "observe",
+                  "text": "observe"
+                },
+                {
+                  "text": ". Here is exactly what it reads."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Goal",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Book cheapest LHR→TYO flight, Friday."
+                  }
+                ],
+                [
+                  {
+                    "term": "context",
+                    "text": "Context",
+                    "strong": true
+                  },
+                  {
+                    "text": ": User said budget is under £900; prefers a window seat."
+                  }
+                ],
+                [
+                  {
+                    "term": "state",
+                    "text": "State",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Turn 1 called the flight-search tool and got back three options — £820, £870, £950."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "With that picture assembled, the agent can now "
+                },
+                {
+                  "term": "decide",
+                  "text": "decide"
+                },
+                {
+                  "text": ": the £820 flight fits the budget, so the next action is to check seat availability."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Notice what would break if the state were missing: the agent would search for flights "
+                },
+                {
+                  "em": true,
+                  "text": "again"
+                },
+                {
+                  "text": ", wasting a turn and possibly returning different results."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "The Observe step is not passive reading — it is "
+                },
+                {
+                  "text": "assembling a picture",
+                  "strong": true
+                },
+                {
+                  "text": " from three sources at once. Miss one source and the picture has a hole."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "A travel-booking agent reads its state",
+          "termIds": [
+            "observe",
+            "goal",
+            "context",
+            "state",
+            "turn",
+            "tool_call"
+          ]
+        },
+        {
+          "id": "observe-state-slider",
+          "max": 3,
+          "min": 1,
+          "kind": "interactiveSlider",
+          "unit": "sources observed",
+          "stops": [
+            {
+              "at": 1,
+              "note": "The agent knows what it wants but has no history and no results. Every action is a blind first guess.",
+              "label": "Goal only"
+            },
+            {
+              "at": 2,
+              "note": "The agent knows the task and the user's preferences. It can make a reasonable first move, but it can't avoid repeating work it already did.",
+              "label": "Goal + Context"
+            },
+            {
+              "at": 3,
+              "note": "Full picture. The agent knows what it wants, what the user needs, and what it has already found. Decisions are grounded and efficient.",
+              "label": "Goal + Context + State"
+            }
+          ],
+          "title": "How complete is the agent's observation?",
+          "caption": "Slide from 'goal only' to 'full state' to see how the agent's picture fills in — and what decisions become possible at each level."
+        },
+        {
+          "id": "observe-failure-modes",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Most agent failures trace back to a broken Observe step, not bad reasoning.",
+                  "strong": true
+                },
+                {
+                  "text": " Here are the four most common ways it goes wrong."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "1. Stale state"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "The agent reads a tool result from an earlier turn, but the real world has changed since then."
+                },
+                {
+                  "text": " Example: a flight price cached two turns ago is now sold out."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "2. Truncated context"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Most LLMs have a context-window limit."
+                },
+                {
+                  "em": false,
+                  "text": " When the conversation grows too long, early messages get cut."
+                },
+                {
+                  "text": " The agent loses the original goal or a key user constraint — and doesn't know it."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "3. Missing tool result"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "A tool call fails silently — it returns an empty response or an error the agent ignores."
+                },
+                {
+                  "text": " The agent treats the gap as 'no data found' and moves on with an incomplete picture."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "4. Conflicting signals (non-obvious)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Context and state can contradict each other."
+                },
+                {
+                  "em": false,
+                  "text": " The user said 'budget under £900' (context), but the state shows the only available flight is £950."
+                },
+                {
+                  "text": " If the agent doesn't surface this conflict, it will either book the wrong flight or loop forever."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
+                {
+                  "text": "Watch for: ",
+                  "strong": true
+                },
+                {
+                  "em": false,
+                  "text": "an agent that repeats the same tool call more than once usually has a stale or missing state."
+                },
+                {
+                  "text": " That's your first diagnostic signal."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "How observation breaks in practice",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "observe",
+            "state",
+            "context",
+            "memory",
+            "turn"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "observe-knowledge-check",
+          "kind": "knowledgeCheck",
+          "intro": "Answer each question from memory. These map directly to this module's objectives.",
+          "title": "Check your understanding: Observe",
+          "termIds": [
+            "observe",
+            "context",
+            "state",
+            "goal",
+            "turn",
+            "memory"
+          ],
+          "questions": [
+            {
+              "id": "kc-observe-1",
+              "kind": "mcq",
+              "prompt": "At the start of each turn, an agent observes three things. Which option lists all three correctly?",
+              "options": [
+                {
+                  "text": "The goal, the context, and the state",
+                  "correct": true
+                },
+                {
+                  "text": "The goal, the tool list, and the user's name",
+                  "correct": false
+                },
+                {
+                  "text": "The context, the output, and the next action",
+                  "correct": false
+                },
+                {
+                  "text": "The state, the prompt template, and the model version",
+                  "correct": false
+                }
+              ],
+              "explanation": "An agent observes its goal (the task), its context (conversation + background), and its state (results of actions already taken). Tool lists and prompt templates are infrastructure, not the observation itself."
+            },
+            {
+              "id": "kc-observe-2",
+              "kind": "mcq",
+              "prompt": "What is the key difference between 'context' and 'state' for an agent?",
+              "options": [
+                {
+                  "text": "Context is what the agent was told; state is what the agent has done and found out.",
+                  "correct": true
+                },
+                {
+                  "text": "Context is the tool result; state is the user's original message.",
+                  "correct": false
+                },
+                {
+                  "text": "They mean the same thing — both refer to the conversation history.",
+                  "correct": false
+                },
+                {
+                  "text": "State is set by the user; context is set by the model.",
+                  "correct": false
+                }
+              ],
+              "explanation": "Context = what the agent was given (instructions, conversation, background). State = what the agent has discovered or produced during the current session. Mixing them up is a common source of confusion."
+            },
+            {
+              "id": "kc-observe-3",
+              "kind": "mcq",
+              "prompt": "An agent is booking a flight. On turn 3 it searches for flights again, even though it already did that on turn 1. What is the most likely cause?",
+              "options": [
+                {
+                  "text": "The agent's state was missing or stale, so it had no record of the earlier search.",
+                  "correct": true
+                },
+                {
+                  "text": "The agent's goal changed between turns.",
+                  "correct": false
+                },
+                {
+                  "text": "The LLM ran out of tokens and had to restart.",
+                  "correct": false
+                },
+                {
+                  "text": "The tool returned too many results on turn 1.",
+                  "correct": false
+                }
+              ],
+              "explanation": "Repeating the same tool call is the classic symptom of a missing or stale state. The agent can't see what it already did, so it starts over."
+            },
+            {
+              "id": "kc-observe-4",
+              "kind": "freeText",
+              "prompt": "In your own words: what does it mean for an agent's observation to be 'stale', and why is it a problem?",
+              "explanation": "Staleness happens when time passes between when a tool result was recorded and when the agent reads it. The world changes; the state doesn't. Any decision built on that gap can be wrong.",
+              "acceptableAnswer": "Stale means the agent is reading an old result that no longer reflects the real world. It's a problem because the agent will make decisions based on outdated information — for example, booking a flight that is already sold out."
+            },
+            {
+              "id": "kc-observe-5",
+              "kind": "freeText",
+              "prompt": "Why does a truncated context window create a hidden risk — one the agent itself may not notice?",
+              "explanation": "This is non-obvious because the agent doesn't receive an error — it simply has less information. It can confidently make a decision that contradicts a constraint it can no longer see.",
+              "acceptableAnswer": "When the context window fills up, early messages are silently dropped. The agent loses the original goal or a key constraint but has no way to know something is missing. It continues reasoning as if it has the full picture."
+            }
+          ]
+        }
+      ],
+      "summary": "The agent gathers what it knows: the goal, the running context, and results from earlier actions. Good observation is what every later decision depends on.",
+      "termIds": [
+        "observe",
+        "context",
+        "state",
+        "goal"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to describe what an agent perceives at the start of a turn.",
+        "After this you'll be able to explain what 'context' and 'state' mean for an agent.",
+        "After this you'll be able to spot when an observation is stale or incomplete."
+      ]
+    },
+    {
+      "id": "m_decide",
+      "sub": "Follows observe — turns what was seen into a choice.",
+      "order": 3,
+      "title": "Decide: reasoning and choosing a tool",
+      "blocks": [
+        {
+          "id": "spaced-retrieval-observe",
+          "body": [
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "text": "In module 2, the agent read the current ",
+                  "strong": true
+                },
+                {
+                  "term": "state",
+                  "text": "state"
+                },
+                {
+                  "text": " and "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": ". What is the name of that step in the agent loop — and what does the agent do with what it reads?"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "That step is called "
+                },
+                {
+                  "term": "observe",
+                  "text": "Observe"
+                },
+                {
+                  "text": ". The agent reads everything available — the goal, prior messages, and any tool results — and loads it into its "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": " window."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Now that the agent has observed, it must act on what it saw."
+                },
+                {
+                  "text": " That brings us to module 3: the "
+                },
+                {
+                  "term": "decide",
+                  "text": "Decide"
+                },
+                {
+                  "text": " step."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Quick recall: what did the agent just read?",
+          "sources": [
+            "S1"
+          ]
+        },
+        {
+          "id": "decide-concept",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "After observing, the "
+                },
+                {
+                  "term": "llm",
+                  "text": "LLM"
+                },
+                {
+                  "text": " reaches the "
+                },
+                {
+                  "term": "decide",
+                  "text": "Decide"
+                },
+                {
+                  "text": " step. It uses "
+                },
+                {
+                  "term": "reasoning",
+                  "text": "reasoning"
+                },
+                {
+                  "text": " to choose one of two paths."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Call a tool",
+                    "strong": true
+                  },
+                  {
+                    "text": ": the model needs more information or can't act alone."
+                  }
+                ],
+                [
+                  {
+                    "text": "Give a final answer",
+                    "strong": true
+                  },
+                  {
+                    "text": ": the model has everything it needs and the "
+                  },
+                  {
+                    "term": "goal",
+                    "text": "goal"
+                  },
+                  {
+                    "text": " is met."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LLM reads the "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": " and available "
+                },
+                {
+                  "term": "tool",
+                  "text": "tools"
+                },
+                {
+                  "text": ". It then reasons about which action moves it closer to the goal."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This decision happens on every "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": " of the "
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "agent loop"
+                },
+                {
+                  "text": ". The loop runs until the model decides to stop."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Decide: how the LLM picks its next move",
+          "analogy": "The Decide step is like a chef glancing at the order ticket and the fridge, then choosing whether to grab an ingredient or plate the dish.",
+          "sources": [
+            "S1",
+            "S3"
+          ]
+        },
+        {
+          "id": "tool-call-anatomy",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "When the LLM decides to use a tool, it produces a "
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool call"
+                },
+                {
+                  "text": ". A tool call has exactly two parts."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Name",
+                    "strong": true
+                  },
+                  {
+                    "text": ": which tool to run (e.g. "
+                  },
+                  {
+                    "code": true,
+                    "text": "search_web"
+                  },
+                  {
+                    "text": " or "
+                  },
+                  {
+                    "code": true,
+                    "text": "get_weather"
+                  },
+                  {
+                    "text": ")."
+                  }
+                ],
+                [
+                  {
+                    "text": "Arguments",
+                    "strong": true
+                  },
+                  {
+                    "text": ": the inputs that tool needs (e.g. "
+                  },
+                  {
+                    "code": true,
+                    "text": "query=\"Paris weather\""
+                  },
+                  {
+                    "text": ")."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The model generates both the name and the arguments as structured text."
+                },
+                {
+                  "text": " This mechanism is called "
+                },
+                {
+                  "term": "function_calling",
+                  "text": "function calling"
+                },
+                {
+                  "text": " and is supported by OpenAI, Anthropic, and Google."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If the name is wrong or an argument is missing, the tool call fails."
+                },
+                {
+                  "text": " We'll look at those failure modes shortly."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Anatomy of a tool call: name + arguments",
+          "analogy": "A tool call is like filling out a form at the pharmacy: you write the medicine name (the tool) and the dosage and patient details (the arguments).",
+          "sources": [
+            "S3"
+          ]
+        },
+        {
+          "id": "decide-visual",
+          "data": {
+            "stages": [
+              {
+                "sub": "Read state & context",
+                "label": "Observe"
+              },
+              {
+                "sub": "Reason → tool call OR final answer",
+                "label": "Decide"
+              },
+              {
+                "sub": "Run the chosen tool",
+                "label": "Act"
+              },
+              {
+                "sub": "Store result, loop back",
+                "label": "Update"
+              }
+            ]
+          },
+          "kind": "diagram",
+          "title": "The Decide step inside the agent loop",
+          "caption": "Decide sits between Observe and Act. Every turn the LLM reasons and picks one path.",
+          "template": "pipeline"
+        },
+        {
+          "id": "decide-worked-example",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A user asks an agent: "
+                },
+                {
+                  "text": "\"What's the weather in Paris right now?\"",
+                  "strong": true
+                },
+                {
+                  "text": " Let's walk through the Decide step together."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 1 — The LLM reads its context"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The model sees the user's question and the list of available tools: "
+                },
+                {
+                  "code": true,
+                  "text": "get_weather(city)"
+                },
+                {
+                  "text": " and "
+                },
+                {
+                  "code": true,
+                  "text": "search_web(query)"
+                },
+                {
+                  "text": ". It has no weather data yet."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 2 — The LLM reasons"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The model thinks: "
+                },
+                {
+                  "em": true,
+                  "text": "\"I don't know the current weather. I have a tool that fetches it. I should call that tool.\""
+                },
+                {
+                  "text": " This is the "
+                },
+                {
+                  "term": "reasoning",
+                  "text": "reasoning"
+                },
+                {
+                  "text": " phase."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 3 — The LLM decides: call a tool"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "It produces a "
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool call"
+                },
+                {
+                  "text": ": name = "
+                },
+                {
+                  "code": true,
+                  "text": "get_weather"
+                },
+                {
+                  "text": ", argument = "
+                },
+                {
+                  "code": true,
+                  "text": "city=\"Paris\""
+                },
+                {
+                  "text": ". The loop moves to the Act step."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 4 — One turn later: decide again"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The tool returns \"18 °C, partly cloudy.\""
+                },
+                {
+                  "text": " Now the model reasons: "
+                },
+                {
+                  "em": true,
+                  "text": "\"I have the answer. No more tools needed.\""
+                },
+                {
+                  "text": " It decides to give a final answer and the loop ends."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "Worked example: 'What's the weather in Paris?'",
+          "sources": [
+            "S1",
+            "S3"
+          ]
+        },
+        {
+          "id": "decide-failure-modes",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The Decide step has a few common failure modes."
+                },
+                {
+                  "text": " Knowing them helps you spot problems quickly."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Missing argument"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LLM calls "
+                },
+                {
+                  "code": true,
+                  "text": "get_weather()"
+                },
+                {
+                  "text": " but forgets to include "
+                },
+                {
+                  "code": true,
+                  "text": "city"
+                },
+                {
+                  "text": ". The tool can't run without it and returns an error."
+                },
+                {
+                  "text": " This is the most common failure."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Wrong tool"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The model picks "
+                },
+                {
+                  "code": true,
+                  "text": "search_web"
+                },
+                {
+                  "text": " when a dedicated "
+                },
+                {
+                  "code": true,
+                  "text": "get_weather"
+                },
+                {
+                  "text": " tool exists."
+                },
+                {
+                  "text": " Results may be stale or irrelevant."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Never stopping (non-obvious)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The model keeps calling tools even after it has enough information."
+                },
+                {
+                  "text": " This wastes turns and can hit the "
+                },
+                {
+                  "term": "turn_budget",
+                  "text": "turn budget"
+                },
+                {
+                  "text": " limit."
+                },
+                {
+                  "text": " It usually happens when the goal is vague."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Hallucinated tool name"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LLM invents a tool name that doesn't exist."
+                },
+                {
+                  "text": " The system can't find it and the turn fails silently or crashes."
+                },
+                {
+                  "text": " Always validate the tool name against the allowed list."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "How the Decide step breaks in practice",
+          "sources": [
+            "S2"
+          ]
+        },
+        {
+          "id": "decide-verify-ai",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If you use an AI assistant to generate tool-calling code, check these four things before trusting it."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Is the tool name exactly right? Compare it to your tool definitions — one typo breaks the call."
+                  }
+                ],
+                [
+                  {
+                    "text": "Are all required arguments present? Check the tool's schema for required fields."
+                  }
+                ],
+                [
+                  {
+                    "text": "Does the stop condition exist? Confirm the code can produce a final answer, not just tool calls."
+                  }
+                ],
+                [
+                  {
+                    "text": "Is the turn budget enforced? Make sure there's a max-turns guard so the loop can't run forever."
+                  }
+                ]
+              ]
+            }
+          ],
+          "kind": "note",
+          "tone": "warn",
+          "sources": [
+            "S2"
+          ]
+        },
+        {
+          "id": "decide-decision-callout",
+          "kind": "decisionCallout",
+          "sources": [
+            "S1",
+            "S3"
+          ],
+          "useWhen": "The agent still lacks information it needs to answer, or must take an action in an external system to make progress.",
+          "avoidWhen": "The context already contains everything needed to answer the user's question — calling a tool at that point wastes a turn and can introduce errors.",
+          "ruleOfThumb": "If you can answer from what's already in context, stop. If you can't, call the most specific tool available."
+        },
+        {
+          "id": "decide-knowledge-check",
+          "kind": "knowledgeCheck",
+          "intro": "Answer these questions from memory. Each one ties directly to what you just learned.",
+          "title": "Check your understanding: the Decide step",
+          "questions": [
+            {
+              "id": "kc-decide-1",
+              "kind": "mcq",
+              "prompt": "At the Decide step, the LLM can choose one of two paths. Which pair is correct?",
+              "options": [
+                {
+                  "text": "Call a tool, or give a final answer",
+                  "correct": true
+                },
+                {
+                  "text": "Observe the context, or update the state",
+                  "correct": false
+                },
+                {
+                  "text": "Loop back, or reset the goal",
+                  "correct": false
+                },
+                {
+                  "text": "Call a tool, or call a different tool",
+                  "correct": false
+                }
+              ],
+              "explanation": "The Decide step has exactly two outcomes: produce a tool call (name + arguments) to get more information, or produce a final answer when the goal is met."
+            },
+            {
+              "id": "kc-decide-2",
+              "kind": "mcq",
+              "prompt": "A tool call is made up of which two parts?",
+              "options": [
+                {
+                  "text": "A tool name and a set of arguments",
+                  "correct": true
+                },
+                {
+                  "text": "A goal and a context window",
+                  "correct": false
+                },
+                {
+                  "text": "A reasoning trace and a final answer",
+                  "correct": false
+                },
+                {
+                  "text": "A turn number and a memory update",
+                  "correct": false
+                }
+              ],
+              "explanation": "Every tool call has a name (which tool to run) and arguments (the inputs that tool needs). Both must be correct for the call to succeed."
+            },
+            {
+              "id": "kc-decide-3",
+              "kind": "mcq",
+              "prompt": "The LLM calls get_weather() but leaves out the city argument. What kind of failure is this?",
+              "options": [
+                {
+                  "text": "Missing-argument failure",
+                  "correct": true
+                },
+                {
+                  "text": "Wrong-tool failure",
+                  "correct": false
+                },
+                {
+                  "text": "Hallucinated tool name",
+                  "correct": false
+                },
+                {
+                  "text": "Turn budget exceeded",
+                  "correct": false
+                }
+              ],
+              "explanation": "A missing-argument failure happens when the tool call is formed but a required input is absent. The tool cannot run without it."
+            },
+            {
+              "id": "kc-decide-4",
+              "kind": "freeText",
+              "prompt": "In your own words: why would an agent keep calling tools even after it has enough information to answer?",
+              "explanation": "A vague goal makes it hard for the model to judge when it's done. This is a non-obvious failure: the tool calls succeed individually, but the loop never reaches a final answer.",
+              "acceptableAnswer": "The goal is vague or the model doesn't recognise that the context already contains the answer, so it keeps reasoning that more information is needed — wasting turns and risking hitting the turn budget."
+            },
+            {
+              "id": "kc-decide-5",
+              "kind": "freeText",
+              "prompt": "Name one thing you should check when an AI assistant generates a tool call for you.",
+              "explanation": "AI-generated tool calls can look correct but have subtle errors — a wrong name, a missing argument, or no stop condition. Checking these before running saves debugging time.",
+              "acceptableAnswer": "Any one of: the tool name matches the allowed list exactly; all required arguments are present; a stop/final-answer path exists; a max-turns guard is in place."
+            }
+          ]
+        }
+      ],
+      "summary": "The LLM reasons over the observation and picks the next action: call a specific tool with arguments, or give a final answer. We walk a worked example of that choice.",
+      "termIds": [
+        "decide",
+        "reasoning",
+        "tool_call",
+        "function_calling"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to explain how the LLM selects an action from the tools available.",
+        "After this you'll be able to read a tool call as a name plus arguments.",
+        "After this you'll be able to recognize a missing-argument or wrong-tool failure."
+      ],
+      "decisionItForces": "Call a tool, or stop and answer?"
+    },
+    {
+      "id": "m_act",
+      "sub": "Follows decide — executes the chosen action.",
+      "order": 4,
+      "title": "Act: running the tool and reading the result",
+      "blocks": [
+        {
+          "id": "spaced-retrieval-observe",
+          "body": [
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict from memory: "
+                },
+                {
+                  "text": "In module 2 we named the thing the agent reads at the start of each turn. What is it called, and what does it contain?",
+                  "strong": true
+                },
+                {
+                  "text": " Try to answer before scrolling."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The answer is the "
+                },
+                {
+                  "term": "observe",
+                  "text": "observation"
+                },
+                {
+                  "text": " — the snapshot of "
+                },
+                {
+                  "term": "state",
+                  "text": "state"
+                },
+                {
+                  "text": " the agent reads at the start of each "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": ". It holds everything the agent knows right now: the "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": ", past results, and any new information."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "In module 3 the agent used that observation to "
+                },
+                {
+                  "term": "decide",
+                  "text": "decide"
+                },
+                {
+                  "text": " which "
+                },
+                {
+                  "term": "tool",
+                  "text": "tool"
+                },
+                {
+                  "text": " to call and what arguments to pass."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Now we reach module 4: the agent actually "
+                },
+                {
+                  "text": "runs",
+                  "strong": true
+                },
+                {
+                  "text": " that tool call and reads what comes back. That result becomes the next observation — closing the loop."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Quick recall: what does the agent read before it decides?",
+          "visibleWhen": {
+            "level": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          }
+        },
+        {
+          "id": "act-concept",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "After the agent "
+                },
+                {
+                  "term": "decide",
+                  "text": "decides"
+                },
+                {
+                  "text": " on a "
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool call"
+                },
+                {
+                  "text": ", the "
+                },
+                {
+                  "term": "act",
+                  "text": "Act"
+                },
+                {
+                  "text": " step executes it. The runtime takes the tool name and arguments. It routes them to the matching "
+                },
+                {
+                  "term": "external_system",
+                  "text": "external system"
+                },
+                {
+                  "text": " — a database, API, browser, or other service."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The "
+                },
+                {
+                  "term": "llm",
+                  "text": "LLM"
+                },
+                {
+                  "text": " does not run the tool. It only produces the call. The runtime is what contacts the external system and waits for a response."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "When the external system replies, the runtime packages the reply as a new "
+                },
+                {
+                  "term": "observe",
+                  "text": "observation"
+                },
+                {
+                  "text": ". It feeds that into the "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": ". The "
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "agent loop"
+                },
+                {
+                  "text": " then starts its next turn with that fresh observation."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "LLM produces the tool call (name + arguments)."
+                  }
+                ],
+                [
+                  {
+                    "text": "Runtime dispatches the call to the external system."
+                  }
+                ],
+                [
+                  {
+                    "text": "External system executes and returns a result."
+                  }
+                ],
+                [
+                  {
+                    "text": "Runtime wraps the result as a new observation."
+                  }
+                ],
+                [
+                  {
+                    "text": "The next turn begins with that observation in context."
+                  }
+                ]
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Act: what happens when the tool call runs",
+          "analogy": "Sending a tool call is like handing a written order to a waiter — you don't cook the food yourself; you wait for the kitchen (the external system) to do the work and bring back a plate (the result).",
+          "sources": [
+            "S1",
+            "S6"
+          ],
+          "termIds": [
+            "act",
+            "tool_call",
+            "external_system",
+            "observe",
+            "context",
+            "agent_loop",
+            "llm",
+            "decide"
+          ]
+        },
+        {
+          "id": "act-flow-visual",
+          "data": {
+            "stages": [
+              {
+                "sub": "Produces tool name + arguments",
+                "label": "LLM decides"
+              },
+              {
+                "sub": "Sends call to external system",
+                "label": "Runtime dispatches"
+              },
+              {
+                "sub": "Runs query, API call, or action",
+                "label": "External system acts"
+              },
+              {
+                "sub": "Response travels back to runtime",
+                "label": "Result returned"
+              },
+              {
+                "sub": "Result added to context for next turn",
+                "label": "New observation"
+              }
+            ]
+          },
+          "kind": "diagram",
+          "title": "From tool call to new observation",
+          "caption": "The Act step spans three parties: the LLM, the runtime, and the external system. The result closes the loop by becoming the next observation.",
+          "termIds": [
+            "act",
+            "tool_call",
+            "external_system",
+            "observe",
+            "context"
+          ],
+          "template": "pipeline"
+        },
+        {
+          "id": "act-functional-example",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Imagine an agent whose "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": " is: \"Find the cheapest flight from London to Tokyo next Friday.\""
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 1 — The LLM decides"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "After reading the observation (the goal plus any earlier results), the "
+                },
+                {
+                  "term": "llm",
+                  "text": "LLM"
+                },
+                {
+                  "text": " produces a "
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool call"
+                },
+                {
+                  "text": ": "
+                },
+                {
+                  "code": true,
+                  "text": "search_flights(origin=\"LHR\", destination=\"NRT\", date=\"2026-07-11\")"
+                },
+                {
+                  "text": ". The LLM writes this call; it does not run it."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 2 — The runtime dispatches"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The agent runtime reads the tool name and arguments. It finds the matching function and calls the flight-search API — an "
+                },
+                {
+                  "term": "external_system",
+                  "text": "external system"
+                },
+                {
+                  "text": " outside the model. The model is paused while it waits."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 3 — The result comes back"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The API returns: "
+                },
+                {
+                  "code": true,
+                  "text": "{\"cheapest\": \"£620\", \"airline\": \"ANA\", \"stops\": 0}"
+                },
+                {
+                  "text": ". The runtime wraps this as a new "
+                },
+                {
+                  "term": "observe",
+                  "text": "observation"
+                },
+                {
+                  "text": " and adds it to the "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Step 4 — The next turn begins"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LLM now sees the flight result in its context. It can reason about it — compare prices, ask a follow-up, or decide the goal is met and stop. The result "
+                },
+                {
+                  "text": "became",
+                  "strong": true
+                },
+                {
+                  "text": " the observation that drives the next "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": ". That is why the result must come back: without it, the agent has no new information to act on."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "A worked example: checking a flight price",
+          "sources": [
+            "S1",
+            "S6"
+          ],
+          "termIds": [
+            "goal",
+            "llm",
+            "tool_call",
+            "external_system",
+            "observe",
+            "context",
+            "turn"
+          ]
+        },
+        {
+          "id": "act-failure-modes",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The Act step touches real systems, so its failures have real consequences. These are the most common — and most dangerous — things to watch for."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Destructive actions without confirmation"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A tool that deletes a file, sends an email, or charges a card cannot be undone. If the agent calls it on a wrong assumption, the damage is immediate. Always require a confirmation step before any irreversible "
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool call"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Silent failures — the tool returns nothing useful"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "An "
+                },
+                {
+                  "term": "external_system",
+                  "text": "external system"
+                },
+                {
+                  "text": " may return an empty result, a timeout, or a vague error. If the runtime passes that back as-is, the agent may treat silence as success and move on with a false belief."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Missing or malformed arguments"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The LLM sometimes produces a call with a missing required argument or the wrong data type. The external system rejects it, but the agent may retry in a loop rather than stopping."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Infinite retry loops"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If every attempt fails and there is no "
+                },
+                {
+                  "term": "turn_budget",
+                  "text": "turn budget"
+                },
+                {
+                  "text": " or retry limit, the agent loops forever. Always set a maximum number of turns and a hard stop on repeated failed calls."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
+                {
+                  "text": "Non-obvious risk: "
+                },
+                {
+                  "text": "A tool can succeed technically but change hidden state. ",
+                  "strong": true
+                },
+                {
+                  "text": "For example, a read-only search API might log the query and trigger a billing event. Treat any external call as potentially side-effecting until you have confirmed otherwise."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "How the Act step breaks in practice",
+          "analogy": "A tool call gone wrong is like posting a letter to the wrong address — the sender thinks the job is done, but nothing actually happened, and no one knows until it's too late.",
+          "sources": [
+            "S2",
+            "S3"
+          ],
+          "termIds": [
+            "tool_call",
+            "external_system",
+            "turn_budget",
+            "act"
+          ]
+        },
+        {
+          "id": "act-verify-ai-output",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "When an AI writes the code that dispatches tool calls, check these things before you trust it:"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Does it validate arguments before sending? (Missing fields should raise an error, not silently pass None.)"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it handle a failed or empty response — not just the happy path?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it guard destructive calls (delete, send, charge) with a confirmation flag or human-in-the-loop step?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it add the result to context as a new observation, not discard it?"
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it respect a turn budget or retry limit to prevent infinite loops?"
+                  }
+                ]
+              ]
+            }
+          ],
+          "kind": "note",
+          "tone": "info",
+          "sources": [
+            "S2",
+            "S3"
+          ],
+          "termIds": [
+            "tool_call",
+            "external_system",
+            "observe",
+            "context",
+            "turn_budget"
+          ]
+        },
+        {
+          "id": "act-completion-code",
+          "code": "# A minimal agent runtime: dispatch one tool call and return the result as an observation.\n\ndef dispatch_tool_call(tool_call, tool_registry):\n    \"\"\"\n    tool_call   : dict with keys 'name' and 'arguments'\n    tool_registry : dict mapping tool names to callable functions\n    Returns     : dict with keys 'tool' and 'result'\n    \"\"\"\n    name = tool_call[\"name\"]\n    args = tool_call[\"arguments\"]\n\n    if name not in tool_registry:\n        raise ValueError(f\"Unknown tool: {name}\")\n\n    tool_fn = tool_registry[name]\n\n    # TODO: call tool_fn with args and store the return value as `result`\n    result = ???\n\n    # Package the result as a new observation\n    observation = {\"tool\": name, \"result\": result}\n    return observation\n\n\n# --- Example usage ---\ndef search_flights(origin, destination, date):\n    # Pretend this calls a real flights API\n    return {\"cheapest\": \"£620\", \"airline\": \"ANA\", \"stops\": 0}\n\nregistry = {\"search_flights\": search_flights}\n\ncall = {\n    \"name\": \"search_flights\",\n    \"arguments\": {\"origin\": \"LHR\", \"destination\": \"NRT\", \"date\": \"2026-07-11\"}\n}\n\nobs = dispatch_tool_call(call, registry)\nprint(obs)\n# Expected: {'tool': 'search_flights', 'result': {'cheapest': '£620', 'airline': 'ANA', 'stops': 0}}",
+          "kind": "codeExample",
+          "title": "Completion problem: dispatch a tool call and return the observation",
+          "syntax": [
+            {
+              "part": "tool_registry[name]",
+              "explains": "Looks up the callable function by its string name — like finding the right tool in a toolbox by label."
+            },
+            {
+              "part": "tool_fn(**args)",
+              "explains": "Calls the function and unpacks the arguments dict so each key becomes a named parameter (e.g. origin='LHR')."
+            },
+            {
+              "part": "observation = {\"tool\": name, \"result\": result}",
+              "explains": "Packages the raw result into a labelled dict — this is what gets added to the agent's context as the new observation."
+            },
+            {
+              "part": "raise ValueError(...)",
+              "explains": "Stops execution immediately with a clear error message if the tool name is not recognised."
+            }
+          ],
+          "explain": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This function is the runtime's Act step. It sits between the LLM's decision and the "
+                },
+                {
+                  "term": "external_system",
+                  "text": "external system"
+                },
+                {
+                  "text": ". The LLM never calls "
+                },
+                {
+                  "code": true,
+                  "text": "tool_fn"
+                },
+                {
+                  "text": " directly — the runtime does, then wraps the result as a new "
+                },
+                {
+                  "term": "observe",
+                  "text": "observation"
+                },
+                {
+                  "text": " ready for the next "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "S1",
+            "S6"
+          ],
+          "termIds": [
+            "act",
+            "tool_call",
+            "external_system",
+            "observe",
+            "turn",
+            "function_calling"
+          ],
+          "language": "python",
+          "predictThenReveal": {
+            "answer": "result = tool_fn(**args)\n\nThe ** unpacks the arguments dictionary so each key becomes a named parameter. For example, tool_fn(**{\"origin\": \"LHR\", ...}) is the same as tool_fn(origin=\"LHR\", ...). Without this, the tool function never runs and no result is returned.",
+            "prompt": "What should replace the ??? on the TODO line? The function needs to call tool_fn and pass the arguments dict to it. Write the one line before revealing."
+          }
+        },
+        {
+          "id": "act-knowledge-check",
+          "kind": "knowledgeCheck",
+          "intro": "These questions cover the three objectives for this module. Answer each one before reading the explanation.",
+          "title": "Check your understanding: Act",
+          "sources": [
+            "S1",
+            "S2",
+            "S6"
+          ],
+          "termIds": [
+            "act",
+            "tool_call",
+            "external_system",
+            "observe",
+            "context",
+            "turn",
+            "llm",
+            "agent_loop"
+          ],
+          "questions": [
+            {
+              "id": "kc-act-1",
+              "kind": "mcq",
+              "prompt": "After the LLM produces a tool call, which part of the system actually contacts the external system?",
+              "options": [
+                {
+                  "text": "The LLM itself, using its internal knowledge.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent runtime, which dispatches the call on the LLM's behalf.",
+                  "correct": true
+                },
+                {
+                  "text": "The user, who must manually trigger the API.",
+                  "correct": false
+                },
+                {
+                  "text": "The context window, which stores and sends the call.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The LLM only produces the tool call as text (a name and arguments). The surrounding runtime code reads that output and actually contacts the external system. This separation is why the LLM can 'use' tools without having network access itself."
+            },
+            {
+              "id": "kc-act-2",
+              "kind": "mcq",
+              "prompt": "Why must the tool result come back as a new observation rather than being discarded?",
+              "options": [
+                {
+                  "text": "So the runtime can log it for billing purposes.",
+                  "correct": false
+                },
+                {
+                  "text": "Because the LLM needs it in context to reason about what to do next.",
+                  "correct": true
+                },
+                {
+                  "text": "To satisfy the external system's API contract.",
+                  "correct": false
+                },
+                {
+                  "text": "So the agent can skip the next turn if the result is good enough.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The agent loop works by feeding each result back as an observation. Without that, the LLM has no new information — it would reason from stale context and likely repeat the same action or make a wrong decision."
+            },
+            {
+              "id": "kc-act-3",
+              "kind": "mcq",
+              "prompt": "Which of the following is the BEST example of a destructive tool call that needs a confirmation step?",
+              "options": [
+                {
+                  "text": "search_web(query='best pizza in Rome')",
+                  "correct": false
+                },
+                {
+                  "text": "get_weather(city='Tokyo')",
+                  "correct": false
+                },
+                {
+                  "text": "delete_file(path='/invoices/2025-final.pdf')",
+                  "correct": true
+                },
+                {
+                  "text": "list_calendar_events(date='2026-07-11')",
+                  "correct": false
+                }
+              ],
+              "explanation": "Deleting a file is irreversible — once done, the data is gone. Read-only calls like search or get_weather have no lasting side effects. Any action that cannot be undone (delete, send, charge) should require explicit confirmation before the agent runs it."
+            },
+            {
+              "id": "kc-act-4",
+              "kind": "freeText",
+              "prompt": "In your own words: what is a 'silent failure' in the Act step, and why is it dangerous?",
+              "explanation": "Silent failures are especially tricky because no exception is raised. The agent just receives nothing useful and may carry on as if the call worked. Good runtimes check for empty or error responses and surface them explicitly as failed observations.",
+              "acceptableAnswer": "A silent failure is when the external system returns an empty result, a timeout, or a vague error, and the agent treats it as a success. It is dangerous because the agent continues with a false belief — it thinks it has information it does not actually have, which can lead to wrong decisions or fabricated answers."
+            },
+            {
+              "id": "kc-act-5",
+              "kind": "freeText",
+              "prompt": "Trace the path of a single tool call from the moment the LLM produces it to the moment the next turn begins. Name each stage in order.",
+              "explanation": "This five-stage path is the core of the Act step. Each stage has a clear owner: the LLM owns stage 1, the runtime owns stages 2 and 4, and the external system owns stage 3. Knowing who owns what helps you debug when something goes wrong.",
+              "acceptableAnswer": "1. LLM produces the tool call (name + arguments). 2. Runtime reads the call and dispatches it to the external system. 3. External system executes and returns a result. 4. Runtime packages the result as a new observation and adds it to context. 5. The next turn begins with that observation available to the LLM."
+            }
+          ]
+        }
+      ],
+      "summary": "The chosen tool call runs against an external system and returns a result the agent can read. We connect this back to the observation it will become next turn.",
+      "termIds": [
+        "act",
+        "tool_call",
+        "tool",
+        "external_system"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to describe how a tool call reaches an external system.",
+        "After this you'll be able to explain why the result must come back as a new observation.",
+        "After this you'll be able to name risks of destructive or unconfirmed actions."
+      ]
+    },
+    {
+      "id": "m_update",
+      "sub": "Follows act — closes the cycle and feeds the next observe.",
+      "order": 5,
+      "title": "Update: folding results into memory",
+      "blocks": [
+        {
+          "id": "spaced-retrieval-observe",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Quick recall from Module 2 — answer from memory before reading on.",
+                  "strong": true
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "When an agent "
+                },
+                {
+                  "term": "observe",
+                  "text": "observes"
+                },
+                {
+                  "text": " its environment, what exactly is it reading? What is the name for the full picture of information available to the agent at that moment?"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": true,
+                  "text": "Think of your answer, then continue. (Answer: the agent reads its "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "em": true,
+                  "text": " — the current "
+                },
+                {
+                  "term": "state",
+                  "text": "state"
+                },
+                {
+                  "em": true,
+                  "text": " of everything it knows, including the goal, prior messages, and any tool results so far.)"
+                }
+              ]
+            }
+          ],
+          "kind": "note",
+          "tone": "info"
+        },
+        {
+          "id": "concept-update-memory",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "You are now at module 5 of 6 — the step that closes the loop."
+                },
+                {
+                  "em": false,
+                  "text": " In module 4 you saw the agent "
+                },
+                {
+                  "term": "act",
+                  "text": "act"
+                },
+                {
+                  "text": ": it ran a tool and got a result back."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "That result is raw data until the agent folds it into its "
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "em": false,
+                  "text": ". The "
+                },
+                {
+                  "term": "update",
+                  "text": "update"
+                },
+                {
+                  "em": false,
+                  "text": " step does exactly that — it writes the result into the agent's working memory so the next "
+                },
+                {
+                  "term": "turn",
+                  "text": "turn"
+                },
+                {
+                  "text": " starts with a richer picture."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Without this step, every turn would start from scratch."
+                },
+                {
+                  "em": false,
+                  "text": " The update is what turns a one-shot call into a real "
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "agent loop"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Two kinds of memory"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Agents have two places to store information, and they work very differently."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Short-term context",
+                    "strong": true
+                  },
+                  {
+                    "em": false,
+                    "text": " — the active conversation window the "
+                  },
+                  {
+                    "term": "llm",
+                    "text": "LLM"
+                  },
+                  {
+                    "text": " reads on every turn. It is fast but limited in size. When the window fills up, old content is pushed out."
+                  }
+                ],
+                [
+                  {
+                    "text": "Long-term memory",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a store outside the model (a database, a vector store, or a knowledge graph). The agent writes important facts there and retrieves them later. It survives across sessions."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Think of short-term context as a sticky note on your desk — visible right now, but limited space."
+                },
+                {
+                  "em": false,
+                  "text": " Long-term "
+                },
+                {
+                  "term": "memory",
+                  "text": "memory"
+                },
+                {
+                  "text": " is the filing cabinet — more room, but you have to look things up."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Update: folding results into memory",
+          "analogy": "Updating memory after a tool result is like a chef tasting a dish mid-cook and adjusting the recipe notes before the next step — the tasting changes what they do next.",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "update",
+            "memory",
+            "context",
+            "agent_loop",
+            "turn",
+            "observe",
+            "state"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "visual-context-vs-memory",
+          "max": 100,
+          "min": 0,
+          "kind": "interactiveSlider",
+          "unit": "% of result kept verbatim in context window",
+          "stops": [
+            {
+              "at": 0,
+              "note": "Context stays small and cheap. Risk: key details are lost in the summary and the agent makes worse decisions.",
+              "label": "Summarize everything"
+            },
+            {
+              "at": 33,
+              "note": "A short structured extract (e.g. 3 bullet points) goes into context. Good balance for most tasks.",
+              "label": "Keep key facts only"
+            },
+            {
+              "at": 66,
+              "note": "Useful when the raw text matters (e.g. a legal clause). Context grows faster — watch the window size.",
+              "label": "Keep most of the result"
+            },
+            {
+              "at": 100,
+              "note": "Nothing is lost, but context fills up quickly. After a few turns the window overflows and early context is dropped.",
+              "label": "Keep full result verbatim"
+            }
+          ],
+          "title": "How much of the result should stay in context?",
+          "caption": "Drag the slider to see the tradeoff between keeping full results and summarizing them away."
+        },
+        {
+          "id": "functional-example-update",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Imagine an agent with the "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": ": \"Write a short report on the tallest buildings in the world.\""
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "On turn 1 it searches the web and gets back a list of ten skyscrapers with heights."
+                },
+                {
+                  "text": " That raw list is the tool result."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "What the update step does"
+                }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "em": false,
+                    "text": "The agent appends the search result to its short-term "
+                  },
+                  {
+                    "term": "context",
+                    "text": "context"
+                  },
+                  {
+                    "text": " as a new message: \"Tool returned: [Burj Khalifa 828 m, Merdeka 118 679 m …]\""
+                  }
+                ],
+                [
+                  {
+                    "em": false,
+                    "text": "It also writes a compact summary — \"Top 3 tallest: Burj Khalifa, Merdeka 118, Shanghai Tower\" — to long-term "
+                  },
+                  {
+                    "term": "memory",
+                    "text": "memory"
+                  },
+                  {
+                    "text": " for later retrieval."
+                  }
+                ],
+                [
+                  {
+                    "em": false,
+                    "text": "On turn 2 the agent "
+                  },
+                  {
+                    "term": "observe",
+                    "text": "observes"
+                  },
+                  {
+                    "text": " the updated context and now knows the top buildings without calling the search tool again."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "The result has become part of the agent's "
+                },
+                {
+                  "term": "state",
+                  "text": "state"
+                },
+                {
+                  "text": ". Each turn builds on the last — that is the loop."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Predict first: ",
+                  "strong": true
+                },
+                {
+                  "text": "if the agent skipped the update step entirely, what would happen on turn 2? Think of your answer before reading the next block."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "A research agent folds in a search result",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "update",
+            "memory",
+            "context",
+            "turn",
+            "observe",
+            "state",
+            "goal"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "failure-modes-update",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The update step is where many real agents quietly go wrong."
+                },
+                {
+                  "text": " Knowing the failure modes helps you spot them early."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Stale context"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If a result is never written back, the agent acts on outdated information."
+                },
+                {
+                  "text": " It may repeat a tool call it already made, or contradict a fact it just learned."
+                },
+                {
+                  "text": " This is the \"skipped update\" failure — easy to miss because the agent keeps running."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Over-stuffed context"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Appending every result verbatim fills the context window fast."
+                },
+                {
+                  "em": false,
+                  "text": " Once the window is full, the "
+                },
+                {
+                  "term": "llm",
+                  "text": "LLM"
+                },
+                {
+                  "text": " silently drops the oldest content."
+                },
+                {
+                  "em": false,
+                  "text": " The agent \"forgets\" its early instructions or the original "
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": " — a non-obvious but common bug."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Memory write errors (the non-obvious one)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "em": false,
+                  "text": "Writing to long-term "
+                },
+                {
+                  "term": "memory",
+                  "text": "memory"
+                },
+                {
+                  "text": " can fail silently — a database timeout, a bad key, a serialization error."
+                },
+                {
+                  "text": " The agent continues as if the write succeeded, but the fact is gone."
+                },
+                {
+                  "text": " Future turns retrieve nothing and the agent hallucinates a replacement."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Watch for: ",
+                    "strong": true
+                  },
+                  {
+                    "text": "repeated identical tool calls (stale context signal)."
+                  }
+                ],
+                [
+                  {
+                    "text": "Watch for: ",
+                    "strong": true
+                  },
+                  {
+                    "text": "the agent ignoring its original goal after several turns (over-stuffed context signal)."
+                  }
+                ],
+                [
+                  {
+                    "text": "Watch for: ",
+                    "strong": true
+                  },
+                  {
+                    "text": "confident answers that contradict earlier retrieved facts (silent memory-write failure signal)."
+                  }
+                ]
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "How the update step breaks in practice",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "context",
+            "memory",
+            "update",
+            "turn",
+            "llm"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "decision-keep-or-summarize",
+          "kind": "decisionCallout",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "context",
+            "memory",
+            "update"
+          ],
+          "useWhen": "Keep the full result in context when the raw text itself matters for the next step — e.g. a code snippet the agent must edit, a legal clause it must quote, or a short result (< ~200 tokens) that is cheap to keep.",
+          "avoidWhen": "Avoid keeping the full result when it is long, repetitive, or only partially relevant. Summarize or extract key facts instead, and write the summary to context while optionally archiving the full result to long-term memory.",
+          "depthTier": "core",
+          "ruleOfThumb": "If the agent needs the exact words, keep them. If it only needs the meaning, summarize. When in doubt, extract 3–5 key facts and discard the rest."
+        },
+        {
+          "id": "knowledge-check-update",
+          "kind": "knowledgeCheck",
+          "intro": "Answer from memory. These questions map directly to what you just learned.",
+          "title": "Check your understanding: Update",
+          "termIds": [
+            "update",
+            "memory",
+            "context",
+            "state",
+            "agent_loop",
+            "turn"
+          ],
+          "depthTier": "core",
+          "questions": [
+            {
+              "id": "kc-update-1",
+              "kind": "mcq",
+              "prompt": "What is the main purpose of the Update step in the agent loop?",
+              "options": [
+                {
+                  "text": "To call an external tool and get a result.",
+                  "correct": false
+                },
+                {
+                  "text": "To fold the tool result into the agent's context so the next turn starts with richer information.",
+                  "correct": true
+                },
+                {
+                  "text": "To decide which tool to call next.",
+                  "correct": false
+                },
+                {
+                  "text": "To check whether the agent's goal has been reached.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The Update step writes the result back into the agent's context (and optionally long-term memory). Without it, each turn would start from scratch and the loop would not build on itself."
+            },
+            {
+              "id": "kc-update-2",
+              "kind": "mcq",
+              "prompt": "Which of the following best describes the difference between short-term context and long-term memory?",
+              "options": [
+                {
+                  "text": "Short-term context is stored in a database; long-term memory lives in the conversation window.",
+                  "correct": false
+                },
+                {
+                  "text": "Short-term context is the active window the LLM reads each turn; long-term memory is an external store that survives across sessions.",
+                  "correct": true
+                },
+                {
+                  "text": "They are the same thing — both refer to the conversation history.",
+                  "correct": false
+                },
+                {
+                  "text": "Short-term context is faster but more accurate; long-term memory is slower and less reliable.",
+                  "correct": false
+                }
+              ],
+              "explanation": "Short-term context is the text window the model sees right now — limited in size. Long-term memory is an external store (database, vector store, etc.) that persists beyond a single session."
+            },
+            {
+              "id": "kc-update-3",
+              "kind": "mcq",
+              "prompt": "An agent keeps appending full tool results to its context on every turn. After 10 turns, it starts ignoring its original goal. What failure mode is this?",
+              "options": [
+                {
+                  "text": "Stale context — the result was never written back.",
+                  "correct": false
+                },
+                {
+                  "text": "Silent memory-write failure — the database timed out.",
+                  "correct": false
+                },
+                {
+                  "text": "Over-stuffed context — the window filled up and the oldest content (including the goal) was dropped.",
+                  "correct": true
+                },
+                {
+                  "text": "Termination failure — the agent never stopped looping.",
+                  "correct": false
+                }
+              ],
+              "explanation": "When the context window fills up, the LLM silently drops the oldest content. If the original goal was written early, it gets pushed out — and the agent loses track of what it was trying to do."
+            },
+            {
+              "id": "kc-update-4",
+              "kind": "freeText",
+              "prompt": "In your own words: when should you keep a tool result verbatim in context, and when should you summarize it instead?",
+              "explanation": "The rule of thumb is: if the agent needs the exact words, keep them; if it only needs the meaning, summarize. Summarizing protects the context window and keeps the agent focused.",
+              "acceptableAnswer": "Keep verbatim when the exact wording matters for the next step (e.g. code to edit, a clause to quote, or a short result). Summarize when the result is long or only partially relevant — extract the key facts and discard the rest to avoid over-stuffing the context window."
+            },
+            {
+              "id": "kc-update-5",
+              "kind": "mcq",
+              "prompt": "A research agent calls a search tool, gets a result, but never writes it back to context or memory. What will most likely happen on the next turn?",
+              "options": [
+                {
+                  "text": "The agent will complete the task correctly using its training knowledge.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent will observe the same empty state as before and may repeat the same tool call.",
+                  "correct": true
+                },
+                {
+                  "text": "The agent will automatically summarize the result and store it.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent will stop and ask the user for the missing information.",
+                  "correct": false
+                }
+              ],
+              "explanation": "Without an update, the agent's state does not change. On the next turn it observes the same context it started with, so it is likely to reason the same way and repeat the tool call it already made — a classic stale-context loop."
+            }
+          ]
+        }
+      ],
+      "summary": "The result updates the agent's context and memory so the next turn observes a richer state. This is the link that makes the loop a loop instead of a one-shot.",
+      "termIds": [
+        "update",
+        "memory",
+        "context",
+        "state"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to explain how a result becomes part of the next observation.",
+        "After this you'll be able to distinguish short-term context from longer-term memory.",
+        "After this you'll be able to recognize stale or over-stuffed context as a failure mode."
+      ],
+      "decisionItForces": "Keep this result in context, or summarize it away?"
+    },
+    {
+      "id": "m_stop",
+      "sub": "The cycle's exit — and the lesson's recall checkpoint.",
+      "order": 6,
+      "title": "Know when to stop: loop termination",
+      "blocks": [
+        {
+          "id": "spaced-retrieval-update",
+          "body": [
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "text": "In module 5, the agent ran a tool and got a result. What did the Update step do with that result — and why?",
+                  "strong": true
+                },
+                {
+                  "text": " Try to answer from memory before scrolling."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The ",
+                  "strong": false
+                },
+                {
+                  "term": "update",
+                  "text": "Update"
+                },
+                {
+                  "text": " step folds the tool's result back into the agent's ",
+                  "strong": false
+                },
+                {
+                  "term": "memory",
+                  "text": "memory"
+                },
+                {
+                  "text": " and ",
+                  "strong": false
+                },
+                {
+                  "term": "context",
+                  "text": "context"
+                },
+                {
+                  "text": ". This keeps the agent's picture of the world current before the next turn."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Without Update, the agent would repeat the same action forever — it would have no way to know anything had changed."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Now we reach the final question of every turn: ",
+                  "strong": false
+                },
+                {
+                  "text": "should the loop run again, or is it time to stop?",
+                  "strong": true
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "Quick recall: what happens in the Update step?",
+          "termIds": [
+            "update",
+            "memory",
+            "context"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "termination-concept",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Every turn of the ",
+                  "strong": false
+                },
+                {
+                  "term": "agent_loop",
+                  "text": "agent loop"
+                },
+                {
+                  "text": " ends with a three-way decision: repeat, finish, or stop for safety."
+                },
+                {
+                  "text": " This decision point is called ",
+                  "strong": false
+                },
+                {
+                  "term": "termination",
+                  "text": "termination"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "There are three main reasons an agent stops:"
+                }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Goal met",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the agent's answer satisfies the original ",
+                    "strong": false
+                  },
+                  {
+                    "term": "goal",
+                    "text": "goal"
+                  },
+                  {
+                    "text": ". This is the happy path."
+                  }
+                ],
+                [
+                  {
+                    "text": "Turn budget hit",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the agent has used its maximum allowed number of ",
+                    "strong": false
+                  },
+                  {
+                    "term": "turn",
+                    "text": "turns"
+                  },
+                  {
+                    "text": ". This is a hard safety ceiling."
+                  }
+                ],
+                [
+                  {
+                    "text": "Safe stop after repeated failures",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the same tool keeps failing, or the agent is going in circles. Continuing would waste resources or cause harm."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Without these checks, an agent could loop forever — burning money, hitting rate limits, or returning a wrong answer with false confidence."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "When does the loop stop?",
+          "analogy": "An agent loop is like a chef tasting a dish repeatedly — they stop when it tastes right, when the kitchen closes, or when they've burned it three times and need to call it.",
+          "sources": [
+            "S1"
+          ],
+          "termIds": [
+            "agent_loop",
+            "termination",
+            "goal",
+            "turn",
+            "turn_budget"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "turn-budget-concept",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A ",
+                  "strong": false
+                },
+                {
+                  "term": "turn_budget",
+                  "text": "turn budget"
+                },
+                {
+                  "text": " is a simple counter: the agent is allowed at most N turns before it must stop and return whatever it has."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Why is this necessary? An ",
+                  "strong": false
+                },
+                {
+                  "term": "llm",
+                  "text": "LLM"
+                },
+                {
+                  "text": " can get stuck in a reasoning loop — calling the same ",
+                  "strong": false
+                },
+                {
+                  "term": "tool",
+                  "text": "tool"
+                },
+                {
+                  "text": " repeatedly, or oscillating between two plans without ever finishing."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The turn budget is checked ",
+                  "strong": false
+                },
+                {
+                  "text": "every turn",
+                  "strong": true
+                },
+                {
+                  "text": ", before the agent decides its next action. If the counter hits zero, the loop exits immediately."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
+                {
+                  "text": "A turn budget does NOT guarantee a good answer — it only guarantees the agent ",
+                  "strong": false
+                },
+                {
+                  "text": "stops",
+                  "strong": true
+                },
+                {
+                  "text": ". Always tell the user when the budget was the reason for stopping."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "The turn budget: your infinite-loop insurance",
+          "analogy": "A turn budget is like a parking meter — no matter how much you want to stay, the time runs out and you must leave.",
+          "sources": [
+            "S1",
+            "S5"
+          ],
+          "termIds": [
+            "turn_budget",
+            "turn",
+            "llm",
+            "tool"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "termination-visual",
+          "data": {
+            "stages": [
+              {
+                "sub": "Read tool result",
+                "label": "Observe"
+              },
+              {
+                "sub": "Fold into memory",
+                "label": "Update"
+              },
+              {
+                "sub": "Yes → finish",
+                "label": "Check: goal met?"
+              },
+              {
+                "sub": "Yes → stop",
+                "label": "Check: budget hit?"
+              },
+              {
+                "sub": "Yes → safe stop",
+                "label": "Check: repeated failure?"
+              },
+              {
+                "sub": "Next turn",
+                "label": "Decide & Act"
+              }
+            ]
+          },
+          "kind": "diagram",
+          "title": "The termination decision at the end of every turn",
+          "caption": "After every Update, the agent runs three checks before looping again. The first check that fires ends the loop.",
+          "termIds": [
+            "observe",
+            "update",
+            "turn_budget",
+            "termination"
+          ],
+          "template": "pipeline",
+          "depthTier": "core"
+        },
+        {
+          "id": "failure-modes-block",
+          "body": [
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "Common failure modes"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Repeated failed tool calls",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the agent calls the same ",
+                    "strong": false
+                  },
+                  {
+                    "term": "tool",
+                    "text": "tool"
+                  },
+                  {
+                    "text": " with the same bad arguments, fails, and tries again. Without a failure counter, this eats the entire turn budget."
+                  }
+                ],
+                [
+                  {
+                    "text": "Unsupported final claims",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the agent stops on time but its answer cites facts that were never retrieved. The loop ended; the answer is still wrong."
+                  }
+                ],
+                [
+                  {
+                    "text": "Silent budget exhaustion",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the agent hits the turn limit but returns a confident-sounding answer anyway, with no warning to the user."
+                  }
+                ],
+                [
+                  {
+                    "text": "Goal declared too early",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the LLM decides the goal is met after one tool call, even when the result was partial or ambiguous."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "h",
+              "level": 3,
+              "spans": [
+                {
+                  "text": "What to watch for"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Track ",
+                  "strong": false
+                },
+                {
+                  "text": "three counters",
+                  "strong": true
+                },
+                {
+                  "text": " per run: total turns used, consecutive failed ",
+                  "strong": false
+                },
+                {
+                  "term": "tool_call",
+                  "text": "tool calls"
+                },
+                {
+                  "text": ", and whether the final answer cites retrieved content."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Test every agent run against a maximum turn budget and a consecutive-failure threshold before shipping."
+                }
+              ]
+            }
+          ],
+          "kind": "conceptual",
+          "title": "How termination breaks in practice",
+          "sources": [
+            "S5"
+          ],
+          "termIds": [
+            "tool",
+            "tool_call",
+            "turn_budget",
+            "termination",
+            "llm"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "termination-scenario",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Imagine an agent whose ",
+                  "strong": false
+                },
+                {
+                  "term": "goal",
+                  "text": "goal"
+                },
+                {
+                  "text": " is: \"Find the current price of three products and return a comparison.\" It has a turn budget of 8."
+                }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Turn 1",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Agent calls a price-lookup tool for Product A. Result: success. Budget remaining: 7."
+                  }
+                ],
+                [
+                  {
+                    "text": "Turn 2",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Agent calls the tool for Product B. Result: API error. Failure count: 1."
+                  }
+                ],
+                [
+                  {
+                    "text": "Turn 3",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Agent retries Product B with the same arguments. Result: API error again. Failure count: 2."
+                  }
+                ],
+                [
+                  {
+                    "text": "Turn 4",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Failure threshold (2 consecutive failures) is hit. The agent triggers a ",
+                    "strong": false
+                  },
+                  {
+                    "text": "safe stop",
+                    "strong": true
+                  },
+                  {
+                    "text": " and returns: \"Found prices for A only; Product B lookup failed twice. Stopping safely.\""
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Notice three things: the agent ",
+                  "strong": false
+                },
+                {
+                  "text": "did not",
+                  "strong": true
+                },
+                {
+                  "text": " keep burning turns on a broken tool. It ",
+                  "strong": false
+                },
+                {
+                  "text": "did not",
+                  "strong": true
+                },
+                {
+                  "text": " invent a price for Product B. And it told the user ",
+                  "strong": false
+                },
+                {
+                  "text": "why",
+                  "strong": true
+                },
+                {
+                  "text": " it stopped."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "good",
+              "spans": [
+                {
+                  "text": "A partial honest answer is almost always better than a complete fabricated one."
+                }
+              ]
+            }
+          ],
+          "kind": "functionalExample",
+          "title": "A research agent decides whether to keep going",
+          "termIds": [
+            "goal",
+            "turn_budget",
+            "tool_call",
+            "termination",
+            "agent_loop"
+          ],
+          "depthTier": "core"
+        },
+        {
+          "id": "termination-decision-callout",
+          "kind": "decisionCallout",
+          "sources": [
+            "S5"
+          ],
+          "termIds": [
+            "goal",
+            "termination",
+            "turn_budget",
+            "tool_call"
+          ],
+          "useWhen": "The agent has retrieved all needed information and the answer directly satisfies the stated goal — choose 'finish'.",
+          "avoidWhen": "The last tool call failed, the answer contains claims not backed by retrieved content, or the turn budget is already exhausted without a real result — do not mark the goal as met.",
+          "depthTier": "core",
+          "ruleOfThumb": "If you can't point to a retrieved fact for every claim in the answer, the goal is NOT met — stop safely and say so."
+        },
+        {
+          "id": "termination-knowledge-check",
+          "kind": "knowledgeCheck",
+          "intro": "You've reached the end of the agent loop spine. These questions cover the whole loop — and especially when and why it stops.",
+          "title": "Module 6 knowledge check: Loop termination",
+          "sources": [
+            "S1",
+            "S5"
+          ],
+          "termIds": [
+            "termination",
+            "turn_budget",
+            "turn",
+            "goal",
+            "tool_call",
+            "agent_loop"
+          ],
+          "depthTier": "core",
+          "questions": [
+            {
+              "id": "kc1",
+              "kind": "mcq",
+              "prompt": "Which of the following is NOT one of the three main reasons an agent loop stops?",
+              "options": [
+                {
+                  "text": "The goal has been met.",
+                  "correct": false
+                },
+                {
+                  "text": "The turn budget has been exhausted.",
+                  "correct": false
+                },
+                {
+                  "text": "The LLM produced a very long answer.",
+                  "correct": true
+                },
+                {
+                  "text": "Repeated tool failures triggered a safe stop.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The three termination reasons are: goal met, turn budget hit, and safe stop after repeated failures. Answer length is not a termination condition — an agent can produce a short or long answer on any turn."
+            },
+            {
+              "id": "kc2",
+              "kind": "mcq",
+              "prompt": "An agent has a turn budget of 10. On turn 7, it meets its goal. What should happen?",
+              "options": [
+                {
+                  "text": "The agent must use all 10 turns before stopping.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent stops immediately and returns the answer.",
+                  "correct": true
+                },
+                {
+                  "text": "The agent waits until turn 10 to confirm the goal.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent resets the turn counter and starts over.",
+                  "correct": false
+                }
+              ],
+              "explanation": "The turn budget is a ceiling, not a target. As soon as the goal is met, the loop exits — there is no reason to use remaining turns."
+            },
+            {
+              "id": "kc3",
+              "kind": "mcq",
+              "prompt": "Why is 'unsupported final claims' listed as a failure mode for termination?",
+              "options": [
+                {
+                  "text": "The agent stopped too late and wasted turns.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent stopped on time but its answer contains facts it never actually retrieved.",
+                  "correct": true
+                },
+                {
+                  "text": "The agent called a tool that was not on the allowed list.",
+                  "correct": false
+                },
+                {
+                  "text": "The agent's context window was too small.",
+                  "correct": false
+                }
+              ],
+              "explanation": "Termination only controls when the loop ends — it does not guarantee the answer is correct. An agent can stop within budget and still return fabricated claims if it never verified them with a tool call. This is why you must check that every claim maps to retrieved content."
+            },
+            {
+              "id": "kc4",
+              "kind": "freeText",
+              "prompt": "In your own words: what is a turn budget, and what problem does it solve?",
+              "explanation": "The key ideas are: (1) it is a hard ceiling on the number of turns, and (2) its purpose is to prevent infinite or runaway loops that waste resources or never return an answer.",
+              "acceptableAnswer": "A turn budget is a maximum number of turns the agent is allowed before it must stop. It prevents the agent from looping forever — for example, when it gets stuck calling the same tool repeatedly or oscillating between plans without finishing."
+            },
+            {
+              "id": "kc5",
+              "kind": "freeText",
+              "prompt": "An agent is researching a topic. It calls a search tool four times in a row and gets an error each time. The turn budget still has 6 turns left. Should it keep trying? What should it do instead?",
+              "explanation": "This tests the 'safe stop after repeated failures' termination reason. A remaining turn budget does not mean the agent must keep going — if a tool is consistently failing, the right move is to stop safely and be transparent with the user.",
+              "acceptableAnswer": "No — it should trigger a safe stop after repeated failures. Continuing to call the same failing tool wastes the remaining budget and will not produce a better result. The agent should stop, return whatever it found before the failures, and tell the user why it stopped."
+            }
+          ]
+        }
+      ],
+      "summary": "An agent must decide each turn whether to repeat or finish: goal met, turn budget hit, or a safe stop after repeated failures. We revisit the whole loop while covering its failure modes.",
+      "termIds": [
+        "termination",
+        "turn_budget",
+        "agent_loop",
+        "memory"
+      ],
+      "citations": [],
+      "loadState": "full",
+      "objectives": [
+        "After this you'll be able to list the main reasons an agent loop stops.",
+        "After this you'll be able to explain why a turn budget prevents infinite loops.",
+        "After this you'll be able to name failure modes like repeated failed calls and unsupported claims."
+      ],
+      "decisionItForces": "Repeat the loop, finish, or stop for safety?"
+    }
+  ],
+  "glossary": {
+    "act": {
+      "id": "act",
+      "label": "Act",
+      "laymanDefinition": "The step where the chosen tool call actually runs against an external system."
+    },
+    "llm": {
+      "id": "llm",
+      "label": "LLM",
+      "acronymExpansion": "Large Language Model",
+      "laymanDefinition": "A model that predicts and generates text, used here as the brain that reasons and picks actions."
+    },
+    "goal": {
+      "id": "goal",
+      "label": "Goal",
+      "laymanDefinition": "The task the agent is trying to complete, which guides every decision it makes."
+    },
+    "tool": {
+      "id": "tool",
+      "label": "Tool",
+      "laymanDefinition": "An external capability the agent can call, such as a search, a calculator, or a database query."
+    },
+    "turn": {
+      "id": "turn",
+      "label": "Turn",
+      "laymanDefinition": "One pass through the loop: observe, decide, act, and update before deciding whether to repeat."
+    },
+    "agent": {
+      "id": "agent",
+      "label": "Agent",
+      "laymanDefinition": "A language model wired into a repeating loop so it can take actions and use tools, not just answer once."
+    },
+    "state": {
+      "id": "state",
+      "label": "State",
+      "laymanDefinition": "Everything the agent currently knows and has done so far in the task."
+    },
+    "decide": {
+      "id": "decide",
+      "label": "Decide",
+      "laymanDefinition": "The step where the LLM reasons over the observation and chooses a tool or a final answer."
+    },
+    "memory": {
+      "id": "memory",
+      "label": "Memory",
+      "laymanDefinition": "Information the agent keeps across turns so it doesn't forget what it has learned or done."
+    },
+    "update": {
+      "id": "update",
+      "label": "Update",
+      "laymanDefinition": "The step where the result is folded back into context and memory for the next turn."
+    },
+    "context": {
+      "id": "context",
+      "label": "Context",
+      "laymanDefinition": "The running set of information the agent currently has in view, including goal and recent results."
+    },
+    "observe": {
+      "id": "observe",
+      "label": "Observe",
+      "laymanDefinition": "The step where the agent reads the goal, current context, and results of past actions."
+    },
+    "reasoning": {
+      "id": "reasoning",
+      "label": "Reasoning",
+      "laymanDefinition": "The model thinking through what to do next based on what it just observed."
+    },
+    "tool_call": {
+      "id": "tool_call",
+      "label": "Tool call",
+      "laymanDefinition": "A request from the agent naming a specific tool plus the arguments to run it with."
+    },
+    "agent_loop": {
+      "id": "agent_loop",
+      "label": "Agent loop",
+      "laymanDefinition": "The repeating cycle of observe, decide, act, and update that drives an agent until its goal is met or it stops."
+    },
+    "termination": {
+      "id": "termination",
+      "label": "Termination",
+      "laymanDefinition": "How and when the loop stops: goal reached, turn budget hit, or a safe stop on failure."
+    },
+    "turn_budget": {
+      "id": "turn_budget",
+      "label": "Turn budget",
+      "laymanDefinition": "A maximum number of loop passes allowed, used to prevent the agent running forever."
+    },
+    "external_system": {
+      "id": "external_system",
+      "label": "External system",
+      "laymanDefinition": "Anything outside the model the agent talks to, like an API, file, or website."
+    },
+    "function_calling": {
+      "id": "function_calling",
+      "label": "Function calling",
+      "laymanDefinition": "The mechanism that lets an LLM emit a structured request to invoke a named tool with arguments."
+    }
+  },
+  "citations": {
+    "S1": {
+      "id": "S1",
+      "kind": "kb",
+      "title": "00_agentic_systems_overview.md",
+      "kbChunkId": "237"
+    },
+    "S2": {
+      "id": "S2",
+      "url": "https://github.com/getzep/graphiti",
+      "kind": "kb",
+      "title": "graphiti",
+      "asOfDate": "2026-06-17",
+      "kbChunkId": "146"
+    },
+    "S3": {
+      "id": "S3",
+      "url": "https://github.com/mem0ai/mem0",
+      "kind": "kb",
+      "title": "mem0",
+      "asOfDate": "2026-06-17",
+      "kbChunkId": "145"
+    },
+    "S4": {
+      "id": "S4",
+      "url": "https://github.com/coze-dev/coze-loop",
+      "kind": "kb",
+      "title": "coze-loop",
+      "asOfDate": "2026-06-17",
+      "kbChunkId": "116"
+    },
+    "S5": {
+      "id": "S5",
+      "kind": "kb",
+      "title": "00_agentic_systems_overview.md",
+      "kbChunkId": "240"
+    },
+    "S6": {
+      "id": "S6",
+      "url": "https://github.com/letta-ai/letta",
+      "kind": "kb",
+      "title": "letta",
+      "asOfDate": "2026-06-17",
+      "kbChunkId": "147"
+    },
+    "S7": {
+      "id": "S7",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "kind": "kb",
+      "title": "LangGraph",
+      "asOfDate": "2026-06-18",
+      "kbChunkId": "241"
+    },
+    "S8": {
+      "id": "S8",
+      "kind": "kb",
+      "title": "langgraph.md",
+      "kbChunkId": "328"
+    }
+  },
+  "mentalMap": {
+    "edges": [
+      {
+        "to": "n_observe",
+        "from": "n_loop"
+      },
+      {
+        "to": "n_decide",
+        "from": "n_observe"
+      },
+      {
+        "to": "n_act",
+        "from": "n_decide"
+      },
+      {
+        "to": "n_update",
+        "from": "n_act"
+      },
+      {
+        "to": "n_observe",
+        "from": "n_update",
+        "label": "repeat"
+      },
+      {
+        "to": "n_stop",
+        "from": "n_update"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "n_loop",
+        "icon": "🔁",
+        "what": "Explains why a repeating observe→decide→act→update loop is necessary for tool-using AI agents.",
+        "label": "Why the loop exists",
+        "order": 1,
+        "orient": "Why a single LLM answer isn't enough, and how the four-step cycle drives an agent.",
+        "moduleId": "m_intro",
+        "relevance": "This is the foundation of everything else in the lesson — every later module (tools, state, memory, termination) is a deeper look at one part of this loop.",
+        "laymanExplanation": "A chatbot is like a vending machine — one button, one result; an agent is like a sous chef who keeps tasting, adjusting, and tasting again until the dish is right."
+      },
+      {
+        "id": "n_observe",
+        "icon": "👀",
+        "what": "The Observe step is how an agent assembles its goal, context, and state at the start of every turn before making any decision.",
+        "label": "Observe the state",
+        "order": 2,
+        "orient": "How the agent reads the goal, current context, and results of past actions before deciding.",
+        "moduleId": "m_observe",
+        "relevance": "Every later step in the agent loop — deciding, acting, updating — depends entirely on what the agent observed here; a weak observation means every downstream decision is built on shaky ground.",
+        "laymanExplanation": "It's like a chef glancing at the order ticket, the half-finished dish, and the clock before touching anything — without that glance, every move is a guess."
+      },
+      {
+        "id": "n_decide",
+        "icon": "🧠",
+        "what": "How the LLM reasons over its context and decides whether to call a tool or give a final answer.",
+        "label": "Decide the next action",
+        "order": 3,
+        "orient": "How the LLM reasons over what it observed and picks a tool or final answer.",
+        "moduleId": "m_decide",
+        "relevance": "Every agent you build depends on this decision — get it wrong and the agent calls the wrong tool, stalls, or never stops.",
+        "laymanExplanation": "The Decide step is like a chef checking the order ticket and the fridge, then choosing whether to grab an ingredient or plate the dish."
+      },
+      {
+        "id": "n_act",
+        "icon": "🔧",
+        "what": "The Act step runs the chosen tool call against an external system and feeds the result back as the next observation.",
+        "label": "Act with a tool",
+        "order": 4,
+        "orient": "How the chosen tool call runs against an external system and returns a result.",
+        "moduleId": "m_act",
+        "relevance": "Understanding Act tells you exactly how your agent reaches out to real services — and what can go wrong when it does.",
+        "laymanExplanation": "Act is like placing a phone order: the agent tells the runtime what to order, the runtime calls the restaurant, and the receipt that comes back tells the agent what happened next."
+      },
+      {
+        "id": "n_update",
+        "icon": "📥",
+        "what": "The Update step writes a tool result back into the agent's context and memory, making the loop build on itself turn by turn.",
+        "label": "Update the context",
+        "order": 5,
+        "orient": "How the result is folded back into context and memory so the next turn is smarter.",
+        "moduleId": "m_update",
+        "relevance": "Without this step your agent forgets what it just learned — mastering it is what turns a one-shot call into a genuinely useful multi-turn agent.",
+        "laymanExplanation": "It's like a chef tasting a dish mid-cook and updating their recipe notes before the next step — the tasting changes what they do next."
+      },
+      {
+        "id": "n_stop",
+        "icon": "🛑",
+        "what": "This module explains the three ways an agent loop ends: goal met, turn budget exhausted, or a safe stop after repeated failures.",
+        "label": "Know when to stop",
+        "order": 6,
+        "orient": "How the loop terminates: goal met, turn budget, or a safe stop on failure.",
+        "moduleId": "m_stop",
+        "relevance": "Without a clear stopping rule, any agent you build can loop forever, waste resources, or return fabricated answers — this module gives you the checks that prevent that.",
+        "laymanExplanation": "Knowing when to stop is like knowing when a recipe is done: you taste it (check the goal), watch the clock (turn budget), or accept it's burned and serve what you have (safe stop)."
+      }
+    ],
+    "title": "The Agent Loop — the map",
+    "entryNodeId": "n_observe",
+    "oneLineThesis": "A tool-using agent is an LLM wrapped in a repeating cycle that perceives state, chooses an action, runs a tool, and folds the result back in until the goal is reached or it safely stops.",
+    "structureType": "procedural"
+  },
+  "synthesis": {
+    "recap": [
+      {
+        "t": "p",
+        "spans": [
+          {
+            "text": "From memory, name the four steps of the agent loop in order and say what each one hands to the next. Then recall two reasons a loop should stop and one failure mode that makes stopping necessary."
+          }
+        ]
+      }
+    ],
+    "capstone": {
+      "prompt": "Apply what you learned to The Agent Loop."
+    },
+    "checklist": [
+      {
+        "id": "c1",
+        "label": "Is my observation current and complete, or stale?"
+      },
+      {
+        "id": "c2",
+        "label": "Should the agent call a tool this turn, or stop and answer?"
+      },
+      {
+        "id": "c3",
+        "label": "Does each tool call have a valid name and all required arguments?"
+      },
+      {
+        "id": "c4",
+        "label": "Do I keep this result in context, or summarize it to stay lean?"
+      },
+      {
+        "id": "c5",
+        "label": "Do I repeat the loop, finish, or stop for safety?"
+      }
+    ],
+    "buildOrder": [
+      {
+        "step": 1,
+        "label": "Frame why an agent needs a loop instead of one answer"
+      },
+      {
+        "step": 2,
+        "label": "Observe: read the goal, context, and past results"
+      },
+      {
+        "step": 3,
+        "label": "Decide: reason and pick a tool or a final answer"
+      },
+      {
+        "step": 4,
+        "label": "Act: run the tool call against an external system"
+      },
+      {
+        "step": 5,
+        "label": "Update: fold the result into context and memory"
+      },
+      {
+        "step": 6,
+        "label": "Terminate: stop when the goal is met, budget is hit, or failure repeats"
+      }
+    ]
+  },
+  "schemaVersion": "1.0",
+  "learnerProfile": {
+    "depth": "conceptual",
+    "level": "beginner",
+    "topic": "The Agent Loop",
+    "levels": [
+      "beginner"
+    ],
+    "density": "medium",
+    "examples": "functional",
+    "inferred": false,
+    "lessonTypes": [
+      "content",
+      "knowledge_check"
+    ],
+    "readingMode": "vertical",
+    "explainSyntax": true,
+    "showTermPopovers": true,
+    "visualsRequested": true,
+    "expandAcronymsOnFirstUse": true
+  }
+}

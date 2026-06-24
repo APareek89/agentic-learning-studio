@@ -16,7 +16,7 @@
  * course artifacts still render and open fine.)
  */
 
-import { profiler, retriever, architect, runDeepDive } from "./nodes";
+import { profiler, retriever, planner, architect, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
@@ -76,6 +76,9 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await retriever(st as any));
+    // OPUS plans the STRUCTURE (lean/fast); the architect (Sonnet) then WRITES the prose from it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.assign(st, await planner(st as any, config as any));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await architect(st as any, config as any));
     // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
@@ -174,7 +177,18 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         await persist();
       }
     };
-    await Promise.all(Array.from({ length: Math.min(MODULE_CONCURRENCY, pending.length) }, () => buildNext()));
+    // DEFERRED OVERVIEW PROSE: the glossary definitions + synthesis were left empty by the (fast)
+    // overview architect — write them HERE, in parallel with the module bodies, so they overlap and
+    // add ~0 to the build wall-clock (the preview never showed them). Independent of module blocks.
+    const proseTask = (async () => {
+      try {
+        await writeOverviewProse(bp, { config });
+        await persist();
+      } catch (e) {
+        console.warn("[runBuildJob] overview-prose:", e instanceof Error ? e.message : String(e));
+      }
+    })();
+    await Promise.all([proseTask, ...Array.from({ length: Math.min(MODULE_CONCURRENCY, pending.length) }, () => buildNext())]);
     await persistChain; // make sure the final, complete state is written
 
     jl.status = "done"; jl.percent = 100;

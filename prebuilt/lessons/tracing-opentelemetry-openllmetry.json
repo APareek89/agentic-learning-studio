@@ -4,8 +4,8 @@
     "topic": "Tracing with OpenTelemetry and OpenLLMetry",
     "title": "Tracing with OpenTelemetry and OpenLLMetry",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 34,
-    "thesis": "Tracing with OpenTelemetry and OpenLLMetry becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 38,
+    "thesis": "Tracing with OpenTelemetry and OpenLLMetry is practical when learners can apply it to this concrete case: An LLM workflow needs traces that connect web requests, model calls, retrievers, and tools. By the end, they should be able to build or review OpenTelemetry span plan for LLM and retrieval operations, measure percentage of incidents with end-to-end trace coverage, and catch the failure where model calls are visible but disconnected from the request that triggered them."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -25,94 +25,105 @@
   },
   "mentalMap": {
     "title": "Tracing with OpenTelemetry and OpenLLMetry: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Tracing with OpenTelemetry and OpenLLMetry by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Trace LLM applications with portable spans, propagated context, GenAI attributes, OpenLLMetry instrumentation, and governed export.",
+    "oneLineThesis": "OpenTelemetry and OpenLLMetry make LLM traces portable when the team models span context and semantic attributes deliberately.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Tracing with OpenTelemetry and OpenLLMetry in the system map.",
-        "what": "What the tool owns turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+        "label": "Telemetry standards give model calls portable shape",
+        "sub": "Start with why a GenAI trace should not be trapped in one vendor.",
+        "what": "Learners understand the reason for OTel before adding instrumentation.",
+        "relevance": "This avoids integrations that cannot migrate or compare across tools.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Introduce portable GenAI spans and the limits of evolving conventions.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+        "label": "Context propagation keeps agent steps in one story",
+        "sub": "Parent-child span relationships are the backbone of trace meaning.",
+        "what": "Learners treat trace context as application state that must be passed deliberately.",
+        "relevance": "This prevents model calls and tool calls from appearing as unrelated events.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Follow one trace context across retrieval, model, and tool boundaries.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+        "label": "OpenLLMetry maps LLM frameworks into spans",
+        "sub": "Auto-instrumentation accelerates tracing but does not define your product contract.",
+        "what": "Learners understand OpenLLMetry as instrumentation help, not the entire observability design.",
+        "relevance": "This prevents blind spots around app-specific retrieval, policy, and eval state.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Use auto-instrumentation for common spans and manual fields for product meaning.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+        "label": "Semantic attributes make traces queryable",
+        "sub": "Consistent names turn spans into release evidence.",
+        "what": "Learners code a concrete attribute verifier.",
+        "relevance": "This catches traces that exist but cannot answer product questions.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Check the required GenAI and product attributes on each span.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+        "label": "Export boundaries protect secrets and budgets",
+        "sub": "Collectors, sampling, and redaction decide what leaves the app.",
+        "what": "Learners close the tracing design with production controls.",
+        "relevance": "This prevents portable telemetry from becoming portable sensitive data.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Govern the exporter so traces remain useful without leaking private content.",
+        "order": 5
       }
     ],
     "edges": [
       {
         "from": "n_m1",
         "to": "n_m2",
-        "label": "then"
+        "label": "needs"
       },
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "enables"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "names"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "protects"
       }
-    ]
+    ],
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Place Tracing with OpenTelemetry and OpenLLMetry in the system map.",
-      "summary": "Place Tracing with OpenTelemetry and OpenLLMetry in the system map. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Telemetry standards give model calls portable shape",
+      "sub": "Start with why a GenAI trace should not be trapped in one vendor.",
+      "summary": "OpenTelemetry provides a shared language for spans and metrics.",
       "objectives": [
-        "Explain the role of what the tool owns in Tracing with OpenTelemetry and OpenLLMetry.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why LLM-specific traces need standard attributes.",
+        "Identify version-sensitive GenAI semantic conventions.",
+        "Separate vendor-neutral telemetry from product-specific metadata."
       ],
       "termIds": [
         "eval",
@@ -121,26 +132,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "What the tool owns: the core idea",
+          "title": "A standard span is a migration strategy",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Tracing with OpenTelemetry and OpenLLMetry",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: an enterprise support agent starts in Langfuse, adds Phoenix for experiments, and still needs infrastructure traces in its existing APM. If each tool names model calls, token counts, and retrieval steps differently, release analysis becomes translation work."
                 }
               ]
             },
@@ -148,203 +152,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "OpenTelemetry gives the application a common trace model: spans, attributes, metrics, context propagation, and export. The GenAI semantic conventions add LLM-specific names for operations such as chat, embeddings, retrieval, tools, agents, and token usage. The KB notes that these conventions are still development-oriented, so version pinning and local documentation matter as of 2026-06-22."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Tracing with OpenTelemetry and OpenLLMetry."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "canon_otel_genai",
+            "kb_observability"
           ]
         },
         {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Tracing with OpenTelemetry and OpenLLMetry.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Tracing with OpenTelemetry and OpenLLMetry, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Case study: backend migration without losing eval history",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for tracing with opentelemetry and openllmetry help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "A team keeps span names like gen_ai.chat and app.retrieval.search stable while exporting to a new backend. Their dashboards survive because model, provider, prompt version, token counts, source IDs, and release SHA are attributes rather than hidden in vendor-specific event text."
                 }
               ]
             }
@@ -352,59 +186,63 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "canon_otel_genai",
+            "kb_observability"
           ]
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"What the tool owns\" in Tracing with OpenTelemetry and OpenLLMetry?",
+          "title": "Standardization reason",
+          "prompt": "Why use OpenTelemetry-style GenAI attributes for LLM calls?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To avoid recording any model metadata.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "To make traces queryable and portable across telemetry backends.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "To replace all product evals with infrastructure metrics.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Standards help preserve meaning across tools, but they do not choose your product thresholds.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "canon_otel_genai"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_otel_genai",
+        "kb_observability"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the inputs, outputs, and lifecycle.",
-      "summary": "Trace the inputs, outputs, and lifecycle. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Context propagation keeps agent steps in one story",
+      "sub": "Parent-child span relationships are the backbone of trace meaning.",
+      "summary": "Trace context connects retrieval, tool calls, and model calls into one run.",
       "objectives": [
-        "Explain the role of core workflow in Tracing with OpenTelemetry and OpenLLMetry.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain trace ID, span ID, and parent span in an LLM workflow.",
+        "Spot orphan spans that break root-cause analysis.",
+        "Design context propagation through async tools and workers."
       ],
       "termIds": [
         "eval",
@@ -413,26 +251,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the core idea",
+          "title": "No parent context, no agent story",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Tracing with OpenTelemetry and OpenLLMetry",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "An agent run crosses function calls, async jobs, external APIs, and maybe a human approval queue. The trace ID says these spans belong to the same user request. Parent span IDs say which operation caused which child operation."
                 }
               ]
             },
@@ -440,223 +271,73 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "For a support refund agent, answer_request is the parent. retrieve_policy and account_lookup are children. draft_answer depends on both. validate_policy_citation and score_groundedness are children of the draft. If account_lookup is orphaned, the trace cannot prove which user answer used that tool result."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Tracing with OpenTelemetry and OpenLLMetry."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "canon_otel_genai",
+            "kb_observability"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Tracing with OpenTelemetry and OpenLLMetry, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_worked",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Trace tree for a refund agent",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for tracing with opentelemetry and openllmetry help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "answer_request -> classify_intent -> retrieve_policy -> account_lookup -> draft_answer -> validate_citation -> score_groundedness. That order is not just decoration. It encodes causality: retrieval and account lookup supply evidence; drafting consumes it; validation and scoring judge the result."
                 }
               ]
             },
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Spaced recall: compare this to the Langfuse span tree. The tool changes; the causal trace idea stays the same."
                 }
               ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
             }
           ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core workflow\" in Tracing with OpenTelemetry and OpenLLMetry?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_otel_genai",
+        "kb_observability"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Compare when this tool is right or wrong.",
-      "summary": "Compare when this tool is right or wrong. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "OpenLLMetry maps LLM frameworks into spans",
+      "sub": "Auto-instrumentation accelerates tracing but does not define your product contract.",
+      "summary": "OpenLLMetry can collect common LLM spans while you fill product-specific gaps.",
       "objectives": [
-        "Explain the role of fit and alternatives in Tracing with OpenTelemetry and OpenLLMetry.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Describe what auto-instrumentation is useful for.",
+        "Name fields that often need manual enrichment.",
+        "Avoid assuming generated traces prove product quality."
       ],
       "termIds": [
         "eval",
@@ -665,26 +346,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the core idea",
+          "title": "Auto spans need product annotations",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Tracing with OpenTelemetry and OpenLLMetry",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "OpenLLMetry is useful because it can instrument popular LLM libraries and export spans through OpenTelemetry. That reduces the toil of wrapping every model call by hand. But auto-instrumentation cannot know your refund policy source IDs, approval rule, customer tier, or eval rubric unless your app adds them."
                 }
               ]
             },
@@ -692,272 +366,156 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The design rule is simple: let auto-instrumentation capture common model and framework details; add manual spans or attributes for product decisions."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Tracing with OpenTelemetry and OpenLLMetry."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "canon_openllmetry",
+            "canon_otel_genai",
+            "kb_observability"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Tracing with OpenTelemetry and OpenLLMetry, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Auto vs manual tracing responsibilities",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Responsibility",
+            "Auto-instrumentation can help",
+            "App must still decide"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Model call",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
+                  "criterion": "Responsibility",
+                  "text": "provider, model call timing, token metrics when supported",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "criterion": "Auto-instrumentation can help",
+                  "text": "prompt version, route, risk class",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "App must still decide",
+                  "text": "Model call",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use when the model call row is the relevant design concern.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Retrieval",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Responsibility",
+                  "text": "framework call boundaries in supported stacks",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Auto-instrumentation can help",
+                  "text": "source IDs, permissions, expected evidence",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "App must still decide",
+                  "text": "Retrieval",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
+              "whenToUse": "Use when the retrieval row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Tools",
+              "cells": [
+                {
+                  "criterion": "Responsibility",
+                  "text": "HTTP or library spans",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Auto-instrumentation can help",
+                  "text": "validated argument shape and approval outcome",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "App must still decide",
+                  "text": "Tools",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the tools row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Evaluation",
+              "cells": [
+                {
+                  "criterion": "Responsibility",
+                  "text": "exporting score spans if wired",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Auto-instrumentation can help",
+                  "text": "rubric, threshold, promotion policy",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "App must still decide",
+                  "text": "Evaluation",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the evaluation row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Fit and alternatives\" in Tracing with OpenTelemetry and OpenLLMetry?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
+            "canon_openllmetry",
+            "canon_otel_genai"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Tracing with OpenTelemetry and OpenLLMetry: baseline, production design, or advanced optimization."
+        "canon_openllmetry",
+        "canon_otel_genai",
+        "kb_observability"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "See the smallest working pattern.",
-      "summary": "See the smallest working pattern. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Semantic attributes make traces queryable",
+      "sub": "Consistent names turn spans into release evidence.",
+      "summary": "The value of OTel traces depends on fields that dashboards can filter and compare.",
       "objectives": [
-        "Explain the role of implementation sketch in Tracing with OpenTelemetry and OpenLLMetry.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Write a small contract check for GenAI span attributes.",
+        "Predict which missing field breaks release analysis.",
+        "Choose low-cardinality names for model and tool spans."
       ],
       "termIds": [
         "eval",
@@ -966,250 +524,57 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Tracing with OpenTelemetry and OpenLLMetry",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Tracing with OpenTelemetry and OpenLLMetry."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Tracing with OpenTelemetry and OpenLLMetry, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for tracing with opentelemetry and openllmetry help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Contract check for OpenTelemetry-style GenAI spans",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
+          "code": "spans = [\n    {\"name\": \"gen_ai.chat\", \"attrs\": {\"gen_ai.operation.name\": \"chat\", \"gen_ai.request.model\": \"gpt-5.5\", \"gen_ai.response.model\": \"gpt-5.5\", \"gen_ai.usage.input_tokens\": 742, \"app.prompt_version\": \"refund-v7\"}},\n    {\"name\": \"app.retrieval\", \"attrs\": {\"app.source_ids\": [\"refunds#45\"], \"app.top_k\": 5, \"app.reranker\": \"rrf-v2\"}},\n    {\"name\": \"app.tool.account_lookup\", \"attrs\": {\"app.tool.name\": \"account_lookup\", \"app.tool.status\": \"ok\"}},\n]\n\nrequired_by_name = {\n    \"gen_ai.chat\": [\"gen_ai.operation.name\", \"gen_ai.request.model\", \"gen_ai.usage.input_tokens\", \"app.prompt_version\"],\n    \"app.retrieval\": [\"app.source_ids\", \"app.top_k\"],\n    \"app.tool.account_lookup\": [\"app.tool.name\", \"app.tool.status\"],\n}\n\nmissing = []\nfor span in spans:\n    for attr in required_by_name.get(span[\"name\"], []):\n        if attr not in span[\"attrs\"]:\n            missing.append((span[\"name\"], attr))\n\nprint(\"otel contract ok\" if not missing else missing)",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This is a lightweight contract test around the telemetry your app exports. It uses OpenTelemetry-style naming plus app-specific attributes for retrieval and prompt version."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict what happens if app.prompt_version is removed from the gen_ai.chat span.",
+            "answer": "The check reports missing app.prompt_version on gen_ai.chat. The model call still has token data, but release comparison cannot group the run by prompt version."
           },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
-            }
-          ],
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Implementation sketch\" in Tracing with OpenTelemetry and OpenLLMetry?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1"
+            "canon_otel_genai",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_otel_genai",
+        "kb_observability"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Harden versioning, evals, and operations.",
-      "summary": "Harden versioning, evals, and operations. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Export boundaries protect secrets and budgets",
+      "sub": "Collectors, sampling, and redaction decide what leaves the app.",
+      "summary": "Advanced tracing requires governance at the telemetry export boundary.",
       "objectives": [
-        "Explain the role of production checklist in Tracing with OpenTelemetry and OpenLLMetry.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why raw prompts and tool outputs need redaction.",
+        "Set sampling rules that preserve rare failures.",
+        "Avoid high-cardinality attributes that ruin dashboards."
       ],
       "termIds": [
         "eval",
@@ -1218,41 +583,19 @@
         "judge",
         "regression"
       ],
-      "estMinutes": 7,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Production checklist: the core idea",
+          "title": "The exporter is a policy boundary",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Tracing with OpenTelemetry and OpenLLMetry",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "eval",
-                  "term": "eval"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "OpenTelemetry makes it easy to send traces to many backends. That flexibility increases the need for controls. Redact raw prompts when possible, store source IDs instead of full private documents, sample successful low-risk runs, preserve severe failures, and document which attributes are allowed to leave the app."
                 }
               ]
             },
@@ -1261,17 +604,22 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Tracing with OpenTelemetry and OpenLLMetry."
+                    "text": "Privacy failure: exporting raw tool output with customer account details."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Cost failure: tracing every token-heavy success path without sampling."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Dashboard failure: adding user IDs or query text to span names."
+                  }
+                ],
+                [
+                  {
+                    "text": "Reliability failure: changing convention versions without a migration note."
                   }
                 ]
               ]
@@ -1280,306 +628,151 @@
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Tracing with OpenTelemetry and OpenLLMetry, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "canon_otel_genai",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Export standardized metadata broadly; export sensitive content narrowly or not at all.",
+          "useWhen": "You need cross-backend tracing, release comparison, or framework-agnostic telemetry. The team can maintain attribute conventions and redaction rules. OpenLLMetry covers common spans and manual annotations fill product gaps.",
+          "avoidWhen": "The workflow contains highly sensitive data and no collector policy exists. A single product-specific observability platform already satisfies the near-term need. The team cannot version or test the exported span contract.",
           "termIds": [
             "eval",
             "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "eval",
-            "trace",
-            "dataset"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "canon_otel_genai",
+            "canon_openllmetry"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Production checklist\" in Tracing with OpenTelemetry and OpenLLMetry?",
+          "title": "Export policy",
+          "prompt": "What is the safest default for retrieved private document text in exported traces?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Put the full document text in every span name.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Store stable source IDs and redacted snippets unless raw content is explicitly allowed.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Drop all metadata, including model and prompt version.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Useful tracing preserves meaning while respecting data boundaries.",
           "termIds": [
             "eval",
-            "trace"
+            "trace",
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Tracing with OpenTelemetry and OpenLLMetry: baseline, production design, or advanced optimization."
+        "canon_otel_genai",
+        "kb_observability",
+        "canon_openllmetry"
+      ]
     }
   ],
   "glossary": {
     "eval": {
       "id": "eval",
       "label": "Eval",
-      "laymanDefinition": "Eval is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Eval is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A repeatable test of model or system behavior against expected criteria.",
+      "technicalNote": "In these lessons, evals are release evidence: they combine cases, assertions, scores, and review rules.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one run, including spans, inputs, outputs, metadata, and scores.",
+      "technicalNote": "Traces make failures diagnosable by showing which retrieval, model, tool, or scoring step produced the result.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ]
     },
     "dataset": {
       "id": "dataset",
       "label": "Dataset",
-      "laymanDefinition": "Dataset is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Dataset is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A curated set of examples used for evaluation, debugging, or regression checks.",
+      "technicalNote": "A useful eval dataset stores inputs, expected behavior, metadata slices, and source or rubric references.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ]
     },
     "judge": {
       "id": "judge",
       "label": "LLM-as-judge",
-      "laymanDefinition": "LLM-as-judge is a core building block in this lesson.",
-      "technicalNote": "In this lesson, LLM-as-judge is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "An LLM used to grade or compare outputs with a rubric.",
+      "technicalNote": "LLM judges are semantic scorers, not final authority; their prompts, model, thresholds, and spot checks must be versioned.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ],
       "acronymExpansion": "Large language model as judge"
     },
     "regression": {
       "id": "regression",
       "label": "Regression",
-      "laymanDefinition": "Regression is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Regression is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A previously working behavior that breaks after a prompt, model, data, or code change.",
+      "technicalNote": "Regression testing protects known capabilities and safety boundaries while allowing harmless wording variation.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ]
     },
     "rubric": {
       "id": "rubric",
       "label": "Rubric",
-      "laymanDefinition": "Rubric is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Rubric is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A scoring guide that states what a good answer or run must demonstrate.",
+      "technicalNote": "Rubrics make qualitative judgment reviewable by naming criteria, severity, examples, and thresholds.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_otel_genai"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for OpenTelemetry and OpenLLMetry tracing",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Portability check",
         "questions": [
           {
-            "q": "What decision does Tracing with OpenTelemetry and OpenLLMetry change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Which fields must survive if this app moves from one LLM observability backend to another?",
+            "why": "Vendor-neutral traces are useful only if span names, parent context, model metadata, token metrics, and tool attributes remain queryable.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Standard span contract",
+              "Backend-only screenshots",
+              "Raw prompts everywhere"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Use standard semantic attributes where possible, and document every product-specific extension."
           }
         ]
       }
@@ -1591,154 +784,175 @@
         "t": "p",
         "spans": [
           {
-            "text": "Tracing with OpenTelemetry and OpenLLMetry is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: explain OTel/OpenLLMetry tracing by reconstructing trace context, span parentage, GenAI semantic attributes, auto-instrumentation limits, export pipeline, and privacy controls."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Portable GenAI tracing dependency chain",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Tracing with OpenTelemetry and OpenLLMetry in the system map.",
-          "what": "What the tool owns turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+          "label": "Telemetry standards give model calls portable shape",
+          "sub": "Start with why a GenAI trace should not be trapped in one vendor.",
+          "what": "Learners understand the reason for OTel before adding instrumentation.",
+          "relevance": "This avoids integrations that cannot migrate or compare across tools.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Introduce portable GenAI spans and the limits of evolving conventions.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+          "label": "Context propagation keeps agent steps in one story",
+          "sub": "Parent-child span relationships are the backbone of trace meaning.",
+          "what": "Learners treat trace context as application state that must be passed deliberately.",
+          "relevance": "This prevents model calls and tool calls from appearing as unrelated events.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Follow one trace context across retrieval, model, and tool boundaries.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+          "label": "OpenLLMetry maps LLM frameworks into spans",
+          "sub": "Auto-instrumentation accelerates tracing but does not define your product contract.",
+          "what": "Learners understand OpenLLMetry as instrumentation help, not the entire observability design.",
+          "relevance": "This prevents blind spots around app-specific retrieval, policy, and eval state.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Use auto-instrumentation for common spans and manual fields for product meaning.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch turns Tracing with OpenTelemetry and OpenLLMetry into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Tracing with OpenTelemetry and OpenLLMetry, not just recognize the words.",
+          "label": "Semantic attributes make traces queryable",
+          "sub": "Consistent names turn spans into release evidence.",
+          "what": "Learners code a concrete attribute verifier.",
+          "relevance": "This catches traces that exist but cannot answer product questions.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Check the required GenAI and product attributes on each span.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Export boundaries protect secrets and budgets",
+          "sub": "Collectors, sampling, and redaction decide what leaves the app.",
+          "what": "Learners close the tracing design with production controls.",
+          "relevance": "This prevents portable telemetry from becoming portable sensitive data.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Govern the exporter so traces remain useful without leaking private content.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "requires context"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "is collected by"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "is queried through"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "is governed by"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Telemetry standards give model calls portable shape",
+        "detail": "OpenTelemetry provides a shared language for spans and metrics."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Context propagation keeps agent steps in one story",
+        "detail": "Trace context connects retrieval, tool calls, and model calls into one run."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "OpenLLMetry maps LLM frameworks into spans",
+        "detail": "OpenLLMetry can collect common LLM spans while you fill product-specific gaps."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Semantic attributes make traces queryable",
+        "detail": "The value of OTel traces depends on fields that dashboards can filter and compare."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
-      }
-    ],
-    "checklist": [
-      {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
-        "fromModuleId": "m1"
-      },
-      {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
-        "fromModuleId": "m5"
+        "label": "Export boundaries protect secrets and budgets",
+        "detail": "Advanced tracing requires governance at the telemetry export boundary."
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Tracing with OpenTelemetry and OpenLLMetry: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Evaluation"
-    }
+      "prompt": "Trace a small RAG agent with OpenTelemetry-style spans. Include parent context, retrieval, model, tool, and score spans; add GenAI attributes; run a contract check; export only redacted fields. Next rung: compare the same trace in Langfuse, Phoenix, or a generic APM backend.",
+      "scopedTo": "Advanced LLM telemetry",
+      "checks": [
+        "Trace IDs connect model and tool spans.",
+        "GenAI attributes include operation, model, provider, and token fields.",
+        "Auto-instrumentation gaps are filled manually.",
+        "Collector or exporter removes sensitive content."
+      ]
+    },
+    "checklist": [
+      {
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Telemetry standards give model calls portable shape\"?",
+        "fromModuleId": "m1"
+      },
+      {
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Semantic attributes make traces queryable\"?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_gate",
+        "label": "Does \"Export boundaries protect secrets and budgets\" define the release or production gate?",
+        "fromModuleId": "m5"
+      }
+    ]
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
+    "kb_observability": {
+      "id": "kb_observability",
       "kind": "kb",
-      "title": "KB: AI Evaluation, Observability, and Regression Testing",
-      "url": "https://platform.openai.com/docs/guides/evals",
-      "asOfDate": "2026-06-19"
+      "title": "KB: Tracing and Observability",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
     },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: AI Evaluation, Observability, and Regression Testing",
-      "url": "https://platform.openai.com/docs/guides/evals",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_otel_genai": {
+      "id": "canon_otel_genai",
       "kind": "canonical",
-      "title": "Langfuse documentation",
-      "url": "https://langfuse.com/docs",
-      "asOfDate": "2026-06-20"
+      "title": "OpenTelemetry GenAI semantic conventions",
+      "url": "https://github.com/open-telemetry/semantic-conventions-genai",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
+    "canon_openllmetry": {
+      "id": "canon_openllmetry",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://langfuse.com/docs",
-      "asOfDate": "2026-06-20"
+      "title": "OpenLLMetry introduction",
+      "url": "https://www.traceloop.com/docs/openllmetry/introduction",
+      "asOfDate": "2026-06-22"
     }
   }
 }

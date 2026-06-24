@@ -5,7 +5,7 @@
     "title": "Add Memory to an Agent",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 42,
-    "thesis": "Add Memory to an Agent becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Add Memory to an Agent is practical when learners can apply it to this concrete case: A ticket assistant needs to remember issue facts across turns while keeping the final answer grounded. By the end, they should be able to build or review memory-enabled agent thin slice with write, retrieve, and reject rules, measure facts reused correctly in follow-up turns, and catch the failure where the agent retrieves an outdated preference and ignores the latest user correction."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Add Memory to an Agent: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Add Memory to an Agent by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build memory by separating thread state, accepted long-term records, scoped retrieval, traceability, and user correction.",
+    "oneLineThesis": "Adding memory to an agent is a product-state change: implement the smallest explicit memory behavior and test write, recall, and correction.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Add Memory to an Agent.",
-        "what": "Target behavior turns Add Memory to an Agent into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+        "label": "Pick one memory behavior to ship",
+        "sub": "Do not start with universal remembering.",
+        "what": "Learners scope a memory feature as a narrow product slice.",
+        "relevance": "Narrow scope makes consent, tests, and correction tractable.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Define the exact future behavior that memory should change.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Add Memory to an Agent into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+        "label": "Separate thread state, facts, and RAG",
+        "sub": "Memory should not absorb every kind of context.",
+        "what": "Learners avoid mixing memory with documents or workflow progress.",
+        "relevance": "Confusing memory with source-of-truth data creates stale and ungoverned behavior.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Route each data need to the right storage surface.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Add Memory to an Agent into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+        "label": "Write accepted memories with provenance",
+        "sub": "The extractor proposes records that policy can reject.",
+        "what": "Learners implement the memory write path.",
+        "relevance": "Provenance and policy are easiest to add before data exists.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Capture source turn, type, status, and confidence at write time.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Add Memory to an Agent into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+        "label": "Retrieve and inject memories narrowly",
+        "sub": "Recall should be task-relevant and visible in traces.",
+        "what": "Learners code the recall path and predict output.",
+        "relevance": "Poor recall leaks data or clutters prompts with stale preferences.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Filter by namespace, status, type, and current task.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Add Memory to an Agent into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+        "label": "Add correction and regression tests",
+        "sub": "Memory bugs should be caught before they persist.",
+        "what": "Learners complete the build with validation and tracing.",
+        "relevance": "Memory regressions are sticky because wrong state affects future sessions.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Test write, no-write, recall, leakage, and deletion paths.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,42 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Add Memory to an Agent.",
-      "summary": "Define the user-visible outcome for Add Memory to an Agent. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Pick one memory behavior to ship",
+      "sub": "Do not start with universal remembering.",
+      "summary": "The first memory feature should be small enough to review.",
       "objectives": [
-        "Explain the role of target behavior in Add Memory to an Agent.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "State the user-visible behavior memory improves.",
+        "Choose one memory type to implement first.",
+        "Write acceptance and rejection examples."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "A memory build starts with a behavior, not a database",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Memory to an Agent",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a coding tutor should remember that a learner prefers TypeScript examples. It should not remember every emotional aside, every code snippet, or facts from retrieved docs."
                 }
               ]
             },
@@ -148,33 +153,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "The first slice accepts explicit preference statements, stores provenance, retrieves them for lesson/example tasks, and lets the learner correct them. That is enough to prove the architecture."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If the feature cannot name a no-write case, it is too broad."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "Start with one labeled drawer before buying a warehouse."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Worked acceptance card for preference memory",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Accept: “Remember that I prefer TypeScript examples.” Reject: “I hate recursion today.” Reject: “The docs say pgvector uses HNSW.” The first is durable preference, the second transient mood, the third external knowledge for RAG."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The acceptance card becomes the regression suite seed."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Add Memory to an Agent."
+                    "text": "Choose one memory class: preference."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Write accepted and rejected examples."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Define where it affects prompts."
+                  }
+                ],
+                [
+                  {
+                    "text": "Define how users edit or delete it."
                   }
                 ]
               ]
@@ -183,256 +231,89 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Add Memory to an Agent.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Memory to an Agent, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for add memory to an agent help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Add Memory to an Agent?",
+          "title": "Scope check",
+          "prompt": "Which requirement is best for a first memory slice?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Remember every sentence forever.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Remember explicit example-language preferences and retrieve them for lesson tasks.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Store all retrieved documents as user memory.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Small typed memory is safer and easier to validate.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb6",
+        "kb13"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Separate thread state, facts, and RAG",
+      "sub": "Memory should not absorb every kind of context.",
+      "summary": "The build needs boundaries before code.",
       "objectives": [
-        "Explain the role of architecture slice in Add Memory to an Agent.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish thread checkpoint from long-term memory.",
+        "Use RAG for external documents.",
+        "Use databases for canonical facts."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "The memory store is not the whole context system",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Memory to an Agent",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Thread state keeps the current run coherent. Long-term memory personalizes future runs. RAG supplies grounded external facts. The app database stores canonical records. Workflow engines store exact progress."
                 }
               ]
             },
@@ -440,251 +321,199 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "For the TypeScript preference slice, the memory store only holds user preference records. It does not store lesson content, billing status, or source documents."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Add Memory to an Agent."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Add a routing table before creating tables."
+                }
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "Use the right shelf: diary, library, ledger, and task board are different things."
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Context storage routing",
+          "criteria": [
+            "Need",
+            "Store",
+            "Reason"
+          ],
+          "options": [
             {
-              "label": "Name the boundary",
-              "detail": [
+              "name": "Current plan/tool results",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Memory to an Agent, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
+                  "criterion": "Need",
+                  "text": "Run-local state.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Store",
+                  "text": "Thread checkpoint or graph state.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "Needed only to resume this run.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Use inside one conversation or workflow.",
+              "cost": "Low",
+              "complexity": "Medium"
             },
             {
-              "label": "Attach evidence",
-              "detail": [
+              "name": "User preference",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
+                  "criterion": "Need",
+                  "text": "Future personalization.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Store",
+                  "text": "Long-term memory with provenance.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Reason",
+                  "text": "Changes later agent behavior.",
+                  "rating": "good"
                 }
-              ]
+              ],
+              "whenToUse": "Use with consent and correction.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "label": "Choose a test",
-              "detail": [
+              "name": "Product documentation",
+              "cells": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
+                  "criterion": "Need",
+                  "text": "Grounded external facts.",
+                  "rating": "good"
+                },
                 {
-                  "text": "Imagine a learner asks for add memory to an agent help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
+                  "criterion": "Store",
+                  "text": "RAG/document index.",
+                  "rating": "good"
+                },
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "criterion": "Reason",
+                  "text": "Source of truth lives outside user memory.",
+                  "rating": "good"
                 }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
-            },
-            {
-              "part": "add_node",
-              "explains": "Adds a step."
-            },
-            {
-              "part": "compile()",
-              "explains": "Makes it runnable."
+              ],
+              "whenToUse": "Use for citeable facts.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Add Memory to an Agent?",
+          "title": "Routing table",
+          "prompt": "Where should product documentation facts go?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "In every user’s preference memory.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "In a RAG or document index, not as inferred user memory.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only in transient model hidden state.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "External facts need source provenance and document refresh, not personalization memory.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb6",
+        "kb13"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Write accepted memories with provenance",
+      "sub": "The extractor proposes records that policy can reject.",
+      "summary": "The write path should make future correction possible.",
       "objectives": [
-        "Explain the role of core implementation in Add Memory to an Agent.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Extract candidate preference memories.",
+        "Reject transient or sensitive candidates.",
+        "Store source and status fields."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "Accepted memory is a typed record",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Memory to an Agent",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A minimal memory row can include namespace, type, value, source turn ID, created time, confidence, status, and optional expiration. This is enough to retrieve and correct later."
                 }
               ]
             },
@@ -692,33 +521,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Avoid opaque transcript dumps. They are hard to inspect, hard to delete selectively, and likely to include sensitive or irrelevant content."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "The memory value should be short enough that a user can approve or correct it."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ],
+          "analogy": "A memory row should look like a clean contact card, not a shoebox of receipts."
+        },
+        {
+          "id": "m3_worked",
+          "kind": "functionalExample",
+          "title": "Case study: write path for language preference",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The user says, “Please remember: I prefer TypeScript examples.” The extractor proposes `{type: preference, value: prefers TypeScript examples}`. Policy accepts because it is explicit, future-useful, and low sensitivity."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The source turn ID is stored so the UI can later show where the memory came from."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Add Memory to an Agent."
+                    "text": "Parse explicit remember/forget/update intent."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Create a candidate with type and value."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Run policy checks."
+                  }
+                ],
+                [
+                  {
+                    "text": "Persist accepted record with provenance."
                   }
                 ]
               ]
@@ -727,265 +599,89 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Memory to an Agent, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Add Memory to an Agent?",
+          "title": "Write record",
+          "prompt": "What field makes later correction explainable?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The model temperature.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The source turn or event that produced the memory.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The CSS class of the chat bubble.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Users and operators need to know why a memory exists.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Memory to an Agent: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb6",
+        "kb13"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Retrieve and inject memories narrowly",
+      "sub": "Recall should be task-relevant and visible in traces.",
+      "summary": "Memory retrieval is part of prompt assembly.",
       "objectives": [
-        "Explain the role of validation and tracing in Add Memory to an Agent.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Retrieve only active memories for the current user.",
+        "Inject memory as labeled context.",
+        "Trace which memory influenced the answer."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
+          "title": "Prompt injection of memory should be labeled and minimal",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Memory to an Agent",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "When assembling the prompt, include relevant memories under a label such as “User preferences from memory.” Do not let memory masquerade as system policy or external evidence."
                 }
               ]
             },
@@ -993,251 +689,129 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Spaced recall: from agent memory, current user instruction and safety policy outrank older memory. Retrieval should be narrow enough that this ordering remains readable."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Add Memory to an Agent."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Every memory in the prompt should appear in the trace with ID and reason."
+                }
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Memory to an Agent, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for add memory to an agent help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "End-to-end preference memory slice",
           "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
+          "code": "store = []\n\ndef maybe_write(user_id, turn_id, text):\n    lowered = text.lower()\n    if \"remember\" in lowered and \"prefer\" in lowered:\n        value = text.split(\"remember\", 1)[1].strip(\" :.\")\n        store.append({\"ns\": (\"user\", user_id), \"type\": \"preference\", \"value\": value, \"source\": turn_id, \"status\": \"active\"})\n\ndef recall(user_id, task):\n    if \"example\" not in task.lower() and \"lesson\" not in task.lower():\n        return []\n    return [m for m in store if m[\"ns\"] == (\"user\", user_id) and m[\"status\"] == \"active\"]\n\nmaybe_write(\"u1\", \"turn-7\", \"Please remember: I prefer TypeScript examples.\")\nprint(recall(\"u1\", \"write a lesson with examples\"))\nprint(recall(\"u1\", \"check my invoice\"))",
+          "explanation": "The slice accepts an explicit preference and recalls it only for lesson/example tasks.",
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before reading the answer, predict whether the invoice task receives the preference.",
+            "answer": "It does not. The preference is relevant to examples or lessons, not invoice checking."
           },
-          "syntax": [
-            {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
-            },
-            {
-              "part": "add_node",
-              "explains": "Adds a step."
-            },
-            {
-              "part": "compile()",
-              "explains": "Makes it runnable."
-            }
-          ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "canon1",
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Add Memory to an Agent?",
+          "title": "Recall injection",
+          "prompt": "How should a preference memory appear in the model prompt?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "As a hidden irreversible instruction.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "As labeled user preference context with provenance, not as system policy or factual evidence.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "As a citation to product docs.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Memory should influence behavior without pretending to be policy or source truth.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb6",
+        "kb13"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Add correction and regression tests",
+      "sub": "Memory bugs should be caught before they persist.",
+      "summary": "A memory feature ships with lifecycle tests.",
       "objectives": [
-        "Explain the role of hardening path in Add Memory to an Agent.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Create tests for accepted and rejected memories.",
+        "Verify correction and deletion.",
+        "Trace memory writes and recalls."
       ],
       "termIds": [
         "prototype",
         "retriever",
         "validator",
         "trace",
-        "deployment"
+        "acceptance_test"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "The memory test suite protects future sessions",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Memory to an Agent",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Tests should cover explicit remember, transient no-write, sensitive no-write, user namespace isolation, task-relevant recall, correction, deletion, and current-instruction override."
                 }
               ]
             },
@@ -1245,14 +819,43 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "Traces should show memory write candidates, acceptance policy result, stored memory ID, recall query, and prompt injection reason. This makes reviews and incidents diagnosable."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
                 {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
+                  "text": "Include one test where the user corrects a false memory and the next run stops using it."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
+          ],
+          "sources": [
+            "kb3",
+            "kb6",
+            "kb13"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output after adding memory",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Review memory behavior across multiple turns."
                 }
               ]
             },
@@ -1261,17 +864,27 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Add Memory to an Agent."
+                    "text": "The agent stores only explicit, allowed memory types."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Rejected transient or sensitive content does not appear later."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Recall is scoped to user/workspace, task, status, and memory type."
+                  }
+                ],
+                [
+                  {
+                    "text": "Users can inspect, correct, delete, or override stored memories."
+                  }
+                ],
+                [
+                  {
+                    "text": "Tests cover write, no-write, recall, leakage, correction, and deletion cases."
                   }
                 ]
               ]
@@ -1280,234 +893,65 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Memory to an Agent, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb6",
+            "kb13"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio production review"
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Add Memory to an Agent?",
+          "title": "Memory release gate",
+          "prompt": "What test catches cross-user leakage?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A snapshot of the final prose for one user only.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A recall test that stores memory for user A and verifies user B never receives it.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A test that disables namespaces.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Namespace isolation must be tested directly.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "acceptance_test"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb6",
+            "kb13"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Memory to an Agent: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb6",
+        "kb13"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A small working version used to prove the workflow and failure cases.",
+      "technicalNote": "A useful AI prototype includes representative inputs, acceptance checks, observability, and known limits rather than only a happy-path demo.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +960,8 @@
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The component that finds relevant evidence before the model answers.",
+      "technicalNote": "Retrievers need chunking, metadata filters, ranking, citation handoff, and evaluation against real questions.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +970,8 @@
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that decides whether an output or workflow step meets the contract.",
+      "technicalNote": "Validators can inspect schemas, citations, safety rules, acceptance tests, and regressions before a result reaches users.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +980,8 @@
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A recorded path of model calls, retrieval, tools, tokens, latency, and errors.",
+      "technicalNote": "Traces make build lessons debuggable by showing which prompt, source, tool, model, and check produced a result.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +990,8 @@
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The packaged path that serves the workflow to real users or reviewers.",
+      "technicalNote": "Deployment includes environment, secrets, routing, monitoring, rollback, and data-handling policy, not just pushing code.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,8 +1000,8 @@
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A concrete test that says the feature is good enough for the intended use.",
+      "technicalNote": "Acceptance tests should cover the target scenario, expected artifact, failure mode, and evidence needed for review.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1565,20 +1009,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Add Memory to an Agent",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Memory build slice",
         "questions": [
           {
-            "q": "What decision does Add Memory to an Agent change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What is the smallest memory behavior that improves the agent and can be validated end to end?",
+            "why": "A memory feature is risky if it stores too much before proving consent, provenance, and retrieval scope.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Typed preference memory slice",
+              "Transcript vector dump",
+              "No memory; use RAG or database"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Start with one typed memory class, explicit acceptance policy, and tests for no-write and correction cases."
           }
         ]
       }
@@ -1590,64 +1034,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Add Memory to an Agent is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild the implementation by naming memory class, extractor, acceptance policy, store, retrieval filter, prompt injection point, trace, correction path, and regression tests."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Memory build path from turn to accepted recall",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Add Memory to an Agent.",
-          "what": "Target behavior turns Add Memory to an Agent into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+          "label": "Pick one memory behavior to ship",
+          "sub": "Do not start with universal remembering.",
+          "what": "Learners scope a memory feature as a narrow product slice.",
+          "relevance": "Narrow scope makes consent, tests, and correction tractable.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Define the exact future behavior that memory should change.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Add Memory to an Agent into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+          "label": "Separate thread state, facts, and RAG",
+          "sub": "Memory should not absorb every kind of context.",
+          "what": "Learners avoid mixing memory with documents or workflow progress.",
+          "relevance": "Confusing memory with source-of-truth data creates stale and ungoverned behavior.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Route each data need to the right storage surface.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Add Memory to an Agent into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+          "label": "Write accepted memories with provenance",
+          "sub": "The extractor proposes records that policy can reject.",
+          "what": "Learners implement the memory write path.",
+          "relevance": "Provenance and policy are easiest to add before data exists.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Capture source turn, type, status, and confidence at write time.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Add Memory to an Agent into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Memory to an Agent, not just recognize the words.",
+          "label": "Retrieve and inject memories narrowly",
+          "sub": "Recall should be task-relevant and visible in traces.",
+          "what": "Learners code the recall path and predict output.",
+          "relevance": "Poor recall leaks data or clutters prompts with stale preferences.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Filter by namespace, status, type, and current task.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Add correction and regression tests",
+          "sub": "Memory bugs should be caught before they persist.",
+          "what": "Learners complete the build with validation and tracing.",
+          "relevance": "Memory regressions are sticky because wrong state affects future sessions.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Test write, no-write, recall, leakage, and deletion paths.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "enables"
         },
         {
           "from": "n_m2",
@@ -1658,56 +1119,61 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "gates"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Pick one memory behavior to ship",
+        "detail": "The first memory feature should be small enough to review."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Separate thread state, facts, and RAG",
+        "detail": "The build needs boundaries before code."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Write accepted memories with provenance",
+        "detail": "The write path should make future correction possible."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Retrieve and inject memories narrowly",
+        "detail": "Memory retrieval is part of prompt assembly."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Add correction and regression tests",
+        "detail": "A memory feature ships with lifecycle tests."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete problem in \"Pick one memory behavior to ship\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_boundary",
+        "label": "Did \"Write accepted memories with provenance\" define the right boundary or decision?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_release",
+        "label": "Does \"Add correction and regression tests\" provide a reviewable release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Add Memory to an Agent: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
+      "prompt": "Implement a small preference-memory feature for an agent: accept explicit “remember my preference” statements, reject transient moods, store provenance, retrieve only for relevant tasks, expose correction, and run five tests. Next rung: add observability for memory writes and recalls.",
+      "scopedTo": "Add Memory to an Agent"
     }
   },
   "citations": {
@@ -1738,6 +1204,27 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: Agent Memory",
+      "url": "https://docs.langchain.com/oss/python/langgraph/memory",
+      "asOfDate": "2026-06-22"
+    },
+    "kb6": {
+      "id": "kb6",
+      "kind": "kb",
+      "title": "KB: Agent Loop, ReAct, Planning, and Reflection",
+      "url": "https://arxiv.org/abs/2210.03629",
+      "asOfDate": "2026-06-22"
+    },
+    "kb13": {
+      "id": "kb13",
+      "kind": "kb",
+      "title": "KB: Regression Testing for Agentic Systems",
+      "url": "https://www.promptfoo.dev/docs/intro/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

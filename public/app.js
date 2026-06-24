@@ -93,7 +93,23 @@ let currentLessonOwned = false; // is the open Trainer lesson the user's own (el
 let contribBuild = false; // is the active overview/build a "Build for Community" contributor course?
 let contribPublishId = null; // artifactId to auto-publish to Community once its build finishes
 let lastBuildArtifactId = null; // last lesson we tried to build (so a failed build can be retried)
-const lessonTabsEl = document.getElementById("lesson-tabs");
+let reloadAfterPromote = null; // tabId whose iframe must reload once a build confirms (Bug 1: drop the preview lock)
+// Fix 4: the open lessons live in a DROPDOWN under the "Trainer" main tab (sub-tabs) instead of
+// a visible bar that ate horizontal space. lessonTabsEl is now that dropdown's menu container.
+const lessonTabsEl = document.getElementById("trainer-tabs-menu");
+const trainerDdEl = document.getElementById("trainer-dd");
+const trainerCaretEl = document.getElementById("trainer-caret");
+function closeTrainerMenu() { if (lessonTabsEl) lessonTabsEl.hidden = true; if (trainerCaretEl) trainerCaretEl.setAttribute("aria-expanded", "false"); if (trainerDdEl) trainerDdEl.classList.remove("open"); }
+function toggleTrainerMenu(force) {
+  if (!lessonTabsEl) return;
+  const open = force === undefined ? lessonTabsEl.hidden : force;
+  lessonTabsEl.hidden = !open;
+  if (trainerCaretEl) trainerCaretEl.setAttribute("aria-expanded", String(open));
+  if (trainerDdEl) trainerDdEl.classList.toggle("open", open);
+}
+if (trainerCaretEl) trainerCaretEl.addEventListener("click", (e) => { e.stopPropagation(); toggleTrainerMenu(); });
+// Click-away closes the open-lessons menu (mirrors the configurator dropdowns).
+document.addEventListener("click", (e) => { if (trainerDdEl && !trainerDdEl.contains(e.target)) closeTrainerMenu(); });
 
 // ---- Trainer tabs: up to 5 open lessons/overviews. One generation at a time; a
 // generating tab keeps running in the background (survives tab-close + page refresh).
@@ -209,11 +225,45 @@ const referWrap = document.getElementById("refer-only-wrap");
 const referChk = document.getElementById("refer-only");
 const uploadHint = document.getElementById("upload-hint");
 
+// ---- Upload gating + size cap ----
+// A file/repo is parsed + chunked + embedded ON THE SERVER; the front-end only learns its
+// docId once that finishes. So while ANY upload is in flight we DISABLE "Generate Overview" —
+// otherwise a click mid-upload sends an empty uploadIds and the lesson is generated WITHOUT the
+// just-added grounding (the reported bug). 25MB hard cap, checked client- and server-side.
+const MAX_UPLOAD_MB = 25;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+let pendingUploads = 0;
+function setUploadPending(delta) {
+  pendingUploads = Math.max(0, pendingUploads + delta);
+  refreshUploadGate();
+}
+function refreshUploadGate() {
+  const busy = pendingUploads > 0;
+  if (generateBtn) {
+    generateBtn.disabled = busy;
+    generateBtn.classList.toggle("waiting-upload", busy);
+    generateBtn.title = busy ? "Finishing reading your file/repo…" : "";
+  }
+  if (busy) {
+    uploadHint.hidden = false;
+    uploadHint.textContent = "Reading your file/repo on the server… Generate unlocks once it's ready, so your lesson includes it.";
+  } else {
+    updateUploadUI();
+  }
+}
+
 addDocsBtn.addEventListener("click", () => fileInput.click());
 referChk.addEventListener("change", updateUploadUI);
 fileInput.addEventListener("change", async () => {
   for (const file of Array.from(fileInput.files)) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const c = addChip(file.name, `✕ too large — max ${MAX_UPLOAD_MB}MB`);
+      c.classList.remove("uploading");
+      c.classList.add("failed");
+      continue;
+    }
     const chip = addChip(file.name, "uploading…");
+    setUploadPending(1);
     try {
       const dataBase64 = await fileToBase64(file);
       const res = await fetch("/api/upload", {
@@ -234,6 +284,8 @@ fileInput.addEventListener("change", async () => {
     } catch (e) {
       chip.classList.add("failed");
       chip.querySelector(".chip-meta").textContent = "✕ " + e.message;
+    } finally {
+      setUploadPending(-1);
     }
   }
   fileInput.value = "";
@@ -247,6 +299,7 @@ addRepoBtn.addEventListener("click", async () => {
   if (!url) { repoUrlEl.focus(); return; }
   const chip = addChip(url.replace(/^https?:\/\//, ""), "cloning & reading…");
   addRepoBtn.disabled = true;
+  setUploadPending(1);
   try {
     const res = await fetch("/api/upload-repo", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ repoUrl: url }) });
     if (res.status === 401) { openAuth("signin"); throw new Error("Sign in to add a repo."); }
@@ -262,7 +315,7 @@ addRepoBtn.addEventListener("click", async () => {
   } catch (e) {
     chip.classList.add("failed");
     chip.querySelector(".chip-meta").textContent = "✕ " + e.message;
-  } finally { addRepoBtn.disabled = false; }
+  } finally { addRepoBtn.disabled = false; setUploadPending(-1); }
 });
 repoUrlEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addRepoBtn.click(); } });
 
@@ -292,6 +345,7 @@ function addChip(name, meta) {
 function updateUploadUI() {
   const n = uploadedDocs.length;
   referWrap.hidden = n === 0;
+  if (pendingUploads > 0) return; // refreshUploadGate owns the hint + button while an upload is in flight
   uploadHint.hidden = n === 0;
   if (n) {
     uploadHint.textContent = referChk.checked
@@ -328,6 +382,7 @@ function buildPayload(promptText, threadId) {
 
 // ---- Submit ----
 generateBtn.addEventListener("click", () => {
+  if (pendingUploads > 0) return; // button is disabled while uploads finish; belt-and-suspenders
   const p = promptEl.value.trim();
   if (!p) { promptEl.focus(); return; }
   if (authRequiredAndOut()) { openAuth("signup"); return; }
@@ -490,7 +545,16 @@ function makeRoomForTab() {
 // Open a descriptor as a tab — focusing an equivalent already-open tab instead of duplicating.
 function openTab(desc) {
   const same = tabs.find((t) => (desc.art && t.art === desc.art) || (desc.slug && t.slug === desc.slug && t.type === desc.type));
-  if (same) { Object.assign(same, desc, { id: same.id }); switchTab("trainer"); activateTab(same.id); return same; }
+  if (same) {
+    // Bug 1: if we're re-opening the SAME artifact but its kind changed from a preview
+    // overview draft → a real lesson (e.g. opened from My Lessons after Generate Lesson),
+    // the open iframe is still the preview-locked render. Force a reload so it unlocks.
+    const wasPreview = same.type === "overview" && desc.type === "lesson";
+    Object.assign(same, desc, { id: same.id });
+    switchTab("trainer"); activateTab(same.id);
+    if (wasPreview) reloadViewer();
+    return same;
+  }
   if (!makeRoomForTab()) { alert("You can keep up to " + MAX_TABS + " lessons open — close one first."); return null; }
   const t = Object.assign({ id: "t" + tabSeq++ }, desc);
   tabs.push(t);
@@ -557,24 +621,45 @@ function activateTab(id) {
   persistTabs();
 }
 
+// Force the viewer iframe to re-fetch its CURRENT artifact even though the URL path is
+// unchanged (the tab manager skips a reload when src matches). Used after "Generate Lesson"
+// promotes an overview draft → lesson for the SAME id: /api/artifact/:id then re-renders
+// WITHOUT the preview lock, so the open Trainer tab stops showing the "🔒 overview" note
+// without a manual refresh. A cache-bust query makes the iframe reload reliably.
+function reloadViewer() {
+  const t = tabById(activeTabId);
+  if (!t || !t.art) return;
+  const base = "/api/artifact/" + t.art;
+  currentViewUrl = base;
+  viewerFrame.hidden = false; viewerEmpty.hidden = true; genOverlay.hidden = true;
+  viewerFrame.src = base + "?v=" + Date.now();
+}
+
+// Fix 4: render the open lessons into the dropdown menu UNDER the "Trainer" tab (was a visible
+// bar). Behavior preserved: open/close/switch/active, the "+" new, and the building spinner. The
+// caret next to "Trainer" appears only when ≥1 lesson is open; selecting a lesson closes the menu.
 function renderTabBar() {
+  if (!lessonTabsEl) return;
   lessonTabsEl.innerHTML = "";
-  lessonTabsEl.hidden = tabs.length === 0;
+  // Caret visibility tracks whether there's anything to drop down.
+  if (trainerCaretEl) trainerCaretEl.hidden = tabs.length === 0;
+  if (tabs.length === 0) { closeTrainerMenu(); return; }
   tabs.forEach((t) => {
     const b = document.createElement("button");
     b.className = "lesson-tab" + (t.id === activeTabId ? " active" : "");
+    b.type = "button"; b.setAttribute("role", "menuitem");
     const spin = (t.type === "generating" || t.building) ? '<span class="lt-spin"></span>' : "";
     b.innerHTML = `${spin}<span class="lt-title">${escapeHtml(t.title || "Lesson")}</span><span class="lt-x" title="Close">×</span>`;
     b.addEventListener("click", (e) => {
       if (e.target.classList && e.target.classList.contains("lt-x")) { e.stopPropagation(); closeTab(t.id); return; }
-      activateTab(t.id);
+      activateTab(t.id); closeTrainerMenu();
     });
     lessonTabsEl.appendChild(b);
   });
   if (tabs.length < MAX_TABS) {
     const add = document.createElement("button");
-    add.className = "lesson-tab lt-add"; add.type = "button"; add.title = "New lesson"; add.textContent = "+";
-    add.addEventListener("click", () => { switchTab("configurator"); if (promptEl) promptEl.focus(); });
+    add.className = "lesson-tab lt-add"; add.type = "button"; add.title = "New lesson"; add.setAttribute("role", "menuitem"); add.textContent = "+ New lesson";
+    add.addEventListener("click", () => { switchTab("configurator"); closeTrainerMenu(); if (promptEl) promptEl.focus(); });
     lessonTabsEl.appendChild(add);
   }
 }
@@ -1283,6 +1368,15 @@ async function startBuild(artifactId) {
   let t = tabs.find((x) => x.art === artifactId) || tabById(activeTabId);
   if (t) { t.type = "lesson"; t.art = artifactId; t.building = true; t.percent = 30; t.prompt = t.prompt || basePrompt; genTabId = t.id; activateTab(t.id); }
   else { t = openTab({ type: "lesson", title: "Building…", art: artifactId, building: true, percent: 30 }); genTabId = t ? t.id : null; }
+  // BUG 1 FIX: the iframe was already showing /api/artifact/<id> as a PREVIEW-LOCKED overview
+  // draft; activateTab() skips the reload because the URL path is unchanged, so clicking a module
+  // still hit the "🔒 overview" lock until a manual refresh. Build promotes the draft → lesson
+  // (kind flip) server-side, after which /api/artifact/:id re-renders WITHOUT the preview lock.
+  // Reload the iframe (cache-busted) so it picks up the unlocked render immediately. We arm a
+  // one-time reload in pollJob too (fires once job.status === "running", i.e. the kind flip has
+  // definitely committed) to close the small async race on the promotion write.
+  reloadAfterPromote = genTabId;
+  reloadViewer();
   updateGenStatus(true);
   pollJob(jobId, genTabId);
 }
@@ -1328,6 +1422,13 @@ function pollJob(jobId, tabId) {
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId);
     if (t) { t.percent = (l && l.percent) || t.percent; renderTabBar(); }
+    // Bug 1: once the build job is actually running (the draft→lesson kind flip has committed),
+    // reload the iframe ONCE so the open tab drops the preview lock even if the eager reload in
+    // startBuild raced the promotion write. Only when this tab is the one on screen.
+    if (reloadAfterPromote === tabId && (job.status === "running" || job.status === "done")) {
+      reloadAfterPromote = null;
+      if (t && t.id === activeTabId) reloadViewer();
+    }
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard();
     if (job.status === "done" || job.status === "error") {
       activeJobId = null; genTabId = null; updateGenStatus(false);

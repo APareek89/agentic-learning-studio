@@ -5,7 +5,7 @@
     "title": "Add Observability with Langfuse",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 40,
-    "thesis": "Add Observability with Langfuse becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Add Observability with Langfuse is practical when learners can apply it to this concrete case: A support agent sometimes gives slow unsupported answers and the team needs trace-level evidence. By the end, they should be able to build or review Langfuse tracing plan for prompts, retrieval, tools, and scores, measure percentage of bad answers with actionable traces, and catch the failure where only final answers are logged, so root cause is invisible."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Add Observability with Langfuse: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Add Observability with Langfuse by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Build Langfuse observability into a support agent one trace contract at a time.",
+    "oneLineThesis": "A Langfuse integration is done when bad answers produce actionable traces, not when the SDK import compiles.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Add Observability with Langfuse.",
-        "what": "Target behavior turns Add Observability with Langfuse into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+        "label": "Define the trace contract before touching the SDK",
+        "sub": "Write what evidence a useful trace must contain.",
+        "what": "Learners begin with observable behavior instead of library ceremony.",
+        "relevance": "This prevents a build that emits traces but cannot answer root-cause questions.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Specify the fields required to debug one slow unsupported answer.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Add Observability with Langfuse into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+        "label": "Instrument the request boundary and model call",
+        "sub": "Create one parent trace and attach model metadata consistently.",
+        "what": "Learners wire the first useful trace around the production request path.",
+        "relevance": "This keeps model calls from floating outside the user incident.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Wrap the support request and model call with stable trace metadata.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Add Observability with Langfuse into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+        "label": "Capture retrieval, tools, and scores as separate spans",
+        "sub": "Add child spans where the agent can fail differently.",
+        "what": "Learners add the observability pieces that explain bad answers.",
+        "relevance": "This catches unsupported answers whose model span looks normal.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Record evidence, tool effects, and quality scores as separate child spans.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Add Observability with Langfuse into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+        "label": "Write a verifier for trace completeness",
+        "sub": "Make observability fail loudly when a required field disappears.",
+        "what": "Learners treat traces as product output that can be tested.",
+        "relevance": "This prevents silent regressions where a refactor drops source IDs or scores.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Run a small test that rejects incomplete observability payloads.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Add Observability with Langfuse into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+        "label": "Promote traces into datasets and release gates",
+        "sub": "Use observed failures to harden the next prompt or model change.",
+        "what": "Learners connect the build to ongoing evaluation and operations.",
+        "relevance": "This keeps observability from ending as a passive dashboard.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Turn failed traces into eval cases and retention-aware release gates.",
+        "order": 5
       }
     ],
     "edges": [
@@ -88,31 +98,33 @@
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "adds"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "tests"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "promotes"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Add Observability with Langfuse.",
-      "summary": "Define the user-visible outcome for Add Observability with Langfuse. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Define the trace contract before touching the SDK",
+      "sub": "Write what evidence a useful trace must contain.",
+      "summary": "The first build artifact is a trace acceptance contract.",
       "objectives": [
-        "Explain the role of target behavior in Add Observability with Langfuse.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Specify required trace and span fields.",
+        "Connect those fields to the support-agent failure being debugged.",
+        "Separate must-have evidence from nice dashboard fields."
       ],
       "termIds": [
         "prototype",
@@ -127,20 +139,13 @@
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "Acceptance target: every bad answer has a usable trace",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Observability with Langfuse",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A support agent sometimes gives slow unsupported answers, so the team defines the target trace before touching SDK code: every flagged answer should include a user-session hash, route, release SHA, prompt version, model, retrieval source IDs, tool status, token cost, latency, and groundedness score."
                 }
               ]
             },
@@ -148,14 +153,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "Do not start by asking where to paste the Langfuse SDK call. Start by asking which question the trace must answer: did the right evidence arrive, did the model use it, did the tool agree, and did a score catch the issue?"
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m1_artifact",
+          "kind": "functionalExample",
+          "title": "Trace contract for the support-agent slice",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Required trace fields: name=support_answer, session_hash, release_sha, prompt_version, route, model, total_tokens, cost_usd. Required spans: retrieve_policy, call_account_tool, draft_answer, validate_citations, score_groundedness."
                 }
               ]
             },
@@ -164,17 +188,17 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Add Observability with Langfuse."
+                    "text": "Failure test: delete source_ids from retrieve_policy and the verifier must fail."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Failure test: omit score_groundedness and the release gate must fail."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Failure test: include raw account_id and the privacy check must fail."
                   }
                 ]
               ]
@@ -183,228 +207,64 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Add Observability with Langfuse.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "canon_langfuse_tracing",
+            "kb_observability"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Observability with Langfuse, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for add observability with langfuse help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Add Observability with Langfuse?",
+          "title": "Build starting point",
+          "prompt": "What is the first artifact in this observability build?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A screenshot of the Langfuse dashboard.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A trace contract describing required fields and spans.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A model upgrade plan.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The contract makes the SDK integration measurable.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Instrument the request boundary and model call",
+      "sub": "Create one parent trace and attach model metadata consistently.",
+      "summary": "Boundary instrumentation ties user-facing work to model behavior.",
       "objectives": [
-        "Explain the role of architecture slice in Add Observability with Langfuse.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Place the parent trace at the request boundary.",
+        "Record prompt, model, and release metadata on the model span.",
+        "Avoid trace names that contain user-specific values."
       ],
       "termIds": [
         "prototype",
@@ -419,20 +279,13 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "The request boundary owns the parent trace",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Observability with Langfuse",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Create the trace when the support request enters the application. That parent should survive routing, retrieval, tool calls, model calls, validation, and response formatting. If each helper creates its own trace, a single bad answer becomes scattered evidence."
                 }
               ]
             },
@@ -440,14 +293,33 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
+                  "text": "The model span should include model, provider, prompt_version, temperature or decoding settings, input/output token counts, and cost. Store the prompt version, not a long prompt name with a ticket number embedded in it."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m2_case",
+          "kind": "functionalExample",
+          "title": "Boundary wiring review",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
                 {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "A good AI-generated integration starts trace support_answer at the HTTP handler or job worker, then passes the trace context into retrieve_policy and draft_answer. A weak integration starts a trace inside the LLM helper only; it cannot show the retrieval context that caused the answer."
                 }
               ]
             },
@@ -456,17 +328,17 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Add Observability with Langfuse."
+                    "text": "Verify the trace has one parent ID for the whole request."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Verify model metadata is on the model span, not only in logs."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Verify errors and retries attach to the same trace."
                   }
                 ]
               ]
@@ -475,188 +347,31 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Observability with Langfuse, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for add observability with langfuse help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "from langfuse import observe\n\n@observe()\ndef generate_lesson(topic: str):\n    return f\"Lesson draft for {topic}\"",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "@observe()",
-              "explains": "Adds tracing."
-            },
-            {
-              "part": "topic: str",
-              "explains": "Documents input type."
-            },
-            {
-              "part": "return",
-              "explains": "Produces traced output."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Add Observability with Langfuse?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Capture retrieval, tools, and scores as separate spans",
+      "sub": "Add child spans where the agent can fail differently.",
+      "summary": "The integration becomes useful when evidence, action, and quality are distinct.",
       "objectives": [
-        "Explain the role of core implementation in Add Observability with Langfuse.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Add retrieval span fields for source IDs and ranking.",
+        "Add tool span fields for validated arguments and status.",
+        "Attach a score that can promote failures into evals."
       ],
       "termIds": [
         "prototype",
@@ -671,20 +386,13 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "Different spans imply different owners",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Observability with Langfuse",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Retrieval failures usually belong to indexing, chunking, filters, or reranking. Tool failures belong to authorization, validation, external service status, or argument construction. Scoring failures belong to eval rubric, threshold, or product policy. Separate spans make ownership clear."
                 }
               ]
             },
@@ -692,272 +400,156 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "For the support agent, retrieve_policy stores query, filters, top_k, source_ids, and reranker. call_account_tool stores tool name, validated args shape, status, and latency. score_groundedness stores score name, score version, value, and threshold."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Add Observability with Langfuse."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_langfuse_tracing",
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Observability with Langfuse, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Child span checklist",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Span",
+            "Minimum fields",
+            "Owner"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "retrieve_policy",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
+                  "criterion": "Span",
+                  "text": "query, filter, top_k, source_ids, rank positions",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "criterion": "Minimum fields",
+                  "text": "Search/RAG owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "retrieve_policy",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use when the retrieve_policy row is the relevant design concern.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "call_account_tool",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Span",
+                  "text": "tool, argument schema, status, latency, error class",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Minimum fields",
+                  "text": "Integration owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "call_account_tool",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
+              "whenToUse": "Use when the call_account_tool row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "draft_answer",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "prompt_version, model, tokens, cost, finish reason",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Minimum fields",
+                  "text": "Prompt/model owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "draft_answer",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the draft_answer row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "score_groundedness",
+              "cells": [
+                {
+                  "criterion": "Span",
+                  "text": "score_version, value, threshold, dataset_case_id",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Minimum fields",
+                  "text": "Eval owner",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Owner",
+                  "text": "score_groundedness",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when the score_groundedness row is the relevant design concern.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Add Observability with Langfuse?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_langfuse_tracing",
+            "canon_langfuse_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_tracing",
+        "canon_langfuse_eval",
+        "kb_observability"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Write a verifier for trace completeness",
+      "sub": "Make observability fail loudly when a required field disappears.",
+      "summary": "A small verifier turns trace quality into a testable contract.",
       "objectives": [
-        "Explain the role of validation and tracing in Add Observability with Langfuse.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Implement a trace completeness check.",
+        "Use predict-then-reveal to reason about missing fields.",
+        "Review AI-generated instrumentation with a concrete checklist."
       ],
       "termIds": [
         "prototype",
@@ -966,250 +558,83 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 8,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Observability with Langfuse",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Add Observability with Langfuse."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Observability with Langfuse, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for add observability with langfuse help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Trace completeness verifier for the Langfuse build",
           "language": "python",
-          "code": "from langfuse import observe\n\n@observe()\ndef generate_lesson(topic: str):\n    return f\"Lesson draft for {topic}\"",
-          "explain": [
+          "code": "trace = {\n    \"metadata\": {\"release_sha\": \"9f31c2a\", \"prompt_version\": \"support-v3\", \"model\": \"gpt-5.5\"},\n    \"spans\": {\n        \"retrieve_policy\": {\"source_ids\": [\"refunds#45\"], \"top_k\": 5},\n        \"call_account_tool\": {\"status\": \"ok\", \"validated_args\": True},\n        \"draft_answer\": {\"input_tokens\": 900, \"output_tokens\": 120, \"cost_usd\": 0.004},\n        \"score_groundedness\": {\"score\": 0.91, \"threshold\": 0.85},\n    },\n}\n\nrequired = {\n    \"metadata\": [\"release_sha\", \"prompt_version\", \"model\"],\n    \"spans.retrieve_policy\": [\"source_ids\", \"top_k\"],\n    \"spans.call_account_tool\": [\"status\", \"validated_args\"],\n    \"spans.draft_answer\": [\"input_tokens\", \"output_tokens\", \"cost_usd\"],\n    \"spans.score_groundedness\": [\"score\", \"threshold\"],\n}\n\nmissing = []\nfor path, fields in required.items():\n    target = trace\n    for part in path.split('.'):\n        target = target.get(part, {})\n    for field in fields:\n        if field not in target:\n            missing.append(f\"{path}.{field}\")\n\nprint(\"OK\" if not missing else {\"missing\": missing})",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Use this as a release test around the payload your Langfuse instrumentation emits. The exact SDK calls can change; the evidence contract should not disappear quietly."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Predict the result if retrieve_policy.source_ids is removed from the trace.",
+            "answer": "The script prints a missing list containing spans.retrieve_policy.source_ids. That is the exact failure this build is meant to catch: an answer can no longer be tied to evidence."
           },
-          "syntax": [
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_langfuse_tracing",
+            "kb_observability"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify the AI-generated integration",
+          "body": [
             {
-              "part": "@observe()",
-              "explains": "Adds tracing."
-            },
-            {
-              "part": "topic: str",
-              "explains": "Documents input type."
-            },
-            {
-              "part": "return",
-              "explains": "Produces traced output."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: the parent trace starts at the request boundary; each child span has stable names; source IDs are captured without full private documents; tool args are shape-validated before logging; cost includes retries; score version and threshold are stored; and the verifier fails when a required span or field is absent."
+                }
+              ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Add Observability with Langfuse?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_langfuse_tracing",
+            "kb_observability"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_langfuse_tracing",
+        "kb_observability"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Promote traces into datasets and release gates",
+      "sub": "Use observed failures to harden the next prompt or model change.",
+      "summary": "The build closes when traces feed regression tests and governance.",
       "objectives": [
-        "Explain the role of hardening path in Add Observability with Langfuse.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Convert a failed trace into a redacted dataset item.",
+        "Define a release gate using trace-derived scores.",
+        "Add privacy and retention rules before broader rollout."
       ],
       "termIds": [
         "prototype",
@@ -1224,20 +649,13 @@
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "Observability should improve the next release",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Add Observability with Langfuse",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "After the first incident, the team should not merely stare at a dashboard. They should turn the redacted input, expected policy citation, and score rubric into a dataset case. The next prompt or model change must pass that case before deployment."
                 }
               ]
             },
@@ -1245,340 +663,157 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Privacy hardening belongs here too: decide which fields are redacted, which traces are sampled, who can view raw content, and when trace data expires."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Add Observability with Langfuse."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Add Observability with Langfuse, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "A trace is production-ready when it can become a safe regression case.",
+          "useWhen": "A failed answer represents a recurring product risk. The trace includes enough evidence to define expected behavior. Sensitive fields can be removed or replaced with stable surrogates.",
+          "avoidWhen": "The trace depends on private content that cannot be safely retained. The failure is a one-off infrastructure outage already covered elsewhere. No owner will maintain the score or dataset case.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "canon_langfuse_eval",
+            "kb_observability"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Add Observability with Langfuse?",
+          "title": "Release gate",
+          "prompt": "What should happen to a high-severity failed trace after redaction?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Delete it immediately and rely on memory.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Promote it into a dataset case that future releases must pass.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Use it only as a dashboard screenshot.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Observability becomes durable when incidents enter regression testing.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_langfuse_eval"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Add Observability with Langfuse: baseline, production design, or advanced optimization."
+        "canon_langfuse_eval",
+        "kb_observability"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A narrow build slice that proves one behavior before full production hardening.",
+      "technicalNote": "A prototype should include the smallest runnable path, its failure test, and the evidence needed to decide the next build step.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     },
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A component that selects candidate context or records for a question.",
+      "technicalNote": "Retrievers need source IDs, filters, top-k choices, and evaluation because missing evidence changes every downstream answer.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     },
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A deterministic or model-assisted check that accepts, rejects, or repairs an output.",
+      "technicalNote": "Validators protect contracts such as schema, citations, allowed tools, approval rules, and safety policy.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one run, including spans, inputs, outputs, metadata, and scores.",
+      "technicalNote": "Traces make failures diagnosable by showing which retrieval, model, tool, or scoring step produced the result.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     },
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A released runtime configuration with model, prompt, data, infrastructure, monitoring, and rollback decisions.",
+      "technicalNote": "Deployment quality depends on observability, eval gates, ownership, and privacy controls, not only code running.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     },
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A test that proves a feature meets its release contract.",
+      "technicalNote": "Acceptance tests should be tied to user-visible behavior and include critical failure cases, not just happy paths.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "canon_langfuse_tracing"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Add Observability with Langfuse",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Build gate",
         "questions": [
           {
-            "q": "What decision does Add Observability with Langfuse change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What trace evidence must exist before this support agent ships?",
+            "why": "The build should prove retrieval, model, tool, score, cost, and version fields are visible for one representative bad answer.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Trace contract with verifier",
+              "SDK import only",
+              "Manual screenshot review"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Define the contract first, instrument the boundary second, and gate the release with trace completeness."
           }
         ]
       }
@@ -1590,154 +825,175 @@
         "t": "p",
         "spans": [
           {
-            "text": "Add Observability with Langfuse is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild the Langfuse implementation from memory by naming the trace contract, request boundary, child spans, verifier, dataset promotion rule, and privacy hardening step."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Langfuse build path from contract to release gate",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Add Observability with Langfuse.",
-          "what": "Target behavior turns Add Observability with Langfuse into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+          "label": "Define the trace contract before touching the SDK",
+          "sub": "Write what evidence a useful trace must contain.",
+          "what": "Learners begin with observable behavior instead of library ceremony.",
+          "relevance": "This prevents a build that emits traces but cannot answer root-cause questions.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Specify the fields required to debug one slow unsupported answer.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Add Observability with Langfuse into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+          "label": "Instrument the request boundary and model call",
+          "sub": "Create one parent trace and attach model metadata consistently.",
+          "what": "Learners wire the first useful trace around the production request path.",
+          "relevance": "This keeps model calls from floating outside the user incident.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Wrap the support request and model call with stable trace metadata.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Add Observability with Langfuse into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+          "label": "Capture retrieval, tools, and scores as separate spans",
+          "sub": "Add child spans where the agent can fail differently.",
+          "what": "Learners add the observability pieces that explain bad answers.",
+          "relevance": "This catches unsupported answers whose model span looks normal.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Record evidence, tool effects, and quality scores as separate child spans.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Add Observability with Langfuse into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Add Observability with Langfuse, not just recognize the words.",
+          "label": "Write a verifier for trace completeness",
+          "sub": "Make observability fail loudly when a required field disappears.",
+          "what": "Learners treat traces as product output that can be tested.",
+          "relevance": "This prevents silent regressions where a refactor drops source IDs or scores.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Run a small test that rejects incomplete observability payloads.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Promote traces into datasets and release gates",
+          "sub": "Use observed failures to harden the next prompt or model change.",
+          "what": "Learners connect the build to ongoing evaluation and operations.",
+          "relevance": "This keeps observability from ending as a passive dashboard.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Turn failed traces into eval cases and retention-aware release gates.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "defines"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "captures"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "verifies"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "promotes"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Define the trace contract before touching the SDK",
+        "detail": "The first build artifact is a trace acceptance contract."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Instrument the request boundary and model call",
+        "detail": "Boundary instrumentation ties user-facing work to model behavior."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Capture retrieval, tools, and scores as separate spans",
+        "detail": "The integration becomes useful when evidence, action, and quality are distinct."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Write a verifier for trace completeness",
+        "detail": "A small verifier turns trace quality into a testable contract."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
-      }
-    ],
-    "checklist": [
-      {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
-        "fromModuleId": "m1"
-      },
-      {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
-      },
-      {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
-        "fromModuleId": "m5"
+        "label": "Promote traces into datasets and release gates",
+        "detail": "The build closes when traces feed regression tests and governance."
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Add Observability with Langfuse: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
-    }
+      "prompt": "Add Langfuse-style observability to a toy support agent. Produce one trace with retrieval, model, tool, and score spans; run a completeness verifier; redact private fields; then promote one failed trace into a regression dataset item. Next rung: wire the same spans to CI evals.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Trace contract exists before SDK wiring.",
+        "Every required child span appears in a failing case.",
+        "Verifier fails on missing source IDs or score.",
+        "Dataset promotion removes sensitive values."
+      ]
+    },
+    "checklist": [
+      {
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Define the trace contract before touching the SDK\"?",
+        "fromModuleId": "m1"
+      },
+      {
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Write a verifier for trace completeness\"?",
+        "fromModuleId": "m4"
+      },
+      {
+        "id": "chk_gate",
+        "label": "Does \"Promote traces into datasets and release gates\" define the release or production gate?",
+        "fromModuleId": "m5"
+      }
+    ]
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
-      "kind": "kb",
-      "title": "KB: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_langfuse_tracing": {
+      "id": "canon_langfuse_tracing",
       "kind": "canonical",
-      "title": "LlamaIndex RAG documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "Langfuse tracing documentation",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
+    "canon_langfuse_eval": {
+      "id": "canon_langfuse_eval",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "Langfuse evaluation overview",
+      "url": "https://langfuse.com/docs/evaluation/overview",
+      "asOfDate": "2026-06-22"
+    },
+    "kb_observability": {
+      "id": "kb_observability",
+      "kind": "kb",
+      "title": "KB: Tracing and Observability",
+      "url": "https://langfuse.com/docs/tracing",
+      "asOfDate": "2026-06-22"
     }
   }
 }

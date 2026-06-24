@@ -25,14 +25,18 @@
   },
   "mentalMap": {
     "title": "Build a Document Q&A Bot: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Build a Document Q&A Bot by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Follow the path top to bottom — each step builds on the one before it.",
+    "oneLineThesis": "A document Q&A bot loads your files, retrieves the passages that match a question, and answers grounded in those passages instead of guessing.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
         "label": "Target behavior",
         "sub": "Define the user-visible outcome for Build a Document Q&A Bot.",
         "what": "Target behavior turns Build a Document Q&A Bot into a usable mental model.",
+        "orient": "Name the question-and-answer behavior users see, and the failure you must catch.",
+        "order": 1,
         "relevance": "It matters because the learner needs to apply Build a Document Q&A Bot, not just recognize the words.",
         "moduleId": "m1",
         "layer": "Path",
@@ -43,6 +47,8 @@
         "label": "Architecture slice",
         "sub": "Choose the smallest pipeline that can work end to end.",
         "what": "Architecture slice turns Build a Document Q&A Bot into a usable mental model.",
+        "orient": "Pick the smallest load-index-retrieve-answer pipeline that runs end to end first.",
+        "order": 2,
         "relevance": "It matters because the learner needs to apply Build a Document Q&A Bot, not just recognize the words.",
         "moduleId": "m2",
         "layer": "Path",
@@ -53,6 +59,8 @@
         "label": "Core implementation",
         "sub": "Wire the main model, retrieval, or tool step.",
         "what": "Core implementation turns Build a Document Q&A Bot into a usable mental model.",
+        "orient": "Wire the retriever and answer step, and choose how much rigor to add.",
+        "order": 3,
         "relevance": "It matters because the learner needs to apply Build a Document Q&A Bot, not just recognize the words.",
         "moduleId": "m3",
         "layer": "Path",
@@ -63,6 +71,8 @@
         "label": "Validation and tracing",
         "sub": "Add checks so failures are visible before users see them.",
         "what": "Validation and tracing turns Build a Document Q&A Bot into a usable mental model.",
+        "orient": "Add citations, traces, and tests so wrong answers surface before users hit them.",
+        "order": 4,
         "relevance": "It matters because the learner needs to apply Build a Document Q&A Bot, not just recognize the words.",
         "moduleId": "m4",
         "layer": "Path",
@@ -73,6 +83,8 @@
         "label": "Hardening path",
         "sub": "Decide what to ship, monitor, and improve next.",
         "what": "Hardening path turns Build a Document Q&A Bot into a usable mental model.",
+        "orient": "Spot how the bot breaks in production and decide what to harden next.",
+        "order": 5,
         "relevance": "It matters because the learner needs to apply Build a Document Q&A Bot, not just recognize the words.",
         "moduleId": "m5",
         "layer": "Path",
@@ -107,7 +119,7 @@
       "id": "m1",
       "order": 1,
       "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Build a Document Q&A Bot.",
+      "sub": "Starts the spine: the answering behavior every later step serves.",
       "summary": "Define the user-visible outcome for Build a Document Q&A Bot. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of target behavior in Build a Document Q&A Bot.",
@@ -125,22 +137,68 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
-          "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "id": "m1_why",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Build a Document Q&A Bot",
+                  "text": "Why this exists: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "a plain chatbot answers from training data, so it guesses about your private PDFs, contracts, and wikis — often confidently and wrong. A "
+                },
+                {
+                  "text": "document Q&A bot",
+                  "strong": true
+                },
+                {
+                  "text": " fixes that by retrieving the actual passages that match a question and answering only from them. Reach for it whenever a correct answer must come from a specific corpus you control, not the model's memory."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "em": true,
+                  "text": "if a user asks a question your documents never cover, what is the most useful thing the bot can do?"
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "retriever",
+            "validator"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m1_concept",
+          "kind": "conceptual",
+          "title": "Target behavior: what the bot should do",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Before writing any code, name the user-visible behavior. A "
+                },
+                {
+                  "text": "Document Q&A Bot",
+                  "strong": true
+                },
+                {
+                  "text": " takes a natural-language question, finds the relevant passages in your documents, and returns an answer grounded in those passages — ideally with a citation to where it came from."
                 }
               ]
             },
@@ -148,14 +206,21 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Start by separating the two jobs: the "
                 },
                 {
-                  "text": "prototype",
-                  "term": "prototype"
+                  "text": "retriever",
+                  "term": "retriever"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " finds the right text, and the model writes the answer from it. Then decide what a wrong answer looks like, so a "
+                },
+                {
+                  "text": "validator",
+                  "term": "validator"
+                },
+                {
+                  "text": " can catch it."
                 }
               ]
             },
@@ -164,17 +229,17 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Build a Document Q&A Bot."
+                    "text": "Name the input (a question) and output (a grounded answer) of the bot."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Separate what the model decides (the wording) from what the application enforces (using only retrieved text)."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Keep one measurable success signal: does the answer cite a passage that actually supports it?"
                   }
                 ]
               ]
@@ -399,7 +464,7 @@
       "id": "m2",
       "order": 2,
       "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
+      "sub": "Now that the behavior is named, pick the smallest pipeline that delivers it.",
       "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of architecture slice in Build a Document Q&A Bot.",
@@ -584,8 +649,8 @@
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before you read the explanation: which one line in this sketch is the retriever, and which line is where a wrong answer could slip through untested?",
+            "answer": "VectorStoreIndex.from_documents builds the retriever; query_engine.query is the boundary where model output meets the user, so it is the first thing to wrap with a grounding check and a test."
           },
           "syntax": [
             {
@@ -603,6 +668,58 @@
           ],
           "termIds": [
             "prototype",
+            "retriever",
+            "validator"
+          ],
+          "sources": [
+            "canon1",
+            "kb1"
+          ]
+        },
+        {
+          "id": "m2_verify_ai",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Verify the AI-generated version before you trust it. ",
+                  "strong": true
+                },
+                {
+                  "text": "When an assistant hands you Q&A pipeline code like the sketch above, check these four things specific to retrieval before running it."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Does it actually load your documents? Print the chunk count — an empty or wrong directory silently indexes nothing."
+                  }
+                ],
+                [
+                  {
+                    "text": "Is retrieval grounding the answer? Inspect the retrieved passages, not just the final text, or the model may be answering from memory."
+                  }
+                ],
+                [
+                  {
+                    "text": "What happens on a no-match question? Confirm it can say \"not in the documents\" instead of inventing an answer."
+                  }
+                ],
+                [
+                  {
+                    "text": "Are chunk size and top-k set deliberately? Defaults often retrieve too little context or too much noise."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
             "retriever",
             "validator"
           ],
@@ -651,7 +768,7 @@
       "id": "m3",
       "order": 3,
       "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
+      "sub": "With the pipeline chosen, wire the retriever and answer step and choose your rigor.",
       "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of core implementation in Build a Document Q&A Bot.",
@@ -952,7 +1069,7 @@
       "id": "m4",
       "order": 4,
       "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
+      "sub": "Once it runs, add the checks that make a wrong answer visible before users see it.",
       "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of validation and tracing in Build a Document Q&A Bot.",
@@ -969,6 +1086,62 @@
       "estMinutes": 8,
       "loadState": "full",
       "blocks": [
+        {
+          "id": "m4_recall",
+          "kind": "note",
+          "tone": "info",
+          "body": [
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Quick recall: "
+                },
+                {
+                  "em": true,
+                  "text": "back in module 1 you named one measurable success signal for the bot. What was it?"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "It was: "
+                },
+                {
+                  "em": true,
+                  "text": "does the answer cite a passage that actually supports it?"
+                },
+                {
+                  "text": " That single signal is exactly what this module turns into a real check — the "
+                },
+                {
+                  "text": "validator",
+                  "term": "validator"
+                },
+                {
+                  "text": " and "
+                },
+                {
+                  "text": "trace",
+                  "term": "trace"
+                },
+                {
+                  "text": " make that signal observable instead of a hope."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "validator",
+            "trace"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
         {
           "id": "m4_concept",
           "kind": "conceptual",
@@ -1204,7 +1377,7 @@
       "id": "m5",
       "order": 5,
       "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
+      "sub": "Closes the spine: knowing the failure modes, decide what to ship and harden next.",
       "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
       "objectives": [
         "Explain the role of hardening path in Build a Document Q&A Bot.",
@@ -1334,6 +1507,110 @@
           "termIds": [
             "prototype",
             "retriever"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
+          "id": "m5_failure_modes",
+          "kind": "conceptual",
+          "title": "How a document Q&A bot breaks in practice",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The happy path looks clean in a demo. These are the failures that show up once real users and real documents arrive — and what to harden against each.",
+                  "strong": true
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "1. Confident hallucination on no-match questions"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The "
+                },
+                {
+                  "text": "retriever",
+                  "term": "retriever"
+                },
+                {
+                  "text": " returns the closest passages even when none truly answer the question, and the model writes a fluent, wrong answer. Fix: gate on a similarity threshold and let the bot say \"not found in the documents.\""
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "2. Chunking that splits the answer"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A fact spans two chunks, so retrieval grabs only half of it. The answer is technically grounded but incomplete. Fix: tune chunk size and overlap, and inspect retrieved passages in your "
+                },
+                {
+                  "text": "trace",
+                  "term": "trace"
+                },
+                {
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "3. Stale index (non-obvious)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Documents change, but the index was built once and never refreshed. The bot answers from an old version with no error — the most common silent failure in production. Fix: re-index on a schedule and stamp each answer with the document version."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
+                {
+                  "text": "Watch for: ",
+                  "strong": true
+                },
+                {
+                  "text": "answers that sound right but cite nothing, or cite a passage that does not contain the claim. That mismatch is your first diagnostic signal."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
             "kb1",
@@ -1590,10 +1867,7 @@
         "t": "p",
         "spans": [
           {
-            "text": "Build a Document Q&A Bot is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "From memory, reconstruct the build: name the target behavior in one sentence, then list the four pipeline steps a document Q&A bot runs (load, index, retrieve, answer). Recall one check that proves the answer is grounded, and two ways the bot breaks in production once real documents arrive."
           }
         ]
       }
@@ -1706,7 +1980,7 @@
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Build a Document Q&A Bot: goal, inputs, core component, validation, and one risk.",
+      "prompt": "Build it solo: take a handful of your own documents and stand up a working Q&A bot end to end — load and index them, retrieve passages for a question, answer grounded in those passages with a citation, and add one check that flags a no-match question instead of hallucinating. Then take the NEXT rung: add a trace that logs the retrieved passages for every answer, and re-run a question after editing a source document to confirm your index refresh works.",
       "scopedTo": "Build Projects"
     }
   },

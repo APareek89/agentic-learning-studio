@@ -3,9 +3,9 @@
   "meta": {
     "topic": "Claude Tool Use and Agent Patterns",
     "title": "Claude Tool Use and Agent Patterns",
-    "generatedAt": "2026-06-20",
+    "generatedAt": "2026-06-22",
     "estTotalMinutes": 32,
-    "thesis": "Claude Tool Use and Agent Patterns becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Claude tool use turns a one-shot text model into an agent: you declare tools, Claude asks to call one, your code runs it and returns the result, and the loop repeats until the task is done."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,55 +25,67 @@
   },
   "mentalMap": {
     "title": "Claude Tool Use and Agent Patterns: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Claude Tool Use and Agent Patterns by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Start at module 1 and follow the path: what tool use is, the loop, which pattern to choose, how to build it, how it breaks.",
+    "oneLineThesis": "Declare tools, let Claude request a tool_use, run it, feed the tool_result back, and repeat until done.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "What the tool owns",
-        "sub": "Place Claude Tool Use and Agent Patterns in the system map.",
-        "what": "What the tool owns turns Claude Tool Use and Agent Patterns into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+        "label": "What tool use is",
+        "order": 1,
+        "orient": "Start here: why a text-only model needs tools to act on the world.",
+        "sub": "Why Claude needs tools, and what a tool definition contains.",
+        "what": "Tool use lets Claude call functions you control instead of only emitting text.",
+        "relevance": "It matters because the whole agent story starts with declaring a tool and reading a tool_use request.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m2",
-        "label": "Core workflow",
-        "sub": "Trace the inputs, outputs, and lifecycle.",
-        "what": "Core workflow turns Claude Tool Use and Agent Patterns into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+        "label": "The tool-use loop",
+        "order": 2,
+        "orient": "The core cycle: request, tool_use, you run it, tool_result, repeat.",
+        "sub": "Trace one full request to tool_use to tool_result round trip.",
+        "what": "The loop is the four-message exchange that runs a tool and feeds the result back.",
+        "relevance": "It matters because every Claude agent is this loop running until a stop condition fires.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m3",
-        "label": "Fit and alternatives",
-        "sub": "Compare when this tool is right or wrong.",
-        "what": "Fit and alternatives turns Claude Tool Use and Agent Patterns into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+        "label": "Choosing a pattern",
+        "order": 3,
+        "orient": "Decide between one shot, a tool loop, or orchestrator-workers.",
+        "sub": "Pick the smallest agent pattern that satisfies the task.",
+        "what": "Agent patterns range from a single tool call to multi-agent orchestration.",
+        "relevance": "It matters because over-engineering the pattern is the most common and costly mistake.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine"
       },
       {
         "id": "n_m4",
-        "label": "Implementation sketch",
-        "sub": "See the smallest working pattern.",
-        "what": "Implementation sketch turns Claude Tool Use and Agent Patterns into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+        "label": "Building the loop",
+        "order": 4,
+        "orient": "Write the smallest working tool-use loop and verify each piece.",
+        "sub": "See the minimal runnable loop and what to check before trusting it.",
+        "what": "A concrete tool-use loop in code: tool schema, dispatch, tool_result, stop.",
+        "relevance": "It matters because the gap between the concept and a correct implementation hides bugs.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal"
       },
       {
         "id": "n_m5",
-        "label": "Production checklist",
-        "sub": "Harden versioning, evals, and operations.",
-        "what": "Production checklist turns Claude Tool Use and Agent Patterns into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+        "label": "How it breaks",
+        "order": 5,
+        "orient": "Late-stage failure modes: runaway loops, bad inputs, missing stops.",
+        "sub": "Harden the loop against the ways tool-using agents fail in production.",
+        "what": "Production failure modes and the guards that catch each one.",
+        "relevance": "It matters because the loop that works in a demo is the loop that loops forever in production.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine"
@@ -106,13 +118,13 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "What the tool owns",
-      "sub": "Place Claude Tool Use and Agent Patterns in the system map.",
-      "summary": "Place Claude Tool Use and Agent Patterns in the system map. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "What tool use is and why it exists",
+      "sub": "Starts the spine: the problem tool use solves.",
+      "summary": "A text-only Claude call answers once and stops. Tool use lets Claude request that your code run a function and hand the result back, which is what makes an agent possible. This module frames the whole path before we open the loop.",
       "objectives": [
-        "Explain the role of what the tool owns in Claude Tool Use and Agent Patterns.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain why a one-shot Claude call cannot complete a task that needs live data or an action.",
+        "Name the parts of a tool definition Claude needs to call a function.",
+        "Recognize a tool_use request as Claude asking your code to act on its behalf."
       ],
       "termIds": [
         "framework",
@@ -125,22 +137,15 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "m1_why",
           "kind": "conceptual",
-          "title": "What the tool owns: the core idea",
+          "title": "Why tool use exists: the problem it solves",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Claude Tool Use and Agent Patterns",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A plain Claude call works in one shot. You send a prompt, Claude replies, and the turn ends. That is fine for writing or reasoning over text you already provided. It breaks the moment the task needs something Claude cannot produce from its weights: a live price, the contents of a file, the result of running code, or any action in the outside world."
                 }
               ]
             },
@@ -148,14 +153,58 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Ask Claude \"what is the weather in Paris right now?\" and a one-shot call can only guess. It has no way to fetch live data, see what came back, and then answer. "
                 },
                 {
-                  "text": "framework",
+                  "text": "Tool use",
+                  "term": "framework",
+                  "strong": true
+                },
+                {
+                  "text": " closes that gap: you declare functions Claude is allowed to ask for, and Claude can request one, read the result your code returns, and continue."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "text": "what would go wrong if you tried to answer a live-data question with a single Claude call and no tools?",
+                  "em": true
+                }
+              ]
+            }
+          ],
+          "analogy": "A one-shot call is like asking a colleague a question and hanging up before they can look anything up; tool use is staying on the line so they can check a source and report back.",
+          "termIds": [
+            "framework"
+          ],
+          "sources": [
+            "kb1",
+            "canon2"
+          ]
+        },
+        {
+          "id": "m1_pieces",
+          "kind": "conceptual",
+          "title": "The pieces: what a tool definition contains",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "You give Claude tools as part of the request. Each "
+                },
+                {
+                  "text": "tool",
                   "term": "framework"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " is a small contract with three parts."
                 }
               ]
             },
@@ -164,154 +213,171 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Claude Tool Use and Agent Patterns."
+                    "text": "name",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a stable identifier Claude uses to ask for the tool (e.g. "
+                  },
+                  {
+                    "text": "get_weather",
+                    "code": true
+                  },
+                  {
+                    "text": ")."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "description",
+                    "strong": true
+                  },
+                  {
+                    "text": " — plain language telling Claude when and why to use it. This is the single biggest lever on whether Claude picks the right tool."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "input_schema",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a JSON Schema for the arguments, so Claude knows which fields to fill and your code can validate them."
                   }
                 ]
               ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "interactiveSlider",
-          "title": "Tradeoff slider",
-          "caption": "The smallest useful sequence for Claude Tool Use and Agent Patterns.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Claude Tool Use and Agent Patterns, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
+                  "text": "Claude never runs the function. It only produces a structured "
+                },
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
+                  "text": "tool_use",
+                  "term": "handoff"
+                },
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": " request — the name plus arguments — and hands control back to your code. The "
+                },
+                {
+                  "text": "boundary",
+                  "term": "graph"
+                },
+                {
+                  "text": " between what the model decides and what your application executes is the whole safety story."
                 }
               ]
             }
           ],
+          "analogy": "A tool definition is like a job posting: the title (name), the responsibilities (description), and the required application fields (input_schema). Claude reads the posting and applies; your code does the hiring and the work.",
           "termIds": [
             "framework",
+            "handoff",
             "graph"
           ],
           "sources": [
             "kb1",
-            "canon1"
+            "canon2"
+          ]
+        },
+        {
+          "id": "m1_visual",
+          "kind": "steppedFlow",
+          "title": "From prompt to tool_use request",
+          "caption": "The first half of the loop: a tool-equipped request produces a tool_use request, not a final answer.",
+          "steps": [
+            {
+              "label": "Declare tools",
+              "detail": "You send the prompt plus a list of tool definitions (name, description, input_schema)."
+            },
+            {
+              "label": "Claude reasons",
+              "detail": "Claude reads the goal and the available tools and decides it needs to call one."
+            },
+            {
+              "label": "tool_use emitted",
+              "detail": "Claude returns a tool_use block with stop_reason \"tool_use\" — the name plus arguments."
+            },
+            {
+              "label": "Control handed back",
+              "detail": "Your code now owns the next step: run the function and return a tool_result."
+            }
+          ],
+          "termIds": [
+            "framework",
+            "handoff"
+          ],
+          "sources": [
+            "kb1"
           ]
         },
         {
           "id": "m1_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: a weather question",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for claude tool use and agent patterns help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "A user asks: \"Is it raining in Paris right now?\" You send Claude the prompt and one tool, "
+                },
+                {
+                  "text": "get_weather(city)",
+                  "code": true
+                },
+                {
+                  "text": "."
                 }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Claude cannot know live weather, so it does not answer directly."
+                  }
+                ],
+                [
+                  {
+                    "text": "It returns a "
+                  },
+                  {
+                    "text": "tool_use",
+                    "term": "handoff"
+                  },
+                  {
+                    "text": " request: name "
+                  },
+                  {
+                    "text": "get_weather",
+                    "code": true
+                  },
+                  {
+                    "text": ", arguments "
+                  },
+                  {
+                    "text": "{\"city\":\"Paris\"}",
+                    "code": true
+                  },
+                  {
+                    "text": "."
+                  }
+                ],
+                [
+                  {
+                    "text": "Your code runs the real API, gets \"light rain, 12C\", and feeds it back."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "That hand-off is the pattern to copy: declare the tool, let Claude ask, run it yourself, return the result."
                 }
               ]
             }
@@ -319,69 +385,35 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "handoff"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"What the tool owns\" in Claude Tool Use and Agent Patterns?",
+          "prompt": "What does Claude actually do when it decides to use a tool?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "It runs the function itself and returns the output.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It returns a structured tool_use request (name + arguments) and hands control back to your code.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It always uses the most powerful tool available.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Claude never executes anything. It emits a tool_use request describing the call; your application runs the function and returns the result. That boundary is what keeps tool use safe and controllable.",
           "termIds": [
             "framework",
-            "graph"
+            "handoff"
           ],
           "sources": [
             "kb1"
@@ -398,13 +430,13 @@
     {
       "id": "m2",
       "order": 2,
-      "title": "Core workflow",
-      "sub": "Trace the inputs, outputs, and lifecycle.",
-      "summary": "Trace the inputs, outputs, and lifecycle. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "The tool-use loop",
+      "sub": "Follows module 1: the full round trip Claude runs each turn.",
+      "summary": "Module 1 ended at the tool_use request. This module completes the cycle: you run the tool, send a tool_result back, and Claude either calls another tool or gives a final answer. Repeating that exchange is the agent loop.",
       "objectives": [
-        "Explain the role of core workflow in Claude Tool Use and Agent Patterns.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Trace the four messages of one tool-use round trip in order.",
+        "Explain how a tool_result message feeds the next turn.",
+        "Identify the stop condition that ends the loop."
       ],
       "termIds": [
         "framework",
@@ -419,115 +451,86 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Core workflow: the core idea",
+          "title": "The loop: request, tool_use, tool_result, repeat",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Claude Tool Use and Agent Patterns",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A Claude agent is the tool-use exchange run on repeat. One turn has four moves, and each move feeds the next."
                 }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Request",
+                    "strong": true
+                  },
+                  {
+                    "text": " — you send the conversation plus the tool list to Claude."
+                  }
+                ],
+                [
+                  {
+                    "text": "tool_use",
+                    "term": "handoff",
+                    "strong": true
+                  },
+                  {
+                    "text": " — Claude replies with a tool_use block (stop_reason \"tool_use\")."
+                  }
+                ],
+                [
+                  {
+                    "text": "Run + tool_result",
+                    "strong": true
+                  },
+                  {
+                    "text": " — your code runs the function and appends a "
+                  },
+                  {
+                    "text": "tool_result",
+                    "term": "checkpoint"
+                  },
+                  {
+                    "text": " message carrying the output."
+                  }
+                ],
+                [
+                  {
+                    "text": "Repeat",
+                    "strong": true
+                  },
+                  {
+                    "text": " — you send the whole conversation back; Claude either calls another tool or answers."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "The loop ends when Claude returns a normal text response (stop_reason \"end_turn\") instead of a tool_use — or when you hit a turn limit you set. The conversation history is the agent's "
                 },
                 {
-                  "text": "framework",
-                  "term": "framework"
+                  "text": "memory",
+                  "term": "graph"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Claude Tool Use and Agent Patterns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Claude Tool Use and Agent Patterns, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": ": each tool_result you append is what the next turn observes."
                 }
               ]
             }
           ],
+          "analogy": "It is like a cook following a recipe with a helper: the cook asks for an ingredient (tool_use), the helper fetches it and puts it on the counter (tool_result), and the cook looks at the counter before asking for the next thing.",
           "termIds": [
             "framework",
+            "handoff",
+            "checkpoint",
             "graph"
           ],
           "sources": [
@@ -536,23 +539,161 @@
           ]
         },
         {
+          "id": "m2_visual",
+          "kind": "diagram",
+          "title": "One full tool-use round trip",
+          "caption": "Each arrow feeds the next message. The loop exits when Claude answers with text instead of a tool_use.",
+          "layout": "flow",
+          "nodes": [
+            {
+              "id": "d1",
+              "label": "Request",
+              "sub": "Conversation + tools sent to Claude"
+            },
+            {
+              "id": "d2",
+              "label": "tool_use",
+              "sub": "Claude asks for a tool (name + args)"
+            },
+            {
+              "id": "d3",
+              "label": "Run tool",
+              "sub": "Your code executes the function"
+            },
+            {
+              "id": "d4",
+              "label": "tool_result",
+              "sub": "Output appended to the conversation"
+            }
+          ],
+          "edges": [
+            {
+              "from": "d1",
+              "to": "d2",
+              "label": "Claude replies"
+            },
+            {
+              "from": "d2",
+              "to": "d3",
+              "label": "your code"
+            },
+            {
+              "from": "d3",
+              "to": "d4",
+              "label": "append"
+            },
+            {
+              "from": "d4",
+              "to": "d1",
+              "label": "send again"
+            }
+          ],
+          "termIds": [
+            "handoff",
+            "checkpoint"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
           "id": "m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Worked example: two turns to answer one question",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for claude tool use and agent patterns help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "Goal: \"What is the weather in Paris, and should I take an umbrella?\" One tool is available: "
+                },
+                {
+                  "text": "get_weather(city)",
+                  "code": true
+                },
+                {
+                  "text": "."
                 }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Turn 1"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Request",
+                    "strong": true
+                  },
+                  {
+                    "text": ": prompt + the get_weather tool."
+                  }
+                ],
+                [
+                  {
+                    "text": "tool_use",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Claude asks for get_weather with {\"city\":\"Paris\"}."
+                  }
+                ],
+                [
+                  {
+                    "text": "tool_result",
+                    "strong": true
+                  },
+                  {
+                    "text": ": your code returns \"light rain, 12C\" appended to the conversation."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "Turn 2"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Request",
+                    "strong": true
+                  },
+                  {
+                    "text": ": you send the full conversation, now including the tool_result."
+                  }
+                ],
+                [
+                  {
+                    "text": "Answer",
+                    "strong": true
+                  },
+                  {
+                    "text": ": Claude has what it needs, so it replies in text \"It is raining lightly, so yes, bring an umbrella.\" stop_reason is \"end_turn\" and the loop ends."
+                  }
+                ]
               ]
             },
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "Notice the hand-off: turn 1's tool_result is exactly what turn 2 reads. Drop that message and Claude would ask for the weather again."
                 }
               ]
             }
@@ -560,7 +701,7 @@
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
+            "handoff",
             "checkpoint"
           ],
           "sources": [
@@ -570,70 +711,81 @@
         {
           "id": "m2_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Minimal tool-use loop with the Claude SDK",
           "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
+          "code": "import anthropic\nclient = anthropic.Anthropic()\ntools = [{\n    \"name\": \"get_weather\",\n    \"description\": \"Get current weather for a city.\",\n    \"input_schema\": {\"type\": \"object\",\n        \"properties\": {\"city\": {\"type\": \"string\"}},\n        \"required\": [\"city\"]},\n}]\nmessages = [{\"role\": \"user\", \"content\": \"Weather in Paris?\"}]\nresp = client.messages.create(model=\"claude-sonnet-4-5\",\n    max_tokens=1024, tools=tools, messages=messages)\nprint(resp.stop_reason)",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This is the first half of the loop: send the prompt with the tool, then inspect what Claude decided. The "
+                },
+                {
+                  "text": "sdk",
+                  "term": "sdk"
+                },
+                {
+                  "text": " returns a response whose stop_reason tells you whether Claude wants a tool or is done."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before running this, predict: what will resp.stop_reason print, and what will be inside resp.content?",
+            "answer": "stop_reason prints \"tool_use\". resp.content contains a tool_use block with name \"get_weather\" and input {\"city\": \"Paris\"} — Claude is asking your code to run the tool, not answering yet."
           },
           "syntax": [
             {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
+              "part": "tools=[...]",
+              "explains": "The tool definitions passed in the request — name, description, input_schema."
             },
             {
-              "part": "add_node",
-              "explains": "Adds a step."
+              "part": "input_schema",
+              "explains": "JSON Schema for the arguments; \"required\" lists fields Claude must fill."
             },
             {
-              "part": "compile()",
-              "explains": "Makes it runnable."
+              "part": "messages.create",
+              "explains": "Sends one request to Claude and returns the response."
+            },
+            {
+              "part": "stop_reason",
+              "explains": "\"tool_use\" means Claude wants a tool; \"end_turn\" means it answered."
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "sdk",
+            "handoff"
           ],
           "sources": [
-            "canon1",
+            "canon2",
             "kb1"
           ]
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core workflow\" in Claude Tool Use and Agent Patterns?",
+          "prompt": "What ends the tool-use loop?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Claude returns a normal text response (stop_reason \"end_turn\"), or you hit a turn limit.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The first tool_result is appended.",
+              "correct": false
+            },
+            {
+              "text": "The model runs out of tokens on the first turn.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The loop continues as long as Claude keeps emitting tool_use blocks. It stops when Claude answers in text, or when your own turn budget cuts it off.",
           "termIds": [
             "framework",
-            "graph"
+            "checkpoint"
           ],
           "sources": [
             "kb1"
@@ -650,20 +802,20 @@
     {
       "id": "m3",
       "order": 3,
-      "title": "Fit and alternatives",
-      "sub": "Compare when this tool is right or wrong.",
-      "summary": "Compare when this tool is right or wrong. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Choosing an agent pattern",
+      "sub": "Follows the loop: now decide how much machinery the task needs.",
+      "summary": "Once you can run the loop, the real decision is how elaborate to make it. This module weighs three patterns, a single tool call, a tool loop, and orchestrator-workers, and pushes you toward the smallest one that works.",
       "objectives": [
-        "Explain the role of fit and alternatives in Claude Tool Use and Agent Patterns.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish a single tool call from a multi-turn loop from an orchestrator-workers design.",
+        "Choose the smallest pattern that satisfies a given task.",
+        "Name the cost of jumping to multi-agent orchestration too early."
       ],
       "termIds": [
         "framework",
         "graph",
         "checkpoint",
         "handoff",
-        "sdk"
+        "orchestration"
       ],
       "estMinutes": 6,
       "loadState": "full",
@@ -671,35 +823,13 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Fit and alternatives: the core idea",
+          "title": "Three patterns, smallest first",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Claude Tool Use and Agent Patterns",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "framework",
-                  "term": "framework"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "\"Agent pattern\" is just how much structure wraps the tool-use loop. Three are worth knowing."
                 }
               ]
             },
@@ -708,79 +838,59 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Claude Tool Use and Agent Patterns."
+                    "text": "Single tool call",
+                    "strong": true
+                  },
+                  {
+                    "text": " — one request, one tool_use, one tool_result, one answer. Predictable and cheap."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Tool loop",
+                    "strong": true
+                  },
+                  {
+                    "text": " — the loop from module 2 running for several turns, deciding tools dynamically until done."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Orchestrator-workers",
+                    "strong": true
+                  },
+                  {
+                    "text": " — one lead Claude plans and delegates subtasks to worker agents via "
+                  },
+                  {
+                    "text": "orchestration",
+                    "term": "orchestration"
+                  },
+                  {
+                    "text": ", each running its own loop."
                   }
                 ]
               ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Claude Tool Use and Agent Patterns, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
             },
             {
-              "label": "Attach evidence",
-              "detail": [
+              "t": "callout",
+              "tone": "warn",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
+                  "text": "Before reading on, predict: ",
+                  "strong": true
+                },
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "which of these three is the right default for a brand-new task, and why?",
+                  "em": true
                 }
               ]
             }
           ],
+          "analogy": "It is like deciding between sending one text (single call), having a back-and-forth chat (loop), or scheduling a meeting with a project lead and a team (orchestrator-workers). Most errands are a single text.",
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1",
@@ -790,7 +900,7 @@
         {
           "id": "m3_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Which agent pattern fits?",
           "criteria": [
             "Fit",
             "Operational burden",
@@ -798,80 +908,80 @@
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Single tool call",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "text": "Task needs one lookup or one action, then an answer.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "text": "One round trip; trivial to trace and test.",
+                  "rating": "good"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "text": "Cannot adapt if the first result is insufficient.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Use when the task is one well-scoped step.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "Tool loop",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "text": "Task needs several dependent steps decided on the fly.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "text": "Needs a turn budget, dispatch table, and tracing.",
                   "rating": "ok"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "Lower when monitored.",
+                  "text": "Can loop or drift without guards.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use when steps depend on earlier results and the count is unknown up front.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Orchestrator-workers",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "text": "Best for parallel subtasks or distinct specialist roles.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
+                  "text": "Many loops, message passing, and shared state to debug.",
+                  "rating": "bad"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
+                  "text": "Compounding errors and cost; hard to reproduce.",
+                  "rating": "bad"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use only after a single loop is provably insufficient.",
               "cost": "High",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Pick the smallest pattern that satisfies the task. Move up a row only when a trace shows the simpler one cannot do the job.",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration",
+            "handoff"
           ],
           "sources": [
             "kb1",
@@ -879,61 +989,91 @@
           ]
         },
         {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
+          "id": "m3_example",
+          "kind": "functionalExample",
+          "title": "Same goal, three sizes",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Goal: \"Summarize today's three top tech headlines.\""
                 }
               ]
             },
             {
-              "t": "callout",
-              "tone": "good",
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Single call",
+                    "strong": true
+                  },
+                  {
+                    "text": ": if a single fetch_headlines tool returns all three, one tool_use + one tool_result is enough."
+                  }
+                ],
+                [
+                  {
+                    "text": "Tool loop",
+                    "strong": true
+                  },
+                  {
+                    "text": ": if each headline must be fetched then expanded, Claude loops, deciding the next fetch from the last result."
+                  }
+                ],
+                [
+                  {
+                    "text": "Orchestrator-workers",
+                    "strong": true
+                  },
+                  {
+                    "text": ": only justified if you wanted three workers researching three topics in parallel and a lead merging them, which is overkill here."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "The lesson: the same goal fits all three, and the cheapest one that works is almost always right."
                 }
               ]
             }
           ],
+          "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
+            "orchestration"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb1"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Fit and alternatives\" in Claude Tool Use and Agent Patterns?",
+          "prompt": "Why is jumping straight to orchestrator-workers usually the wrong call?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "It is a named concept you must memorize.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It multiplies loops, message passing, and cost while a single tool loop usually suffices, and the extra moving parts are far harder to debug.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "It is only available on the largest model.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Multi-agent orchestration adds compounding error, latency, and cost. Reach for it only after a single loop is demonstrably insufficient.",
           "termIds": [
             "framework",
-            "graph"
+            "orchestration"
           ],
           "sources": [
             "kb1"
@@ -946,18 +1086,18 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Claude Tool Use and Agent Patterns: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the smallest agent pattern for the task: single tool call, tool loop, or orchestrator-workers."
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Implementation sketch",
-      "sub": "See the smallest working pattern.",
-      "summary": "See the smallest working pattern. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Building the loop",
+      "sub": "Follows the pattern choice: now write and verify the loop.",
+      "summary": "With a pattern chosen, this module turns it into running code: a dispatch table, the tool_result hand-off, and a stop condition. It also shows how to verify an AI-generated loop before you trust it, and asks you to fill in the key line.",
       "objectives": [
-        "Explain the role of implementation sketch in Claude Tool Use and Agent Patterns.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Assemble a working tool loop from a dispatch table, tool_result, and a stop check.",
+        "Verify an AI-generated tool loop against a concrete checklist.",
+        "Identify the one line that, if wrong, silently breaks the loop."
       ],
       "termIds": [
         "framework",
@@ -966,26 +1106,23 @@
         "handoff",
         "sdk"
       ],
-      "estMinutes": 6,
+      "estMinutes": 7,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Implementation sketch: the core idea",
+          "id": "m4_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Claude Tool Use and Agent Patterns",
+                  "text": "Before reading on, recall from module 2: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "after Claude emits a tool_use and your code runs the function, what message must you append, and what happens to the loop if you forget it?"
                 }
               ]
             },
@@ -993,128 +1130,20 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Answer: you append a ",
+                  "em": true
                 },
                 {
-                  "text": "framework",
-                  "term": "framework"
+                  "text": "tool_result",
+                  "term": "checkpoint",
+                  "em": true
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Claude Tool Use and Agent Patterns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Claude Tool Use and Agent Patterns, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": " message carrying the output. Forget it and the next turn re-observes a request with no result, so Claude asks for the same tool again, the classic stuck-loop signature.",
+                  "em": true
                 }
               ]
             }
-          ],
-          "termIds": [
-            "framework",
-            "graph"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for claude tool use and agent patterns help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
           ],
           "sources": [
             "kb1"
@@ -1123,70 +1152,161 @@
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Completion problem: finish the loop",
           "language": "python",
-          "code": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\nclass State(TypedDict):\n    question: str\n    answer: str\ndef answer(state: State):\n    return {\"answer\":\"retrieve before drafting\"}\ngraph=StateGraph(State)\ngraph.add_node(\"answer\", answer)\ngraph.add_edge(START,\"answer\")\ngraph.add_edge(\"answer\",END)\napp=graph.compile()",
+          "code": "def run_agent(client, tools, dispatch, messages, max_turns=8):\n    for _ in range(max_turns):\n        resp = client.messages.create(model=\"claude-sonnet-4-5\",\n            max_tokens=1024, tools=tools, messages=messages)\n        if resp.stop_reason != \"tool_use\":\n            return resp  # final answer -> stop\n        messages.append({\"role\": \"assistant\", \"content\": resp.content})\n        results = []\n        for block in resp.content:\n            if block.type == \"tool_use\":\n                out = dispatch[block.name](**block.input)\n                results.append({\"type\": \"tool_result\",\n                    \"tool_use_id\": block.id, \"content\": str(out)})\n        # TODO: append the tool_result message so the next turn sees it\n        # messages.append( ??? )\n    raise RuntimeError(\"turn budget exhausted\")",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Everything is wired except the hand-off line. The "
+                },
+                {
+                  "text": "dispatch",
+                  "term": "handoff"
+                },
+                {
+                  "text": " table maps each tool name to a Python function. The "
+                },
+                {
+                  "text": "max_turns",
+                  "code": true
+                },
+                {
+                  "text": " guard is the "
+                },
+                {
+                  "text": "stop condition",
+                  "term": "checkpoint"
+                },
+                {
+                  "text": " that prevents a runaway loop."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Fill in the TODO: what message must you append so the next turn sees the tool output?",
+            "answer": "messages.append({\"role\": \"user\", \"content\": results}) — the collected tool_result blocks go back as a user-role message. That is the tool_result hand-off; without it the loop stalls and Claude re-requests the same tool."
           },
           "syntax": [
             {
-              "part": "StateGraph",
-              "explains": "Creates the workflow."
+              "part": "dispatch[block.name]",
+              "explains": "Looks up the real Python function for the tool Claude asked for."
             },
             {
-              "part": "add_node",
-              "explains": "Adds a step."
+              "part": "tool_use_id",
+              "explains": "Ties each tool_result back to the exact tool_use it answers."
             },
             {
-              "part": "compile()",
-              "explains": "Makes it runnable."
+              "part": "for _ in range(max_turns)",
+              "explains": "The hard turn budget; raising at the end prevents an infinite loop."
+            },
+            {
+              "part": "role: user",
+              "explains": "Tool results are sent back in a user-role message, not assistant."
             }
           ],
           "termIds": [
             "framework",
-            "graph",
+            "sdk",
+            "handoff",
             "checkpoint"
           ],
           "sources": [
-            "canon1",
+            "canon2",
             "kb1"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If you let an AI assistant generate a tool loop, verify these four things before trusting it, AI-written loops look right and fail subtly."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "tool_result hand-off",
+                    "strong": true
+                  },
+                  {
+                    "text": ": confirm each tool_use's output is appended as a user-role tool_result with the matching tool_use_id. A missing or mismatched id is the most common silent bug."
+                  }
+                ],
+                [
+                  {
+                    "text": "Stop condition",
+                    "strong": true
+                  },
+                  {
+                    "text": ": confirm the code can return on a non-tool_use response AND has a max-turns guard. Both, not one."
+                  }
+                ],
+                [
+                  {
+                    "text": "Schema match",
+                    "strong": true
+                  },
+                  {
+                    "text": ": confirm every tool name in the dispatch table matches a declared tool, and arguments are validated against input_schema before the function runs."
+                  }
+                ],
+                [
+                  {
+                    "text": "Error path",
+                    "strong": true
+                  },
+                  {
+                    "text": ": confirm a tool that raises returns an error tool_result, not an unhandled exception that kills the loop."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "framework",
+            "checkpoint",
+            "handoff"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
           ]
         },
         {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Implementation sketch\" in Claude Tool Use and Agent Patterns?",
+          "prompt": "Which single omission most often makes a tool loop silently stall?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Choosing the wrong model.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Failing to append the tool_result (or using a mismatched tool_use_id), so the next turn never sees the output.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Setting max_tokens too high.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The tool_result hand-off is the join between turns. Skip it or mismatch the tool_use_id and Claude re-observes a request with no answer, so it re-requests the same tool, the textbook stuck loop.",
           "termIds": [
-            "framework",
-            "graph"
+            "checkpoint",
+            "handoff"
           ],
           "sources": [
             "kb1"
@@ -1203,13 +1323,13 @@
     {
       "id": "m5",
       "order": 5,
-      "title": "Production checklist",
-      "sub": "Harden versioning, evals, and operations.",
-      "summary": "Harden versioning, evals, and operations. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "How it breaks in production",
+      "sub": "Closes the spine: the failure modes the demo never shows.",
+      "summary": "A loop that works on a happy-path demo is exactly the loop that loops forever or burns budget in production. This module names the real failure modes, gives the guard for each, and forces a decision on how much hardening a given deployment needs.",
       "objectives": [
-        "Explain the role of production checklist in Claude Tool Use and Agent Patterns.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name the four most common ways a Claude tool loop fails in production.",
+        "Match each failure to the guard that catches it.",
+        "Decide the right hardening level for a given deployment."
       ],
       "termIds": [
         "framework",
@@ -1218,26 +1338,28 @@
         "handoff",
         "sdk"
       ],
-      "estMinutes": 6,
+      "estMinutes": 7,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
+          "id": "m5_failure",
           "kind": "conceptual",
-          "title": "Production checklist: the core idea",
+          "title": "How tool-using agents break in practice",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This frameworks lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
+                  "text": "Knowing the happy path is not enough. These are the failures that show up only at scale, and the guard for each."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
                 {
-                  "text": "Claude Tool Use and Agent Patterns",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "1. Runaway loop"
                 }
               ]
             },
@@ -1245,94 +1367,101 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Claude never decides the goal is met and keeps calling tools. Guard: a hard "
                 },
                 {
-                  "text": "framework",
-                  "term": "framework"
+                  "text": "turn budget",
+                  "term": "checkpoint"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " plus a clear stop instruction in the system prompt."
                 }
               ]
             },
             {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Claude Tool Use and Agent Patterns."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "2. Stale or dropped tool_result"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A tool_result is missing or carries a mismatched "
+                },
+                {
+                  "text": "tool_use_id",
+                  "code": true
+                },
+                {
+                  "text": ", so the next turn re-observes old state and repeats the call. Guard: assert every tool_use has a matching "
+                },
+                {
+                  "text": "tool_result",
+                  "term": "handoff"
+                },
+                {
+                  "text": " before sending."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "3. Bad or unsafe tool input"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Claude fills an argument that is wrong, malformed, or dangerous (a destructive query, an out-of-range value). Guard: validate every argument against the "
+                },
+                {
+                  "text": "input_schema",
+                  "code": true
+                },
+                {
+                  "text": " and re-check at the "
+                },
+                {
+                  "text": "boundary",
+                  "term": "graph"
+                },
+                {
+                  "text": " before executing. Never trust model output as a safe instruction."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "4. Context overflow (non-obvious)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Every turn appends to the conversation. After many tool calls, early messages, including the original goal, get pushed out and Claude drifts. Guard: summarize or prune old tool_results and re-anchor the goal each turn."
+                }
               ]
             }
           ],
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Claude Tool Use and Agent Patterns, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
+            "checkpoint",
+            "handoff",
             "graph"
           ],
           "sources": [
@@ -1341,9 +1470,35 @@
           ]
         },
         {
+          "id": "m5_diagnostic",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "First diagnostic signal: ",
+                  "strong": true
+                },
+                {
+                  "text": "an agent that calls the same tool with the same arguments more than once almost always has a dropped or mismatched tool_result. Check the hand-off before you blame the model's reasoning."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "handoff",
+            "checkpoint"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
           "id": "m5_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "How much hardening does this deployment need?",
           "criteria": [
             "Fit",
             "Operational burden",
@@ -1351,113 +1506,80 @@
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Prototype guards",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "text": "Internal demo or notebook where you watch every run.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "text": "Just a turn budget and basic logging.",
+                  "rating": "good"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "text": "Fine while a human is in the loop.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Use while exploring, with a human watching each run.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "Production guards",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "text": "User-facing agent calling read-only or low-risk tools.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "text": "Turn budget, schema validation, error tool_results, tracing.",
                   "rating": "ok"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
+                  "text": "Lower; failures are caught and logged.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use when real users depend on the result.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "High-stakes guards",
               "cells": [
                 {
                   "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "text": "Tools that write data, spend money, or touch production systems.",
                   "rating": "good"
                 },
                 {
                   "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
+                  "text": "Adds approval gates, sandboxing, and replayable traces.",
+                  "rating": "bad"
                 },
                 {
                   "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "text": "Highest blast radius if a guard is missing.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use whenever a tool can take an irreversible action.",
               "cost": "High",
               "complexity": "High"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Match the hardening to the blast radius of the tools, not the cleverness of the agent. A write-capable tool always needs the high-stakes column.",
           "termIds": [
             "framework",
-            "graph",
-            "checkpoint"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "framework",
-            "graph",
-            "checkpoint"
+            "checkpoint",
+            "graph"
           ],
           "sources": [
             "kb1",
@@ -1467,26 +1589,26 @@
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Production checklist\" in Claude Tool Use and Agent Patterns?",
+          "prompt": "Which guard directly prevents a runaway loop?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Validating arguments against input_schema.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "A hard turn budget (max-turns) that cuts the loop off.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Summarizing old tool_results.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "A turn budget sets a hard ceiling on iterations, so an agent that never decides it is done still stops. Schema validation and context pruning fix different failures.",
           "termIds": [
             "framework",
-            "graph"
+            "checkpoint"
           ],
           "sources": [
             "kb1"
@@ -1499,15 +1621,15 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Claude Tool Use and Agent Patterns: baseline, production design, or advanced optimization."
+      "decisionItForces": "Decide the hardening level for the deployment: prototype, production, or high-stakes guards."
     }
   ],
   "glossary": {
     "framework": {
       "id": "framework",
-      "label": "Framework",
-      "laymanDefinition": "Framework is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Framework is treated as a boundary that needs evidence, tests, and ownership.",
+      "label": "Tool use",
+      "laymanDefinition": "The capability that lets Claude ask your code to run a function and use the result.",
+      "technicalNote": "In a request you pass a tools array; Claude may respond with a tool_use block instead of text. Your code runs the named function and returns a tool_result.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1515,9 +1637,9 @@
     },
     "graph": {
       "id": "graph",
-      "label": "Graph",
-      "laymanDefinition": "Graph is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Graph is treated as a boundary that needs evidence, tests, and ownership.",
+      "label": "Boundary",
+      "laymanDefinition": "The line between what Claude decides and what your application actually executes.",
+      "technicalNote": "Claude only proposes tool calls; your code owns execution, validation, and side effects. Treat every model argument as untrusted at this boundary.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1525,9 +1647,9 @@
     },
     "checkpoint": {
       "id": "checkpoint",
-      "label": "Checkpoint",
-      "laymanDefinition": "Checkpoint is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Checkpoint is treated as a boundary that needs evidence, tests, and ownership.",
+      "label": "Stop condition",
+      "laymanDefinition": "The rule that ends the loop: a final answer, or a turn budget you set.",
+      "technicalNote": "The loop ends on stop_reason \"end_turn\" or when a max-turns counter is hit. A tool_result is the per-turn checkpoint that carries state forward.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1535,9 +1657,9 @@
     },
     "handoff": {
       "id": "handoff",
-      "label": "Handoff",
-      "laymanDefinition": "Handoff is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Handoff is treated as a boundary that needs evidence, tests, and ownership.",
+      "label": "tool_use / tool_result hand-off",
+      "laymanDefinition": "The exchange where Claude asks for a tool and your code returns the result.",
+      "technicalNote": "Claude emits a tool_use block (name, input, id); your code appends a matching tool_result block (same tool_use_id) in a user-role message before the next turn.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1668,8 @@
     "sdk": {
       "id": "sdk",
       "label": "SDK",
-      "laymanDefinition": "A package of APIs and helpers.",
-      "technicalNote": "In this lesson, SDK is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The Anthropic client library you call to send requests and read responses.",
+      "technicalNote": "The Anthropic SDK exposes messages.create with a tools parameter and returns content blocks plus a stop_reason.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1557,8 +1679,8 @@
     "orchestration": {
       "id": "orchestration",
       "label": "Orchestration",
-      "laymanDefinition": "Orchestration is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Orchestration is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Coordinating multiple agents, a lead and workers, instead of one loop.",
+      "technicalNote": "An orchestrator Claude plans and delegates subtasks to worker agents, each running its own tool-use loop, then merges their results.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1569,17 +1691,27 @@
     "title": "Decision prompts",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Pattern and hardening check",
         "questions": [
           {
-            "q": "What decision does Claude Tool Use and Agent Patterns change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What is the smallest agent pattern that satisfies this task?",
+            "why": "Over-engineering the pattern is the most common and most expensive tool-use mistake.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Single tool call",
+              "Tool loop",
+              "Orchestrator-workers"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Start at single call; move up only when a trace proves it insufficient."
+          },
+          {
+            "q": "How much can the tools in this deployment break?",
+            "why": "Hardening should match the blast radius of the tools, not the cleverness of the agent.",
+            "opts": [
+              "Read-only",
+              "Low-risk writes",
+              "Irreversible actions"
+            ],
+            "rot": "A write-capable tool always needs approval gates and replayable traces."
           }
         ]
       }
@@ -1591,10 +1723,19 @@
         "t": "p",
         "spans": [
           {
-            "text": "Claude Tool Use and Agent Patterns is now tied to a mental map, a workflow, and a decision checklist. "
+            "text": "Reconstruct the path from memory before reading on: ",
+            "strong": true
           },
           {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "what does a tool definition contain, what are the four moves of one tool-use round trip, which pattern is the right default, and which single missing line stalls the loop?"
+          }
+        ]
+      },
+      {
+        "t": "p",
+        "spans": [
+          {
+            "text": "The answers: a tool is name + description + input_schema; the round trip is request, tool_use, run + tool_result, repeat; the default is a single tool call (escalate only when proven necessary); and the missing tool_result hand-off is what stalls the loop. The habit underneath all of it: keep every tool call observable, validated, and bounded by a stop condition."
           }
         ]
       }
@@ -1605,40 +1746,48 @@
       "nodes": [
         {
           "id": "n_m1",
-          "label": "What the tool owns",
-          "sub": "Place Claude Tool Use and Agent Patterns in the system map.",
-          "what": "What the tool owns turns Claude Tool Use and Agent Patterns into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+          "label": "What tool use is",
+          "order": 1,
+          "orient": "Declare a tool; Claude requests it instead of answering directly.",
+          "sub": "Tool definition: name, description, input_schema.",
+          "what": "Tool use lets Claude call functions you control instead of only emitting text.",
+          "relevance": "The agent story starts with declaring a tool and reading a tool_use request.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine"
         },
         {
           "id": "n_m2",
-          "label": "Core workflow",
-          "sub": "Trace the inputs, outputs, and lifecycle.",
-          "what": "Core workflow turns Claude Tool Use and Agent Patterns into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+          "label": "The tool-use loop",
+          "order": 2,
+          "orient": "Run the tool, return a tool_result, repeat until a text answer.",
+          "sub": "Request, tool_use, tool_result, repeat.",
+          "what": "The loop is the four-message exchange that runs a tool and feeds the result back.",
+          "relevance": "Every Claude agent is this loop running until a stop condition fires.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal"
         },
         {
           "id": "n_m3",
-          "label": "Fit and alternatives",
-          "sub": "Compare when this tool is right or wrong.",
-          "what": "Fit and alternatives turns Claude Tool Use and Agent Patterns into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+          "label": "Choosing a pattern",
+          "order": 3,
+          "orient": "Pick the smallest pattern: one call, a loop, or orchestration.",
+          "sub": "Single call vs tool loop vs orchestrator-workers.",
+          "what": "Agent patterns range from a single tool call to multi-agent orchestration.",
+          "relevance": "Over-engineering the pattern is the most common and costly mistake.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine"
         },
         {
           "id": "n_m4",
-          "label": "Implementation sketch",
-          "sub": "See the smallest working pattern.",
-          "what": "Implementation sketch turns Claude Tool Use and Agent Patterns into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Claude Tool Use and Agent Patterns, not just recognize the words.",
+          "label": "Building the loop",
+          "order": 4,
+          "orient": "Wire dispatch, tool_result, and a turn budget; verify each piece.",
+          "sub": "Minimal runnable loop plus a verify checklist.",
+          "what": "A concrete tool-use loop in code: tool schema, dispatch, tool_result, stop.",
+          "relevance": "The gap between the concept and a correct implementation hides bugs.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal"
@@ -1665,79 +1814,84 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Declare the tool",
+        "detail": "Write the name, a sharp description, and the input_schema (module 1)."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Run one round trip",
+        "detail": "Send the request, read the tool_use, run it, append the tool_result (module 2)."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Choose the pattern",
+        "detail": "Pick the smallest pattern that fits: single call, loop, or orchestration (module 3)."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Build and verify the loop",
+        "detail": "Add the dispatch table, stop condition, and run the verify checklist (module 4)."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Harden for production",
+        "detail": "Add a turn budget, schema validation, error tool_results, and guards sized to blast radius (module 5)."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_tool",
+        "label": "Does each tool have a name, a sharp description, and a validated input_schema?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_handoff",
+        "label": "Is every tool_use answered by a matching tool_result before the next turn?",
+        "fromModuleId": "m2"
+      },
+      {
+        "id": "chk_pattern",
+        "label": "Did you choose the smallest pattern that the task actually needs?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_guards",
+        "label": "Are there a turn budget and guards sized to what the tools can break?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Claude Tool Use and Agent Patterns: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Frameworks"
+      "prompt": "Build a working single-tool Claude agent end to end: declare one tool (name, description, input_schema), run the request/tool_use/tool_result/answer loop with a turn budget, and validate the argument before executing. Then extend it: add a second tool so the loop must run two turns, and write down which failure mode from module 5 your guards now cover. Next rung: turn this into a multi-tool loop and study Anthropic's agent-building guidance on when orchestrator-workers is justified.",
+      "scopedTo": "Claude tool use"
     }
   },
   "citations": {
     "kb1": {
       "id": "kb1",
       "kind": "kb",
-      "title": "KB: AI Model Ecosystem and Tool Selection",
-      "url": "https://platform.openai.com/docs",
+      "title": "KB: Claude Tool Use and Agent Patterns",
+      "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use",
       "asOfDate": "2026-06-19"
     },
     "kb2": {
       "id": "kb2",
       "kind": "kb",
-      "title": "KB support: AI Model Ecosystem and Tool Selection",
-      "url": "https://platform.openai.com/docs",
+      "title": "KB support: Building effective agents with Claude",
+      "url": "https://www.anthropic.com/engineering/building-effective-agents",
       "asOfDate": "2026-06-19"
     },
     "canon1": {
       "id": "canon1",
       "kind": "canonical",
-      "title": "LangGraph documentation",
-      "url": "https://langchain-ai.github.io/langgraph/",
+      "title": "Anthropic: Building effective agents",
+      "url": "https://www.anthropic.com/engineering/building-effective-agents",
       "asOfDate": "2026-06-20"
     },
     "canon2": {
       "id": "canon2",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://langchain-ai.github.io/langgraph/",
+      "title": "Anthropic tool use documentation",
+      "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use",
       "asOfDate": "2026-06-20"
     }
   }

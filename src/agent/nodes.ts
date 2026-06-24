@@ -28,7 +28,7 @@ import {
 import type { Blueprint, Block } from "../render/schema";
 import { renderArtifact } from "../render/index";
 import { registerArtifact } from "../lib/artifacts";
-import { PROFILER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, architectUserPrompt, moduleUserPrompt } from "./prompts";
+import { PROFILER_SYSTEM, PLANNER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, OVERVIEW_PROSE_SYSTEM, plannerUserPrompt, architectUserPrompt, moduleUserPrompt, overviewProseUserPrompt } from "./prompts";
 import { measureModule, repairDensity } from "./density";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled } from "../lib/db";
@@ -36,25 +36,19 @@ import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads
 import type { Intent, RetrievedSource } from "./state";
 
 const profilerLLM = makeLLM("sonnet", 0);
-// PROGRESSIVE GENERATION (the latency fix):
-//   architect → SKELETON ONLY (mental map w/ what+relevance + module STUBS + a
-//   12–18 term glossary + synthesis). No block bodies, so far smaller than the old
-//   monolithic call — but the glossary + synthesis + per-node what/relevance still
-//   need real headroom; 8000 truncated. 16000 is the SDK's non-streaming-safe ceiling.
-// Non-streaming 16k: the skeleton is kept SMALL (map structure + module stubs +
-// glossary; the heavy detail-layer node fields what/relevance/layman are written
-// later per-module via nodeMeta), so it fits without truncation. Streaming
-// aggregation produced malformed JSON for large procedural skeletons, so we avoid it.
-// COST-CONTROLLED HYBRID: the architect SKELETON + structure classification is the one
-// reasoning-heavy step (it sets the whole lesson's spine and shape), so it runs on Opus
-// 4.8 for sharper pedagogy/sequencing. The ~5 module builds stay on Sonnet (moduleLLM
-// below) where the token bulk is, so the cost lift is ~10–15%, not ~2×. (No proofreader
-// pass — it would add a critic call per module and raise latency.)
-// NON-STREAMING 16k (deliberate): streaming withStructuredOutput double-encodes the
-// aggregated tool-call JSON for large skeletons on Opus (a langchain-anthropic bug), and
-// non-streaming can't exceed the SDK's ~16k ceiling — so the lever is keeping the OUTLINE
-// SMALL (SKELETON_SYSTEM forbids block bodies and caps the glossary), which fits 16k.
-const skeletonLLM = makeLLM("opus", 0.2, { maxTokens: 16000 });
+// OVERVIEW = a TWO-STAGE split (planner / writer) so each model does the job it's best at:
+//   planner (OPUS) → the STRUCTURE only: spine, module plan, mental-map shape, glossary term
+//     list, structureType. The reasoning-heavy step — kept LEAN (NO prose), so Opus is fast +
+//     cheap. ~9k cap is plenty for a structure-only object.
+//   architect / writer (SONNET) → WRITES the skeleton's prose (each node's orient, module
+//     summaries + objectives, glossary definitions, synthesis), following the planner's
+//     structure EXACTLY. Sonnet is cheaper/faster for prose; raw-parsed via coerceSkeleton.
+//     16k streaming so a prose-rich skeleton doesn't truncate (Sonnet streams fine; the
+//     Opus-only streaming double-encode bug doesn't apply to Sonnet).
+// If the planner fails (e.g. a hard overload), state.plan is null and the architect plans +
+// writes in one Sonnet call (graceful fallback — see plannerUserPrompt / architectUserPrompt).
+const plannerLLM = makeLLM("opus", 0.2, { maxTokens: 9000 });
+const skeletonLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
@@ -337,7 +331,27 @@ function coerceSkeleton(input: unknown, profile: LearnerProfile): Blueprint {
     return v && typeof v === "object" ? (v as Record<string, any>) : {}; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
   o.glossary = toRecord(o.glossary);
+  // DEFERRED DEFINITIONS: the overview architect now emits glossary terms with an EMPTY
+  // laymanDefinition (the real definitions are written during the build, in parallel). Ensure the
+  // required field exists so the draft validates; writeOverviewProse fills the empties later.
+  for (const k of Object.keys(o.glossary)) {
+    const g = o.glossary[k];
+    if (!g || typeof g !== "object") { delete o.glossary[k]; continue; }
+    if (!g.id) g.id = k;
+    if (!g.label) g.label = k;
+    if (typeof g.laymanDefinition !== "string") g.laymanDefinition = "";
+  }
+  // citations: the writer (esp. Sonnet) sometimes emits bare entries missing the schema-required
+  // id/kind/title — the app REFILLS these from retrieved sources right after, so don't fail the
+  // whole parse over them; fill safe defaults (or drop a hopeless entry).
   o.citations = toRecord(o.citations);
+  for (const k of Object.keys(o.citations)) {
+    const c = o.citations[k];
+    if (!c || typeof c !== "object") { delete o.citations[k]; continue; }
+    if (!c.id) c.id = k;
+    if (!["kb", "liveSearch", "canonical", "upload"].includes(c.kind)) c.kind = "canonical";
+    if (!c.title || typeof c.title !== "string") c.title = c.label || c.url || k;
+  }
   o.synthesis = o.synthesis && typeof o.synthesis === "object" ? o.synthesis : {};
   // recap: string → rich text nodes; array stays.
   if (typeof o.synthesis.recap === "string") o.synthesis.recap = o.synthesis.recap.trim() ? [{ t: "p", spans: [{ text: o.synthesis.recap }] }] : undefined;
@@ -353,7 +367,55 @@ function coerceSkeleton(input: unknown, profile: LearnerProfile): Blueprint {
 }
 
 // ============================================================================
-// NODE 2 — architect (produce + validate the SKELETON: stubs only, no block bodies)
+// NODE 1.7 — planner (OPUS: design the STRUCTURE only; the architect/writer adds the prose)
+// ============================================================================
+export async function planner(state: GraphStateType, config: RunnableConfig) {
+  const p = state.profile!;
+  const intent = state.intent;
+  const sources = state.retrieved ?? [];
+  let plan: unknown = null;
+  try {
+    const raw = await withOverloadRetry(() =>
+      plannerLLM.invoke(
+        [
+          new SystemMessage(PLANNER_SYSTEM),
+          new HumanMessage(
+            plannerUserPrompt({
+              topic: p.topic,
+              level: p.level,
+              depth: p.depth,
+              examples: p.examples,
+              industry: p.industry,
+              buildGoal: p.buildGoal,
+              objective: p.objective,
+              levels: p.levels,
+              lessonTypes: p.lessonTypes,
+              userPrompt: state.userPrompt,
+              learningGoal: intent?.learningGoal,
+              lessonFocus: intent?.lessonFocus,
+              mustCover: intent?.mustCover,
+              sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
+            })
+          ),
+        ],
+        config
+      )
+    );
+    const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
+    plan = extractJsonObject(text);
+  } catch (err) {
+    // Graceful: if the planner fails, the architect (Sonnet) plans + writes in one call.
+    console.warn("[planner] failed — architect will plan + write in one:", (err as Error).message?.slice(0, 160));
+    plan = null;
+  }
+  return {
+    plan,
+    messages: [{ role: "assistant" as const, node: "Planner", content: "Mapped out the lesson structure…" }],
+  };
+}
+
+// ============================================================================
+// NODE 2 — architect (WRITES the SKELETON's prose, following the planner's structure)
 // ============================================================================
 export async function architect(state: GraphStateType, config: RunnableConfig) {
   const p = state.profile!;
@@ -396,6 +458,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             lessonFocus: intent?.lessonFocus,
             mustCover: intent?.mustCover,
             sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, asOfDate: s.asOfDate, origin: s.origin })),
+            plan: state.plan,
             repairErrors,
           })
         ),
@@ -627,6 +690,77 @@ export async function runDeepDive(
     }
   } catch { /* never block on density */ }
   return { ok: true, sources };
+}
+
+// ============================================================================
+// writeOverviewProse — fills the glossary DEFINITIONS + SYNTHESIS that the overview
+// architect now DEFERS (they're never shown in the free preview). Runs during the BUILD,
+// in parallel with the module bodies. Idempotent: only fills EMPTY definitions / a missing
+// synthesis, so re-runs and old (full) drafts are left untouched. Mutates `bp` in place.
+// ============================================================================
+const OverviewProseSchema = z.object({
+  glossary: z.array(z.object({ id: z.string(), definition: z.string(), acronymExpansion: z.string().optional() })).default([]),
+  recap: z.string().default(""),
+  buildOrder: z.array(z.object({ step: z.number(), label: z.string() })).default([]),
+  checklist: z.array(z.object({ label: z.string() })).default([]),
+  capstonePrompt: z.string().default(""),
+  capstoneNext: z.string().optional(),
+});
+
+export async function writeOverviewProse(bp: Blueprint, opts: { config?: RunnableConfig } = {}): Promise<void> {
+  const p = bp.learnerProfile;
+  const config = opts.config;
+  // Terms whose definition is still empty (the deferred ones).
+  const needDefs = Object.entries(bp.glossary).filter(([, t]) => !((t.laymanDefinition as string) || "").trim());
+  const syn = bp.synthesis as { recap?: unknown; buildOrder?: unknown[] } | undefined;
+  const needSynthesis = !(syn?.buildOrder && syn.buildOrder.length) && !syn?.recap;
+  if (!needDefs.length && !needSynthesis) return; // already filled (old draft / re-run)
+
+  const out = await withOverloadRetry(() =>
+    moduleLLM.withStructuredOutput(OverviewProseSchema, { name: "overview_prose" }).invoke(
+      [
+        new SystemMessage(OVERVIEW_PROSE_SYSTEM),
+        new HumanMessage(
+          overviewProseUserPrompt({
+            topic: bp.meta.topic,
+            level: p.level,
+            density: p.density,
+            buildGoal: p.buildGoal,
+            objective: p.objective,
+            terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
+            modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces })),
+            needSynthesis,
+          })
+        ),
+      ],
+      config ?? {}
+    )
+  ).catch((err: unknown) => {
+    console.warn("[overview-prose] failed:", (err instanceof Error ? err.message : String(err)).slice(0, 160));
+    return null;
+  });
+  if (!out) return;
+
+  // Merge glossary definitions (only fill empties).
+  for (const g of out.glossary ?? []) {
+    const entry = bp.glossary[g.id];
+    if (!entry) continue;
+    if (!((entry.laymanDefinition as string) || "").trim() && g.definition?.trim()) entry.laymanDefinition = g.definition.trim();
+    if (g.acronymExpansion && !entry.acronymExpansion) entry.acronymExpansion = g.acronymExpansion;
+  }
+  // Merge synthesis (only when it was empty).
+  if (needSynthesis) {
+    const s = (bp.synthesis = bp.synthesis ?? ({} as Blueprint["synthesis"]));
+    const recap = (out.recap ?? "").trim();
+    const buildOrder = out.buildOrder ?? [];
+    const checklist = out.checklist ?? [];
+    const capstonePrompt = (out.capstonePrompt ?? "").trim();
+    if (recap) s.recap = [{ t: "p", spans: [{ text: recap }] }];
+    if (buildOrder.length) s.buildOrder = buildOrder;
+    if (checklist.length) s.checklist = checklist.map((c, i) => ({ id: `c${i + 1}`, label: c.label }));
+    if (capstonePrompt) s.capstone = { prompt: capstonePrompt + (out.capstoneNext?.trim() ? ` Next: ${out.capstoneNext.trim()}` : "") };
+  }
+  repairBlueprint(bp); // re-resolve any term/citation refs the new prose touched
 }
 
 // ============================================================================

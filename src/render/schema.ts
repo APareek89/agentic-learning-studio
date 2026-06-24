@@ -168,6 +168,10 @@ export const MentalMapSchema = z.object({
   entryNodeId: z.string().optional(),
   nodes: z.array(MapNodeSchema).min(1),
   edges: z.array(MapEdgeSchema),
+  /** Overview "This lesson will cover" — up to 4 short learner-facing bullets (key concepts,
+   *  the how-to, a worked example, when to use). Shown below the map; renderer falls back to
+   *  module titles when absent. */
+  willCover: z.array(z.string()).optional(),
 });
 
 // ----------------------------------------------------------------------------

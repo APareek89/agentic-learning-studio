@@ -5,7 +5,7 @@
     "title": "AI Evaluation Foundations",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 30,
-    "thesis": "AI Evaluation Foundations becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Evaluation turns 'the AI seems to work' into a fixed dataset, a repeatable run, an explicit scorer, and a tracked score you can compare across versions."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -25,13 +25,17 @@
   },
   "mentalMap": {
     "title": "AI Evaluation Foundations: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use AI Evaluation Foundations by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Follow the path in order: each step assumes the one before it.",
+    "oneLineThesis": "Evaluation is the loop that turns a vague hope your AI 'works' into measured, repeatable evidence.",
+    "structureType": "procedural",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of AI Evaluation Foundations.",
+        "label": "Why evaluate at all",
+        "order": 1,
+        "orient": "Start here: the problem evals solve and the core mental model.",
+        "sub": "Build the simplest useful picture of why AI needs evaluation.",
         "what": "Mental model turns AI Evaluation Foundations into a usable mental model.",
         "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
         "moduleId": "m1",
@@ -40,8 +44,10 @@
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
+        "label": "How an eval runs",
+        "order": 2,
+        "orient": "The moving parts: dataset, the run, a judge, and a score.",
+        "sub": "See the moving parts of an eval and how they interact.",
         "what": "Mechanism turns AI Evaluation Foundations into a usable mental model.",
         "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
         "moduleId": "m2",
@@ -50,8 +56,10 @@
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
+        "label": "Choosing how to score",
+        "order": 3,
+        "orient": "Pick a scoring method: exact-match, rubric, or LLM-as-judge tradeoffs.",
+        "sub": "Make the scoring choice that changes quality, cost, or risk.",
         "what": "Design choices turns AI Evaluation Foundations into a usable mental model.",
         "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
         "moduleId": "m3",
@@ -60,8 +68,10 @@
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
+        "label": "Build a tiny eval",
+        "order": 4,
+        "orient": "Wire dataset, run, and scorer into a minimal runnable eval.",
+        "sub": "Connect the concept to a small practical eval harness.",
         "what": "Tiny implementation sketch turns AI Evaluation Foundations into a usable mental model.",
         "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
         "moduleId": "m4",
@@ -70,7 +80,9 @@
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
+        "label": "Trust, check, and ship",
+        "order": 5,
+        "orient": "Late step: how evals mislead, and a checklist to make them stick.",
         "sub": "Use active recall and a decision checklist to make it stick.",
         "what": "Check and apply turns AI Evaluation Foundations into a usable mental model.",
         "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
@@ -106,11 +118,11 @@
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of AI Evaluation Foundations.",
-      "summary": "Build the simplest useful picture of AI Evaluation Foundations. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Why evaluate at all",
+      "sub": "Starts the spine: the problem evaluation solves before any mechanism.",
+      "summary": "Without evaluation, 'the AI works' is a feeling, not a fact. This module frames the problem evals solve and the simplest useful mental model, before we open up how an eval actually runs.",
       "objectives": [
-        "Explain the role of mental model in AI Evaluation Foundations.",
+        "Explain why subjective 'it looks good' testing fails for AI systems.",
         "Identify the main tradeoff instead of treating the topic as trivia.",
         "Choose one validation check that would catch a realistic failure."
       ],
@@ -125,22 +137,66 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
-          "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "id": "m1_why",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "AI Evaluation Foundations",
+                  "text": "Why this exists: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "you change a prompt, eyeball five outputs, and ship. Two weeks later users report the model now botches a case you never re-checked. "
+                },
+                {
+                  "text": "Evaluation",
+                  "term": "eval"
+                },
+                {
+                  "text": " exists to replace that gut-feel spot-check with a repeatable, measured answer to 'did this change make things better or worse?'"
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: ",
+                  "strong": true
+                },
+                {
+                  "em": true,
+                  "text": "if you only ever judge an AI by glancing at a few outputs, what kind of failure are you almost guaranteed to miss?"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m1_concept",
+          "kind": "conceptual",
+          "title": "The core idea: a standard you can re-run",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "An "
+                },
+                {
+                  "text": "eval",
+                  "term": "eval",
+                  "strong": true
+                },
+                {
+                  "text": " is just a repeatable test of an AI system's quality. Instead of judging outputs by feel, you fix a set of cases, run the system on them, and score the results the same way every time."
                 }
               ]
             },
@@ -148,14 +204,14 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "The mental model to carry: an eval is a "
                 },
                 {
-                  "text": "eval",
-                  "term": "eval"
+                  "em": true,
+                  "text": "frozen standard"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ". Because the cases don't change, the only thing that moves the score is the system itself. That's what makes 'better or worse than last week?' an answerable question."
                 }
               ]
             },
@@ -164,17 +220,24 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of AI Evaluation Foundations."
+                    "text": "Eyeballing a few outputs samples whatever you happened to look at; an eval samples the same fixed cases every run."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "An eval catches a "
+                  },
+                  {
+                    "text": "regression",
+                    "term": "regression"
+                  },
+                  {
+                    "text": " — a change that quietly breaks a case that used to work — which spot-checking almost never does."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Keep one tracked score attached to the system so every change has a number, not an opinion."
                   }
                 ]
               ]
@@ -182,8 +245,8 @@
           ],
           "termIds": [
             "eval",
-            "trace",
-            "dataset"
+            "dataset",
+            "regression"
           ],
           "sources": [
             "kb1"
@@ -398,11 +461,11 @@
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "How an eval runs",
+      "sub": "Follows module 1: now that you know why, see the moving parts.",
+      "summary": "An eval has four parts working together: a dataset of cases, a run that produces outputs, a scorer that grades them, and an aggregate score you track over time. This module opens up that mechanism before we choose how to score.",
       "objectives": [
-        "Explain the role of mechanism in AI Evaluation Foundations.",
+        "Name the four moving parts of an eval: dataset, run, scorer, and score.",
         "Identify the main tradeoff instead of treating the topic as trivia.",
         "Choose one validation check that would catch a realistic failure."
       ],
@@ -419,35 +482,20 @@
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Mechanism: the four parts of an eval",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "AI Evaluation Foundations",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
+                  "text": "Every "
                 },
                 {
                   "text": "eval",
                   "term": "eval"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ", from a one-line script to a hosted platform, is the same four parts wired in a line."
                 }
               ]
             },
@@ -456,26 +504,77 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of AI Evaluation Foundations."
+                    "text": "Dataset",
+                    "strong": true
+                  },
+                  {
+                    "text": " — a fixed set of "
+                  },
+                  {
+                    "text": "test cases",
+                    "term": "dataset"
+                  },
+                  {
+                    "text": ", each an input and (often) an expected answer. This is what holds your standard steady across runs."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Run",
+                    "strong": true
+                  },
+                  {
+                    "text": " — feed each input to the AI system and collect its actual output."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Scorer",
+                    "strong": true
+                  },
+                  {
+                    "text": " — compare each output to the expected answer (or grade it against a "
+                  },
+                  {
+                    "text": "rubric",
+                    "term": "rubric"
+                  },
+                  {
+                    "text": ") and emit pass/fail or a number."
+                  }
+                ],
+                [
+                  {
+                    "text": "Score",
+                    "strong": true
+                  },
+                  {
+                    "text": " — aggregate the per-case results into one tracked metric (e.g. 86% pass) you compare across versions to catch a "
+                  },
+                  {
+                    "text": "regression",
+                    "term": "regression"
+                  },
+                  {
+                    "text": "."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The whole point of fixing the dataset is repeatability: run the same cases before and after a change and the score moves only because the system changed, not because you happened to look at different examples."
+                }
               ]
             }
           ],
           "termIds": [
             "eval",
-            "trace",
-            "dataset"
+            "dataset",
+            "rubric",
+            "regression"
           ],
           "sources": [
             "kb1"
@@ -639,11 +738,11 @@
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Choosing how to score",
+      "sub": "Follows the mechanism: the scorer is the part with real tradeoffs.",
+      "summary": "The scorer is where evals get hard. Exact-match is cheap but brittle; a rubric is flexible but manual; an LLM-as-judge scales but can be wrong in confident ways. This module makes that choice explicit.",
       "objectives": [
-        "Explain the role of design choices in AI Evaluation Foundations.",
+        "Compare exact-match, rubric, and LLM-as-judge scoring on cost and reliability.",
         "Identify the main tradeoff instead of treating the topic as trivia.",
         "Choose one validation check that would catch a realistic failure."
       ],
@@ -940,11 +1039,11 @@
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Build a tiny eval",
+      "sub": "Puts the four parts together into the smallest runnable eval.",
+      "summary": "Now wire the dataset, run, and scorer from module 2 into the smallest eval that actually runs. This is the worked-to-solo bridge: read the sketch here, then build your own in the capstone.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in AI Evaluation Foundations.",
+        "Trace a minimal eval loop from dataset to aggregated score.",
         "Identify the main tradeoff instead of treating the topic as trivia.",
         "Choose one validation check that would catch a realistic failure."
       ],
@@ -1112,45 +1211,108 @@
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Minimal working eval",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
+          "code": "dataset = [\n    {\"input\": \"2+2\", \"expected\": \"4\"},\n    {\"input\": \"capital of France\", \"expected\": \"Paris\"},\n]\n\ndef run_eval(system):\n    passed = 0\n    for case in dataset:\n        output = system(case[\"input\"])          # run\n        if output.strip() == case[\"expected\"]:  # scorer (exact-match)\n            passed += 1\n    return passed / len(dataset)                 # aggregate score\n\nscore = run_eval(my_model)\nprint(f\"pass rate: {score:.0%}\")",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "All four parts from module 2 are here: the "
+                },
+                {
+                  "text": "dataset",
+                  "term": "dataset"
+                },
+                {
+                  "text": " list, the run (calling the system), the exact-match scorer, and the aggregated score. This is the smallest runnable shape; you'd swap exact-match for a rubric or judge as cases get fuzzier."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Before running it: if my_model returns \"4.0\" for the first case, what pass rate prints — and why?",
+            "answer": "50%. \"4.0\" != \"4\" under exact-match, so case 1 fails even though it's arithmetically correct. This is exactly why exact-match is brittle and you sometimes reach for a rubric or judge."
           },
           "syntax": [
             {
-              "part": "def",
-              "explains": "Defines a function."
+              "part": "for case in dataset",
+              "explains": "Iterates over every test case."
             },
             {
-              "part": "if",
-              "explains": "Branches on readiness."
+              "part": "==",
+              "explains": "The exact-match scorer: string-equal check."
             },
             {
-              "part": "return",
-              "explains": "Hands back the result."
+              "part": "passed / len(dataset)",
+              "explains": "Aggregates per-case results into one score."
             }
           ],
           "termIds": [
             "eval",
-            "trace",
-            "dataset"
+            "dataset",
+            "rubric"
           ],
           "sources": [
             "canon1",
             "kb1"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Verify the AI-generated version before trusting it. ",
+                  "strong": true
+                },
+                {
+                  "text": "If you have an assistant write an eval harness, check these four things specific to evals:"
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Is the scorer comparing the right fields? A harness that scores output against output (not against ",
+                    "strong": false
+                  },
+                  {
+                    "text": "expected",
+                    "code": true
+                  },
+                  {
+                    "text": ") will report 100% and prove nothing."
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it normalize before comparing (whitespace, case)? Otherwise correct answers fail on formatting, as in the prediction above."
+                  }
+                ],
+                [
+                  {
+                    "text": "Is the dataset fixed and version-controlled? If cases are generated fresh each run, the score is not comparable across versions."
+                  }
+                ],
+                [
+                  {
+                    "text": "Does it report per-case failures, not just the aggregate? A bare pass rate hides which inputs broke."
+                  }
+                ]
+              ]
+            }
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
           ]
         },
         {
@@ -1192,11 +1354,11 @@
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Trust, check, and ship",
+      "sub": "Late step: where evals mislead, then lock it in with recall.",
+      "summary": "An eval can pass and still lie to you. This module covers how evals break in practice, recalls the four parts from module 2 to make them stick, and ends with a decision checklist for shipping.",
       "objectives": [
-        "Explain the role of check and apply in AI Evaluation Foundations.",
+        "Name two ways a passing eval can still be misleading.",
         "Identify the main tradeoff instead of treating the topic as trivia.",
         "Choose one validation check that would catch a realistic failure."
       ],
@@ -1211,22 +1373,21 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "id": "m5_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
-              "t": "p",
+              "t": "callout",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "This evaluation lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "AI Evaluation Foundations",
+                  "text": "Before reading on, predict from memory: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "em": true,
+                  "text": "back in module 2 you saw an eval has four moving parts. Can you name all four in order before scrolling?"
                 }
               ]
             },
@@ -1234,14 +1395,32 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "The four parts were: "
                 },
                 {
-                  "text": "eval",
-                  "term": "eval"
+                  "text": "dataset",
+                  "term": "dataset"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " (fixed test cases), run (collect outputs), scorer (grade them), and score (the aggregate you track). The failure modes below are each a way one of those four parts quietly betrays you."
+                }
+              ]
+            }
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "How evals break in practice",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A green pass rate feels like proof. These are the ways it can be lying to you — each one maps to a part of the eval."
                 }
               ]
             },
@@ -1250,17 +1429,59 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of AI Evaluation Foundations."
+                    "text": "Overfitting the dataset.",
+                    "strong": true
+                  },
+                  {
+                    "text": " You tune prompts until the "
+                  },
+                  {
+                    "text": "dataset",
+                    "term": "dataset"
+                  },
+                  {
+                    "text": " passes, so the score measures memorization of those cases, not real-world quality. Hold out a fresh set you never tune against."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Judge bias.",
+                    "strong": true
+                  },
+                  {
+                    "text": " An "
+                  },
+                  {
+                    "text": "LLM-as-judge",
+                    "term": "judge"
+                  },
+                  {
+                    "text": " systematically prefers longer or more confident answers, inflating scores for verbose-but-wrong outputs. Spot-check judge verdicts against human labels."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Silent regressions outside the dataset.",
+                    "strong": true
+                  },
+                  {
+                    "text": " The eval only covers what's in it; a "
+                  },
+                  {
+                    "text": "regression",
+                    "term": "regression"
+                  },
+                  {
+                    "text": " on an untested case is invisible. When a real bug slips through, add it as a new case so it can never regress unnoticed again."
+                  }
+                ],
+                [
+                  {
+                    "text": "Metric mismatch.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Exact-match counts a correct answer as a failure over formatting, so the score drops for the wrong reason and you 'fix' a problem that wasn't there."
                   }
                 ]
               ]
@@ -1268,11 +1489,13 @@
           ],
           "termIds": [
             "eval",
-            "trace",
-            "dataset"
+            "dataset",
+            "judge",
+            "regression"
           ],
           "sources": [
-            "kb1"
+            "kb1",
+            "canon1"
           ]
         },
         {
@@ -1580,10 +1803,27 @@
         "t": "p",
         "spans": [
           {
-            "text": "AI Evaluation Foundations is now tied to a mental map, a workflow, and a decision checklist. "
+            "text": "Reconstruct the lesson from memory before reading on: ",
+            "strong": true
           },
           {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "em": true,
+            "text": "(1) Why do evals exist instead of eyeballing outputs? (2) What are the four moving parts of an eval? (3) Name the three scoring methods and their main tradeoff. (4) What's the smallest runnable eval shape? (5) Name two ways a passing eval can still mislead you."
+          }
+        ]
+      },
+      {
+        "t": "p",
+        "spans": [
+          {
+            "text": "If any answer was fuzzy, that's the module to reopen. The through-line: an "
+          },
+          {
+            "text": "eval",
+            "term": "eval"
+          },
+          {
+            "text": " turns 'it seems to work' into a fixed dataset, a repeatable run, an explicit scorer, and a tracked score you can compare across versions."
           }
         ]
       }
@@ -1594,8 +1834,10 @@
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of AI Evaluation Foundations.",
+          "label": "Why evaluate at all",
+          "order": 1,
+          "orient": "Start here: the problem evals solve and the core mental model.",
+          "sub": "Build the simplest useful picture of why AI needs evaluation.",
           "what": "Mental model turns AI Evaluation Foundations into a usable mental model.",
           "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
           "moduleId": "m1",
@@ -1604,8 +1846,10 @@
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
+          "label": "How an eval runs",
+          "order": 2,
+          "orient": "The moving parts: dataset, the run, a judge, and a score.",
+          "sub": "See the moving parts of an eval and how they interact.",
           "what": "Mechanism turns AI Evaluation Foundations into a usable mental model.",
           "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
           "moduleId": "m2",
@@ -1614,8 +1858,10 @@
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
+          "label": "Choosing how to score",
+          "order": 3,
+          "orient": "Pick a scoring method: exact-match, rubric, or LLM-as-judge tradeoffs.",
+          "sub": "Make the scoring choice that changes quality, cost, or risk.",
           "what": "Design choices turns AI Evaluation Foundations into a usable mental model.",
           "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
           "moduleId": "m3",
@@ -1624,8 +1870,10 @@
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
+          "label": "Build a tiny eval",
+          "order": 4,
+          "orient": "Wire dataset, run, and scorer into a minimal runnable eval.",
+          "sub": "Connect the concept to a small practical eval harness.",
           "what": "Tiny implementation sketch turns AI Evaluation Foundations into a usable mental model.",
           "relevance": "It matters because the learner needs to apply AI Evaluation Foundations, not just recognize the words.",
           "moduleId": "m4",
@@ -1654,28 +1902,28 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Name why you're evaluating",
+        "detail": "State the change you want to detect (a regression, a quality lift) in one sentence."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Assemble the four parts",
+        "detail": "Fix a dataset of cases, define the run, the scorer, and the aggregate score."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Choose how to score",
+        "detail": "Pick exact-match, a rubric, or an LLM-as-judge for the kind of output you have."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Build the tiny eval",
+        "detail": "Wire it into the smallest harness that runs end to end and prints a score."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Check it can't fool you, then ship",
+        "detail": "Add a holdout, spot-check the judge, and grow the dataset from real failures."
       }
     ],
     "checklist": [
@@ -1696,7 +1944,7 @@
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for AI Evaluation Foundations: goal, inputs, core component, validation, and one risk.",
+      "prompt": "Solo build: take a small AI feature you have (or a prompt) and write a runnable eval for it from scratch — a fixed dataset of 5+ cases, a run that collects outputs, a scorer (start with exact-match), and a printed aggregate score. Then add one holdout case the system currently fails. NEXT RUNG: once you trust the score, replace exact-match with an LLM-as-judge and validate it against your own labels on 10 cases — that's the gateway to the 'LLM-as-judge calibration' lesson.",
       "scopedTo": "Evaluation"
     }
   },

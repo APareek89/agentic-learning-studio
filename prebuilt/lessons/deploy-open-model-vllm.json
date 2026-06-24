@@ -5,7 +5,7 @@
     "title": "Deploy an Open Model with vLLM",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 46,
-    "thesis": "Deploy an Open Model with vLLM becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "Deploy an Open Model with vLLM is practical when learners can apply it to this concrete case: A team deploys an open model for ticket summaries and must hit latency and cost limits. By the end, they should be able to build or review vLLM deployment checklist with model, batching, and rollback settings, measure p95 latency under the release target, and catch the failure where throughput looks fine in a demo but collapses under concurrent users."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Deploy an Open Model with vLLM: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Deploy an Open Model with vLLM by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Deploy an open model with vLLM by selecting model/hardware, launching server, smoke-testing API, load-testing, and hardening the endpoint.",
+    "oneLineThesis": "A vLLM deployment is not done until serving, streaming, metrics, load, and rollback are proven for the chosen model and traffic shape.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Target behavior",
-        "sub": "Define the user-visible outcome for Deploy an Open Model with vLLM.",
-        "what": "Target behavior turns Deploy an Open Model with vLLM into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+        "label": "Choose the open model and serving target",
+        "sub": "Start with model, traffic shape, and GPU budget.",
+        "what": "Learners position vLLM accurately.",
+        "relevance": "This prevents using vLLM when a hosted API or local runner would be simpler.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Size a support-agent endpoint around GPU memory and request shape.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Architecture slice",
-        "sub": "Choose the smallest pipeline that can work end to end.",
-        "what": "Architecture slice turns Deploy an Open Model with vLLM into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+        "label": "Budget weights, context, and KV cache before launch",
+        "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+        "what": "Learners understand the serving bottleneck.",
+        "relevance": "This prevents setting long contexts and high concurrency without memory math.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Estimate how long prompts and active users consume GPU memory.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Core implementation",
-        "sub": "Wire the main model, retrieval, or tool step.",
-        "what": "Core implementation turns Deploy an Open Model with vLLM into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+        "label": "Expose an OpenAI-compatible endpoint",
+        "sub": "Compatibility helps, but integration tests still matter.",
+        "what": "Learners connect runtime to application code.",
+        "relevance": "This catches mismatch between provider assumptions and self-hosted behavior.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Serve a model and call it through the same client shape.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Validation and tracing",
-        "sub": "Add checks so failures are visible before users see them.",
-        "what": "Validation and tracing turns Deploy an Open Model with vLLM into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+        "label": "Run the server and smoke-test streaming",
+        "sub": "The first production slice proves launch, request, stream, and metrics.",
+        "what": "Learners implement the serving slice concretely.",
+        "relevance": "This makes the deployment testable before scaling.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Start vLLM and call it through an OpenAI-compatible client.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Hardening path",
-        "sub": "Decide what to ship, monitor, and improve next.",
-        "what": "Hardening path turns Deploy an Open Model with vLLM into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+        "label": "Load-test, monitor, and protect the endpoint",
+        "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+        "what": "Learners close deployment with operations.",
+        "relevance": "This prevents an exposed GPU server from becoming a fragile product dependency.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Gate the endpoint with load, metrics, auth, and fallback checks.",
+        "order": 5
       }
     ],
     "edges": [
@@ -98,21 +108,23 @@
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "hardens"
       }
-    ]
+    ],
+    "structureType": "procedural",
+    "entryNodeId": "n_m1"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Target behavior",
-      "sub": "Define the user-visible outcome for Deploy an Open Model with vLLM.",
-      "summary": "Define the user-visible outcome for Deploy an Open Model with vLLM. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Choose the open model and serving target",
+      "sub": "Start with model, traffic shape, and GPU budget.",
+      "summary": "A vLLM deployment begins with model choice, context budget, and traffic assumptions.",
       "objectives": [
-        "Explain the role of target behavior in Deploy an Open Model with vLLM.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain vLLM fit.",
+        "Name PagedAttention and continuous batching.",
+        "Separate production endpoint from local demo."
       ],
       "termIds": [
         "prototype",
@@ -121,230 +133,46 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Target behavior: the core idea",
+          "title": "The product constraint is GPU memory under load",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deploy an Open Model with vLLM",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a support-agent team wants to serve an open instruction model for many concurrent users. Hosted APIs are too costly for expected volume, and data locality matters. vLLM is a fit because it focuses on high-throughput online serving, continuous batching, OpenAI-compatible endpoints, and efficient KV-cache management."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deploy an Open Model with vLLM."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
+            "kb_vllm",
+            "canon_vllm_serving"
+          ],
+          "analogy": "vLLM is an airport scheduler for token generation: it keeps many flights moving through limited gates."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Deploy an Open Model with vLLM.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Deploy an Open Model with vLLM, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Deployment target sheet",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for deploy an open model with vllm help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Model: Llama-3.1-8B-Instruct. Traffic: 20 concurrent chats, p95 prompt 2k tokens, p95 output 400 tokens. Hardware: two GPUs. Release target: OpenAI-compatible chat endpoint with streaming, health checks, metrics, and load test before production."
                 }
               ]
             }
@@ -352,59 +180,63 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb_vllm"
+          ],
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Target behavior\" in Deploy an Open Model with vLLM?",
+          "title": "vLLM fit",
+          "prompt": "When does vLLM become compelling?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A one-off laptop demo with no concurrency.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "High-throughput self-hosted serving where GPU memory, batching, and KV cache matter.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only for image generation.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "vLLM is production-serving oriented.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_vllm"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_vllm",
+        "canon_vllm_serving"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Architecture slice",
-      "sub": "Choose the smallest pipeline that can work end to end.",
-      "summary": "Choose the smallest pipeline that can work end to end. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Budget weights, context, and KV cache before launch",
+      "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+      "summary": "PagedAttention reduces waste but does not remove memory limits.",
       "objectives": [
-        "Explain the role of architecture slice in Deploy an Open Model with vLLM.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain KV cache pressure.",
+        "Connect context length to concurrency.",
+        "Name why prefix caching helps only some workloads."
       ],
       "termIds": [
         "prototype",
@@ -413,250 +245,144 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Architecture slice: the core idea",
+          "title": "PagedAttention manages memory; it does not make memory infinite",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deploy an Open Model with vLLM",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "vLLM is known for PagedAttention, which manages key/value cache in blocks to reduce waste. The practical constraint remains: model weights, active prompt tokens, generated tokens, batch size, and context length compete for GPU memory. Long context serving leaves less room for concurrent users."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deploy an Open Model with vLLM."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "canon_vllm_paged_attention",
+            "kb_vllm"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Deploy an Open Model with vLLM, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+          "id": "m2_matrix",
+          "kind": "decisionMatrix",
+          "title": "Serving memory pressures",
+          "criteria": [
+            "Pressure",
+            "What increases it",
+            "First mitigation"
           ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for deploy an open model with vllm help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "bash",
-          "code": "vllm serve Qwen/Qwen3-0.6B\ncurl http://localhost:8000/v1/chat/completions -H \"Content-Type: application/json\" -d '{\"model\":\"Qwen/Qwen3-0.6B\",\"messages\":[{\"role\":\"user\",\"content\":\"Explain RAG\"}]}'",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "vllm serve",
-              "explains": "Starts the model server."
-            },
-            {
-              "part": "curl",
-              "explains": "Sends a test request."
-            },
-            {
-              "part": "messages",
-              "explains": "Carries the chat turns."
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Architecture slice\" in Deploy an Open Model with vLLM?",
-          "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
-              "correct": false
+              "name": "Weights",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "Weights",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "larger model or precision",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "quantization or smaller model",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Model selection.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
+              "name": "KV cache",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "KV cache",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "long context and many active tokens",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "shorter context, batching limits, more GPUs",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Concurrency tuning.",
+              "cost": "Medium",
+              "complexity": "Medium"
             },
             {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
+              "name": "Prefill cost",
+              "cells": [
+                {
+                  "criterion": "Pressure",
+                  "text": "Prefill cost",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "What increases it",
+                  "text": "long shared prompts",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "First mitigation",
+                  "text": "prefix caching when prefixes match exactly",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Repeated system/context prompts.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_vllm",
+            "canon_vllm_prefix_cache"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_vllm_paged_attention",
+        "kb_vllm",
+        "canon_vllm_prefix_cache"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Core implementation",
-      "sub": "Wire the main model, retrieval, or tool step.",
-      "summary": "Wire the main model, retrieval, or tool step. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Expose an OpenAI-compatible endpoint",
+      "sub": "Compatibility helps, but integration tests still matter.",
+      "summary": "Apps can often use existing OpenAI clients against vLLM, with caveat tests.",
       "objectives": [
-        "Explain the role of core implementation in Deploy an Open Model with vLLM.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Start vLLM serving.",
+        "Call it with an OpenAI-style client.",
+        "Test unsupported parameters and chat templates."
       ],
       "termIds": [
         "prototype",
@@ -665,60 +391,66 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Core implementation: the core idea",
+          "title": "Compatibility is an integration surface, not a guarantee",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deploy an Open Model with vLLM",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "vLLM exposes OpenAI-compatible serving endpoints, which lets many apps point an OpenAI client at a self-hosted base URL. But provider-specific parameters, tool behavior, chat templates, and streaming details still need tests. Chat-tuned models especially need correct templates."
                 }
               ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
+            }
+          ],
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_vllm_serving",
+            "kb_vllm"
+          ]
+        },
+        {
+          "id": "m3_case",
+          "kind": "functionalExample",
+          "title": "Integration test plan",
+          "body": [
             {
               "t": "ul",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Deploy an Open Model with vLLM."
+                    "text": "List models endpoint returns the expected model name."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Chat completion works with the app message format."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Streaming chunks parse in the UI."
+                  }
+                ],
+                [
+                  {
+                    "text": "Unsupported parameters fail clearly."
+                  }
+                ],
+                [
+                  {
+                    "text": "Tool-call or structured-output behavior is tested before release."
                   }
                 ]
               ]
@@ -727,237 +459,30 @@
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Deploy an Open Model with vLLM, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Core implementation\" in Deploy an Open Model with vLLM?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "canon_vllm_serving"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Deploy an Open Model with vLLM: baseline, production design, or advanced optimization."
+        "canon_vllm_serving",
+        "kb_vllm"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Validation and tracing",
-      "sub": "Add checks so failures are visible before users see them.",
-      "summary": "Add checks so failures are visible before users see them. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Run the server and smoke-test streaming",
+      "sub": "The first production slice proves launch, request, stream, and metrics.",
+      "summary": "A minimal server command plus client call catches deployment mistakes early.",
       "objectives": [
-        "Explain the role of validation and tracing in Deploy an Open Model with vLLM.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Run a vLLM serve command.",
+        "Predict chat-template or model-name failure.",
+        "Verify generated deployment scripts."
       ],
       "termIds": [
         "prototype",
@@ -966,250 +491,83 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 10,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Validation and tracing: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deploy an Open Model with vLLM",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deploy an Open Model with vLLM."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Deploy an Open Model with vLLM, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for deploy an open model with vllm help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "vLLM launch and OpenAI-compatible smoke test",
           "language": "bash",
-          "code": "vllm serve Qwen/Qwen3-0.6B\ncurl http://localhost:8000/v1/chat/completions -H \"Content-Type: application/json\" -d '{\"model\":\"Qwen/Qwen3-0.6B\",\"messages\":[{\"role\":\"user\",\"content\":\"Explain RAG\"}]}'",
-          "explain": [
+          "code": "vllm serve meta-llama/Llama-3.1-8B-Instruct   --host 0.0.0.0   --port 8000   --tensor-parallel-size 2   --enable-prefix-caching\n\npython - <<'PY'\nfrom openai import OpenAI\nclient = OpenAI(base_url=\"http://localhost:8000/v1\", api_key=\"local\")\nresp = client.chat.completions.create(\n    model=\"meta-llama/Llama-3.1-8B-Instruct\",\n    messages=[{\"role\": \"user\", \"content\": \"Explain KV cache in two sentences.\"}],\n    stream=False,\n)\nprint(resp.choices[0].message.content[:200])\nPY",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "This is the thin slice: server starts, the model name matches, the client can call it, and the app can parse the response. Load and safety tests come after this smoke test passes."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "What likely happens if the client uses a model name different from the served model ID?",
+            "answer": "The request can fail with an unknown model or routing error. The app should assert the served model list before release."
           },
-          "syntax": [
+          "termIds": [
+            "prototype",
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
+          ],
+          "sources": [
+            "canon_vllm_serving",
+            "kb_vllm"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify AI-generated vLLM deployment scripts",
+          "body": [
             {
-              "part": "vllm serve",
-              "explains": "Starts the model server."
-            },
-            {
-              "part": "curl",
-              "explains": "Sends a test request."
-            },
-            {
-              "part": "messages",
-              "explains": "Carries the chat turns."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: model ID and license reviewed; tensor or pipeline parallel settings match hardware; chat template works; streaming parsed; health and metrics exposed; prefix caching only assumed for exact shared prefixes; and dev-only endpoints are not public."
+                }
+              ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Validation and tracing\" in Deploy an Open Model with vLLM?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1"
+            "kb_vllm",
+            "canon_vllm_serving"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_vllm_serving",
+        "kb_vllm"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Hardening path",
-      "sub": "Decide what to ship, monitor, and improve next.",
-      "summary": "Decide what to ship, monitor, and improve next. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Load-test, monitor, and protect the endpoint",
+      "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+      "summary": "A vLLM endpoint needs load tests, metrics, routing policy, and operational safeguards.",
       "objectives": [
-        "Explain the role of hardening path in Deploy an Open Model with vLLM.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name vLLM production checks.",
+        "Plan monitoring and rollback.",
+        "Know when to put a gateway in front."
       ],
       "termIds": [
         "prototype",
@@ -1218,367 +576,168 @@
         "trace",
         "deployment"
       ],
-      "estMinutes": 9,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Hardening path: the core idea",
+          "title": "The server is not the whole serving system",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This build projects lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Deploy an Open Model with vLLM",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Production checks include p50/p95 latency, tokens per second, time to first token, GPU memory, active requests, queueing, error rate, cost per tenant, and quality evals. Put a gateway in front when you need tenant keys, budgets, routing, fallback to hosted models, or one logical model name across replicas."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "prototype",
-                  "term": "prototype"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Deploy an Open Model with vLLM."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Deploy an Open Model with vLLM, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_vllm",
+            "canon_vllm_serving"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Ship vLLM when load tests, integration tests, metrics, auth, and rollback are all in place.",
+          "useWhen": "Use it for self-hosted high-throughput open-model serving where GPU utilization matters.",
+          "avoidWhen": "Avoid exposing raw dynamic endpoints, cache reset tools, or unauthenticated model APIs in production.",
           "termIds": [
             "prototype",
             "retriever",
-            "validator"
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "prototype",
-            "retriever",
-            "validator"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_vllm"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Hardening path\" in Deploy an Open Model with vLLM?",
+          "title": "Hardening gate",
+          "prompt": "What should pass before a vLLM endpoint serves users?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Only one successful localhost response.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Load tests, integration tests, monitoring, auth/routing policy, and quality checks.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A screenshot of GPU utilization.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Production serving needs operations around the model runtime.",
           "termIds": [
             "prototype",
-            "retriever"
+            "retriever",
+            "validator",
+            "trace",
+            "deployment"
           ],
           "sources": [
-            "kb1"
+            "kb_vllm"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Deploy an Open Model with vLLM: baseline, production design, or advanced optimization."
+        "kb_vllm",
+        "canon_vllm_serving"
+      ]
     }
   ],
   "glossary": {
     "prototype": {
       "id": "prototype",
       "label": "Prototype",
-      "laymanDefinition": "Prototype is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Prototype is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A narrow runnable slice that proves one infrastructure behavior.",
+      "technicalNote": "A good prototype includes setup, smoke test, failure mode, and migration boundary.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "retriever": {
       "id": "retriever",
       "label": "Retriever",
-      "laymanDefinition": "Retriever is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Retriever is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A component that fetches context or records for a request.",
+      "technicalNote": "Serving lessons track retrievers because retrieval shape affects latency, cost, and quality.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "validator": {
       "id": "validator",
       "label": "Validator",
-      "laymanDefinition": "Validator is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Validator is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A check that enforces output, request, or deployment contracts.",
+      "technicalNote": "Validators protect schemas, health checks, citations, policy gates, and readiness criteria.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "trace": {
       "id": "trace",
       "label": "Trace",
-      "laymanDefinition": "Trace is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Trace is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A structured record of one request or job through serving components.",
+      "technicalNote": "Traces reveal queue time, model call latency, token counts, errors, and release metadata.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "deployment": {
       "id": "deployment",
       "label": "Deployment",
-      "laymanDefinition": "Deployment is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Deployment is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A versioned runtime configuration exposed to users or systems.",
+      "technicalNote": "A deployment includes model, serving flags, hardware, API contract, monitoring, rollback, and ownership.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     },
     "acceptance_test": {
       "id": "acceptance_test",
       "label": "Acceptance test",
-      "laymanDefinition": "Acceptance test is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Acceptance test is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A test that proves the build meets its release contract.",
+      "technicalNote": "Acceptance tests should cover smoke behavior, failure modes, metrics, and rollback expectations.",
       "wrapPolicy": "firstOnly",
       "sources": [
-        "kb1"
+        "kb_vllm"
       ]
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Deploy an Open Model with vLLM",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Deployment acceptance",
         "questions": [
           {
-            "q": "What decision does Deploy an Open Model with vLLM change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "What evidence proves this vLLM endpoint is ready for a product traffic slice?",
+            "why": "Open-model deployment must prove model fit, GPU memory, API compatibility, latency, throughput, safety, and rollback.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Load-tested endpoint with gates",
+              "Server starts once",
+              "Model card only"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Gate deployment on smoke tests, load tests, metrics, auth, and quality checks."
           }
         ]
       }
@@ -1590,57 +749,74 @@
         "t": "p",
         "spans": [
           {
-            "text": "Deploy an Open Model with vLLM is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild the vLLM deployment by naming chosen model, GPU memory budget, serve command, client smoke test, streaming test, metrics, load threshold, gateway/auth, and rollback plan."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "vLLM deployment path from model choice to hardened endpoint",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Target behavior",
-          "sub": "Define the user-visible outcome for Deploy an Open Model with vLLM.",
-          "what": "Target behavior turns Deploy an Open Model with vLLM into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+          "label": "Choose the open model and serving target",
+          "sub": "Start with model, traffic shape, and GPU budget.",
+          "what": "Learners position vLLM accurately.",
+          "relevance": "This prevents using vLLM when a hosted API or local runner would be simpler.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Size a support-agent endpoint around GPU memory and request shape.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Architecture slice",
-          "sub": "Choose the smallest pipeline that can work end to end.",
-          "what": "Architecture slice turns Deploy an Open Model with vLLM into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+          "label": "Budget weights, context, and KV cache before launch",
+          "sub": "Weights, context length, batch size, and cache all compete for accelerator memory.",
+          "what": "Learners understand the serving bottleneck.",
+          "relevance": "This prevents setting long contexts and high concurrency without memory math.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Estimate how long prompts and active users consume GPU memory.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Core implementation",
-          "sub": "Wire the main model, retrieval, or tool step.",
-          "what": "Core implementation turns Deploy an Open Model with vLLM into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+          "label": "Expose an OpenAI-compatible endpoint",
+          "sub": "Compatibility helps, but integration tests still matter.",
+          "what": "Learners connect runtime to application code.",
+          "relevance": "This catches mismatch between provider assumptions and self-hosted behavior.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Serve a model and call it through the same client shape.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Validation and tracing",
-          "sub": "Add checks so failures are visible before users see them.",
-          "what": "Validation and tracing turns Deploy an Open Model with vLLM into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Deploy an Open Model with vLLM, not just recognize the words.",
+          "label": "Run the server and smoke-test streaming",
+          "sub": "The first production slice proves launch, request, stream, and metrics.",
+          "what": "Learners implement the serving slice concretely.",
+          "relevance": "This makes the deployment testable before scaling.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Start vLLM and call it through an OpenAI-compatible client.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Load-test, monitor, and protect the endpoint",
+          "sub": "Throughput is useless without reliability, budgets, and safe exposure.",
+          "what": "Learners close deployment with operations.",
+          "relevance": "This prevents an exposed GPU server from becoming a fragile product dependency.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Gate the endpoint with load, metrics, auth, and fallback checks.",
+          "order": 5
         }
       ],
       "edges": [
@@ -1658,86 +834,97 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "hardens"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Choose the open model and serving target",
+        "detail": "A vLLM deployment begins with model choice, context budget, and traffic assumptions."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Budget weights, context, and KV cache before launch",
+        "detail": "PagedAttention reduces waste but does not remove memory limits."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Expose an OpenAI-compatible endpoint",
+        "detail": "Apps can often use existing OpenAI clients against vLLM, with caveat tests."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Run the server and smoke-test streaming",
+        "detail": "A minimal server command plus client call catches deployment mistakes early."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Load-test, monitor, and protect the endpoint",
+        "detail": "A vLLM endpoint needs load tests, metrics, routing policy, and operational safeguards."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Choose the open model and serving target\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Run the server and smoke-test streaming\"?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Load-test, monitor, and protect the endpoint\" define the production or release gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Deploy an Open Model with vLLM: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Build Projects"
+      "prompt": "Deploy an open instruction model behind vLLM for a small app. Include serve command, OpenAI-compatible client test, streaming parser, health/metrics check, load test target, gateway/auth rule, and rollback. Next rung: add autoscaling or multi-replica routing.",
+      "scopedTo": "Build Projects",
+      "checks": [
+        "Model and license reviewed.",
+        "Serve command matches hardware.",
+        "Smoke and streaming tests pass.",
+        "Load and rollback gates are documented."
+      ]
     }
   },
   "citations": {
-    "kb1": {
-      "id": "kb1",
+    "kb_vllm": {
+      "id": "kb_vllm",
       "kind": "kb",
-      "title": "KB: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
+      "title": "KB: vLLM",
+      "url": "https://docs.vllm.ai/",
+      "asOfDate": "2026-06-22"
     },
-    "kb2": {
-      "id": "kb2",
-      "kind": "kb",
-      "title": "KB support: Agentic Systems Overview",
-      "url": "https://platform.openai.com/docs/guides/function-calling",
-      "asOfDate": "2026-06-19"
-    },
-    "canon1": {
-      "id": "canon1",
+    "canon_vllm_serving": {
+      "id": "canon_vllm_serving",
       "kind": "canonical",
-      "title": "LlamaIndex RAG documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "vLLM online serving",
+      "url": "https://docs.vllm.ai/en/latest/serving/online_serving/",
+      "asOfDate": "2026-06-22"
     },
-    "canon2": {
-      "id": "canon2",
+    "canon_vllm_prefix_cache": {
+      "id": "canon_vllm_prefix_cache",
       "kind": "canonical",
-      "title": "Official documentation",
-      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
-      "asOfDate": "2026-06-20"
+      "title": "vLLM automatic prefix caching",
+      "url": "https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html",
+      "asOfDate": "2026-06-22"
+    },
+    "canon_vllm_paged_attention": {
+      "id": "canon_vllm_paged_attention",
+      "kind": "canonical",
+      "title": "vLLM PagedAttention engineering blog",
+      "url": "https://blog.vllm.ai/2023/06/20/vllm.html",
+      "asOfDate": "2026-06-22"
     }
   }
 }

@@ -4,8 +4,8 @@
     "topic": "Diffusion Models Explained",
     "title": "Diffusion Models Explained",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 32,
-    "thesis": "Diffusion Models Explained becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 42,
+    "thesis": "Diffusion Models Explained is practical when learners can apply it to this concrete case: A marketing team needs a simple mental model for how noisy images become product visuals. By the end, they should be able to build or review diffusion storyboard from noise, denoise steps, prompt, and review, measure prompt changes produce understandable visual changes, and catch the failure where the team treats generation as magic and cannot debug bad outputs."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -25,94 +25,105 @@
   },
   "mentalMap": {
     "title": "Diffusion Models Explained: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Diffusion Models Explained by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Follow diffusion from random noise through conditioned denoising steps, scheduler choices, and responsible output review.",
+    "oneLineThesis": "Diffusion models generate media by learning how to reverse noise step by step, not by retrieving a finished image.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Diffusion Models Explained.",
-        "what": "Mental model turns Diffusion Models Explained into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+        "label": "Generation starts from structured noise",
+        "sub": "The model learns to undo a corruption process.",
+        "what": "Learners get the core mental model first.",
+        "relevance": "This prevents prompt-only explanations of image generation.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Turn a noisy solar-system illustration into a cleaner sample over steps.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Diffusion Models Explained into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+        "label": "Conditioning tells the denoiser what to aim for",
+        "sub": "Prompts, masks, references, and layouts guide the same loop.",
+        "what": "Learners separate the engine from the guidance signal.",
+        "relevance": "This helps debug missing objects, bad counts, and weak layout control.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Encode the lesson prompt as guidance for the denoising path.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Diffusion Models Explained into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+        "label": "Schedulers decide the denoising route",
+        "sub": "Timesteps control speed, quality, and reproducibility tradeoffs.",
+        "what": "Learners understand a key inference component.",
+        "relevance": "This makes quality and cost tradeoffs concrete.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Compare fast and careful denoising routes with the same prompt.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Diffusion Models Explained into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+        "label": "Code a toy denoising loop",
+        "sub": "A one-dimensional loop makes the iteration visible.",
+        "what": "Learners see iteration in runnable code.",
+        "relevance": "This turns the abstract process into mechanics.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Move a noisy number toward a prompt target over several steps.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Diffusion Models Explained into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+        "label": "Artifacts and safety checks finish the loop",
+        "sub": "A plausible image is still a draft.",
+        "what": "Learners close with responsible use.",
+        "relevance": "This prevents attractive images from becoming misleading teaching assets.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Review generated lesson media for correctness, safety, bias, and rights.",
+        "order": 5
       }
     ],
     "edges": [
       {
         "from": "n_m1",
         "to": "n_m2",
-        "label": "then"
+        "label": "guides"
       },
       {
         "from": "n_m2",
         "to": "n_m3",
-        "label": "then"
+        "label": "routes"
       },
       {
         "from": "n_m3",
         "to": "n_m4",
-        "label": "then"
+        "label": "implements"
       },
       {
         "from": "n_m4",
         "to": "n_m5",
-        "label": "then"
+        "label": "reviews"
       }
-    ]
+    ],
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Diffusion Models Explained.",
-      "summary": "Build the simplest useful picture of Diffusion Models Explained. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Generation starts from structured noise",
+      "sub": "The model learns to undo a corruption process.",
+      "summary": "Diffusion begins with noise because training taught the model to remove it.",
       "objectives": [
-        "Explain the role of mental model in Diffusion Models Explained.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain forward noising and reverse denoising.",
+        "Use a concrete lesson-image example.",
+        "Avoid the stored-image misconception."
       ],
       "termIds": [
         "diffusion",
@@ -121,26 +132,19 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Noise is the starting material",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Diffusion Models Explained",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: an educator asks for an image of a student studying a solar-system diagram. A diffusion model starts from random noise and repeatedly updates the sample toward something that fits learned image patterns and the prompt."
                 }
               ]
             },
@@ -148,203 +152,34 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Training corrupts real examples with noise, and the model learns to predict how to remove that noise. Inference runs the learned process backward."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Diffusion Models Explained."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
-          ]
+            "canon_hf_diffusers",
+            "kb_multimodal_generative"
+          ],
+          "analogy": "Diffusion is restoring a foggy sketch one wipe at a time."
         },
         {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Diffusion Models Explained.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Diffusion Models Explained, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
+          "id": "m1_worked",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Five-step denoising story",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for diffusion models explained help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Step 1 is speckled noise. Step 2 separates background and foreground. Step 3 forms a student, desk, and diagram. Step 4 sharpens planets and notebook edges. Step 5 gets reviewed for prompt fit, artifacts, and rights."
                 }
               ]
             }
@@ -352,59 +187,63 @@
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
+            "kb_multimodal_generative"
+          ],
+          "personalizedFor": "Agentic Learning Studio"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Diffusion Models Explained?",
+          "title": "Starting point",
+          "prompt": "What does a diffusion generator usually start from?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "A completed stored image.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Random noise that is iteratively denoised.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "A hand-coded SVG template.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The reverse denoising loop is the core mechanism.",
           "termIds": [
             "diffusion",
-            "latent_space"
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "kb_multimodal_generative"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_hf_diffusers",
+        "kb_multimodal_generative"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Conditioning tells the denoiser what to aim for",
+      "sub": "Prompts, masks, references, and layouts guide the same loop.",
+      "summary": "Conditioning shapes denoising without guaranteeing exact obedience.",
       "objectives": [
-        "Explain the role of mechanism in Diffusion Models Explained.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Define conditioning.",
+        "Explain prompt mismatch.",
+        "Name non-text conditioning examples."
       ],
       "termIds": [
         "diffusion",
@@ -413,179 +252,45 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "The prompt is guidance, not a remote control",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Diffusion Models Explained",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Text prompts are encoded into vectors that condition denoising. Other workflows can condition on images, masks, sketches, depth maps, or layouts. Conditioning changes probabilities at every step, but exact counts, readable text, and spatial relations can still fail."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Diffusion Models Explained."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_hf_diffusers",
+            "kb_multimodal_generative"
           ]
         },
         {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Diffusion Models Explained, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
+          "id": "m2_case",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Prompt mismatch in a science image",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for diffusion models explained help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "A prompt asks for eight labeled planets. The image has six planets and unreadable labels. The broad style succeeded; the factual diagram requirement failed, so the asset should be rejected or redrawn with a deterministic tool."
                 }
               ]
             }
@@ -593,59 +298,30 @@
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Diffusion Models Explained?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "kb_multimodal_generative"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "canon_hf_diffusers",
+        "kb_multimodal_generative"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Schedulers decide the denoising route",
+      "sub": "Timesteps control speed, quality, and reproducibility tradeoffs.",
+      "summary": "The scheduler converts denoiser predictions into the next sample.",
       "objectives": [
-        "Explain the role of design choices in Diffusion Models Explained.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain scheduler and timestep.",
+        "Connect steps to latency.",
+        "Avoid assuming more steps fixes everything."
       ],
       "termIds": [
         "diffusion",
@@ -654,299 +330,142 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "The scheduler is the route planner",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Diffusion Models Explained",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "At each timestep, the denoiser predicts a correction. The scheduler decides how that correction changes the sample. More steps can improve detail up to a point, but they add latency and may not fix bad conditioning or model limits."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Diffusion Models Explained."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "canon_hf_schedulers",
+            "kb_multimodal_generative"
           ]
         },
         {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Diffusion Models Explained, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
+          "id": "m3_matrix",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Diffusion control knobs",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Knob",
+            "What it changes",
+            "Failure to watch"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Seed",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
+                  "criterion": "Knob",
+                  "text": "Seed",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
+                  "criterion": "What it changes",
+                  "text": "initial noise and repeatability",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "same prompt can vary widely",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Need reproducible comparisons.",
               "cost": "Low",
-              "complexity": "Low"
+              "complexity": "Medium"
             },
             {
-              "name": "Production design",
+              "name": "Steps",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "criterion": "Knob",
+                  "text": "Steps",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
+                  "criterion": "What it changes",
+                  "text": "number of denoising updates",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "too few rough; too many slow",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Tune speed-quality.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Scheduler",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
+                  "criterion": "Knob",
+                  "text": "Scheduler",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "What it changes",
+                  "text": "path through timesteps",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure to watch",
+                  "text": "look, speed, or stability changes",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
+              "whenToUse": "Inference comparison.",
+              "cost": "Medium",
+              "complexity": "Medium"
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Diffusion Models Explained?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "canon_hf_schedulers"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Diffusion Models Explained: baseline, production design, or advanced optimization."
+        "canon_hf_schedulers",
+        "kb_multimodal_generative"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Code a toy denoising loop",
+      "sub": "A one-dimensional loop makes the iteration visible.",
+      "summary": "The toy code preserves the idea of repeated guided correction.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Diffusion Models Explained.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Run a tiny denoising loop.",
+        "Predict why it approaches rather than jumps.",
+        "Verify AI explanations of diffusion."
       ],
       "termIds": [
         "diffusion",
@@ -955,250 +474,83 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
-          "id": "m4_concept",
-          "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Diffusion Models Explained",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Diffusion Models Explained."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Diffusion Models Explained, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for diffusion models explained help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Toy denoising toward a prompt target",
           "language": "python",
-          "code": "from diffusers import DiffusionPipeline\npipe = DiffusionPipeline.from_pretrained(\"stabilityai/stable-diffusion-xl-base-1.0\")\nimage = pipe(\"A clean classroom diagram\").images[0]",
-          "explain": [
+          "code": "sample = 0.0\ntarget_from_prompt = 10.0\nsteps = 5\nguidance = 0.4\n\nfor t in range(steps, 0, -1):\n    correction = (target_from_prompt - sample) * guidance\n    sample += correction\n    print(f\"step {t}: {sample:.2f}\")",
+          "explanation": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Real diffusion uses tensors, trained denoisers, and schedulers. This toy loop shows repeated partial corrections toward conditioned structure."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "Will the sample reach exactly 10.0 after five steps?",
+            "answer": "No. It approaches 10.0 through partial corrections. Real diffusion also balances guidance, learned priors, and scheduler behavior."
           },
-          "syntax": [
+          "termIds": [
+            "diffusion",
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
+          ],
+          "sources": [
+            "kb_multimodal_generative",
+            "canon_hf_schedulers"
+          ]
+        },
+        {
+          "id": "m4_verify",
+          "kind": "conceptual",
+          "title": "Verify AI-generated diffusion code",
+          "body": [
             {
-              "part": "DiffusionPipeline",
-              "explains": "Loads a generation workflow."
-            },
-            {
-              "part": "from_pretrained",
-              "explains": "Fetches model weights."
-            },
-            {
-              "part": "pipe(...)",
-              "explains": "Generates an image."
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Checklist: iterative timesteps are present; denoiser and scheduler roles are separate; seed, model, steps, and prompt are recorded; and output review is included."
+                }
+              ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Diffusion Models Explained?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1"
+            "canon_hf_diffusers"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb_multimodal_generative",
+        "canon_hf_schedulers",
+        "canon_hf_diffusers"
       ]
     },
     {
       "id": "m5",
       "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Artifacts and safety checks finish the loop",
+      "sub": "A plausible image is still a draft.",
+      "summary": "Generated media needs artifact, factuality, safety, and rights review.",
       "objectives": [
-        "Explain the role of check and apply in Diffusion Models Explained.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name diffusion artifacts.",
+        "Add review criteria for lesson media.",
+        "Decide when to reject generated assets."
       ],
       "termIds": [
         "diffusion",
@@ -1207,296 +559,97 @@
         "vlm",
         "asr"
       ],
-      "estMinutes": 6,
+      "estMinutes": 8,
       "loadState": "full",
       "blocks": [
         {
           "id": "m5_concept",
           "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "title": "Looks good is not the same as correct",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This generative lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Diffusion Models Explained",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Generated media can contain distorted hands, impossible diagrams, unreadable labels, biased depictions, unsafe content, or rights constraints. A learning product should label, review, and replace assets that mislead."
                 }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "diffusion",
-                  "term": "diffusion"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Diffusion Models Explained."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Diffusion Models Explained, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_multimodal_generative",
+            "canon_hf_diffusers"
           ]
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "ruleOfThumb": "Use diffusion outputs as drafts that must pass content, safety, and rights review.",
+          "useWhen": "Use diffusion when visual variation or editing is useful and human review is available.",
+          "avoidWhen": "Avoid factual diagrams, identity-sensitive depictions, or rights-constrained contexts without verification.",
           "termIds": [
             "diffusion",
             "latent_space",
-            "pipeline"
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "diffusion",
-            "latent_space",
-            "pipeline"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
+            "kb_multimodal_generative"
           ]
         },
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Diffusion Models Explained?",
+          "title": "Review gate",
+          "prompt": "Why review a generated science illustration?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Diffusion always creates exact diagrams.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It can look polished while containing factual or visual errors.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Only text models need review.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Generated media needs domain and safety review.",
           "termIds": [
             "diffusion",
-            "latent_space"
+            "latent_space",
+            "pipeline",
+            "vlm",
+            "asr"
           ],
           "sources": [
-            "kb1"
+            "kb_multimodal_generative"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Diffusion Models Explained: baseline, production design, or advanced optimization."
+        "kb_multimodal_generative",
+        "canon_hf_diffusers"
+      ]
     }
   ],
   "glossary": {
     "diffusion": {
       "id": "diffusion",
       "label": "Diffusion",
-      "laymanDefinition": "Diffusion is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Diffusion is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A generative process that learns to turn noise into structured media.",
+      "technicalNote": "Diffusion systems combine denoising steps, conditioning, schedulers, and safety controls; quality and provenance depend on the full pipeline.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1505,8 +658,8 @@
     "latent_space": {
       "id": "latent_space",
       "label": "Latent space",
-      "laymanDefinition": "Latent space is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Latent space is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A compressed representation where models manipulate meaning more efficiently than raw pixels or audio.",
+      "technicalNote": "Latent-space choices affect speed, detail, editability, artifacts, and what safety or provenance checks can inspect.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1515,8 +668,8 @@
     "pipeline": {
       "id": "pipeline",
       "label": "Pipeline",
-      "laymanDefinition": "Pipeline is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Pipeline is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "The ordered set of model, preprocessing, generation, postprocessing, and safety steps.",
+      "technicalNote": "Media pipelines should pin model versions, prompts, parameters, assets, moderation, watermarking, and review metadata for reproducibility.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1525,8 +678,8 @@
     "vlm": {
       "id": "vlm",
       "label": "VLM",
-      "laymanDefinition": "A model that connects vision and language.",
-      "technicalNote": "In this lesson, VLM is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A model that connects visual inputs with language understanding or generation.",
+      "technicalNote": "VLM workflows need image preprocessing, prompt grounding, output validation, and privacy review for uploaded visual content.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +689,8 @@
     "asr": {
       "id": "asr",
       "label": "ASR",
-      "laymanDefinition": "Turning speech into text.",
-      "technicalNote": "In this lesson, ASR is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Technology that converts spoken audio into text.",
+      "technicalNote": "ASR systems should track language, accent, noise, timestamps, confidence, privacy, and downstream correction paths.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1547,8 +700,8 @@
     "provenance": {
       "id": "provenance",
       "label": "Provenance",
-      "laymanDefinition": "Provenance is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Provenance is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Evidence about where media came from and how it was created or edited.",
+      "technicalNote": "Provenance for generated media includes source assets, model versions, prompts, parameters, edits, disclosures, and review decisions.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,20 +709,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Diffusion Models Explained",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Denoising explanation",
         "questions": [
           {
-            "q": "What decision does Diffusion Models Explained change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Can you explain what changes at each denoising step?",
+            "why": "The core concept is the repeated correction loop guided by conditioning and scheduler timesteps.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Iterative denoising story",
+              "Stored-image lookup",
+              "One-step drawing"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Name noise, denoiser, conditioning, scheduler, step count, and review."
           }
         ]
       }
@@ -1581,124 +734,152 @@
         "t": "p",
         "spans": [
           {
-            "text": "Diffusion Models Explained is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct diffusion by naming forward noising, reverse denoising, seed, prompt conditioning, scheduler timesteps, artifacts, and final review."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Diffusion path from noisy sample to reviewed media",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Diffusion Models Explained.",
-          "what": "Mental model turns Diffusion Models Explained into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+          "label": "Generation starts from structured noise",
+          "sub": "The model learns to undo a corruption process.",
+          "what": "Learners get the core mental model first.",
+          "relevance": "This prevents prompt-only explanations of image generation.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Turn a noisy solar-system illustration into a cleaner sample over steps.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Diffusion Models Explained into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+          "label": "Conditioning tells the denoiser what to aim for",
+          "sub": "Prompts, masks, references, and layouts guide the same loop.",
+          "what": "Learners separate the engine from the guidance signal.",
+          "relevance": "This helps debug missing objects, bad counts, and weak layout control.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Encode the lesson prompt as guidance for the denoising path.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Diffusion Models Explained into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+          "label": "Schedulers decide the denoising route",
+          "sub": "Timesteps control speed, quality, and reproducibility tradeoffs.",
+          "what": "Learners understand a key inference component.",
+          "relevance": "This makes quality and cost tradeoffs concrete.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Compare fast and careful denoising routes with the same prompt.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Diffusion Models Explained into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Diffusion Models Explained, not just recognize the words.",
+          "label": "Code a toy denoising loop",
+          "sub": "A one-dimensional loop makes the iteration visible.",
+          "what": "Learners see iteration in runnable code.",
+          "relevance": "This turns the abstract process into mechanics.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Move a noisy number toward a prompt target over several steps.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Artifacts and safety checks finish the loop",
+          "sub": "A plausible image is still a draft.",
+          "what": "Learners close with responsible use.",
+          "relevance": "This prevents attractive images from becoming misleading teaching assets.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Review generated lesson media for correctness, safety, bias, and rights.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "guides"
         },
         {
           "from": "n_m2",
           "to": "n_m3",
-          "label": "then"
+          "label": "routes"
         },
         {
           "from": "n_m3",
           "to": "n_m4",
-          "label": "then"
+          "label": "implements"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "reviews"
         }
       ]
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Generation starts from structured noise",
+        "detail": "Diffusion begins with noise because training taught the model to remove it."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Conditioning tells the denoiser what to aim for",
+        "detail": "Conditioning shapes denoising without guaranteeing exact obedience."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Schedulers decide the denoising route",
+        "detail": "The scheduler converts denoiser predictions into the next sample."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Code a toy denoising loop",
+        "detail": "The toy code preserves the idea of repeated guided correction."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Artifacts and safety checks finish the loop",
+        "detail": "Generated media needs artifact, factuality, safety, and rights review."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_anchor",
+        "label": "Can you explain the concrete case in \"Generation starts from structured noise\"?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
-        "fromModuleId": "m3"
+        "id": "chk_code",
+        "label": "Can a reviewer run or inspect the code in \"Code a toy denoising loop\"?",
+        "fromModuleId": "m4"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_gate",
+        "label": "Does \"Artifacts and safety checks finish the loop\" define the production or review gate?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Diffusion Models Explained: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "Generative"
+      "prompt": "Create a five-step explanation of a generated lesson illustration: seed noise, prompt conditioning, scheduler steps, denoising updates, artifact review. Next rung: compare pixel diffusion with latent diffusion.",
+      "scopedTo": "Generative foundations",
+      "checks": [
+        "Generation is iterative.",
+        "Prompt conditioning is guidance, not command execution.",
+        "Scheduler and steps are recorded.",
+        "Output is reviewed before use."
+      ]
     }
   },
   "citations": {
@@ -1729,6 +910,27 @@
       "title": "Official documentation",
       "url": "https://huggingface.co/docs/diffusers/en/index",
       "asOfDate": "2026-06-20"
+    },
+    "canon_hf_diffusers": {
+      "id": "canon_hf_diffusers",
+      "kind": "canonical",
+      "title": "Hugging Face Diffusers documentation",
+      "url": "https://huggingface.co/docs/diffusers/en/index",
+      "asOfDate": "2026-06-23"
+    },
+    "canon_hf_schedulers": {
+      "id": "canon_hf_schedulers",
+      "kind": "canonical",
+      "title": "Diffusers schedulers documentation",
+      "url": "https://huggingface.co/docs/diffusers/en/api/schedulers/overview",
+      "asOfDate": "2026-06-23"
+    },
+    "kb_multimodal_generative": {
+      "id": "kb_multimodal_generative",
+      "kind": "kb",
+      "title": "KB: Multimodal and Generative Models",
+      "url": "https://huggingface.co/docs/diffusers/index",
+      "asOfDate": "2026-06-22"
     }
   }
 }

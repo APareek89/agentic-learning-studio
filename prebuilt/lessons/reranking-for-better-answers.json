@@ -4,8 +4,8 @@
     "topic": "Reranking for Better Answers",
     "title": "Reranking for Better Answers",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 32,
-    "thesis": "Reranking for Better Answers becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 40,
+    "thesis": "Reranking for Better Answers is practical when learners can apply it to this concrete case: A retriever finds many plausible docs and a reranker must put the truly useful evidence first. By the end, they should be able to build or review reranking experiment with baseline top-k, reranked top-k, and answer quality checks, measure relevant evidence in the top three chunks, and catch the failure where reranking improves average relevance but buries rare edge-case documents."
   },
   "learnerProfile": {
     "level": "intermediate",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Reranking for Better Answers: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Reranking for Better Answers by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Use a slower, more precise scorer on a short candidate list so the generator receives stronger evidence.",
+    "oneLineThesis": "Reranking improves RAG when recall exists but the best evidence is not reliably high enough to fit into context.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Reranking for Better Answers.",
-        "what": "Mental model turns Reranking for Better Answers into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+        "label": "Reranking starts after recall",
+        "sub": "A second stage only helps candidates that already exist.",
+        "what": "Learners diagnose whether reranking is the right lever.",
+        "relevance": "This avoids adding a costly reranker to a retrieval system with poor recall.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Separate missing evidence from badly ordered evidence before adding cost.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Reranking for Better Answers into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+        "label": "Cross-encoders read query and passage together",
+        "sub": "Precision improves because the scorer sees the pair.",
+        "what": "Learners know why reranking is slower but more precise.",
+        "relevance": "Understanding the architecture helps set candidate count and latency budgets.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Contrast bi-encoder retrieval speed with cross-encoder scoring depth.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Reranking for Better Answers into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+        "label": "Rerank the evidence you can defend",
+        "sub": "The reranker objective must match answer quality.",
+        "what": "Learners tune relevance definitions toward support, not topical similarity.",
+        "relevance": "A topically relevant chunk can still be useless for the claim being generated.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Prefer passages that directly support the answer over generally related text.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Reranking for Better Answers into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+        "label": "Implement reranking as a replaceable stage",
+        "sub": "Keep retrieval, reranking, and packing separately testable.",
+        "what": "Learners build a small reranking harness.",
+        "relevance": "A replaceable stage lets teams compare models, thresholds, and latency safely.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Write the rerank stage so failures expose candidate and score details.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Reranking for Better Answers into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+        "label": "Release reranking with eval and fallbacks",
+        "sub": "A reranker changes latency, cost, and answer risk.",
+        "what": "Learners plan measurement and fallback behavior for reranked RAG.",
+        "relevance": "Reranking can improve average precision while hurting exact or fresh-source cases.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Treat reranking as a quality gate with category-specific thresholds.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,41 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "procedural"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Reranking for Better Answers.",
-      "summary": "Build the simplest useful picture of Reranking for Better Answers. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Reranking starts after recall",
+      "sub": "A second stage only helps candidates that already exist.",
+      "summary": "Reranking is precision work on a candidate set, not magic retrieval.",
       "objectives": [
-        "Explain the role of mental model in Reranking for Better Answers.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain first-stage retrieval versus second-stage reranking.",
+        "Identify recall failures that reranking cannot fix.",
+        "Decide how many candidates to send to a reranker."
       ],
       "termIds": [
         "rag",
-        "embedding",
+        "reranker",
         "vector_search",
         "chunk",
-        "reranker"
+        "embedding"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Recall first, precision second",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Reranking for Better Answers",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: a policy assistant retrieves the right cancellation clause at rank 17, but the prompt packs only top 6. The generated answer cites a nearby FAQ instead. A reranker can help because the evidence exists but is badly ordered."
                 }
               ]
             },
@@ -148,33 +152,75 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "If the cancellation clause never appears in top 40, reranking is the wrong first fix. Look at chunking, filters, embedding model, sparse search, or query rewriting."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "For every failed answer, ask “was the needed chunk retrieved anywhere?” before changing the prompt."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ],
+          "analogy": "A reranker can choose the best cards in your hand; it cannot draw a missing card."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Case study: answerable but out of budget",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "In an internal handbook bot, dense retrieval puts “contractor PTO exceptions” at rank 13 behind general PTO policy pages. A cross-encoder reranker scores the query and each candidate together, moving the exception to rank 2."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The answer changes from a generic policy summary to a grounded answer with the exception cited. The improvement came from context selection, not a more verbose prompt."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Reranking for Better Answers."
+                    "text": "Capture the top-40 candidate list for the failing query."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Mark whether the expected source appears."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Rerank the list with a pairwise scorer."
+                  }
+                ],
+                [
+                  {
+                    "text": "Compare packed top-k before and after reranking."
                   }
                 ]
               ]
@@ -182,257 +228,87 @@
           ],
           "termIds": [
             "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Reranking for Better Answers.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Reranking for Better Answers, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb4",
+            "canon5"
           ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for reranking for better answers help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Reranking for Better Answers"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Reranking for Better Answers?",
+          "title": "Reranker fit",
+          "prompt": "When is reranking unlikely to help?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "When there are more than five documents in the corpus.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "When the decisive evidence is absent from the candidate set.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "When chunks contain metadata.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Reranking reorders retrieved candidates; it does not search the whole corpus by itself.",
           "termIds": [
             "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1"
+            "kb4",
+            "canon5"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb4",
+        "canon5"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Cross-encoders read query and passage together",
+      "sub": "Precision improves because the scorer sees the pair.",
+      "summary": "A reranker spends more compute per candidate to judge relevance more carefully.",
       "objectives": [
-        "Explain the role of mechanism in Reranking for Better Answers.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Describe bi-encoder and cross-encoder tradeoffs.",
+        "Explain why reranking usually happens on tens of candidates, not millions.",
+        "Plan latency budgets for reranking."
       ],
       "termIds": [
         "rag",
-        "embedding",
+        "reranker",
         "vector_search",
         "chunk",
-        "reranker"
+        "embedding"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Pairwise scoring is the expensive part",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Reranking for Better Answers",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Embedding retrieval usually encodes the query and passage separately, enabling fast approximate search over many chunks. A cross-encoder-style reranker reads the query and candidate passage together, which gives a richer relevance judgment but costs more per pair."
                 }
               ]
             },
@@ -440,33 +316,75 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "This is why a common pattern is retrieve 40 or 100 candidates quickly, rerank that short list, then pack the best 5 to 10 into the prompt."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If latency is tight, measure p95 with realistic candidate counts rather than assuming reranking is free."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ],
+          "analogy": "The retriever scans the library catalog; the reranker opens a short stack of books."
+        },
+        {
+          "id": "m2_worked",
+          "kind": "functionalExample",
+          "title": "Worked sizing: 60 candidates to 8 evidence chunks",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A product-doc assistant retrieves 60 candidates with hybrid search. The reranker scores each query-passage pair and returns the top 8. The answer prompt receives fewer but sharper chunks."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If p95 latency rises too much, the team can reduce first-stage top-k, cache reranker results for common queries, or route only ambiguous categories through reranking."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Reranking for Better Answers."
+                    "text": "Choose candidate count from recall eval, not a default."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Score pairs in batches."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Trim to the context budget used by generation."
+                  }
+                ],
+                [
+                  {
+                    "text": "Log candidate count, rerank latency, and before/after rank of expected sources."
                   }
                 ]
               ]
@@ -474,206 +392,87 @@
           ],
           "termIds": [
             "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Reranking for Better Answers, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for reranking for better answers help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
+            "kb4",
+            "canon5"
           ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Reranking for Better Answers"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Reranking for Better Answers?",
+          "title": "Architecture tradeoff",
+          "prompt": "Why not use a cross-encoder over every chunk in a large KB?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Cross-encoders cannot read user queries.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "It is too expensive per query; first-stage retrieval narrows the candidate set.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Vector search is always more accurate than reranking.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Rerankers are usually second-stage models because pairwise scoring is costly.",
           "termIds": [
             "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1"
+            "kb4",
+            "canon5"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb4",
+        "canon5"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Rerank the evidence you can defend",
+      "sub": "The reranker objective must match answer quality.",
+      "summary": "Reranking should optimize support for the user question.",
       "objectives": [
-        "Explain the role of design choices in Reranking for Better Answers.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Distinguish topical relevance from answer support.",
+        "Use graded judgments for ambiguous passages.",
+        "Spot cases where reranking over-favors summaries."
       ],
       "termIds": [
         "rag",
-        "embedding",
+        "reranker",
         "vector_search",
         "chunk",
-        "reranker"
+        "embedding"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Relevant is not always sufficient",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Reranking for Better Answers",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A passage can mention “refunds” and rank high while lacking the exact enterprise exception. Reranking should favor the chunk that answers the question, not the chunk that merely shares vocabulary."
                 }
               ]
             },
@@ -681,300 +480,195 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Reranking for Better Answers."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Reranking for Better Answers, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "When evaluating rerankers, label candidates with grades such as direct support, partial support, background, and irrelevant. This produces better feedback than a binary relevant/not relevant tag."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "The best evidence chunk should let a reviewer verify the final sentence without hunting elsewhere."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
-            "embedding",
-            "vector_search"
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb4",
+            "canon5"
+          ],
+          "analogy": "A witness who was in the building is not as useful as one who saw the event."
+        },
+        {
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "Reranking objective choices",
+          "criteria": [
+            "Objective",
+            "Best signal",
+            "Failure mode"
+          ],
+          "options": [
+            {
+              "name": "Topical relevance",
+              "cells": [
+                {
+                  "criterion": "Objective",
+                  "text": "Find passages about the same subject.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Best signal",
+                  "text": "Good for broad discovery.",
+                  "rating": "ok"
+                },
+                {
+                  "criterion": "Failure mode",
+                  "text": "Can rank background above answer evidence.",
+                  "rating": "bad"
+                }
+              ],
+              "whenToUse": "Use for exploratory search.",
+              "cost": "Low",
+              "complexity": "Low"
+            },
+            {
+              "name": "Answer support",
+              "cells": [
+                {
+                  "criterion": "Objective",
+                  "text": "Find passages that prove the requested claim.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Best signal",
+                  "text": "Best for grounded Q&A.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Failure mode",
+                  "text": "Needs better labels and harder evals.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for production RAG answers.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            },
+            {
+              "name": "Freshness-aware relevance",
+              "cells": [
+                {
+                  "criterion": "Objective",
+                  "text": "Prefer current source versions.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Best signal",
+                  "text": "Strong for policy and product docs.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Failure mode",
+                  "text": "Requires reliable version metadata.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when facts change often.",
+              "cost": "Medium",
+              "complexity": "Medium"
+            }
+          ],
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Reranking for Better Answers?",
+          "title": "Support vs topic",
+          "prompt": "The top reranked chunk is about refunds but lacks the exception asked about. What label should it receive?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Direct support because it shares the topic.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Partial or background support, not direct answer support.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Irrelevant because all refund pages are useless.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Graded labels help rerankers and reviewers distinguish topic overlap from proof.",
           "termIds": [
             "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1"
+            "kb4",
+            "canon5"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Reranking for Better Answers: baseline, production design, or advanced optimization."
+        "kb4",
+        "canon5"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Implement reranking as a replaceable stage",
+      "sub": "Keep retrieval, reranking, and packing separately testable.",
+      "summary": "Reranking should be observable plumbing, not hidden prompt magic.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Reranking for Better Answers.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Sort candidates by reranker score.",
+        "Preserve original retrieval ranks for debugging.",
+        "Predict how a simple scorer changes the packed set."
       ],
       "termIds": [
         "rag",
-        "embedding",
+        "reranker",
         "vector_search",
         "chunk",
-        "reranker"
+        "embedding"
       ],
-      "estMinutes": 6,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "A reranker is a scoring function over pairs",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Reranking for Better Answers",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "In production the scorer may be a cross-encoder, LLM judge, or hosted reranking API. The interface is simple: given query and candidate text, return a relevance score plus enough metadata to debug."
                 }
               ]
             },
@@ -982,521 +676,261 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Reranking for Better Answers."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Reranking for Better Answers, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for reranking for better answers help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "def",
-              "explains": "Defines a function."
-            },
-            {
-              "part": "if",
-              "explains": "Branches on readiness."
-            },
-            {
-              "part": "return",
-              "explains": "Hands back the result."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Reranking for Better Answers?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Reranking for Better Answers.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 6,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Reranking for Better Answers",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Reranking for Better Answers."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Reranking for Better Answers, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Spaced recall: from hybrid retrieval, keep original dense and sparse ranks. If reranking hurts exact identifier queries, those ranks help explain why."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Store the candidate text, original rank, rerank score, and final packed rank in traces."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Reranking for Better Answers?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
             "embedding"
           ],
           "sources": [
-            "kb1"
+            "kb4",
+            "canon5"
+          ]
+        },
+        {
+          "id": "m4_code",
+          "kind": "codeExample",
+          "title": "Small rerank harness with trace fields",
+          "language": "python",
+          "code": "def toy_score(query, text):\n    q_terms = set(query.lower().split())\n    t_terms = set(text.lower().split())\n    return len(q_terms & t_terms) / max(1, len(q_terms))\n\nquery = \"enterprise refund approval after 30 days\"\ncandidates = [\n    {\"id\": \"faq\", \"text\": \"Refunds are available for standard plans within 30 days.\", \"rank\": 1},\n    {\"id\": \"enterprise\", \"text\": \"Enterprise refunds after 30 days require finance approval.\", \"rank\": 9},\n    {\"id\": \"billing\", \"text\": \"Billing invoices are issued monthly.\", \"rank\": 4},\n]\n\nreranked = sorted(\n    [{**c, \"rerank_score\": toy_score(query, c[\"text\"])} for c in candidates],\n    key=lambda c: c[\"rerank_score\"],\n    reverse=True,\n)\nprint([(c[\"id\"], c[\"rank\"], round(c[\"rerank_score\"], 2)) for c in reranked])",
+          "explanation": "The toy scorer is intentionally simple; the useful pattern is preserving original rank and final score for inspection.",
+          "predictThenReveal": {
+            "prompt": "Before running it, predict which candidate moves above the original rank-1 FAQ.",
+            "answer": "The enterprise chunk rises because it overlaps the specific approval-after-30-days claim. A real reranker should learn richer evidence support than word overlap."
+          },
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ]
+        },
+        {
+          "id": "m4_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Trace fields",
+          "prompt": "Which field helps debug whether reranking hurt a previously good dense result?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "The UI theme used for citations.",
+              "correct": false
+            },
+            {
+              "text": "Original retrieval rank alongside rerank score and final rank.",
+              "correct": true
+            },
+            {
+              "text": "Only the final generated answer.",
+              "correct": false
+            }
+          ],
+          "explanation": "You need before/after rank data to isolate the reranker’s effect.",
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb4",
+        "canon5"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Release reranking with eval and fallbacks",
+      "sub": "A reranker changes latency, cost, and answer risk.",
+      "summary": "Reranking is production-ready when it improves the packed evidence under realistic budgets.",
+      "objectives": [
+        "Measure MRR and packed-context hit rate.",
+        "Inspect regressions by query bucket.",
+        "Create fallback behavior for reranker failure."
       ],
-      "decisionItForces": "Choose the right level of rigor for Reranking for Better Answers: baseline, production design, or advanced optimization."
+      "termIds": [
+        "rag",
+        "reranker",
+        "vector_search",
+        "chunk",
+        "embedding"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "Reranker wins must survive shipped constraints",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Evaluate the final context budget, not an offline top-100 leaderboard. The question is whether the answer prompt receives better evidence often enough to justify the latency and cost."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Failure modes include missing candidates, reranker timeouts, stale chunks ranked highly, over-favoring summaries, and degraded exact identifier queries. Route or fallback deliberately."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "A reranker outage should degrade to first-stage retrieval with a logged warning, not break every answer."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output after reranking",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Use this checklist on answer samples, not only metrics."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Every generated claim has a citation whose reranked chunk directly supports it."
+                  }
+                ],
+                [
+                  {
+                    "text": "Queries with exact identifiers still retain exact-match evidence."
+                  }
+                ],
+                [
+                  {
+                    "text": "Expected sources move into the packed top-k for known failures."
+                  }
+                ],
+                [
+                  {
+                    "text": "Reranker latency and timeout rates fit the product budget."
+                  }
+                ],
+                [
+                  {
+                    "text": "Negative or insufficient-evidence cases do not become overconfident answers."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ],
+          "personalizedFor": "Agentic Learning Studio production review"
+        },
+        {
+          "id": "m5_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Release decision",
+          "prompt": "The reranker improves MRR but doubles p95 latency for simple FAQ lookups. What is a sensible next step?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "Remove retrieval evaluation because MRR improved.",
+              "correct": false
+            },
+            {
+              "text": "Route reranking to ambiguous or high-risk categories instead of using it everywhere.",
+              "correct": true
+            },
+            {
+              "text": "Ask the model to answer without citations.",
+              "correct": false
+            }
+          ],
+          "explanation": "Reranking can be selectively applied where the quality gain is worth the cost.",
+          "termIds": [
+            "rag",
+            "reranker",
+            "vector_search",
+            "chunk",
+            "embedding"
+          ],
+          "sources": [
+            "kb4",
+            "canon5"
+          ]
+        }
+      ],
+      "citations": [
+        "kb4",
+        "canon5"
+      ]
     }
   ],
   "glossary": {
     "rag": {
       "id": "rag",
       "label": "RAG",
-      "laymanDefinition": "Retrieving evidence before generation.",
-      "technicalNote": "In this lesson, RAG is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Retrieving relevant evidence before generation so answers can be grounded in sources.",
+      "technicalNote": "RAG quality depends on corpus freshness, chunking, embeddings, filters, ranking, citation handling, and faithfulness evaluation.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +940,8 @@
     "embedding": {
       "id": "embedding",
       "label": "Embedding",
-      "laymanDefinition": "Embedding is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Embedding is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A numeric vector representation of text used for semantic comparison.",
+      "technicalNote": "Embedding choices fix dimension, distance metric, query/passage formatting, model version, and migration requirements for retrieval.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +950,8 @@
     "vector_search": {
       "id": "vector_search",
       "label": "Vector search",
-      "laymanDefinition": "Vector search is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Vector search is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Finding nearby vectors to retrieve semantically related chunks.",
+      "technicalNote": "Vector search needs metadata filters, recall tests, index tuning, and fallback for exact terms, IDs, and rare phrases.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +960,8 @@
     "chunk": {
       "id": "chunk",
       "label": "Chunk",
-      "laymanDefinition": "Chunk is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Chunk is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A source text segment stored and retrieved as a unit.",
+      "technicalNote": "Chunk design balances semantic completeness, citation accuracy, token budget, overlap, metadata, and update/delete behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +970,8 @@
     "reranker": {
       "id": "reranker",
       "label": "Reranker",
-      "laymanDefinition": "Reranker is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Reranker is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A second-stage model or method that reorders retrieved candidates by relevance.",
+      "technicalNote": "Rerankers improve top-result precision when candidate recall is adequate, but add latency, cost, and evaluation complexity.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +980,8 @@
     "rrf": {
       "id": "rrf",
       "label": "RRF",
-      "laymanDefinition": "A rank-based method for merging retrieval results.",
-      "technicalNote": "In this lesson, RRF is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A rank-fusion method that merges multiple result lists by reciprocal rank.",
+      "technicalNote": "RRF is useful for hybrid retrieval because it combines lexical and vector rankings without requiring comparable raw scores.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,20 +990,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Reranking for Better Answers",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Reranker adoption",
         "questions": [
           {
-            "q": "What decision does Reranking for Better Answers change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Is the right passage already in the candidate set but ranked too low for answer packing?",
+            "why": "Rerankers cannot rescue missing evidence; they can only reorder candidates that retrieval found.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Add reranking after broad retrieval",
+              "Increase dense top-k only",
+              "Rewrite the answer prompt"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Choose reranking when candidate recall is good and top-k precision is the bottleneck."
           }
         ]
       }
@@ -1581,64 +1015,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Reranking for Better Answers is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: reconstruct reranking by naming first-stage recall, pairwise scoring, top-k trimming, latency tradeoff, and the eval that proves answer evidence improved."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Reranking path from broad recall to packed evidence",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Reranking for Better Answers.",
-          "what": "Mental model turns Reranking for Better Answers into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+          "label": "Reranking starts after recall",
+          "sub": "A second stage only helps candidates that already exist.",
+          "what": "Learners diagnose whether reranking is the right lever.",
+          "relevance": "This avoids adding a costly reranker to a retrieval system with poor recall.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Separate missing evidence from badly ordered evidence before adding cost.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Reranking for Better Answers into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+          "label": "Cross-encoders read query and passage together",
+          "sub": "Precision improves because the scorer sees the pair.",
+          "what": "Learners know why reranking is slower but more precise.",
+          "relevance": "Understanding the architecture helps set candidate count and latency budgets.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Contrast bi-encoder retrieval speed with cross-encoder scoring depth.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Reranking for Better Answers into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+          "label": "Rerank the evidence you can defend",
+          "sub": "The reranker objective must match answer quality.",
+          "what": "Learners tune relevance definitions toward support, not topical similarity.",
+          "relevance": "A topically relevant chunk can still be useless for the claim being generated.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Prefer passages that directly support the answer over generally related text.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Reranking for Better Answers into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Reranking for Better Answers, not just recognize the words.",
+          "label": "Implement reranking as a replaceable stage",
+          "sub": "Keep retrieval, reranking, and packing separately testable.",
+          "what": "Learners build a small reranking harness.",
+          "relevance": "A replaceable stage lets teams compare models, thresholds, and latency safely.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Write the rerank stage so failures expose candidate and score details.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Release reranking with eval and fallbacks",
+          "sub": "A reranker changes latency, cost, and answer risk.",
+          "what": "Learners plan measurement and fallback behavior for reranked RAG.",
+          "relevance": "Reranking can improve average precision while hurting exact or fresh-source cases.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Treat reranking as a quality gate with category-specific thresholds.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -1649,57 +1100,62 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Build a 25-query eval where expected evidence appears in top-40 but often not top-6. Add a reranking stage, report MRR and packed-context hit rate, then inspect three cases where the answer still fails. Next rung: RAG faithfulness evaluation.",
+      "scopedTo": "Reranking for Better Answers"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Reranking starts after recall",
+        "detail": "Reranking is precision work on a candidate set, not magic retrieval."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Cross-encoders read query and passage together",
+        "detail": "A reranker spends more compute per candidate to judge relevance more carefully."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Rerank the evidence you can defend",
+        "detail": "Reranking should optimize support for the user question."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Implement reranking as a replaceable stage",
+        "detail": "Reranking should be observable plumbing, not hidden prompt magic."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Release reranking with eval and fallbacks",
+        "detail": "Reranking is production-ready when it improves the packed evidence under realistic budgets."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Reranking starts after recall” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Rerank the evidence you can defend” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Release reranking with eval and fallbacks”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Design a one-page implementation plan for Reranking for Better Answers: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -1729,6 +1185,41 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon5": {
+      "id": "canon5",
+      "kind": "canonical",
+      "title": "Sentence Transformers retrieve and rerank",
+      "url": "https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html",
+      "asOfDate": "2026-06-22"
     }
   }
 }

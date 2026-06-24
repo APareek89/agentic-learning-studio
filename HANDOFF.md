@@ -6,38 +6,27 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
-## ✅ PROMOTED TO PROD (2026-06-24) — pending verification ON PROD
-All four changes below + R0 are now on BOTH `staging` and `main`/prod (promoted 2026-06-24 — the staging Render FREE
-instance can't run the app, so testing happens on prod). They are committed + `tsc`-clean but **⚠️ still NOT
-runtime-verified** (the 2026-06-23 Anthropic 529 "Overloaded" event blocked live testing). Run the VERIFY-ON-PROD
-checklist below once Anthropic is healthy. The four (staging provenance hashes):
-1. `764fae2` — **module-cache correctness fix**: `moduleCacheKey` (`src/lib/hash.ts` + `src/server.ts`) keys on
-   objective/buildGoal/framework/lessonTypes (else a cache hit served a fragment that dropped those inputs).
-   Also `Stale/` gitignore + cleanup notes. (Side effect: existing `module_cache` rows regenerate once.)
-2. `56d5a27` — **parallel module build (A1/A4/A2)** (`src/agent/orchestrator.ts` + `nodes.ts`): cap-3 parallel
-   module bodies (`MAX_MODULE_CONCURRENCY`, default 3), spine-order incremental render (Module 1 in first wave),
-   relaxed density-repair trigger. ~13.5 min → ~5-6 min.
-3. `9bd0f51` — **deterministic overview repair (A5)** (`src/agent/orchestrator.ts`): `runOverviewJob` skips the
-   2nd ~56s Opus call on gate-only validation misses (ships the `repairBlueprint`-fixed skeleton); re-gens only on a
-   true parse/shape failure. Saves ~56s on gate-failing overviews.
-4. `bf0714d` — **overview 529 resilience** (`src/agent/llm.ts` + `nodes.ts`): the profiler + Opus skeleton now ride out
-   a 529/overload too (shared `withOverloadRetry` helper), so an overload DURING the overview doesn't fail it.
-On prod since 2026-06-23: `58fabd3` (R0 529 resilience — the module build). The 4 above were promoted to prod 2026-06-24
-in ONE commit by applying staging's version of the 5 code files + `.gitignore` (the main↔staging diff was exactly those
-changes; `tsc` clean). Staging stays the source of truth; future promotions: same one-commit file-apply.
-
-**⚠️ VERIFY ON PROD** (testing on prod since the staging Render FREE instance can't run the app; was blocked 2026-06-23 by
-the Anthropic overload — do these once it's healthy):
-- **Deploy:** confirm Render **prod** redeployed the latest `main` commit and is **Live**. The 529s alone are NOT proof the
-  code is live — the trace pattern is (see next).
-- **Overview ≈ 55-70s** (profiler + one Opus skeleton). A transient 529 should show in Langfuse as a SHORT RETRY BURST that
-  then SUCCEEDS (multiple attempts 2/5/12s apart), not a single ~38s failure — that burst pattern is how you confirm the resilience code is live.
-- **Build ≈ 5-6 min** (was ~13.5): Langfuse shows ~3 module-body traces STARTING within seconds of each other (parallel,
-  cap 3); Module 1 readable in ~90s while the rest build.
-- **Density (A2):** noticeably FEWER "TIGHTEN prose" traces than before (relaxed trigger).
-- **Overview repair (A5):** a gate-failing overview does NOT fire a 2nd Opus skeleton call.
-- **Cache fix:** generate two lessons on the SAME topic but different objective/buildGoal/framework — the 2nd must NOT serve
-  the 1st's module fragments (no wrong-input bleed from `module_cache`).
+## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
+Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
+on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
+- **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
+- **Parallel module build (A1/A4/A2)** — cap-3 (`MAX_MODULE_CONCURRENCY`) parallel bodies, spine-order incremental render,
+  relaxed density trigger. ~13.5 min → **~3.5–6 min** (verified: 3 module traces start the same second; 1 density pass, not 5).
+- **Deterministic overview repair (A5)** + **529/overload resilience** — shared `withOverloadRetry` (`llm.ts`) on
+  profiler/architect/modules; runs ride out a transient overload instead of failing.
+- **Opus PLANNER → Sonnet WRITER split** — new `planner` node (Opus, STRUCTURE only, ~3-4k chars/~18s) feeds the `architect`
+  node (now SONNET) which WRITES the prose. `runOverviewJob` = profiler→retriever→**planner**→architect. `coerceSkeleton`
+  tolerates title-less citations + empty glossary defs. See "Generation latency".
+- **Deferred glossary + synthesis** — `writeOverviewProse` (nodes.ts) fills glossary definitions + synthesis DURING the build,
+  in parallel with the module bodies (the preview never showed them). Overview ~94s → **~73s**; ~0 added to the build.
+- **"This lesson will cover"** — `mentalMap.willCover` (≤4 bullets; renderer `coversList()` falls back to module titles) below
+  the overview map, + a FLEXIBLE no-clip overview layout (`#overview` min-height + roomy card clamp 162–204px; scrolls
+  gracefully only if content genuinely overflows).
+- **5 Trainer/renderer UI fixes** — preview lock cleared after "Generate Lesson"; horizontal-overview parity with vertical;
+  scatter label de-collision; tabs → dropdown under "Trainer"; Sources link to the real source URL.
+- **Upload gating + 25MB cap** — "Generate Overview" is DISABLED while a file/repo is still uploading server-side (else the
+  lesson generated UNGROUNDED); 25MB cap client + server (`express.json` 40mb, `/api/upload` 35M-base64 ≈ 25MB).
+- Prior baseline already on both: R0 module-build 529 resilience.
 
 ## Generation latency (2026-06-23)
 - **529/overload resilience (shared `withOverloadRetry` in `src/agent/llm.ts`):** Anthropic `overloaded_error` (529) was

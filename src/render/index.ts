@@ -49,7 +49,7 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean } = 
 <style>${ARTIFACT_CSS}</style>${accentStyle}
 </head>
 <body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="light">
-${renderBody(bp)}
+${renderBody(bp, { previewOnly })}
 <div id="popover" role="dialog" aria-label="Definition"></div>
 <script type="application/json" id="glossary-data">${glossaryJson}</script>
 <script type="application/json" id="lesson-config">${configJson}</script>

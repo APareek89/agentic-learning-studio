@@ -4,8 +4,8 @@
     "topic": "Graph RAG",
     "title": "Graph RAG",
     "generatedAt": "2026-06-20",
-    "estTotalMinutes": 36,
-    "thesis": "Graph RAG becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "estTotalMinutes": 38,
+    "thesis": "Graph RAG is practical when learners can apply it to this concrete case: A product-support assistant needs to connect customers, products, incidents, and policies across documents. By the end, they should be able to build or review Graph RAG design with entity extraction, relationships, and retrieval paths, measure multi-hop questions answered with explicit evidence paths, and catch the failure where entity extraction errors create confident but wrong graph connections."
   },
   "learnerProfile": {
     "level": "advanced",
@@ -25,58 +25,68 @@
   },
   "mentalMap": {
     "title": "Graph RAG: mental map",
-    "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Graph RAG by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "caption": "Move from isolated chunks to entities, relationships, neighborhoods, and graph-backed evidence assembly.",
+    "oneLineThesis": "Graph RAG helps when the answer depends on relationships spread across sources, not just one semantically similar passage.",
     "nodes": [
       {
         "id": "n_m1",
-        "label": "Mental model",
-        "sub": "Build the simplest useful picture of Graph RAG.",
-        "what": "Mental model turns Graph RAG into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+        "label": "Relationship questions expose classic RAG limits",
+        "sub": "Graph RAG begins when isolated passages are not enough.",
+        "what": "Learners distinguish lookup questions from relationship questions.",
+        "relevance": "This prevents overbuilding graph pipelines for simple factual search.",
         "moduleId": "m1",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Problem",
+        "emphasis": "spine",
+        "orient": "Identify the multi-hop relationship the answer must explain.",
+        "order": 1
       },
       {
         "id": "n_m2",
-        "label": "Mechanism",
-        "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Graph RAG into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+        "label": "Entities and edges need provenance",
+        "sub": "A graph claim must point back to source text.",
+        "what": "Learners add provenance to graph nodes and edges.",
+        "relevance": "Without provenance, graph summaries become another source of ungrounded claims.",
         "moduleId": "m2",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Treat extracted relationships as hypotheses until source-linked.",
+        "order": 2
       },
       {
         "id": "n_m3",
-        "label": "Design choices",
-        "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Graph RAG into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+        "label": "Query planning chooses vector, graph, or both",
+        "sub": "Graph RAG is an orchestration choice at query time.",
+        "what": "Learners design query plans for graph-backed retrieval.",
+        "relevance": "Using graph traversal for every query increases cost and can pull weak context.",
         "moduleId": "m3",
         "layer": "Path",
-        "emphasis": "spine"
+        "emphasis": "normal",
+        "orient": "Route simple lookups and relationship questions through different paths.",
+        "order": 3
       },
       {
         "id": "n_m4",
-        "label": "Tiny implementation sketch",
-        "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Graph RAG into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+        "label": "Implement a bounded graph expansion",
+        "sub": "Small traversal code reveals hop and edge-type behavior.",
+        "what": "Learners implement a minimal graph neighborhood expansion.",
+        "relevance": "Bounded traversal prevents weakly connected nodes from flooding context.",
         "moduleId": "m4",
         "layer": "Path",
-        "emphasis": "normal"
+        "emphasis": "normal",
+        "orient": "Build the graph walk as inspectable retrieval code.",
+        "order": 4
       },
       {
         "id": "n_m5",
-        "label": "Check and apply",
-        "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Graph RAG into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+        "label": "Graph answers fail through false edges",
+        "sub": "Evaluation must inspect paths, not only final prose.",
+        "what": "Learners evaluate Graph RAG with path-level faithfulness.",
+        "relevance": "A fluent answer can hide a wrong edge or overextended traversal.",
         "moduleId": "m5",
-        "layer": "Path",
-        "emphasis": "spine"
+        "layer": "Synthesis",
+        "emphasis": "spine",
+        "orient": "Review extracted relationships and generated claims together.",
+        "order": 5
       }
     ],
     "edges": [
@@ -100,47 +110,41 @@
         "to": "n_m5",
         "label": "then"
       }
-    ]
+    ],
+    "structureType": "dependency"
   },
   "modules": [
     {
       "id": "m1",
       "order": 1,
-      "title": "Mental model",
-      "sub": "Build the simplest useful picture of Graph RAG.",
-      "summary": "Build the simplest useful picture of Graph RAG. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Relationship questions expose classic RAG limits",
+      "sub": "Graph RAG begins when isolated passages are not enough.",
+      "summary": "Graph RAG is for connected evidence, not for every knowledge base.",
       "objectives": [
-        "Explain the role of mental model in Graph RAG.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Define the retrieval problem Graph RAG solves.",
+        "Recognize entity and relationship questions.",
+        "Decide when classic RAG is sufficient."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m1_concept",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Some answers live between chunks",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Graph RAG",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Problem anchor: an operations lead asks which product features depend on a vendor whose contract is expiring. No single policy page says the full answer. The evidence is spread across architecture notes, vendor docs, feature ownership pages, and incident records."
                 }
               ]
             },
@@ -148,33 +152,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Classic vector search can retrieve related chunks, but it may not connect vendor, service, feature, team, and incident into a defensible chain. Graph RAG makes those connections retrievable."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "If the answer needs “A depends on B because C owns D,” list the entities and relations before choosing a retriever."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Classic RAG finds pages; Graph RAG can follow the index cards pinned between them."
+        },
+        {
+          "id": "m1_worked",
+          "kind": "functionalExample",
+          "title": "Case study: vendor exposure map",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The corpus contains docs for AuthFlow, Billing, VendorX, and incident postmortems. A graph extracts nodes for services, vendors, teams, and incidents, with edges such as DEPENDS_ON, OWNS, and MENTIONED_IN."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A query for “What breaks if VendorX sunsets the embeddings endpoint?” seeds VendorX, expands to dependent services, then retrieves source chunks for each edge. The final answer cites paths, not only passages."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Graph RAG."
+                    "text": "Extract candidate entities from each chunk."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Store edges with source chunk IDs and confidence."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Resolve aliases such as “VendorX API” and “VX embeddings.”"
+                  }
+                ],
+                [
+                  {
+                    "text": "At query time, retrieve seed entities and expand a bounded neighborhood."
                   }
                 ]
               ]
@@ -182,257 +229,90 @@
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_visual",
-          "kind": "steppedFlow",
-          "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Graph RAG.",
-          "steps": [
-            {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
-            },
-            {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
-            },
-            {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
-            },
-            {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Graph RAG, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m1_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for graph rag help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Graph RAG"
         },
         {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Graph RAG?",
+          "title": "Graph fit",
+          "prompt": "Which question most clearly calls for Graph RAG?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "What is the refund deadline in the billing policy?",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Which teams and features are indirectly affected by VendorX through shared services?",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Summarize the introduction paragraph of one document.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "The affected-features question depends on relationships across multiple sources.",
           "termIds": [
             "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m2",
       "order": 2,
-      "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Entities and edges need provenance",
+      "sub": "A graph claim must point back to source text.",
+      "summary": "Graph structure is useful only when every important edge can be audited.",
       "objectives": [
-        "Explain the role of mechanism in Graph RAG.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Describe entity extraction and edge extraction.",
+        "Explain why entity resolution is hard.",
+        "Attach source provenance to graph claims."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m2_concept",
           "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "title": "Edges are evidence claims",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Graph RAG",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "An LLM-extracted edge like “Billing DEPENDS_ON VendorX” is a claim, not a fact by itself. It needs source chunk IDs, extraction date, confidence, and ideally the exact sentence or table row that supported it."
                 }
               ]
             },
@@ -440,33 +320,76 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Entity resolution is a major failure point. “OpenAI,” “Open AI,” and “the model vendor” may refer to the same entity in one corpus and different entities in another. Bad merges poison graph traversal."
                 }
               ]
             },
             {
-              "t": "ul",
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "For each high-impact edge, ask whether a reviewer can open the source and verify it in under a minute."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "A graph edge without provenance is a rumor with a neat label."
+        },
+        {
+          "id": "m2_worked",
+          "kind": "functionalExample",
+          "title": "Worked edge record",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A source chunk says “Billing uses VendorX embeddings to classify invoice disputes.” The graph stores Service:Billing, Vendor:VendorX, Capability:invoice dispute classification, and an edge Billing USES VendorX with the source chunk ID."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "At answer time, the generated explanation cites the source chunk behind the edge, not the graph database alone. If the source changes, the edge can be re-extracted or retired."
+                }
+              ]
+            },
+            {
+              "t": "ol",
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Graph RAG."
+                    "text": "Extract entities and proposed relations from chunks."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Normalize aliases with human-reviewed rules for critical entities."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Store source chunk IDs and spans on edges."
+                  }
+                ],
+                [
+                  {
+                    "text": "Use edge provenance in the answer context."
                   }
                 ]
               ]
@@ -474,206 +397,90 @@
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Graph RAG, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
+            "kb3",
+            "kb4",
+            "canon4"
           ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m2_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for graph rag help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
+          "personalizedFor": "Graph RAG"
         },
         {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Graph RAG?",
+          "title": "Provenance check",
+          "prompt": "Why should an extracted graph edge keep a source chunk ID?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "So the LLM can ignore document permissions.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "So generated answers and audits can verify the relationship against original evidence.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "So vector search is no longer needed.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Graph structure complements source evidence; it does not replace it.",
           "termIds": [
             "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
       ]
     },
     {
       "id": "m3",
       "order": 3,
-      "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Query planning chooses vector, graph, or both",
+      "sub": "Graph RAG is an orchestration choice at query time.",
+      "summary": "The query should decide how much graph expansion is warranted.",
       "objectives": [
-        "Explain the role of design choices in Graph RAG.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Seed graph traversal from query entities or retrieved chunks.",
+        "Bound hop count and relationship types.",
+        "Combine vector evidence with graph neighborhoods."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "Start with seeds, then expand deliberately",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Graph RAG",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "A graph query usually needs seed entities. Seeds can come from entity linking in the user question, vector retrieval over entity descriptions, or classic retrieval over chunks that mention candidate entities."
                 }
               ]
             },
@@ -681,300 +488,199 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Graph RAG."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m3_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Graph RAG, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Expansion should be bounded: max hops, allowed edge types, freshness filters, and source permissions. Otherwise the graph can wander into weakly related neighborhoods and flood the prompt."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "If a graph expansion adds context, name the relationship that made each added item relevant."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "analogy": "Graph traversal is a guided walk, not a sightseeing tour."
+        },
+        {
+          "id": "m3_matrix",
+          "kind": "decisionMatrix",
+          "title": "Graph RAG query paths",
+          "criteria": [
+            "Path",
+            "Best for",
+            "Risk"
+          ],
+          "options": [
+            {
+              "name": "Vector only",
+              "cells": [
+                {
+                  "criterion": "Path",
+                  "text": "Retrieve chunks directly by semantic similarity.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Best for",
+                  "text": "Single-source lookup or ordinary Q&A.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Misses relationship chains.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for simple factual questions.",
+              "cost": "Low",
+              "complexity": "Low"
+            },
+            {
+              "name": "Graph seeded by entities",
+              "cells": [
+                {
+                  "criterion": "Path",
+                  "text": "Link entities, expand edges, retrieve provenance.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Best for",
+                  "text": "Ownership, dependency, compatibility, influence.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Alias errors and over-expansion.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use for relationship questions.",
+              "cost": "Medium",
+              "complexity": "High"
+            },
+            {
+              "name": "Vector seeds plus graph expansion",
+              "cells": [
+                {
+                  "criterion": "Path",
+                  "text": "Use retrieved chunks to find seed entities, then expand.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Best for",
+                  "text": "Messy natural-language questions.",
+                  "rating": "good"
+                },
+                {
+                  "criterion": "Risk",
+                  "text": "Bad first-stage retrieval biases the graph walk.",
+                  "rating": "ok"
+                }
+              ],
+              "whenToUse": "Use when entity names are implicit.",
+              "cost": "Medium",
+              "complexity": "High"
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Graph RAG?",
+          "title": "Query plan",
+          "prompt": "A user asks for the refund deadline in one policy page. What should the system likely do?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Run community detection for every query.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Use classic retrieval first; graph traversal is probably unnecessary.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Extract new graph edges during answer generation only.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Graph RAG is a tool for relationship-heavy questions, not a default for all lookup.",
           "termIds": [
             "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ],
-      "decisionItForces": "Choose the right level of rigor for Graph RAG: baseline, production design, or advanced optimization."
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     },
     {
       "id": "m4",
       "order": 4,
-      "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "title": "Implement a bounded graph expansion",
+      "sub": "Small traversal code reveals hop and edge-type behavior.",
+      "summary": "Graph RAG needs explicit limits that traces can show.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Graph RAG.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Represent edges with type and provenance.",
+        "Expand from seed entities with max hops.",
+        "Predict which nodes and chunks enter context."
       ],
       "termIds": [
         "rag",
+        "chunk",
         "embedding",
         "vector_search",
-        "chunk",
         "reranker"
       ],
-      "estMinutes": 7,
+      "estMinutes": 9,
       "loadState": "full",
       "blocks": [
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "Traversal settings are retrieval settings",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Graph RAG",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "Max hops, edge types, confidence thresholds, and provenance filters are as important as vector top-k. They decide what the generator can see."
                 }
               ]
             },
@@ -982,521 +688,269 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Graph RAG."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Graph RAG, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for graph rag help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_code",
-          "kind": "codeExample",
-          "title": "Minimal working sketch",
-          "language": "python",
-          "code": "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\ndocs = SimpleDirectoryReader(\"data\").load_data()\nindex = VectorStoreIndex.from_documents(docs)\nquery_engine = index.as_query_engine()\nprint(query_engine.query(\"What does this corpus say?\"))",
-          "explain": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
-                }
-              ]
-            }
-          ],
-          "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
-          },
-          "syntax": [
-            {
-              "part": "SimpleDirectoryReader",
-              "explains": "Loads files."
-            },
-            {
-              "part": "VectorStoreIndex",
-              "explains": "Creates the retrieval index."
-            },
-            {
-              "part": "query_engine",
-              "explains": "Runs grounded questions."
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "canon1",
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_quiz",
-          "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Graph RAG?",
-          "format": "mcq",
-          "options": [
-            {
-              "text": "It is a named concept to memorize.",
-              "correct": false
-            },
-            {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
-              "correct": true
-            },
-            {
-              "text": "It should always be solved with the largest available model.",
-              "correct": false
-            }
-          ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        }
-      ],
-      "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
-      ]
-    },
-    {
-      "id": "m5",
-      "order": 5,
-      "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
-      "objectives": [
-        "Explain the role of check and apply in Graph RAG.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
-      ],
-      "termIds": [
-        "rag",
-        "embedding",
-        "vector_search",
-        "chunk",
-        "reranker"
-      ],
-      "estMinutes": 7,
-      "loadState": "full",
-      "blocks": [
-        {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Graph RAG",
-                  "strong": true
-                },
-                {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
-                }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Graph RAG."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Graph RAG, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
+                  "text": "Spaced recall: from chunking, source chunk IDs still matter. Graph expansion should bring back the text behind edges, not just node names."
                 }
               ]
             },
             {
               "t": "callout",
-              "tone": "good",
+              "tone": "info",
               "spans": [
                 {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
+                  "text": "Print the path that led each evidence chunk into the prompt. If the path is not meaningful, do not include it."
                 }
               ]
             }
           ],
           "termIds": [
             "rag",
+            "chunk",
             "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1",
-            "canon1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         },
         {
-          "id": "m5_quiz",
+          "id": "m4_code",
+          "kind": "codeExample",
+          "title": "Bounded relationship expansion",
+          "language": "python",
+          "code": "edges = {\n    \"VendorX\": [(\"used_by\", \"Billing\", \"chunk_vendor_billing\")],\n    \"Billing\": [(\"owned_by\", \"PaymentsTeam\", \"chunk_billing_owner\"), (\"powers\", \"InvoiceDisputes\", \"chunk_invoice\")],\n}\n\ndef expand(seed, max_hops=2, allowed={\"used_by\", \"owned_by\", \"powers\"}):\n    frontier = [(seed, [])]\n    seen = {seed}\n    evidence = []\n    for _ in range(max_hops):\n        new_frontier = []\n        for node, path in frontier:\n            for rel, target, source in edges.get(node, []):\n                if rel not in allowed or target in seen:\n                    continue\n                seen.add(target)\n                next_path = path + [(node, rel, target)]\n                evidence.append({\"target\": target, \"path\": next_path, \"source\": source})\n                new_frontier.append((target, next_path))\n        frontier = new_frontier\n    return evidence\n\nprint(expand(\"VendorX\"))",
+          "explanation": "The traversal returns paths and source chunk IDs, which are the minimum ingredients needed to assemble grounded answer context.",
+          "predictThenReveal": {
+            "prompt": "Before running it, predict which feature node appears because VendorX is used by Billing.",
+            "answer": "InvoiceDisputes appears through VendorX -> Billing -> InvoiceDisputes, and the trace keeps the source chunk behind each edge."
+          },
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        },
+        {
+          "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Graph RAG?",
+          "title": "Traversal guardrail",
+          "prompt": "What should happen when graph expansion reaches a node through an irrelevant edge type?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Let the model decide silently after seeing it.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Filter it out before it becomes answer context.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Delete the whole graph.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Edge-type filters keep traversal aligned with the user’s relationship question.",
           "termIds": [
             "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
           ],
           "sources": [
-            "kb1"
+            "kb3",
+            "kb4",
+            "canon4"
           ]
         }
       ],
       "citations": [
-        "kb1",
-        "kb2",
-        "canon1",
-        "canon2"
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
+    },
+    {
+      "id": "m5",
+      "order": 5,
+      "title": "Graph answers fail through false edges",
+      "sub": "Evaluation must inspect paths, not only final prose.",
+      "summary": "Graph RAG quality depends on extraction, resolution, traversal, and synthesis.",
+      "objectives": [
+        "Name Graph RAG-specific failure modes.",
+        "Verify answer claims against source-backed paths.",
+        "Decide when a human review gate is needed."
       ],
-      "decisionItForces": "Choose the right level of rigor for Graph RAG: baseline, production design, or advanced optimization."
+      "termIds": [
+        "rag",
+        "chunk",
+        "embedding",
+        "vector_search",
+        "reranker"
+      ],
+      "estMinutes": 9,
+      "loadState": "full",
+      "blocks": [
+        {
+          "id": "m5_concept",
+          "kind": "conceptual",
+          "title": "The graph can hallucinate before the model does",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Graph RAG adds new failure modes: false extracted edges, duplicate entity merges, stale relationships, over-broad community summaries, and path expansion that looks connected but does not answer the question."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Evaluation should ask: Did the system choose the right seed? Were the traversed edges correct? Did the answer cite the source behind each relationship? Did the model overstate a weak path?"
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "For high-impact operational answers, require the output to show path evidence or defer to human review."
+                }
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        },
+        {
+          "id": "m5_checklist",
+          "kind": "functionalExample",
+          "title": "Verify AI output from Graph RAG",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Inspect both graph evidence and final language."
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Each relationship claim maps to a source-backed edge or source chunk."
+                  }
+                ],
+                [
+                  {
+                    "text": "Entity aliases are resolved correctly for the domain and time period."
+                  }
+                ],
+                [
+                  {
+                    "text": "The graph path answers the question rather than merely connecting related nodes."
+                  }
+                ],
+                [
+                  {
+                    "text": "Community summaries are backed by retrievable source evidence."
+                  }
+                ],
+                [
+                  {
+                    "text": "The answer distinguishes confirmed paths from uncertain or missing relationships."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ],
+          "personalizedFor": "Agentic Learning Studio production review"
+        },
+        {
+          "id": "m5_quiz",
+          "kind": "selfCheckQuiz",
+          "title": "Graph faithfulness",
+          "prompt": "The answer says Feature A depends on VendorX, but the path only shows both mentioned in one incident summary. What is wrong?",
+          "format": "mcq",
+          "options": [
+            {
+              "text": "The answer is safe because graph paths always imply causality.",
+              "correct": false
+            },
+            {
+              "text": "The relationship is overstated; co-mention is not dependency evidence.",
+              "correct": true
+            },
+            {
+              "text": "The model should remove all citations.",
+              "correct": false
+            }
+          ],
+          "explanation": "Graph paths need semantically valid edge types and source support.",
+          "termIds": [
+            "rag",
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
+          ],
+          "sources": [
+            "kb3",
+            "kb4",
+            "canon4"
+          ]
+        }
+      ],
+      "citations": [
+        "kb3",
+        "kb4",
+        "canon4"
+      ]
     }
   ],
   "glossary": {
     "rag": {
       "id": "rag",
       "label": "RAG",
-      "laymanDefinition": "Retrieving evidence before generation.",
-      "technicalNote": "In this lesson, RAG is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Retrieving relevant evidence before generation so answers can be grounded in sources.",
+      "technicalNote": "RAG quality depends on corpus freshness, chunking, embeddings, filters, ranking, citation handling, and faithfulness evaluation.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +960,8 @@
     "embedding": {
       "id": "embedding",
       "label": "Embedding",
-      "laymanDefinition": "Embedding is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Embedding is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A numeric vector representation of text used for semantic comparison.",
+      "technicalNote": "Embedding choices fix dimension, distance metric, query/passage formatting, model version, and migration requirements for retrieval.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +970,8 @@
     "vector_search": {
       "id": "vector_search",
       "label": "Vector search",
-      "laymanDefinition": "Vector search is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Vector search is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Finding nearby vectors to retrieve semantically related chunks.",
+      "technicalNote": "Vector search needs metadata filters, recall tests, index tuning, and fallback for exact terms, IDs, and rare phrases.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +980,8 @@
     "chunk": {
       "id": "chunk",
       "label": "Chunk",
-      "laymanDefinition": "Chunk is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Chunk is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A source text segment stored and retrieved as a unit.",
+      "technicalNote": "Chunk design balances semantic completeness, citation accuracy, token budget, overlap, metadata, and update/delete behavior.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +990,8 @@
     "reranker": {
       "id": "reranker",
       "label": "Reranker",
-      "laymanDefinition": "Reranker is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Reranker is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A second-stage model or method that reorders retrieved candidates by relevance.",
+      "technicalNote": "Rerankers improve top-result precision when candidate recall is adequate, but add latency, cost, and evaluation complexity.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1000,8 @@
     "rrf": {
       "id": "rrf",
       "label": "RRF",
-      "laymanDefinition": "A rank-based method for merging retrieval results.",
-      "technicalNote": "In this lesson, RRF is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A rank-fusion method that merges multiple result lists by reciprocal rank.",
+      "technicalNote": "RRF is useful for hybrid retrieval because it combines lexical and vector rankings without requiring comparable raw scores.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1556,20 +1010,20 @@
     }
   },
   "decisionDoc": {
-    "title": "Decision prompts",
+    "title": "Decision prompts for Graph RAG",
     "themes": [
       {
-        "name": "Adoption check",
+        "name": "Graph RAG fit check",
         "questions": [
           {
-            "q": "What decision does Graph RAG change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Does the question require entities, paths, communities, contradictions, or ownership relationships across documents?",
+            "why": "Graph extraction adds cost and refresh complexity, so it should be reserved for relationship-heavy retrieval failures.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Graph plus vector retrieval",
+              "Classic vector RAG",
+              "Deterministic database query"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Use Graph RAG when relationship traversal or path explanation is central; use simpler retrieval when one or two passages answer the question."
           }
         ]
       }
@@ -1581,64 +1035,81 @@
         "t": "p",
         "spans": [
           {
-            "text": "Graph RAG is now tied to a mental map, a workflow, and a decision checklist. "
-          },
-          {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "Retrieval prompt: rebuild Graph RAG by naming entities, edges, provenance, seed retrieval, path expansion, community summaries, and the failure mode each step introduces."
           }
         ]
       }
     ],
     "referenceArchitecture": {
-      "title": "Reference path",
+      "title": "Graph RAG path from text to entities to answer context",
       "layout": "flow",
       "nodes": [
         {
           "id": "n_m1",
-          "label": "Mental model",
-          "sub": "Build the simplest useful picture of Graph RAG.",
-          "what": "Mental model turns Graph RAG into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+          "label": "Relationship questions expose classic RAG limits",
+          "sub": "Graph RAG begins when isolated passages are not enough.",
+          "what": "Learners distinguish lookup questions from relationship questions.",
+          "relevance": "This prevents overbuilding graph pipelines for simple factual search.",
           "moduleId": "m1",
-          "layer": "Path",
-          "emphasis": "spine"
+          "layer": "Problem",
+          "emphasis": "spine",
+          "orient": "Identify the multi-hop relationship the answer must explain.",
+          "order": 1
         },
         {
           "id": "n_m2",
-          "label": "Mechanism",
-          "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Graph RAG into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+          "label": "Entities and edges need provenance",
+          "sub": "A graph claim must point back to source text.",
+          "what": "Learners add provenance to graph nodes and edges.",
+          "relevance": "Without provenance, graph summaries become another source of ungrounded claims.",
           "moduleId": "m2",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Treat extracted relationships as hypotheses until source-linked.",
+          "order": 2
         },
         {
           "id": "n_m3",
-          "label": "Design choices",
-          "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Graph RAG into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+          "label": "Query planning chooses vector, graph, or both",
+          "sub": "Graph RAG is an orchestration choice at query time.",
+          "what": "Learners design query plans for graph-backed retrieval.",
+          "relevance": "Using graph traversal for every query increases cost and can pull weak context.",
           "moduleId": "m3",
           "layer": "Path",
-          "emphasis": "spine"
+          "emphasis": "normal",
+          "orient": "Route simple lookups and relationship questions through different paths.",
+          "order": 3
         },
         {
           "id": "n_m4",
-          "label": "Tiny implementation sketch",
-          "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Graph RAG into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Graph RAG, not just recognize the words.",
+          "label": "Implement a bounded graph expansion",
+          "sub": "Small traversal code reveals hop and edge-type behavior.",
+          "what": "Learners implement a minimal graph neighborhood expansion.",
+          "relevance": "Bounded traversal prevents weakly connected nodes from flooding context.",
           "moduleId": "m4",
           "layer": "Path",
-          "emphasis": "normal"
+          "emphasis": "normal",
+          "orient": "Build the graph walk as inspectable retrieval code.",
+          "order": 4
+        },
+        {
+          "id": "n_m5",
+          "label": "Graph answers fail through false edges",
+          "sub": "Evaluation must inspect paths, not only final prose.",
+          "what": "Learners evaluate Graph RAG with path-level faithfulness.",
+          "relevance": "A fluent answer can hide a wrong edge or overextended traversal.",
+          "moduleId": "m5",
+          "layer": "Synthesis",
+          "emphasis": "spine",
+          "orient": "Review extracted relationships and generated claims together.",
+          "order": 5
         }
       ],
       "edges": [
         {
           "from": "n_m1",
           "to": "n_m2",
-          "label": "then"
+          "label": "shapes"
         },
         {
           "from": "n_m2",
@@ -1649,57 +1120,62 @@
           "from": "n_m3",
           "to": "n_m4",
           "label": "then"
+        },
+        {
+          "from": "n_m4",
+          "to": "n_m5",
+          "label": "proves"
         }
       ]
+    },
+    "capstone": {
+      "prompt": "Choose a corpus where answers depend on relationships, such as vendor dependencies or research-paper claims. Sketch entities, edge types, provenance fields, seed retrieval, max-hop expansion, and three questions classic RAG misses. Next rung: evaluate graph answers for faithfulness.",
+      "scopedTo": "Graph RAG"
     },
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Relationship questions expose classic RAG limits",
+        "detail": "Graph RAG is for connected evidence, not for every knowledge base."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Entities and edges need provenance",
+        "detail": "Graph structure is useful only when every important edge can be audited."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Query planning chooses vector, graph, or both",
+        "detail": "The query should decide how much graph expansion is warranted."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Implement a bounded graph expansion",
+        "detail": "Graph RAG needs explicit limits that traces can show."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Graph answers fail through false edges",
+        "detail": "Graph RAG quality depends on extraction, resolution, traversal, and synthesis."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_problem_anchor",
+        "label": "Can you explain why “Relationship questions expose classic RAG limits” matters for the running case?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_design_choice",
+        "label": "Did you make the design choice from “Query planning chooses vector, graph, or both” explicit?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_evidence_gate",
+        "label": "Can the capstone be reviewed using “Graph answers fail through false edges”?",
         "fromModuleId": "m5"
       }
-    ],
-    "capstone": {
-      "prompt": "Design a one-page implementation plan for Graph RAG: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "RAG"
-    }
+    ]
   },
   "citations": {
     "kb1": {
@@ -1729,6 +1205,48 @@
       "title": "Official documentation",
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
+    },
+    "kb3": {
+      "id": "kb3",
+      "kind": "kb",
+      "title": "KB: RAG Fundamentals",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "asOfDate": "2026-06-22"
+    },
+    "kb4": {
+      "id": "kb4",
+      "kind": "kb",
+      "title": "KB: Chunking, hybrid retrieval, Graph RAG, and retrieval evaluation notes",
+      "url": "kb/RAG-tooling",
+      "asOfDate": "2026-06-22"
+    },
+    "canon3": {
+      "id": "canon3",
+      "kind": "canonical",
+      "title": "LangChain retrieval concepts",
+      "url": "https://docs.langchain.com/oss/python/langchain/retrieval",
+      "asOfDate": "2026-06-22"
+    },
+    "canon4": {
+      "id": "canon4",
+      "kind": "canonical",
+      "title": "LlamaIndex RAG guide",
+      "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon6": {
+      "id": "canon6",
+      "kind": "canonical",
+      "title": "Microsoft GraphRAG docs",
+      "url": "https://microsoft.github.io/graphrag/",
+      "asOfDate": "2026-06-22"
+    },
+    "canon7": {
+      "id": "canon7",
+      "kind": "canonical",
+      "title": "Neo4j GraphRAG Python docs",
+      "url": "https://neo4j.com/docs/neo4j-graphrag-python/current/",
+      "asOfDate": "2026-06-22"
     }
   }
 }

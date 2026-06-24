@@ -5,7 +5,7 @@
     "title": "Embeddings and Vector Search",
     "generatedAt": "2026-06-20",
     "estTotalMinutes": 32,
-    "thesis": "Embeddings and Vector Search becomes practical when you can map it to a decision, a workflow, and a validation check."
+    "thesis": "An embedding turns text into a point in space so that meaning becomes distance; vector search then answers 'what is closest in meaning?' — the retrieval engine behind semantic search and RAG."
   },
   "learnerProfile": {
     "level": "beginner",
@@ -26,14 +26,17 @@
   "mentalMap": {
     "title": "Embeddings and Vector Search: mental map",
     "caption": "Start with the blocks, then open each one for detail.",
-    "oneLineThesis": "Use Embeddings and Vector Search by connecting concept, mechanism, tradeoff, implementation, and validation.",
+    "oneLineThesis": "Turn meaning into coordinates (embeddings), then find the nearest neighbours (vector search) — tuned, then validated.",
+    "structureType": "conceptual",
+    "entryNodeId": "n_m1",
     "nodes": [
       {
         "id": "n_m1",
         "label": "Mental model",
         "sub": "Build the simplest useful picture of Embeddings and Vector Search.",
-        "what": "Mental model turns Embeddings and Vector Search into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+        "orient": "What an embedding is and why keyword search can't find meaning.",
+        "what": "An embedding is a list of numbers that places a piece of text in a meaning-space, where closeness equals similarity.",
+        "relevance": "It matters because every later choice — model, chunking, search — only makes sense once you picture text as points in space.",
         "moduleId": "m1",
         "layer": "Path",
         "emphasis": "spine"
@@ -42,8 +45,9 @@
         "id": "n_m2",
         "label": "Mechanism",
         "sub": "See the moving parts and how they interact.",
-        "what": "Mechanism turns Embeddings and Vector Search into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+        "orient": "The ingest→chunk→embed→store→search pipeline and how distance is measured.",
+        "what": "An embedding model converts each chunk to a vector, you store the vectors, and at query time you embed the question and find nearest vectors.",
+        "relevance": "It matters because knowing the pipeline tells you exactly where quality, latency, and cost are decided.",
         "moduleId": "m2",
         "layer": "Path",
         "emphasis": "normal"
@@ -52,8 +56,9 @@
         "id": "n_m3",
         "label": "Design choices",
         "sub": "Make the choices that change quality, cost, or risk.",
-        "what": "Design choices turns Embeddings and Vector Search into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+        "orient": "Chunk size, exact vs approximate search, and whether to add a reranker.",
+        "what": "The big levers are chunk size, which embedding model, exact vs approximate nearest-neighbour search, and an optional reranker.",
+        "relevance": "It matters because these choices set the quality/cost/latency tradeoff for the whole retrieval system.",
         "moduleId": "m3",
         "layer": "Path",
         "emphasis": "spine"
@@ -62,8 +67,9 @@
         "id": "n_m4",
         "label": "Tiny implementation sketch",
         "sub": "Connect the concept to a small practical artifact.",
-        "what": "Tiny implementation sketch turns Embeddings and Vector Search into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+        "orient": "A minimal embed-store-search loop in code, and how to verify it.",
+        "what": "A few lines that embed chunks, store them, embed a query, and return the top matches by similarity.",
+        "relevance": "It matters because seeing the smallest runnable shape makes the pipeline concrete and debuggable.",
         "moduleId": "m4",
         "layer": "Path",
         "emphasis": "normal"
@@ -72,8 +78,9 @@
         "id": "n_m5",
         "label": "Check and apply",
         "sub": "Use active recall and a decision checklist to make it stick.",
-        "what": "Check and apply turns Embeddings and Vector Search into a usable mental model.",
-        "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+        "orient": "How retrieval breaks in practice, plus recall and a go/no-go decision.",
+        "what": "The common failure modes (bad chunking, model mismatch, stale index) and a checklist to catch them.",
+        "relevance": "It matters because retrieval fails quietly — wrong results look like confident answers — so you need a deliberate check.",
         "moduleId": "m5",
         "layer": "Path",
         "emphasis": "spine"
@@ -108,11 +115,11 @@
       "order": 1,
       "title": "Mental model",
       "sub": "Build the simplest useful picture of Embeddings and Vector Search.",
-      "summary": "Build the simplest useful picture of Embeddings and Vector Search. This module turns that idea into a concrete decision and a testable behavior.",
+      "summary": "Keyword search matches letters; embeddings match meaning. This module frames the whole topic: text becomes a point in space, and similarity becomes distance.",
       "objectives": [
-        "Explain the role of mental model in Embeddings and Vector Search.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain what an embedding is in one plain sentence.",
+        "Say why keyword search fails on questions phrased differently from the source.",
+        "Picture text as points in a meaning-space where closeness equals similarity."
       ],
       "termIds": [
         "rag",
@@ -125,22 +132,29 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m1_concept",
+          "id": "m1_why",
           "kind": "conceptual",
-          "title": "Mental model: the core idea",
+          "title": "Why embeddings exist: the problem keyword search can't solve",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Imagine a help centre. A user types "
                 },
                 {
-                  "text": "Embeddings and Vector Search",
-                  "strong": true
+                  "text": "\"my card got declined\"",
+                  "em": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": ", but the right article is titled "
+                },
+                {
+                  "text": "\"payment failed at checkout\"",
+                  "em": true
+                },
+                {
+                  "text": ". Keyword search shares no words, so it finds nothing — even though the meaning is identical."
                 }
               ]
             },
@@ -148,14 +162,58 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "That is the gap "
                 },
                 {
-                  "text": "rag",
-                  "term": "rag"
+                  "text": "embeddings",
+                  "term": "embedding",
+                  "strong": true
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": " close. An "
+                },
+                {
+                  "text": "embedding",
+                  "term": "embedding"
+                },
+                {
+                  "text": " turns a piece of text into a list of numbers — a point in space — positioned so that texts with similar meaning sit close together, even when they share no words."
+                }
+              ]
+            },
+            {
+              "t": "callout",
+              "tone": "info",
+              "spans": [
+                {
+                  "text": "Before reading on, predict: "
+                },
+                {
+                  "text": "if \"my card got declined\" and \"payment failed\" become two points in space, what would you measure to decide they mean the same thing?",
+                  "em": true
+                }
+              ]
+            }
+          ],
+          "analogy": "An embedding is like pinning every sentence onto a giant map: sentences about the same idea land in the same neighbourhood, no matter what words they used to get there.",
+          "termIds": [
+            "embedding",
+            "vector_search"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m1_concept",
+          "kind": "conceptual",
+          "title": "The core idea: meaning becomes distance",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Hold three ideas together and the rest of this lesson follows."
                 }
               ]
             },
@@ -164,24 +222,128 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Embeddings and Vector Search."
+                    "text": "Text → vector.",
+                    "strong": true
+                  },
+                  {
+                    "text": " An "
+                  },
+                  {
+                    "text": "embedding",
+                    "term": "embedding"
+                  },
+                  {
+                    "text": " model reads text and outputs a fixed-length list of numbers (often hundreds of them)."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Similar meaning → nearby points.",
+                    "strong": true
+                  },
+                  {
+                    "text": " The model is trained so that related texts land close together and unrelated texts land far apart."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Search → nearest neighbours.",
+                    "strong": true
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Vector search",
+                    "term": "vector_search"
+                  },
+                  {
+                    "text": " embeds your query and returns the points closest to it — the most similar texts."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "This is also the engine behind "
+                },
+                {
+                  "text": "RAG",
+                  "term": "rag"
+                },
+                {
+                  "text": ": retrieve the most relevant passages by meaning, then hand them to a language model as evidence before it answers."
+                }
               ]
             }
           ],
           "termIds": [
-            "rag",
+            "embedding",
+            "vector_search",
+            "rag"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m1_scatter",
+          "kind": "interactiveScatter",
+          "title": "Meaning-space: pick a query, see its neighbours",
+          "caption": "Each point is a short text placed by meaning. Pick a query and watch the nearest points light up — that is exactly what vector search returns.",
+          "points": [
+            {
+              "label": "payment failed at checkout",
+              "x": 20,
+              "y": 78,
+              "group": "billing"
+            },
+            {
+              "label": "card was declined",
+              "x": 28,
+              "y": 70,
+              "group": "billing"
+            },
+            {
+              "label": "refund not received",
+              "x": 34,
+              "y": 82,
+              "group": "billing"
+            },
+            {
+              "label": "reset my password",
+              "x": 80,
+              "y": 30,
+              "group": "account"
+            },
+            {
+              "label": "can't log in",
+              "x": 74,
+              "y": 24,
+              "group": "account"
+            },
+            {
+              "label": "delete my account",
+              "x": 86,
+              "y": 38,
+              "group": "account"
+            }
+          ],
+          "queries": [
+            {
+              "label": "my card got declined",
+              "x": 25,
+              "y": 73
+            },
+            {
+              "label": "I forgot my password",
+              "x": 78,
+              "y": 28
+            }
+          ],
+          "termIds": [
             "embedding",
             "vector_search"
           ],
@@ -193,117 +355,43 @@
           "id": "m1_visual",
           "kind": "steppedFlow",
           "title": "Click through the flow",
-          "caption": "The smallest useful sequence for Embeddings and Vector Search.",
+          "caption": "The smallest useful sequence: text becomes vectors, a query finds the nearest ones.",
           "steps": [
             {
-              "label": "Input",
-              "detail": "A user goal, document, prompt, or request enters the system."
+              "label": "Text",
+              "detail": "A document or question enters as plain words."
             },
             {
-              "label": "Process",
-              "detail": "The core model, retriever, tool, or workflow transforms it."
+              "label": "Embed",
+              "detail": "An embedding model turns it into a vector — a point in meaning-space."
             },
             {
-              "label": "Check",
-              "detail": "Validation, citations, traces, or policy checks decide whether it is ready."
+              "label": "Compare",
+              "detail": "Vector search measures distance from the query point to every stored point."
             },
             {
-              "label": "Output",
-              "detail": "The system returns a useful answer, artifact, or next action."
-            }
-          ],
-          "min": 1,
-          "max": 5,
-          "unit": "level",
-          "stops": [
-            {
-              "at": 1,
-              "label": "Intuition",
-              "note": "Good for orientation."
-            },
-            {
-              "at": 3,
-              "label": "Working model",
-              "note": "Enough detail to predict failures."
-            },
-            {
-              "at": 5,
-              "label": "Operational rigor",
-              "note": "Adds validation and monitoring."
+              "label": "Return",
+              "detail": "The closest points come back as the most similar texts."
             }
           ],
           "termIds": [
-            "rag",
-            "embedding"
+            "embedding",
+            "vector_search"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m1_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Embeddings and Vector Search, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
           "id": "m1_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: the help-centre search box",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for embeddings and vector search help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "A support team has 500 help articles. With keyword search, \"my card got declined\" returns nothing useful because no article uses those exact words."
                 }
               ]
             },
@@ -311,14 +399,28 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "They switch to "
+                },
+                {
+                  "text": "vector search",
+                  "term": "vector_search"
+                },
+                {
+                  "text": ". Each article is embedded once and stored. The query is embedded at search time, and the nearest article — \"payment failed at checkout\" — comes back first. Same meaning, different words, correct result."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "That is the pattern to copy: embed the corpus once, embed each query, return nearest neighbours."
                 }
               ]
             }
           ],
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "rag",
             "embedding",
             "vector_search"
           ],
@@ -327,61 +429,28 @@
           ]
         },
         {
-          "id": "m1_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
           "id": "m1_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mental model\" in Embeddings and Vector Search?",
+          "prompt": "Why does keyword search miss the article \"payment failed at checkout\" when the user types \"my card got declined\"?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The article is too long to index.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Keyword search matches shared words, and these two phrases share none — even though they mean the same thing.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The user used too many words.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Keyword search compares literal tokens. Embeddings compare meaning, so semantically equivalent phrasings land near each other regardless of wording.",
           "termIds": [
-            "rag",
-            "embedding"
+            "embedding",
+            "vector_search"
           ],
           "sources": [
             "kb1"
@@ -399,12 +468,12 @@
       "id": "m2",
       "order": 2,
       "title": "Mechanism",
-      "sub": "See the moving parts and how they interact.",
-      "summary": "See the moving parts and how they interact. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the mental model: open the pipeline that turns text into searchable points.",
+      "summary": "Now we open the box. Text is chunked, each chunk is embedded into a vector, vectors are stored in an index, and a query is embedded and matched by distance. Knowing each stage tells you where quality is won or lost.",
       "objectives": [
-        "Explain the role of mechanism in Embeddings and Vector Search.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name the five stages of the retrieval pipeline in order.",
+        "Explain what a chunk is and why text is split before embedding.",
+        "Describe how similarity is measured between two vectors."
       ],
       "termIds": [
         "rag",
@@ -417,22 +486,26 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m2_concept",
-          "kind": "conceptual",
-          "title": "Mechanism: the core idea",
+          "id": "m2_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Embeddings and Vector Search",
+                  "text": "Before reading on, predict from memory: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "in module 1 you met the core idea. What does an "
+                },
+                {
+                  "text": "embedding",
+                  "term": "embedding"
+                },
+                {
+                  "text": " turn a piece of text into, and what does \"close together\" mean for two texts?"
                 }
               ]
             },
@@ -440,42 +513,178 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Answer it, then continue. (An embedding turns text into a vector — a point in meaning-space. Two texts close together mean similar things. This module shows the machinery that makes that happen.)",
+                  "em": true
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Embeddings and Vector Search."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "rag",
+            "embedding"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
+          "id": "m2_concept",
+          "kind": "conceptual",
+          "title": "The retrieval pipeline, stage by stage",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Building a searchable corpus and answering a query is one pipeline with two phases. Indexing happens once; querying happens on every request."
+                }
+              ]
+            },
+            {
+              "t": "ol",
+              "items": [
+                [
+                  {
+                    "text": "Ingest.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Load the raw documents you want to search."
+                  }
+                ],
+                [
+                  {
+                    "text": "Chunk.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Split each document into smaller passages — "
+                  },
+                  {
+                    "text": "chunks",
+                    "term": "chunk"
+                  },
+                  {
+                    "text": " — because one vector cannot faithfully represent a whole long document."
+                  }
+                ],
+                [
+                  {
+                    "text": "Embed.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Run each "
+                  },
+                  {
+                    "text": "chunk",
+                    "term": "chunk"
+                  },
+                  {
+                    "text": " through an "
+                  },
+                  {
+                    "text": "embedding",
+                    "term": "embedding"
+                  },
+                  {
+                    "text": " model to get its vector."
+                  }
+                ],
+                [
+                  {
+                    "text": "Store.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Save the vectors (with their text) in a vector index built for fast nearest-neighbour lookup."
+                  }
+                ],
+                [
+                  {
+                    "text": "Search.",
+                    "strong": true
+                  },
+                  {
+                    "text": " At query time, embed the question with the same model and ask the index for the nearest vectors. That is "
+                  },
+                  {
+                    "text": "vector search",
+                    "term": "vector_search"
+                  },
+                  {
+                    "text": "."
+                  }
+                ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The query must be embedded with the "
+                },
+                {
+                  "text": "same model",
+                  "strong": true
+                },
+                {
+                  "text": " used for the chunks — otherwise the two sets of points live in different spaces and distance means nothing."
+                }
+              ]
+            }
+          ],
+          "analogy": "Think of a library: chunking is tearing books into single-topic pages, embedding is filing each page by subject, and search is walking straight to the nearest shelf for your question.",
+          "termIds": [
+            "chunk",
             "embedding",
             "vector_search"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
+          "id": "m2_similarity",
+          "kind": "conceptual",
+          "title": "How 'closeness' is actually measured",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Two vectors are compared by an angle, not just a straight-line gap. The most common measure is "
+                },
+                {
+                  "text": "cosine similarity",
+                  "strong": true
+                },
+                {
+                  "text": ": it looks at the direction each vector points and scores how aligned they are, from -1 (opposite) to 1 (identical direction)."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Why direction and not raw distance? Because meaning lives in which way a vector points, not how long it is. Two passages about the same topic point the same way even if one is wordier than the other."
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "So \"nearest neighbour\" really means \"smallest angle\" — the chunks whose direction best matches the query's direction."
+                }
+              ]
+            }
+          ],
+          "analogy": "Cosine similarity is like comparing which way two compass needles point: same heading means same meaning, even if one needle is bigger.",
+          "termIds": [
+            "vector_search",
+            "embedding"
           ],
           "sources": [
             "kb1"
@@ -484,42 +693,42 @@
         {
           "id": "m2_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "Walk one query through the pipeline",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Embed the question",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Embeddings and Vector Search, write one sentence that says what this part owns and what it does not own."
+                      "text": "\"How do I get a refund?\" becomes a query vector using the same embedding model the chunks used."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Score every stored chunk",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "The index computes similarity between the query vector and each stored chunk vector."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Return the top matches",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "The highest-scoring chunks — say the top 5 — are returned as the most relevant passages."
                     }
                   ]
                 }
@@ -527,7 +736,8 @@
             }
           ],
           "termIds": [
-            "rag",
+            "chunk",
+            "vector_search",
             "embedding"
           ],
           "sources": [
@@ -538,13 +748,20 @@
         {
           "id": "m2_example",
           "kind": "functionalExample",
-          "title": "Concrete use case",
+          "title": "Concrete use case: indexing a product manual",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Imagine a learner asks for embeddings and vector search help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
+                  "text": "A 200-page manual is ingested, split into ~800 "
+                },
+                {
+                  "text": "chunks",
+                  "term": "chunk"
+                },
+                {
+                  "text": " of a few paragraphs each, and every chunk is embedded and stored once."
                 }
               ]
             },
@@ -552,14 +769,14 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
+                  "text": "When a user asks \"how do I replace the filter?\", the question is embedded and the index instantly returns the three chunks whose vectors point most like the query — the filter-replacement section — without scanning all 800 by hand."
                 }
               ]
             }
           ],
           "personalizedFor": "Agentic Learning Studio course library",
           "termIds": [
-            "rag",
+            "chunk",
             "embedding",
             "vector_search"
           ],
@@ -568,61 +785,29 @@
           ]
         },
         {
-          "id": "m2_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
           "id": "m2_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Mechanism\" in Embeddings and Vector Search?",
+          "prompt": "What is the correct order of the indexing-and-search pipeline?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Embed → Ingest → Chunk → Search → Store",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Ingest → Chunk → Embed → Store → Search",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Search → Chunk → Embed → Ingest → Store",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "You ingest documents, split them into chunks, embed each chunk into a vector, store the vectors, then embed queries and search the store for nearest neighbours.",
           "termIds": [
-            "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search"
           ],
           "sources": [
             "kb1"
@@ -640,19 +825,20 @@
       "id": "m3",
       "order": 3,
       "title": "Design choices",
-      "sub": "Make the choices that change quality, cost, or risk.",
-      "summary": "Make the choices that change quality, cost, or risk. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the mechanism: the few knobs that decide quality, cost, and latency.",
+      "summary": "The pipeline has a handful of high-leverage knobs: chunk size, which embedding model, exact vs approximate search, and whether to add a reranker. This module helps you pick the smallest design that meets the need.",
       "objectives": [
-        "Explain the role of design choices in Embeddings and Vector Search.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Explain the tradeoff in chunk size between precision and context.",
+        "Say when approximate nearest-neighbour search is worth its small accuracy loss.",
+        "Decide when a reranker earns its extra cost and latency."
       ],
       "termIds": [
         "rag",
         "embedding",
         "vector_search",
         "chunk",
-        "reranker"
+        "reranker",
+        "rrf"
       ],
       "estMinutes": 6,
       "loadState": "full",
@@ -660,20 +846,27 @@
         {
           "id": "m3_concept",
           "kind": "conceptual",
-          "title": "Design choices: the core idea",
+          "title": "The knobs that actually matter",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "Before reading on, predict: ",
+                  "em": true
                 },
                 {
-                  "text": "Embeddings and Vector Search",
-                  "strong": true
+                  "text": "if you make each ",
+                  "em": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "chunk",
+                  "term": "chunk",
+                  "em": true
+                },
+                {
+                  "text": " very large, what do you gain and what do you lose at search time?",
+                  "em": true
                 }
               ]
             },
@@ -681,14 +874,7 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Four choices shape almost every retrieval system."
                 }
               ]
             },
@@ -697,25 +883,125 @@
               "items": [
                 [
                   {
-                    "text": "Name the input and output of this part of Embeddings and Vector Search."
+                    "text": "Chunk size.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Small "
+                  },
+                  {
+                    "text": "chunks",
+                    "term": "chunk"
+                  },
+                  {
+                    "text": " are precise but lose surrounding context; large chunks keep context but dilute the match, so the relevant sentence drowns in noise."
                   }
                 ],
                 [
                   {
-                    "text": "Separate what the model decides from what the application enforces."
+                    "text": "Embedding model.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Bigger "
+                  },
+                  {
+                    "text": "embedding",
+                    "term": "embedding"
+                  },
+                  {
+                    "text": " models capture nuance but cost more per call and produce larger vectors to store."
                   }
                 ],
                 [
                   {
-                    "text": "Keep one measurable success signal attached to the concept."
+                    "text": "Exact vs approximate search.",
+                    "strong": true
+                  },
+                  {
+                    "text": " Exact search checks every vector (slow at scale); approximate nearest-neighbour search trades a little accuracy for huge speed."
+                  }
+                ],
+                [
+                  {
+                    "text": "Reranker.",
+                    "strong": true
+                  },
+                  {
+                    "text": " A "
+                  },
+                  {
+                    "text": "reranker",
+                    "term": "reranker"
+                  },
+                  {
+                    "text": " re-scores the top results with a slower, more accurate model to push the best answer to position one."
                   }
                 ]
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "A common upgrade is hybrid retrieval — run keyword and "
+                },
+                {
+                  "text": "vector search",
+                  "term": "vector_search"
+                },
+                {
+                  "text": " together and merge the two ranked lists with "
+                },
+                {
+                  "text": "RRF",
+                  "term": "rrf"
+                },
+                {
+                  "text": " so neither blind spot dominates."
+                }
               ]
             }
           ],
           "termIds": [
-            "rag",
+            "chunk",
             "embedding",
+            "vector_search",
+            "reranker",
+            "rrf"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
+          "id": "m3_slider",
+          "kind": "interactiveSlider",
+          "title": "Chunk size: drag to feel the tradeoff",
+          "caption": "Slide from tiny to huge chunks and read what you win and lose at each setting.",
+          "min": 1,
+          "max": 3,
+          "unit": "chunk size",
+          "stops": [
+            {
+              "at": 1,
+              "label": "Small (a sentence or two)",
+              "note": "Very precise matches, but a chunk may be missing the context needed to actually answer — you retrieve a fragment."
+            },
+            {
+              "at": 2,
+              "label": "Medium (a paragraph or two)",
+              "note": "Usually the sweet spot: enough context to be useful, focused enough that the match stays sharp."
+            },
+            {
+              "at": 3,
+              "label": "Large (a whole page)",
+              "note": "Lots of context, but the one relevant sentence is diluted by surrounding text, so similarity scores blur and precision drops."
+            }
+          ],
+          "termIds": [
+            "chunk",
             "vector_search"
           ],
           "sources": [
@@ -725,42 +1011,42 @@
         {
           "id": "m3_walk",
           "kind": "walkthrough",
-          "title": "How to reason through it",
+          "title": "How to reason through a design choice",
           "steps": [
             {
-              "label": "Name the boundary",
+              "label": "Name the requirement",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "For Embeddings and Vector Search, write one sentence that says what this part owns and what it does not own."
+                      "text": "Write the user-visible need in one sentence, e.g. \"return the right help article in the top 3 results.\""
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Attach evidence",
+              "label": "Pick the smallest design that meets it",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
+                      "text": "Start with medium chunks, a standard embedding model, and approximate search. Add a reranker only if the requirement is unmet."
                     }
                   ]
                 }
               ]
             },
             {
-              "label": "Choose a test",
+              "label": "Measure before optimizing",
               "detail": [
                 {
                   "t": "p",
                   "spans": [
                     {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
+                      "text": "Run a handful of real queries and check whether the right chunk appears in the top results before reaching for heavier machinery."
                     }
                   ]
                 }
@@ -768,8 +1054,9 @@
             }
           ],
           "termIds": [
-            "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "reranker"
           ],
           "sources": [
             "kb1",
@@ -779,121 +1066,88 @@
         {
           "id": "m3_decision",
           "kind": "decisionMatrix",
-          "title": "Decision block",
+          "title": "Which retrieval design fits?",
           "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
+            "Quality",
+            "Latency",
+            "Build effort"
           ],
           "options": [
             {
-              "name": "Simple baseline",
+              "name": "Pure vector search, approximate",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
+                  "criterion": "Quality",
+                  "text": "Good for most semantic queries.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
+                  "criterion": "Latency",
+                  "text": "Fast even on millions of vectors.",
+                  "rating": "good"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
+                  "criterion": "Build effort",
+                  "text": "Just embed, store, query.",
+                  "rating": "good"
                 }
               ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
+              "whenToUse": "Start here: meaning-based search where exact wording varies.",
               "cost": "Low",
               "complexity": "Low"
             },
             {
-              "name": "Production design",
+              "name": "Hybrid (vector + keyword, RRF merge)",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
+                  "criterion": "Quality",
+                  "text": "Catches exact terms vector search misses (IDs, codes).",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
+                  "criterion": "Latency",
+                  "text": "Two searches plus a merge step.",
                   "rating": "ok"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
+                  "criterion": "Build effort",
+                  "text": "Maintain two indexes and fuse with RRF.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
+              "whenToUse": "Use when queries mix natural language with exact tokens like part numbers.",
               "cost": "Medium",
               "complexity": "Medium"
             },
             {
-              "name": "Advanced optimization",
+              "name": "Vector search + reranker",
               "cells": [
                 {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
+                  "criterion": "Quality",
+                  "text": "Best top-1 accuracy; reorders the shortlist.",
                   "rating": "good"
                 },
                 {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
+                  "criterion": "Latency",
+                  "text": "Reranker adds a slower model on the top results.",
+                  "rating": "bad"
                 },
                 {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
+                  "criterion": "Build effort",
+                  "text": "Add and tune a second model.",
                   "rating": "ok"
                 }
               ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
+              "whenToUse": "Use when the single best answer must be first and latency budget allows.",
               "cost": "High",
-              "complexity": "High"
+              "complexity": "Medium"
             }
           ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "howToRead": "Pick the simplest row that meets your quality requirement; only move down when a measured gap forces it.",
           "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m3_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
+            "vector_search",
+            "reranker",
+            "rrf"
           ],
           "sources": [
             "kb1",
@@ -903,25 +1157,25 @@
         {
           "id": "m3_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Design choices\" in Embeddings and Vector Search?",
+          "prompt": "Why can chunks that are too large hurt retrieval quality?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "Large chunks are always slower to store.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "The one relevant sentence is diluted by surrounding text, so the similarity score blurs and precision drops.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Embedding models reject chunks over a fixed size.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "A vector summarizes the whole chunk. When a chunk mixes many topics, the summary is averaged and the match to a focused query weakens.",
           "termIds": [
-            "rag",
+            "chunk",
             "embedding"
           ],
           "sources": [
@@ -935,18 +1189,18 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Embeddings and Vector Search: baseline, production design, or advanced optimization."
+      "decisionItForces": "Choose the retrieval design: pure vector search, hybrid with RRF, or vector search plus a reranker."
     },
     {
       "id": "m4",
       "order": 4,
       "title": "Tiny implementation sketch",
-      "sub": "Connect the concept to a small practical artifact.",
-      "summary": "Connect the concept to a small practical artifact. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the design choices: the smallest runnable embed-store-search loop.",
+      "summary": "Theory becomes concrete in a few lines: embed the chunks, store them, embed the query, return the top matches. We also cover how to check an AI-generated version before trusting it.",
       "objectives": [
-        "Explain the role of tiny implementation sketch in Embeddings and Vector Search.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Read a minimal embed-store-search loop and name each step.",
+        "Complete the missing line that ranks results by similarity.",
+        "List the specific things to verify in AI-generated retrieval code."
       ],
       "termIds": [
         "rag",
@@ -961,20 +1215,20 @@
         {
           "id": "m4_concept",
           "kind": "conceptual",
-          "title": "Tiny implementation sketch: the core idea",
+          "title": "The smallest shape that works",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
+                  "text": "A working "
                 },
                 {
-                  "text": "Embeddings and Vector Search",
-                  "strong": true
+                  "text": "vector search",
+                  "term": "vector_search"
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": " has only three moving parts: a function that turns text into a vector, a place to keep the vectors, and a similarity comparison at query time."
                 }
               ]
             },
@@ -982,128 +1236,22 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
+                  "text": "Everything heavier — an index for scale, a "
                 },
                 {
-                  "text": "rag",
-                  "term": "rag"
+                  "text": "reranker",
+                  "term": "reranker"
                 },
                 {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": ", monitoring — is added on top of this same shape once you can see it run."
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Embeddings and Vector Search."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "rag",
+            "vector_search",
             "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1"
-          ]
-        },
-        {
-          "id": "m4_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
-            {
-              "label": "Name the boundary",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Embeddings and Vector Search, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Attach evidence",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "label": "Choose a test",
-              "detail": [
-                {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m4_example",
-          "kind": "functionalExample",
-          "title": "Concrete use case",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "Imagine a learner asks for embeddings and vector search help while building an AI feature. The useful response identifies the next decision, shows evidence, and gives a safe next step."
-                }
-              ]
-            },
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "That is the pattern to copy: orient, explain, decide, then test."
-                }
-              ]
-            }
-          ],
-          "personalizedFor": "Agentic Learning Studio course library",
-          "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
+            "reranker"
           ],
           "sources": [
             "kb1"
@@ -1112,39 +1260,46 @@
         {
           "id": "m4_code",
           "kind": "codeExample",
-          "title": "Minimal working sketch",
+          "title": "Minimal embed-store-search loop",
           "language": "python",
-          "code": "def choose_next_step(goal, evidence_ready):\n    if not evidence_ready:\n        return \"retrieve sources first\"\n    return f\"draft the smallest useful answer for {goal}\"",
+          "code": "import numpy as np\n\n# 1. Embed: each chunk and the query become vectors (model omitted).\nchunk_vecs = embed([\"payment failed at checkout\", \"reset my password\"])\nquery_vec = embed([\"my card got declined\"])[0]\n\ndef cosine(a, b):\n    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))\n\n# 2. Search: score every stored chunk, return the best match.\nscores = [cosine(query_vec, c) for c in chunk_vecs]\nbest = int(np.argmax(scores))\nprint(\"best chunk index:\", best)",
           "explain": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "Treat this as the smallest runnable shape, then add tracing, validation, and tests before production."
+                  "text": "Treat this as the smallest runnable shape: embed the "
+                },
+                {
+                  "text": "chunks",
+                  "term": "chunk"
+                },
+                {
+                  "text": " and the query, score each chunk with cosine similarity, and pick the highest. A real system swaps the list scan for a vector index, but the logic is identical."
                 }
               ]
             }
           ],
           "predictThenReveal": {
-            "prompt": "What is the first thing you would wrap with a test?",
-            "answer": "The boundary where external evidence, model output, or tool action enters the product."
+            "prompt": "The line `best = int(np.argmax(scores))` is left for you to reason about. Given a list of cosine scores, what does this line return — and why argmax and not argmin?",
+            "answer": "It returns the index of the HIGHEST score. Cosine similarity is larger when two vectors point the same way, so the most similar chunk has the maximum score — hence argmax, not argmin."
           },
           "syntax": [
             {
-              "part": "def",
-              "explains": "Defines a function."
+              "part": "np.dot(a, b)",
+              "explains": "Multiplies the two vectors element-wise and sums — the core of cosine similarity."
             },
             {
-              "part": "if",
-              "explains": "Branches on readiness."
+              "part": "np.linalg.norm",
+              "explains": "Length of a vector; dividing by both lengths isolates direction (angle)."
             },
             {
-              "part": "return",
-              "explains": "Hands back the result."
+              "part": "np.argmax",
+              "explains": "Returns the index of the largest value in the list of scores."
             }
           ],
           "termIds": [
-            "rag",
+            "chunk",
             "embedding",
             "vector_search"
           ],
@@ -1154,28 +1309,115 @@
           ]
         },
         {
+          "id": "m4_verify",
+          "kind": "note",
+          "tone": "warn",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "If you ask an AI assistant to generate retrieval code, check these four things before trusting it:",
+                  "strong": true
+                }
+              ]
+            },
+            {
+              "t": "ul",
+              "items": [
+                [
+                  {
+                    "text": "Same model both sides. The query and the chunks must use the identical embedding model, or distances are meaningless."
+                  }
+                ],
+                [
+                  {
+                    "text": "Normalization matches the metric. If it uses cosine similarity, confirm vectors are normalized (or the formula divides by norms, as above)."
+                  }
+                ],
+                [
+                  {
+                    "text": "It returns the MOST similar. Verify it sorts by highest similarity, not lowest distance flipped the wrong way."
+                  }
+                ],
+                [
+                  {
+                    "text": "Index is rebuilt when data changes. Confirm new or edited documents are re-embedded, or search will quietly return stale results."
+                  }
+                ]
+              ]
+            }
+          ],
+          "termIds": [
+            "embedding",
+            "vector_search"
+          ],
+          "sources": [
+            "kb1",
+            "canon1"
+          ]
+        },
+        {
+          "id": "m4_example",
+          "kind": "functionalExample",
+          "title": "Concrete use case: from sketch to feature",
+          "body": [
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The same loop scales up almost unchanged: replace the Python list with a vector index, return the top 5 instead of the top 1, and feed those "
+                },
+                {
+                  "text": "chunks",
+                  "term": "chunk"
+                },
+                {
+                  "text": " to a language model as evidence — and you have built a basic "
+                },
+                {
+                  "text": "RAG",
+                  "term": "rag"
+                },
+                {
+                  "text": " retriever."
+                }
+              ]
+            }
+          ],
+          "personalizedFor": "Agentic Learning Studio course library",
+          "termIds": [
+            "chunk",
+            "rag",
+            "vector_search"
+          ],
+          "sources": [
+            "kb1"
+          ]
+        },
+        {
           "id": "m4_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Tiny implementation sketch\" in Embeddings and Vector Search?",
+          "prompt": "In the sketch, why is the query embedded with the same model as the chunks?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "To save money on API calls.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Only vectors from the same model share a meaning-space, so distances between them are comparable.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "Because the code would not compile otherwise.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Different embedding models place text in different spaces. Mixing them makes cosine scores meaningless even if the code runs without error.",
           "termIds": [
-            "rag",
-            "embedding"
+            "embedding",
+            "vector_search"
           ],
           "sources": [
             "kb1"
@@ -1193,12 +1435,12 @@
       "id": "m5",
       "order": 5,
       "title": "Check and apply",
-      "sub": "Use active recall and a decision checklist to make it stick.",
-      "summary": "Use active recall and a decision checklist to make it stick. This module turns that idea into a concrete decision and a testable behavior.",
+      "sub": "Follows the implementation: how retrieval breaks, and a go/no-go decision.",
+      "summary": "Retrieval fails quietly — wrong chunks look like confident answers. This module names the common failure modes, brings back an earlier concept from memory, and ends with a decision and a checklist so the lesson sticks.",
       "objectives": [
-        "Explain the role of check and apply in Embeddings and Vector Search.",
-        "Identify the main tradeoff instead of treating the topic as trivia.",
-        "Choose one validation check that would catch a realistic failure."
+        "Name three ways a vector search system fails in practice.",
+        "Recall the meaning of cosine similarity without looking back.",
+        "Decide whether your retrieval is good enough to ship or needs a fix."
       ],
       "termIds": [
         "rag",
@@ -1211,22 +1453,19 @@
       "loadState": "full",
       "blocks": [
         {
-          "id": "m5_concept",
-          "kind": "conceptual",
-          "title": "Check and apply: the core idea",
+          "id": "m5_recall",
+          "kind": "note",
+          "tone": "info",
           "body": [
             {
               "t": "p",
               "spans": [
                 {
-                  "text": "This rag lesson turns the topic into a mental map, a concrete decision, and a validation habit. "
-                },
-                {
-                  "text": "Embeddings and Vector Search",
+                  "text": "Before reading on, predict from memory: ",
                   "strong": true
                 },
                 {
-                  "text": " is useful when you can name the decision it changes, not just recite a definition."
+                  "text": "in module 2 you learned how closeness is measured. What does cosine similarity compare between two vectors, and what range does it run over?"
                 }
               ]
             },
@@ -1234,95 +1473,119 @@
               "t": "p",
               "spans": [
                 {
-                  "text": "Start by locating the "
-                },
-                {
-                  "text": "rag",
-                  "term": "rag"
-                },
-                {
-                  "text": " layer, then ask what evidence, action, or validation it needs."
+                  "text": "Answer, then check. (Cosine similarity compares the direction the two vectors point, scoring from -1 for opposite to 1 for identical direction. Same direction means same meaning.)",
+                  "em": true
                 }
-              ]
-            },
-            {
-              "t": "ul",
-              "items": [
-                [
-                  {
-                    "text": "Name the input and output of this part of Embeddings and Vector Search."
-                  }
-                ],
-                [
-                  {
-                    "text": "Separate what the model decides from what the application enforces."
-                  }
-                ],
-                [
-                  {
-                    "text": "Keep one measurable success signal attached to the concept."
-                  }
-                ]
               ]
             }
           ],
           "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
+            "vector_search",
+            "embedding"
           ],
           "sources": [
             "kb1"
           ]
         },
         {
-          "id": "m5_walk",
-          "kind": "walkthrough",
-          "title": "How to reason through it",
-          "steps": [
+          "id": "m5_failure",
+          "kind": "conceptual",
+          "title": "How retrieval breaks in practice",
+          "body": [
             {
-              "label": "Name the boundary",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "For Embeddings and Vector Search, write one sentence that says what this part owns and what it does not own."
-                    }
-                  ]
+                  "text": "These failures rarely throw an error — the system returns something, just the wrong something. Watch for each.",
+                  "strong": true
                 }
               ]
             },
             {
-              "label": "Attach evidence",
-              "detail": [
+              "t": "h",
+              "level": 4,
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Use the knowledge base or official documentation for non-obvious factual claims."
-                    }
-                  ]
+                  "text": "1. Bad chunking"
                 }
               ]
             },
             {
-              "label": "Choose a test",
-              "detail": [
+              "t": "p",
+              "spans": [
                 {
-                  "t": "p",
-                  "spans": [
-                    {
-                      "text": "Pick one behavior that would prove this part is working and one failure that should be caught."
-                    }
-                  ]
+                  "text": "Chunks",
+                  "term": "chunk"
+                },
+                {
+                  "text": " split mid-sentence or mix several topics. The relevant idea is fragmented or diluted, so the right passage never scores high enough to return."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "2. Model mismatch"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The query is embedded with a different model than the corpus, or the corpus was re-embedded with a new model but the index was not rebuilt. Distances become noise, and results look random."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "3. Stale index"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "Documents change but their vectors are not re-embedded. Search confidently returns the old version — a silent correctness bug nobody sees until a user complains."
+                }
+              ]
+            },
+            {
+              "t": "h",
+              "level": 4,
+              "spans": [
+                {
+                  "text": "4. Top-1 is wrong (non-obvious)"
+                }
+              ]
+            },
+            {
+              "t": "p",
+              "spans": [
+                {
+                  "text": "The right chunk is in the top 10 but not first, so a system that uses only the single best result answers from the wrong passage. This is exactly the gap a "
+                },
+                {
+                  "text": "reranker",
+                  "term": "reranker"
+                },
+                {
+                  "text": " closes."
                 }
               ]
             }
           ],
           "termIds": [
-            "rag",
-            "embedding"
+            "chunk",
+            "embedding",
+            "vector_search",
+            "reranker"
           ],
           "sources": [
             "kb1",
@@ -1331,121 +1594,12 @@
         },
         {
           "id": "m5_decision",
-          "kind": "decisionMatrix",
-          "title": "Decision block",
-          "criteria": [
-            "Fit",
-            "Operational burden",
-            "Risk"
-          ],
-          "options": [
-            {
-              "name": "Simple baseline",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Fast way to learn or prove value.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Few moving parts.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "May miss scale issues.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use first when the outcome is still uncertain.",
-              "cost": "Low",
-              "complexity": "Low"
-            },
-            {
-              "name": "Production design",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best when users depend on the result.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Needs tests, traces, and owners.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Lower when monitored.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use when quality, safety, or uptime matters.",
-              "cost": "Medium",
-              "complexity": "Medium"
-            },
-            {
-              "name": "Advanced optimization",
-              "cells": [
-                {
-                  "criterion": "Fit",
-                  "text": "Best after a measured bottleneck.",
-                  "rating": "good"
-                },
-                {
-                  "criterion": "Operational burden",
-                  "text": "Adds specialist tuning.",
-                  "rating": "ok"
-                },
-                {
-                  "criterion": "Risk",
-                  "text": "Can overfit to benchmarks.",
-                  "rating": "ok"
-                }
-              ],
-              "whenToUse": "Use only after traces show the baseline is insufficient.",
-              "cost": "High",
-              "complexity": "High"
-            }
-          ],
-          "howToRead": "Pick the smallest option that satisfies the user-visible requirement and can be tested.",
+          "kind": "decisionCallout",
+          "useWhen": "Your evaluation queries reliably surface the correct chunk in the top results and the index is rebuilt whenever documents change.",
+          "avoidWhen": "The right passage is missing or buried, results shift between runs, or you have never tested retrieval on real queries — shipping now hides a silent correctness bug.",
+          "ruleOfThumb": "If a small, fixed set of real queries returns the right chunk in the top few every time, ship it; if not, fix chunking or rebuild the index before adding heavier machinery.",
           "termIds": [
-            "rag",
-            "embedding",
-            "vector_search"
-          ],
-          "sources": [
-            "kb1",
-            "canon1"
-          ]
-        },
-        {
-          "id": "m5_technical",
-          "kind": "technical",
-          "title": "Technical note",
-          "body": [
-            {
-              "t": "p",
-              "spans": [
-                {
-                  "text": "The technical habit is to make hidden state visible: record inputs, outputs, parameters, and the source or version that shaped the result."
-                }
-              ]
-            },
-            {
-              "t": "callout",
-              "tone": "good",
-              "spans": [
-                {
-                  "text": "If a claim would matter in a production review, attach a source or a test to it."
-                }
-              ]
-            }
-          ],
-          "termIds": [
-            "rag",
-            "embedding",
+            "chunk",
             "vector_search"
           ],
           "sources": [
@@ -1456,26 +1610,26 @@
         {
           "id": "m5_quiz",
           "kind": "selfCheckQuiz",
-          "prompt": "Which statement best captures the point of \"Check and apply\" in Embeddings and Vector Search?",
+          "prompt": "A retrieval system suddenly returns seemingly random results after a deploy. Which failure mode is the most likely first suspect?",
           "format": "mcq",
           "options": [
             {
-              "text": "It is a named concept to memorize.",
+              "text": "The user asked too many questions.",
               "correct": false
             },
             {
-              "text": "It is a design boundary with inputs, outputs, tradeoffs, and tests.",
+              "text": "Model mismatch — the query and corpus are no longer embedded by the same model, or the index was not rebuilt.",
               "correct": true
             },
             {
-              "text": "It should always be solved with the largest available model.",
+              "text": "The vector index is too fast.",
               "correct": false
             }
           ],
-          "explanation": "The reusable skill is mapping a concept or tool to the decision it changes and the test that proves it works.",
+          "explanation": "Random-looking results right after a change almost always mean the query and stored vectors no longer share a meaning-space. Confirm the same model is used on both sides and the index was rebuilt.",
           "termIds": [
-            "rag",
-            "embedding"
+            "embedding",
+            "vector_search"
           ],
           "sources": [
             "kb1"
@@ -1488,15 +1642,15 @@
         "canon1",
         "canon2"
       ],
-      "decisionItForces": "Choose the right level of rigor for Embeddings and Vector Search: baseline, production design, or advanced optimization."
+      "decisionItForces": "Decide whether your retrieval is good enough to ship or needs a chunking fix or index rebuild first."
     }
   ],
   "glossary": {
     "rag": {
       "id": "rag",
       "label": "RAG",
-      "laymanDefinition": "Retrieving evidence before generation.",
-      "technicalNote": "In this lesson, RAG is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Retrieving relevant evidence by meaning, then giving it to a language model before it answers.",
+      "technicalNote": "RAG pairs a vector-search retriever with a generator: the retriever supplies grounded passages so the model answers from evidence rather than memory.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1506,8 +1660,8 @@
     "embedding": {
       "id": "embedding",
       "label": "Embedding",
-      "laymanDefinition": "Embedding is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Embedding is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A list of numbers that places a piece of text at a point in space, so similar meanings sit close together.",
+      "technicalNote": "A fixed-length dense vector produced by a model trained so that semantically related inputs have a high cosine similarity.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1516,8 +1670,8 @@
     "vector_search": {
       "id": "vector_search",
       "label": "Vector search",
-      "laymanDefinition": "Vector search is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Vector search is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "Finding the stored texts whose points are closest in meaning to your query's point.",
+      "technicalNote": "Nearest-neighbour search over embedding vectors using a similarity metric (commonly cosine), often accelerated by an approximate index.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1526,8 +1680,8 @@
     "chunk": {
       "id": "chunk",
       "label": "Chunk",
-      "laymanDefinition": "Chunk is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Chunk is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A small passage a document is split into before embedding, so each vector covers one focused idea.",
+      "technicalNote": "A unit of text (often a few sentences to a couple of paragraphs) embedded and indexed independently; chunk size trades precision against context.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1536,8 +1690,8 @@
     "reranker": {
       "id": "reranker",
       "label": "Reranker",
-      "laymanDefinition": "Reranker is a core building block in this lesson.",
-      "technicalNote": "In this lesson, Reranker is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A second, slower model that re-scores the top search results to push the single best answer to the top.",
+      "technicalNote": "Typically a cross-encoder that jointly scores the query and each candidate chunk for higher top-1 accuracy at the cost of latency.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1546,8 +1700,8 @@
     "rrf": {
       "id": "rrf",
       "label": "RRF",
-      "laymanDefinition": "A rank-based method for merging retrieval results.",
-      "technicalNote": "In this lesson, RRF is treated as a boundary that needs evidence, tests, and ownership.",
+      "laymanDefinition": "A simple rank-based way to merge two result lists (e.g. keyword and vector) into one.",
+      "technicalNote": "Reciprocal rank fusion combines rankings by summing 1/(k+rank) across lists, so items ranked high in either list rise to the top.",
       "wrapPolicy": "firstOnly",
       "sources": [
         "kb1"
@@ -1562,14 +1716,14 @@
         "name": "Adoption check",
         "questions": [
           {
-            "q": "What decision does Embeddings and Vector Search change in your build?",
-            "why": "A lesson is useful only when it changes what you do next.",
+            "q": "Does your search need to match meaning, not just shared words?",
+            "why": "Vector search only earns its complexity when phrasing varies between queries and documents.",
             "opts": [
-              "Use now",
-              "Prototype first",
-              "Defer"
+              "Use vector search now",
+              "Start with hybrid",
+              "Keyword is enough"
             ],
-            "rot": "Prefer the smallest testable version."
+            "rot": "Prefer the smallest design that returns the right chunk in the top few results."
           }
         ]
       }
@@ -1581,10 +1735,36 @@
         "t": "p",
         "spans": [
           {
-            "text": "Embeddings and Vector Search is now tied to a mental map, a workflow, and a decision checklist. "
+            "text": "From memory, reconstruct the path: an ",
+            "strong": true
           },
           {
-            "text": "The important habit is to make every AI capability observable and testable."
+            "text": "embedding",
+            "term": "embedding"
+          },
+          {
+            "text": " turns text into a point in meaning-space; "
+          },
+          {
+            "text": "vector search",
+            "term": "vector_search"
+          },
+          {
+            "text": " returns the nearest points; "
+          },
+          {
+            "text": "chunk",
+            "term": "chunk"
+          },
+          {
+            "text": " size, model choice, and an optional "
+          },
+          {
+            "text": "reranker",
+            "term": "reranker"
+          },
+          {
+            "text": " set the quality/cost tradeoff; and most failures come from bad chunking, model mismatch, or a stale index. Can you say each step before reading it?"
           }
         ]
       }
@@ -1597,8 +1777,9 @@
           "id": "n_m1",
           "label": "Mental model",
           "sub": "Build the simplest useful picture of Embeddings and Vector Search.",
-          "what": "Mental model turns Embeddings and Vector Search into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+          "orient": "Meaning becomes distance: text is a point in space.",
+          "what": "An embedding places text in a meaning-space where closeness equals similarity.",
+          "relevance": "Every later choice rests on this picture.",
           "moduleId": "m1",
           "layer": "Path",
           "emphasis": "spine"
@@ -1607,8 +1788,9 @@
           "id": "n_m2",
           "label": "Mechanism",
           "sub": "See the moving parts and how they interact.",
-          "what": "Mechanism turns Embeddings and Vector Search into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+          "orient": "The ingest→chunk→embed→store→search pipeline.",
+          "what": "Chunks become vectors, get stored, and queries find nearest vectors.",
+          "relevance": "Shows where quality, latency, and cost are decided.",
           "moduleId": "m2",
           "layer": "Path",
           "emphasis": "normal"
@@ -1617,8 +1799,9 @@
           "id": "n_m3",
           "label": "Design choices",
           "sub": "Make the choices that change quality, cost, or risk.",
-          "what": "Design choices turns Embeddings and Vector Search into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+          "orient": "Chunk size, model, exact vs approximate, reranker.",
+          "what": "The few knobs that set the quality/cost/latency tradeoff.",
+          "relevance": "Lets you pick the smallest design that meets the need.",
           "moduleId": "m3",
           "layer": "Path",
           "emphasis": "spine"
@@ -1627,8 +1810,9 @@
           "id": "n_m4",
           "label": "Tiny implementation sketch",
           "sub": "Connect the concept to a small practical artifact.",
-          "what": "Tiny implementation sketch turns Embeddings and Vector Search into a usable mental model.",
-          "relevance": "It matters because the learner needs to apply Embeddings and Vector Search, not just recognize the words.",
+          "orient": "A minimal embed-store-search loop and how to verify it.",
+          "what": "A few lines that embed, store, and rank by similarity.",
+          "relevance": "Makes the pipeline concrete and debuggable.",
           "moduleId": "m4",
           "layer": "Path",
           "emphasis": "normal"
@@ -1655,50 +1839,50 @@
     "buildOrder": [
       {
         "step": 1,
-        "label": "Name the goal",
-        "detail": "Write the user-visible behavior in one sentence."
+        "label": "Build the mental model",
+        "detail": "Picture text as points in a meaning-space where closeness equals similarity."
       },
       {
         "step": 2,
-        "label": "Choose the boundary",
-        "detail": "Decide what the model, retriever, tool, or validator owns."
+        "label": "Wire the mechanism",
+        "detail": "Ingest, chunk, embed, store, then embed queries and search for nearest vectors."
       },
       {
         "step": 3,
-        "label": "Build a thin slice",
-        "detail": "Make the smallest path work end to end."
+        "label": "Make the design choices",
+        "detail": "Pick chunk size, model, exact vs approximate search, and whether to add a reranker."
       },
       {
         "step": 4,
-        "label": "Add evidence and tests",
-        "detail": "Attach citations, traces, evals, or policy checks."
+        "label": "Sketch the implementation",
+        "detail": "Write the smallest embed-store-search loop and rank results by similarity."
       },
       {
         "step": 5,
-        "label": "Harden deliberately",
-        "detail": "Optimize only after failures are measured."
+        "label": "Check and apply",
+        "detail": "Test real queries, watch for bad chunking, model mismatch, and stale indexes, then ship or fix."
       }
     ],
     "checklist": [
       {
-        "id": "chk_goal",
-        "label": "Can you name the user-visible outcome?",
+        "id": "chk_meaning",
+        "label": "Can you explain why embeddings beat keyword search for varied phrasing?",
         "fromModuleId": "m1"
       },
       {
-        "id": "chk_tradeoff",
-        "label": "Did you choose the smallest reliable design?",
+        "id": "chk_design",
+        "label": "Did you pick the smallest retrieval design that meets the requirement?",
         "fromModuleId": "m3"
       },
       {
-        "id": "chk_trace",
-        "label": "Can a reviewer see sources, versions, and failures?",
+        "id": "chk_failure",
+        "label": "Can you test for bad chunking, model mismatch, and a stale index?",
         "fromModuleId": "m5"
       }
     ],
     "capstone": {
-      "prompt": "Design a one-page implementation plan for Embeddings and Vector Search: goal, inputs, core component, validation, and one risk.",
-      "scopedTo": "RAG"
+      "prompt": "Build a tiny semantic search over 20 short documents of your own: chunk them, embed with one model, store the vectors, and return the top 3 for five real queries. Confirm the right chunk appears in the top 3 each time. NEXT rung: feed those top chunks to a language model to turn your retriever into a working RAG answer, then add a reranker and measure whether top-1 accuracy improves.",
+      "scopedTo": "Embeddings and Vector Search"
     }
   },
   "citations": {
