@@ -164,7 +164,13 @@ export const RUNTIME_JS = String.raw`
     if(t.matches(".kc-recall-done")){ kcRevealStage(t); return; }
     if(t.matches(".kc-conf")){ kcPickConf(t); return; }
 
-    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto"); if(PREVIEW && isStub(gid)){ previewNote(); return; } if(HORIZ){ showPane(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
+    if(t.matches("[data-deepdive],[data-goto]")){ ev.preventDefault(); var gid=t.getAttribute("data-deepdive")||t.getAttribute("data-goto");
+      // PREVIEW (overview gate): clicking any map node shows the "build the lesson" note and
+      // never navigates. We check PREVIEW alone (not PREVIEW && isStub): the horizontal overview
+      // preview renders ONLY the concept map (no module panes), so isStub() can't find a panel —
+      // the note must still fire there, matching the vertical preview behaviour. (Bug 2.)
+      if(PREVIEW){ previewNote(); return; }
+      if(HORIZ){ showPane(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
     if(t.id==="to-overview"){ showOverview(); return; }
     if(t.matches(".term,.term-chip")){ ev.preventDefault(); ev.stopPropagation(); if(pop.classList.contains("on") && pop._for===t){ closePopover(); } else { openPopover(t); pop._for=t; } return; }
@@ -279,6 +285,13 @@ export const RUNTIME_JS = String.raw`
     var W=460,H=300,PAD=34;
     function sx(x){ return PAD + (Math.max(0,Math.min(100,x))/100)*(W-2*PAD); }
     function sy(y){ return PAD + (Math.max(0,Math.min(100,y))/100)*(H-2*PAD); }
+    // Approx label width (no DOM measure in SVG-build): ~5.6px per char at font-size 10.5,
+    // capped so a long label both wraps visually (we shorten) and reserves a sane box.
+    var CH=5.6, LH=12;
+    function shorten(s){ s=String(s); return s.length>22 ? s.slice(0,21)+"…" : s; }
+    function lblW(s){ return shorten(s).length*CH; }
+    // Does box A overlap box B (with a small gap)?
+    function hit(a,b){ var g=1.5; return !(a.x+a.w+g<b.x || b.x+b.w+g<a.x || a.y+a.h+g<b.y || b.y+b.h+g<a.y); }
     body.innerHTML = '<div class="viz-controls">'+qs.map(function(q,i){return '<button class="viz-qbtn'+(i===0?' sel':'')+'" data-qi="'+i+'">'+vEsc(q.label)+'</button>';}).join("")+'</div>'+
       '<div class="viz-scatter-grid"><svg class="scatter" viewBox="0 0 '+W+' '+H+'"></svg><div><div class="viz-near-lab">Nearest matches</div><ol class="viz-near"></ol></div></div>';
     var svg=body.querySelector("svg.scatter"), near=body.querySelector(".viz-near"), maxD=Math.hypot(100,100);
@@ -288,7 +301,59 @@ export const RUNTIME_JS = String.raw`
       var nearSet={}; ranked.slice(0,3).forEach(function(r){ nearSet[r.p.label]=1; });
       var h="";
       ranked.slice(0,3).forEach(function(r){ h+='<line x1="'+sx(q.x)+'" y1="'+sy(q.y)+'" x2="'+sx(r.p.x)+'" y2="'+sy(r.p.y)+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.5"/>'; });
-      pts.forEach(function(p){ var on=nearSet[p.label]; h+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="'+(on?7:5)+'" fill="'+(on?'var(--accent)':'var(--border-strong)')+'" stroke="var(--surface)" stroke-width="2"/><text x="'+(sx(p.x)+9)+'" y="'+(sy(p.y)+4)+'" font-size="10.5" fill="'+(on?'var(--accent-2)':'var(--muted)')+'" font-weight="'+(on?700:500)+'">'+vEsc(p.label)+'</text>'; });
+      // Dots first (always visible, never overlap-hidden).
+      pts.forEach(function(p){ var on=nearSet[p.label]; h+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="'+(on?7:5)+'" fill="'+(on?'var(--accent)':'var(--border-strong)')+'" stroke="var(--surface)" stroke-width="2"/>'; });
+      // DECLUTTERED LABELS (Bug 3): a fixed right-offset stacked colliding labels on top of each
+      // other when points clustered. For each point we try candidate anchors (right, left, above,
+      // below — and edge-aware variants), pick the first that fits in the viewport AND doesn't
+      // collide with an already-placed label or a point dot. Nearest-match labels are placed FIRST
+      // (priority) and emphasised; if a non-near label can find no free slot in a dense cluster we
+      // drop it (declutter) rather than overlap — its dot stays, and it's listed in "Nearest matches"
+      // when relevant. This keeps the picture readable instead of a pile of stacked text.
+      var placed=[]; // boxes already taken (labels + a small box around every dot)
+      pts.forEach(function(p){ var r=(nearSet[p.label]?7:5); placed.push({x:sx(p.x)-r,y:sy(p.y)-r,w:2*r,h:2*r,dot:1}); });
+      // Build a ring of candidate anchor corners around a point at two radii, in preference order
+      // (right/left first, then above/below, then diagonals further out). Each anchors the SVG text
+      // correctly (start=left edge, end=right edge, middle=centre) so the box matches the glyphs.
+      function candsFor(cx,cy,w){
+        var out=[];
+        var rings=[ {dx:9,dy:0}, {dx:14,dy:0} ];
+        // right / left at the dot's vertical centre
+        rings.forEach(function(g){
+          out.push({x:cx+g.dx, y:cy-LH/2, a:"start"});
+          out.push({x:cx-g.dx-w, y:cy-LH/2, a:"end"});
+        });
+        // above / below, centred
+        out.push({x:cx-w/2, y:cy-13, a:"middle"});
+        out.push({x:cx-w/2, y:cy+5, a:"middle"});
+        out.push({x:cx-w/2, y:cy-20, a:"middle"});
+        out.push({x:cx-w/2, y:cy+12, a:"middle"});
+        // diagonals
+        out.push({x:cx+9, y:cy-LH-3, a:"start"});
+        out.push({x:cx+9, y:cy+6, a:"start"});
+        out.push({x:cx-9-w, y:cy-LH-3, a:"end"});
+        out.push({x:cx-9-w, y:cy+6, a:"end"});
+        return out;
+      }
+      // Order: near labels first (priority for the few free slots), then the rest by x for stability.
+      var order=pts.slice().sort(function(a,b){ var na=nearSet[a.label]?0:1, nb=nearSet[b.label]?0:1; if(na!==nb) return na-nb; return sx(a.x)-sx(b.x); });
+      order.forEach(function(p){
+        var on=nearSet[p.label], txt=shorten(p.label), w=lblW(p.label), hgt=LH, cx=sx(p.x), cy=sy(p.y);
+        var cands=candsFor(cx,cy,w);
+        var box=null;
+        for(var ci=0;ci<cands.length;ci++){
+          var c=cands[ci], bx={x:c.x,y:c.y,w:w,h:hgt};
+          if(bx.x<2||bx.x+bx.w>W-2||bx.y<2||bx.y+bx.h>H-2) continue; // off-canvas
+          var bad=false; for(var k=0;k<placed.length;k++){ if(hit(bx,placed[k])){ bad=true; break; } }
+          if(!bad){ box={c:c,bx:bx}; break; }
+        }
+        // No free slot anywhere → DROP the label (declutter) rather than overlap. The dot stays,
+        // and near/relevant labels are still spelled out in the "Nearest matches" list beside the plot.
+        if(!box) return;
+        placed.push(box.bx);
+        // baseline y = box top + ~9 (font 10.5 baseline within the 12px line box)
+        h+='<text x="'+box.c.x+'" y="'+(box.bx.y+9)+'" text-anchor="'+box.c.a+'" font-size="10.5" fill="'+(on?'var(--accent-2)':'var(--muted)')+'" font-weight="'+(on?700:500)+'">'+vEsc(txt)+'</text>';
+      });
       h+='<text x="'+sx(q.x)+'" y="'+(sy(q.y)+6)+'" font-size="20" text-anchor="middle" fill="var(--accent)">★</text>';
       svg.innerHTML=h;
       near.innerHTML=ranked.slice(0,3).map(function(r){ return '<li>'+vEsc(r.p.label)+' <span style="color:var(--faint)">· '+Math.max(0,1-r.d/maxD).toFixed(2)+'</span></li>'; }).join("");
