@@ -125,54 +125,6 @@ export async function fetchPricing(nowMs: number): Promise<PricingInfo> {
   return data;
 }
 
-/**
- * Diagnostic: report the store + variant status so we can tell WHY a checkout 404s
- * (draft/unpublished product vs unactivated store vs test/live mismatch). Read-only.
- */
-/** Raw checkout attempt with explicit store+variant ids; returns the LS outcome. */
-async function rawCheckout(storeId: string, variantId: string, withQty: boolean): Promise<any> {
-  const attributes: any = {
-    checkout_data: { custom: { user_id: "diag", plan_id: "diag" } },
-    product_options: { redirect_url: "https://example.com/" },
-    checkout_options: { embed: true },
-  };
-  if (withQty) attributes.checkout_data.variant_quantities = [{ variant_id: Number(variantId), quantity: 1 }];
-  const body = { data: { type: "checkouts", attributes, relationships: {
-    store: { data: { type: "stores", id: String(storeId) } },
-    variant: { data: { type: "variants", id: String(variantId) } },
-  } } };
-  const res = await fetch(`${API}/checkouts`, { method: "POST", headers: { Accept: "application/vnd.api+json", "Content-Type": "application/vnd.api+json", Authorization: `Bearer ${env("LEMONSQUEEZY_API_KEY")}` }, body: JSON.stringify(body) });
-  if (res.ok) return { ok: true };
-  const txt = await res.text().catch(() => "");
-  let detail = txt.slice(0, 200);
-  try { const p = JSON.parse(txt) as { errors?: Array<{ detail?: string; title?: string }> }; if (p.errors?.length) detail = p.errors.map((e) => e.detail || e.title).filter(Boolean).join("; "); } catch { /* raw */ }
-  return { ok: false, status: res.status, detail };
-}
-
-export async function fetchDiag(): Promise<any> {
-  const out: any = { envStoreId: env("LEMONSQUEEZY_STORE_ID"), envPayg: env("LEMONSQUEEZY_PAYG_VARIANT_ID"), envTrial: env("LEMONSQUEEZY_TRIAL_VARIANT_ID") };
-  try {
-    const list = await lsGet(`/stores`);
-    out.stores = (list?.data || []).map((s: any) => ({ id: s.id, name: s?.attributes?.name, currency: s?.attributes?.currency, country: s?.attributes?.country }));
-  } catch (e) { out.stores = { error: e instanceof Error ? e.message : String(e) }; }
-  for (const [k, id] of [["payg", env("LEMONSQUEEZY_PAYG_VARIANT_ID")], ["trial", env("LEMONSQUEEZY_TRIAL_VARIANT_ID")]] as const) {
-    try {
-      const v = await lsGet(`/variants/${id}`);
-      out[k] = { id: v?.data?.id, name: v?.data?.attributes?.name, status: v?.data?.attributes?.status, price: v?.data?.attributes?.price };
-    } catch (e) { out[k] = { error: e instanceof Error ? e.message : String(e) }; }
-  }
-  // Isolate the 404: env store id vs the REAL store id from the list, with/without variant_quantities.
-  const realStore = Array.isArray(out.stores) && out.stores[0] ? String(out.stores[0].id) : "";
-  const v = env("LEMONSQUEEZY_TRIAL_VARIANT_ID");
-  out.realStoreId = realStore;
-  try { out.probe_envStore_withQty = await rawCheckout(out.envStoreId, v, true); } catch (e) { out.probe_envStore_withQty = { error: String(e) }; }
-  try { out.probe_envStore_noQty = await rawCheckout(out.envStoreId, v, false); } catch (e) { out.probe_envStore_noQty = { error: String(e) }; }
-  if (realStore && realStore !== out.envStoreId) {
-    try { out.probe_realStore_noQty = await rawCheckout(realStore, v, false); } catch (e) { out.probe_realStore_noQty = { error: String(e) }; }
-  }
-  return out;
-}
-
 /** Lessons to credit for a paid order — server-computed, never from the client. */
 export function lessonsForOrder(planId: string, quantity: number): number {
   if (planId === "trial-launch") return 10;
