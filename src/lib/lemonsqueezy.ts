@@ -42,6 +42,57 @@ export function webhookConfigured(): boolean {
   return !!env("LEMONSQUEEZY_WEBHOOK_SECRET");
 }
 
+/** Authenticated GET against the LS API; throws with parsed JSON:API error detail. */
+async function lsGet(path: string): Promise<any> {
+  const res = await fetch(`${API}${path}`, {
+    headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${env("LEMONSQUEEZY_API_KEY")}` },
+  });
+  const txt = await res.text().catch(() => "");
+  if (!res.ok) {
+    let detail = txt.slice(0, 300);
+    try { const p = JSON.parse(txt) as { errors?: Array<{ detail?: string; title?: string }> }; if (p.errors?.length) detail = p.errors.map((e) => e.detail || e.title).filter(Boolean).join("; "); } catch { /* raw */ }
+    throw new Error(`Lemon Squeezy ${res.status} on ${path}: ${detail}`);
+  }
+  return txt ? JSON.parse(txt) : {};
+}
+
+/** A variant's current unit price in cents (modern `prices` resource, with the legacy attr as fallback). */
+async function variantPriceCents(variantId: string): Promise<number> {
+  const v = await lsGet(`/variants/${variantId}`);
+  const legacy = v?.data?.attributes?.price;
+  if (typeof legacy === "number" && legacy > 0) return legacy;
+  const prices = await lsGet(`/prices?filter[variant_id]=${variantId}`);
+  const up = prices?.data?.[0]?.attributes?.unit_price;
+  return typeof up === "number" ? up : 0;
+}
+
+export interface PricingInfo {
+  currency: string;            // ISO code, e.g. "INR" / "USD"
+  paygUnitCents: number;       // per-lesson price in minor units
+  trialCents: number;          // trial bundle price in minor units
+}
+
+let pricingCache: { at: number; data: PricingInfo } | null = null;
+
+/**
+ * Live prices + store currency from Lemon Squeezy (cached 10 min). The page shows
+ * these so it always matches the LS config (no hardcoded USD). LS still localizes
+ * the FINAL charge to the buyer's country at checkout. `nowMs` is passed in because
+ * the workflow sandbox forbids Date.now() — callers pass Date.now().
+ */
+export async function fetchPricing(nowMs: number): Promise<PricingInfo> {
+  if (pricingCache && nowMs - pricingCache.at < 10 * 60 * 1000) return pricingCache.data;
+  const store = await lsGet(`/stores/${env("LEMONSQUEEZY_STORE_ID")}`);
+  const currency: string = store?.data?.attributes?.currency || env("LEMONSQUEEZY_CURRENCY") || "USD";
+  const [paygUnitCents, trialCents] = await Promise.all([
+    variantPriceCents(env("LEMONSQUEEZY_PAYG_VARIANT_ID")),
+    variantPriceCents(env("LEMONSQUEEZY_TRIAL_VARIANT_ID")),
+  ]);
+  const data: PricingInfo = { currency, paygUnitCents, trialCents };
+  pricingCache = { at: nowMs, data };
+  return data;
+}
+
 /** Lessons to credit for a paid order — server-computed, never from the client. */
 export function lessonsForOrder(planId: string, quantity: number): number {
   if (planId === "trial-launch") return 10;
@@ -95,11 +146,20 @@ export async function createCheckout(args: {
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`lemonsqueezy checkout ${res.status}: ${txt.slice(0, 300)}`);
+    // Lemon Squeezy returns JSON:API errors: { errors: [{ status, title, detail }] }.
+    let detail = txt.slice(0, 400);
+    try {
+      const parsed = JSON.parse(txt) as { errors?: Array<{ detail?: string; title?: string }> };
+      if (parsed.errors?.length) detail = parsed.errors.map((e) => e.detail || e.title).filter(Boolean).join("; ");
+    } catch { /* keep raw text */ }
+    const err = new Error(`Lemon Squeezy ${res.status}: ${detail}`);
+    (err as Error & { lsStatus?: number; lsDetail?: string }).lsStatus = res.status;
+    (err as Error & { lsStatus?: number; lsDetail?: string }).lsDetail = detail;
+    throw err;
   }
   const json = (await res.json()) as { data?: { attributes?: { url?: string } } };
   const url = json.data?.attributes?.url;
-  if (!url) throw new Error("lemonsqueezy: no checkout url in response");
+  if (!url) throw new Error("Lemon Squeezy: no checkout url in response");
   return url;
 }
 

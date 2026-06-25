@@ -39,7 +39,7 @@ import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { getBalance, ensureFreeGrant, addCredits } from "./lib/credits";
-import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, type PlanId } from "./lib/lemonsqueezy";
+import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
@@ -215,7 +215,26 @@ app.post("/api/checkout", heavyLimiter, requireAuth, async (req, res) => {
     res.json({ url });
   } catch (e) {
     console.error("[checkout]", e);
-    res.status(502).json({ error: "Couldn't start checkout — please try again." });
+    const detail = e instanceof Error ? e.message : String(e);
+    // Surface the upstream Lemon Squeezy reason so checkout failures are diagnosable
+    // (e.g. "store not activated", bad variant id). TODO: hide `detail` once billing is stable.
+    res.status(502).json({ error: "Couldn't start checkout.", detail });
+  }
+});
+
+/**
+ * GET /api/pricing — live prices + store currency from Lemon Squeezy (public; cached).
+ * The pricing page renders these so it always matches the LS config (never hardcoded
+ * USD). LS localizes the FINAL charge to the buyer's country at checkout. On error it
+ * returns the upstream detail (also a quick health probe for the API key + variants).
+ */
+app.get("/api/pricing", async (_req, res) => {
+  if (!billingConfigured()) { res.json({ configured: false }); return; }
+  try {
+    const p = await fetchPricing(Date.now());
+    res.json({ configured: true, ...p });
+  } catch (e) {
+    res.status(502).json({ configured: true, error: "pricing-fetch-failed", detail: e instanceof Error ? e.message : String(e) });
   }
 });
 

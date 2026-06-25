@@ -1599,7 +1599,9 @@ function applySession(session) {
     loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
   } else {
     updateCreditPill(null);
+    clearCachedCredits();
   }
+  updateProfileUI(signedIn, email);
 }
 
 document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
@@ -1751,7 +1753,33 @@ restoreTabs();
 // Pricing tab, and Lemon Squeezy checkout (Lemon.js overlay). The webhook is the
 // source of truth for crediting; the front-end just reflects the balance.
 // ============================================================================
-const UNIT_PRICE = 0.99;
+// Live pricing from Lemon Squeezy — replaces the old hardcoded USD. `pricing` is a
+// fallback until /api/pricing loads the real store currency + amounts.
+let pricing = { currency: "USD", paygUnitCents: 99, trialCents: 500 };
+function fmtMoney(cents) {
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: pricing.currency, maximumFractionDigits: 2 }).format((cents || 0) / 100); }
+  catch { return ((cents || 0) / 100).toFixed(2) + " " + pricing.currency; }
+}
+function renderPricing() {
+  const slider = document.getElementById("payg-slider");
+  const n = Number(slider && slider.value) || 1;
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  set("payg-cost", fmtMoney(n * pricing.paygUnitCents));
+  set("payg-each", fmtMoney(pricing.paygUnitCents));
+  set("trial-cost", fmtMoney(pricing.trialCents));
+  set("trial-each", fmtMoney(Math.round((pricing.trialCents || 0) / 10)));
+  set("trial-btn-cost", fmtMoney(pricing.trialCents));
+}
+async function loadPricing() {
+  try {
+    const res = await fetch("/api/pricing");
+    const d = await res.json();
+    if (d && d.configured && typeof d.paygUnitCents === "number" && d.paygUnitCents > 0) {
+      pricing = { currency: d.currency || "USD", paygUnitCents: d.paygUnitCents, trialCents: d.trialCents || 0 };
+    }
+  } catch { /* keep fallback */ }
+  renderPricing();
+}
 let billingIsEnabled = false;
 const creditPill = document.getElementById("credit-pill");
 const creditCount = document.getElementById("credit-count");
@@ -1764,20 +1792,34 @@ function updateCreditPill(balance) {
   creditPill.classList.toggle("empty", balance <= 0);
 }
 
+// Persist the last-known balance so the pill can render INSTANTLY on the next page
+// load — otherwise it stays hidden for ~1-2s while Supabase restores the session and
+// /api/credits round-trips (the "pill flashes away on refresh" bug).
+function cacheCredits(balance) { try { localStorage.setItem("wb-credits", String(balance)); } catch (e) {} }
+function clearCachedCredits() { try { localStorage.removeItem("wb-credits"); } catch (e) {} }
+
 async function loadCredits() {
-  if (!accessToken && authIsEnabled) { updateCreditPill(null); return; }
+  if (!accessToken && authIsEnabled) { updateCreditPill(null); clearCachedCredits(); return; }
   try {
     const res = await fetch("/api/credits", { headers: authHeaders() });
-    if (!res.ok) { updateCreditPill(null); return; }
+    if (!res.ok) { updateCreditPill(null); clearCachedCredits(); return; }
     const d = await res.json();
-    updateCreditPill(typeof d.balance === "number" ? d.balance : 0);
+    const balance = typeof d.balance === "number" ? d.balance : 0;
+    updateCreditPill(balance);
+    cacheCredits(balance);
     const bal = document.getElementById("pricing-balance");
     if (bal && !bal.classList.contains("low")) {
       bal.hidden = false;
-      bal.textContent = `You have ${d.balance} lesson credit${d.balance === 1 ? "" : "s"}.`;
+      bal.textContent = `You have ${balance} lesson credit${balance === 1 ? "" : "s"}.`;
     }
-  } catch { updateCreditPill(null); }
+  } catch { /* keep the optimistic cached pill on a transient error */ }
 }
+
+// Optimistic paint: if we credited this browser before, show that balance immediately
+// on load. loadCredits() reconciles a moment later (and hides on a real sign-out).
+(function showCachedPill() {
+  try { const c = localStorage.getItem("wb-credits"); if (c != null && c !== "") updateCreditPill(Number(c)); } catch (e) {}
+})();
 
 // Poll a few times after a purchase — the webhook credits asynchronously.
 function refreshCreditsRetry(tries) {
@@ -1795,16 +1837,16 @@ if (creditPill) {
 // ---- Pricing tab interactions ----
 (function initPricing() {
   const slider = document.getElementById("payg-slider");
-  const cost = document.getElementById("payg-cost");
   const nEls = [document.getElementById("payg-n"), document.getElementById("payg-n2"), document.getElementById("buy-payg-n")];
   const sEl = document.getElementById("payg-s");
   function syncSlider() {
     const n = Number(slider.value) || 1;
-    if (cost) cost.textContent = "$" + (n * UNIT_PRICE).toFixed(2);
     nEls.forEach((el) => { if (el) el.textContent = String(n); });
     if (sEl) sEl.textContent = n === 1 ? "" : "s";
+    renderPricing(); // currency-aware cost for the current N
   }
   if (slider) { slider.addEventListener("input", syncSlider); syncSlider(); }
+  loadPricing(); // pull live currency + amounts from Lemon Squeezy
 
   async function buy(planId, quantity) {
     if (authIsEnabled && !accessToken) { openAuth("signin"); return; }
@@ -1816,7 +1858,7 @@ if (creditPill) {
       const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ planId, quantity }) });
       if (res.status === 401) { openAuth("signin"); return; }
       const d = await res.json();
-      if (!res.ok || !d.url) throw new Error(d.error || "Couldn't start checkout.");
+      if (!res.ok || !d.url) throw new Error(d.detail ? `${d.error || "Checkout failed"} — ${d.detail}` : (d.error || "Couldn't start checkout."));
       // Open the Lemon.js overlay if available; otherwise fall back to a new tab.
       if (window.LemonSqueezy && window.LemonSqueezy.Url && typeof window.LemonSqueezy.Url.Open === "function") {
         window.LemonSqueezy.Url.Open(d.url);
@@ -1876,3 +1918,65 @@ else window.addEventListener("load", setupLemon);
     try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
   }
 })();
+
+// ============================================================================
+// Profile menu — top-right avatar replaces the old email + Sign-out in the nav.
+// Click → { Account Details, Sign out }. Account Details shows name/email/credits
+// + a Top-up button. (Email + sign-out are no longer in the top bar.)
+// ============================================================================
+const profileWrap = document.getElementById("profile-wrap");
+const profileBtn = document.getElementById("profile-btn");
+const profileMenu = document.getElementById("profile-menu");
+const profileAvatar = document.getElementById("profile-avatar");
+
+function displayNameFrom(email) {
+  if (!email) return "there";
+  const local = email.split("@")[0].replace(/[._-]+/g, " ");
+  return local.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Show/hide the avatar with the user's initial. Driven from applySession.
+function updateProfileUI(signedIn, email) {
+  if (profileWrap) profileWrap.hidden = !signedIn;
+  if (signedIn && profileAvatar) profileAvatar.textContent = (email || "U").trim().charAt(0).toUpperCase() || "U";
+  if (!signedIn) closeProfileMenu();
+}
+
+function openProfileMenu() { if (profileMenu) { profileMenu.hidden = false; profileBtn.setAttribute("aria-expanded", "true"); } }
+function closeProfileMenu() { if (profileMenu) { profileMenu.hidden = true; profileBtn && profileBtn.setAttribute("aria-expanded", "false"); } }
+
+if (profileBtn) profileBtn.addEventListener("click", (e) => { e.stopPropagation(); profileMenu.hidden ? openProfileMenu() : closeProfileMenu(); });
+document.addEventListener("click", (e) => { if (profileWrap && !profileWrap.contains(e.target)) closeProfileMenu(); });
+
+// --- Account Details modal ---
+const acctOverlay = document.getElementById("acct-overlay");
+async function openAccount() {
+  closeProfileMenu();
+  const nameEl = document.getElementById("acct-name");
+  const emailEl = document.getElementById("acct-email");
+  const credEl = document.getElementById("acct-credits");
+  if (nameEl) nameEl.textContent = displayNameFrom(currentUserEmail);
+  if (emailEl) emailEl.textContent = currentUserEmail || "—";
+  if (credEl) { const c = (() => { try { return localStorage.getItem("wb-credits"); } catch (e) { return null; } })(); credEl.textContent = c != null && c !== "" ? `${c} lesson${c === "1" ? "" : "s"}` : "…"; }
+  if (acctOverlay) acctOverlay.hidden = false;
+  // Refresh the credits figure live.
+  try {
+    const res = await fetch("/api/credits", { headers: authHeaders() });
+    if (res.ok) { const d = await res.json(); if (credEl) credEl.textContent = `${d.balance} lesson${d.balance === 1 ? "" : "s"}`; }
+  } catch (e) {}
+}
+function closeAccount() { if (acctOverlay) acctOverlay.hidden = true; }
+
+const pmAccount = document.getElementById("pm-account");
+const pmSignout = document.getElementById("pm-signout");
+if (pmAccount) pmAccount.addEventListener("click", openAccount);
+if (pmSignout) pmSignout.addEventListener("click", async () => {
+  closeProfileMenu();
+  try { if (sb) await sb.auth.signOut(); } catch (e) {}
+  applySession(null);
+});
+const acctClose = document.getElementById("acct-close");
+if (acctClose) acctClose.addEventListener("click", closeAccount);
+if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAccount(); });
+const acctTopup = document.getElementById("acct-topup");
+if (acctTopup) acctTopup.addEventListener("click", () => { closeAccount(); switchTab("pricing"); });
