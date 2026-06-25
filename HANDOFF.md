@@ -201,6 +201,16 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🧪 QA PASS (2026-06-25, on staging+prod `main 71cf976`):** parameterized Playwright harness `scripts/qa.mjs`
+  (`npm run qa`, env `QA_BASE_URL/QA_EMAIL/QA_PASSWORD`, no committed creds) — auth, rapid nav/state, credit pill,
+  generation progress, no-console-errors/no-full-reload guards. 13/13 on staging. Fixes shipped this pass:
+  (1) **sign-out resets the workspace → Home** (`resetWorkspace()` in app.js — was leaving the previous user's
+  lesson on screen); (2) **`als-progress` source guard** (`e.source === viewerFrame.contentWindow` — stale iframe
+  can't mis-attribute progress); (3) **central credit refresh** on focus/visibilitychange; (4) **`GET /api/jobs/active`**
+  (exposes `jobs.ts activeJobs()`) merged into `loadDashboard` so a build continuing after a refresh still shows
+  progress in My Lessons (light self-poll when no client poller is active). OPEN: lesson-click flicker
+  (module→overview) — needs a fully-built lesson to repro; AbortController on loaders (low-impact); nested-control
+  click-bubble has no explicit automated assertion yet.
 - **🩹 GENERATION FIX (2026-06-25, on staging+prod) — capstone.prompt.** Overviews were FAILING ("Couldn't design
   an overview") on BOTH envs: the skeleton schema requires `synthesis.capstone.prompt`, but the model sometimes
   returns a `capstone` object without it; `coerceSkeleton` (nodes.ts) only defaulted a wholly-missing capstone, so
