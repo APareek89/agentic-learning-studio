@@ -1550,6 +1550,7 @@ function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "
 let sb = null;
 let accessToken = null;
 let currentUserEmail = "";
+let currentUserId = "";
 let authMode = "signin";
 let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
@@ -1589,6 +1590,7 @@ function applySession(session) {
   accessToken = (session && session.access_token) || null;
   const email = (session && session.user && session.user.email) || "";
   currentUserEmail = email;
+  currentUserId = (session && session.user && session.user.id) || "";
   const signedIn = !!accessToken;
   if (logoutBtn) logoutBtn.hidden = !signedIn;
   if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }
@@ -1957,9 +1959,14 @@ async function openAccount() {
   const nameEl = document.getElementById("acct-name");
   const emailEl = document.getElementById("acct-email");
   const credEl = document.getElementById("acct-credits");
+  const uuidEl = document.getElementById("acct-uuid");
+  const planEl = document.getElementById("acct-plan");
   if (nameEl) nameEl.textContent = displayNameFrom(currentUserEmail);
   if (emailEl) emailEl.textContent = currentUserEmail || "—";
-  if (credEl) { const c = (() => { try { return localStorage.getItem("wb-credits"); } catch (e) { return null; } })(); credEl.textContent = c != null && c !== "" ? `${c} lesson${c === "1" ? "" : "s"}` : "…"; }
+  if (uuidEl) uuidEl.textContent = currentUserId || "—";
+  const cached = (() => { try { return localStorage.getItem("wb-credits"); } catch (e) { return null; } })();
+  if (planEl) planEl.textContent = "Pay as you go";
+  if (credEl) credEl.textContent = cached != null && cached !== "" ? `${cached} lesson${cached === "1" ? "" : "s"}` : "…";
   if (acctOverlay) acctOverlay.hidden = false;
   // Refresh the credits figure live.
   try {

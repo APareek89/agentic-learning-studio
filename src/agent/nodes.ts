@@ -360,7 +360,13 @@ function coerceSkeleton(input: unknown, profile: LearnerProfile): Blueprint {
     typeof b === "string" ? { step: i + 1, label: b } : { step: typeof b?.step === "number" ? b.step : i + 1, label: b?.label ?? String(b ?? ""), detail: b?.detail });
   o.synthesis.checklist = (Array.isArray(o.synthesis.checklist) ? o.synthesis.checklist : []).map((c: any, i: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
     typeof c === "string" ? { id: `c${i + 1}`, label: c } : { id: c?.id ?? `c${i + 1}`, label: c?.label ?? String(c ?? ""), fromModuleId: c?.fromModuleId });
-  o.synthesis.capstone = o.synthesis.capstone && typeof o.synthesis.capstone === "object" ? o.synthesis.capstone : { prompt: `Apply what you learned to ${profile.buildGoal || profile.topic}.` };
+  // capstone.prompt is REQUIRED by the schema. The model sometimes returns a capstone object
+  // WITHOUT prompt (e.g. just {scopedTo}) — the old guard only defaulted a wholly-missing
+  // capstone, so a present-but-promptless one slipped through and failed validation ("synthesis.
+  // capstone.prompt — Required") → no blueprint → "Couldn't design an overview". Always fill it.
+  const cap = (o.synthesis.capstone && typeof o.synthesis.capstone === "object" ? o.synthesis.capstone : {}) as Record<string, unknown>;
+  if (typeof cap.prompt !== "string" || !(cap.prompt as string).trim()) cap.prompt = `Apply what you learned to ${profile.buildGoal || profile.topic}.`;
+  o.synthesis.capstone = cap;
   const parsed = BlueprintSchema.safeParse(o);
   if (!parsed.success) throw new Error("skeleton shape invalid: " + parsed.error.issues.slice(0, 4).map((i) => `${i.path.join(".")} — ${i.message}`).join("; "));
   return parsed.data;
