@@ -1112,6 +1112,10 @@ document.getElementById("code-view").addEventListener("click", () => { codeOverl
 
 // ---- Progress relay (from the artifact iframe) → server + the Trainer share popup ----
 window.addEventListener("message", (e) => {
+  // Only accept progress from the LIVE viewer iframe — not a stale/background window or an
+  // external page — so a late message from a previous lesson can't be mis-attributed to the
+  // one now on screen. (The iframe is sandboxed → e.origin may be "null"; e.source is the guard.)
+  if (e.source !== viewerFrame.contentWindow) return;
   const d = e.data;
   if (!d || d.type !== "als-progress") return;
   if (!currentLessonOwned || !currentArtifactId) return; // only the user's own lessons
@@ -1847,6 +1851,20 @@ function refreshCreditsRetry(tries) {
   loadCredits();
   if (tries > 1) setTimeout(() => refreshCreditsRetry(tries - 1), 2000);
 }
+
+// Central credit refresh: re-fetch the balance whenever the tab regains focus/visibility — covers
+// returning from a checkout opened in another tab, or being away while a webhook lands. (loadCredits
+// already no-ops + clears the pill when signed out, so this is safe to call unconditionally.)
+let _lastCreditRefresh = 0;
+function refreshCreditsOnReturn() {
+  if (authIsEnabled && !accessToken) return; // not signed in → nothing to refresh
+  const now = (window.performance && performance.now()) || 0;
+  if (now - _lastCreditRefresh < 1500) return; // debounce focus+visibilitychange double-fire
+  _lastCreditRefresh = now;
+  loadCredits();
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshCreditsOnReturn(); });
+window.addEventListener("focus", refreshCreditsOnReturn);
 
 // Pill → Pricing tab.
 if (creditPill) {
