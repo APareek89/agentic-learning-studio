@@ -18,6 +18,7 @@
 
 import { profiler, retriever, planner, architect, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
+import { spendOne } from "../lib/credits";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
 import { makeRootedLangfuseHandler } from "../lib/langfuse";
@@ -197,6 +198,13 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
 
     jl.status = "done"; jl.percent = 100;
     job.status = "done";
+    // Charge ONE lesson credit — only on a SUCCESSFUL build. The free overview/preview
+    // never costs; a failure falls through to catch and is never charged. No-op when
+    // there's no user / DB (local open-mode dev). FIFO over the buyer's credit lots.
+    if (art.userId) {
+      try { await spendOne(art.userId); }
+      catch (e) { console.error("[runBuildJob] credit deduct failed", e); }
+    }
   } catch (e) {
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);

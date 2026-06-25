@@ -737,7 +737,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -1370,6 +1370,13 @@ async function startBuild(artifactId) {
   try {
     const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
     if (res.status === 401) { openAuth("signin"); return; }
+    if (res.status === 402) { // out of lesson credits — send them to Pricing
+      const d = await res.json().catch(() => ({}));
+      switchTab("pricing");
+      const note = document.getElementById("pricing-balance");
+      if (note) { note.hidden = false; note.textContent = (d.error || "You're out of lesson credits.") + " Your overview is saved — buy credits and click Generate Lesson again."; note.classList.add("low"); }
+      return;
+    }
     const data = await res.json();
     if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the lesson build.");
     jobId = data.jobId;
@@ -1452,6 +1459,7 @@ function pollJob(jobId, tabId) {
       } else if (job.status === "error" && t && t.id === activeTabId) {
         showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
       }
+      if (job.status === "done") loadCredits(); // a completed build spent 1 credit — refresh the pill
       loadDashboard(); loadSuggestions(); return;
     }
     activeJobTimer = setTimeout(tick, 2500);
@@ -1588,7 +1596,9 @@ function applySession(session) {
   if (authActions) authActions.hidden = signedIn || !authIsEnabled;
   if (signedIn) {
     closeAuth();
-    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
+  } else {
+    updateCreditPill(null);
   }
 }
 
@@ -1601,12 +1611,13 @@ async function bootAuth() {
   let cfg;
   try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
   authIsEnabled = !!cfg.authEnabled;
+  billingIsEnabled = !!cfg.billingEnabled;
 
   if (!authIsEnabled) {
     // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
     authOverlay.hidden = true;
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
-    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
     return;
   }
 
@@ -1734,3 +1745,134 @@ async function maybeOnboard() {
 bootAuth();
 // Re-open any Trainer tabs the learner had before a refresh (sessionStorage).
 restoreTabs();
+
+// ============================================================================
+// Lesson credits + Pricing — the credit pill in the nav, the slider/cost on the
+// Pricing tab, and Lemon Squeezy checkout (Lemon.js overlay). The webhook is the
+// source of truth for crediting; the front-end just reflects the balance.
+// ============================================================================
+const UNIT_PRICE = 0.99;
+let billingIsEnabled = false;
+const creditPill = document.getElementById("credit-pill");
+const creditCount = document.getElementById("credit-count");
+
+function updateCreditPill(balance) {
+  if (!creditPill) return;
+  if (balance == null) { creditPill.hidden = true; return; }
+  creditPill.hidden = false;
+  if (creditCount) creditCount.textContent = String(balance);
+  creditPill.classList.toggle("empty", balance <= 0);
+}
+
+async function loadCredits() {
+  if (!accessToken && authIsEnabled) { updateCreditPill(null); return; }
+  try {
+    const res = await fetch("/api/credits", { headers: authHeaders() });
+    if (!res.ok) { updateCreditPill(null); return; }
+    const d = await res.json();
+    updateCreditPill(typeof d.balance === "number" ? d.balance : 0);
+    const bal = document.getElementById("pricing-balance");
+    if (bal && !bal.classList.contains("low")) {
+      bal.hidden = false;
+      bal.textContent = `You have ${d.balance} lesson credit${d.balance === 1 ? "" : "s"}.`;
+    }
+  } catch { updateCreditPill(null); }
+}
+
+// Poll a few times after a purchase — the webhook credits asynchronously.
+function refreshCreditsRetry(tries) {
+  tries = tries || 6;
+  loadCredits();
+  if (tries > 1) setTimeout(() => refreshCreditsRetry(tries - 1), 2000);
+}
+
+// Pill → Pricing tab.
+if (creditPill) {
+  creditPill.addEventListener("click", () => switchTab("pricing"));
+  creditPill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchTab("pricing"); } });
+}
+
+// ---- Pricing tab interactions ----
+(function initPricing() {
+  const slider = document.getElementById("payg-slider");
+  const cost = document.getElementById("payg-cost");
+  const nEls = [document.getElementById("payg-n"), document.getElementById("payg-n2"), document.getElementById("buy-payg-n")];
+  const sEl = document.getElementById("payg-s");
+  function syncSlider() {
+    const n = Number(slider.value) || 1;
+    if (cost) cost.textContent = "$" + (n * UNIT_PRICE).toFixed(2);
+    nEls.forEach((el) => { if (el) el.textContent = String(n); });
+    if (sEl) sEl.textContent = n === 1 ? "" : "s";
+  }
+  if (slider) { slider.addEventListener("input", syncSlider); syncSlider(); }
+
+  async function buy(planId, quantity) {
+    if (authIsEnabled && !accessToken) { openAuth("signin"); return; }
+    if (!billingIsEnabled) { const s = document.getElementById("pricing-soon"); if (s) s.hidden = false; return; }
+    const btn = planId === "trial-launch" ? document.getElementById("buy-trial") : document.getElementById("buy-payg");
+    const label = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Starting checkout…"; }
+    try {
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ planId, quantity }) });
+      if (res.status === 401) { openAuth("signin"); return; }
+      const d = await res.json();
+      if (!res.ok || !d.url) throw new Error(d.error || "Couldn't start checkout.");
+      // Open the Lemon.js overlay if available; otherwise fall back to a new tab.
+      if (window.LemonSqueezy && window.LemonSqueezy.Url && typeof window.LemonSqueezy.Url.Open === "function") {
+        window.LemonSqueezy.Url.Open(d.url);
+      } else {
+        window.open(d.url, "_blank");
+      }
+      // Reflect the new balance once the webhook lands.
+      refreshCreditsRetry();
+    } catch (e) {
+      const s = document.getElementById("pricing-soon");
+      if (s) { s.hidden = false; s.textContent = e.message; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }
+  }
+
+  const buyPayg = document.getElementById("buy-payg");
+  const buyTrial = document.getElementById("buy-trial");
+  if (buyPayg) buyPayg.addEventListener("click", () => buy("lessons-payg", Number(slider && slider.value) || 1));
+  if (buyTrial) buyTrial.addEventListener("click", () => buy("trial-launch", 1));
+  const signinLink = document.getElementById("pricing-signin-link");
+  if (signinLink) signinLink.addEventListener("click", (e) => { e.preventDefault(); openAuth("signin"); });
+
+  // Show the right helper line when Pricing is opened.
+  document.querySelectorAll('.tab[data-tab="pricing"], #credit-pill').forEach((el) => {
+    el.addEventListener("click", () => {
+      const needSignin = authIsEnabled && !accessToken;
+      const signinEl = document.getElementById("pricing-signin");
+      const soonEl = document.getElementById("pricing-soon");
+      if (signinEl) signinEl.hidden = !needSignin;
+      if (soonEl) soonEl.hidden = billingIsEnabled || needSignin;
+      if (!needSignin) loadCredits();
+    });
+  });
+})();
+
+// Lemon.js overlay: initialize when the deferred script is ready + refresh on success.
+function setupLemon() {
+  if (typeof window.createLemonSqueezy === "function") {
+    window.createLemonSqueezy();
+    if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === "function") {
+      window.LemonSqueezy.Setup({ eventHandler: (ev) => { if (ev && ev.event === "Checkout.Success") refreshCreditsRetry(); } });
+    }
+  }
+}
+if (document.readyState === "complete") setupLemon();
+else window.addEventListener("load", setupLemon);
+
+// Returning from a hosted checkout (?purchase=success) → land on Pricing, poll the balance, clean the URL.
+(function handlePurchaseReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("purchase") === "success") {
+    switchTab("pricing");
+    refreshCreditsRetry();
+    const note = document.getElementById("pricing-balance");
+    if (note) { note.hidden = false; note.textContent = "Thanks for your purchase! Your credits will appear here in a moment."; }
+    try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+  }
+})();
