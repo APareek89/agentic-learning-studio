@@ -36,6 +36,9 @@ export const ARTIFACT_CSS = String.raw`
   --ink:#eaf0ff; --ink-soft:#c8d2ea; --muted:#9aa6c4; --faint:#76829f;
   --bg:#0a0f1f; --surface:#121829; --surface-2:#161d31;
   --border:#222a44; --border-strong:#313b5c; --accent-weak:#142149;
+  /* semantic "weak" fills must flip in dark too, else callouts + quiz states render as
+     light boxes with invisible (light-on-light) text. Dark tints matched to the blk-* set. */
+  --info-weak:#142149; --ok-weak:#0e2419; --warn-weak:#241d0f; --danger-weak:#2a1416;
   --code-bg:#070b18; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box}
