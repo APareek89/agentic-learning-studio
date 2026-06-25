@@ -18,6 +18,7 @@
 
 import { profiler, retriever, planner, architect, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
+import { spendOne } from "../lib/credits";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
 import { makeRootedLangfuseHandler } from "../lib/langfuse";
@@ -196,6 +197,16 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     await persistChain; // make sure the final, complete state is written
 
     jl.status = "done"; jl.percent = 100;
+    // Charge ONE lesson credit — only on a SUCCESSFUL build. The free overview/preview
+    // never costs; a failure falls through to catch and is never charged. No-op when
+    // there's no user / DB (local open-mode dev). FIFO over the buyer's credit lots.
+    // MUST run BEFORE job.status="done": the front-end refreshes the credit pill the
+    // instant it polls "done", so the deduction has to be committed first or the pill
+    // shows the stale (pre-spend) balance.
+    if (art.userId) {
+      try { await spendOne(art.userId); }
+      catch (e) { console.error("[runBuildJob] credit deduct failed", e); }
+    }
     job.status = "done";
   } catch (e) {
     job.status = "error";

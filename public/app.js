@@ -679,7 +679,13 @@ function restoreTabs() {
   tabs = data.tabs.map((d) => Object.assign({ id: "t" + tabSeq++, building: false }, d));
   const act = tabs[Math.max(0, Math.min(tabs.length - 1, data.active | 0))];
   renderTabBar();
-  if (act) { switchTab("trainer"); activateTab(act.id); }
+  // Set up the saved Trainer tabs, but land the user back on the top-level tab they were on
+  // (My Lessons / Library / …), NOT always Trainer. `als-toptab` is written by switchTab().
+  if (act) {
+    let top = "trainer"; try { top = sessionStorage.getItem("als-toptab") || "trainer"; } catch { /* ignore */ }
+    activateTab(act.id);
+    switchTab(top);
+  }
   return true;
 }
 openWindowBtn.addEventListener("click", () => { const u = currentViewUrl || (currentArtifactId && "/api/artifact/" + currentArtifactId); if (u) window.open(u, "_blank"); });
@@ -737,7 +743,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -749,6 +755,7 @@ function switchTab(name) {
     t.setAttribute("aria-selected", String(on));
   });
   Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
+  try { sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ } // remember where the user is across refresh
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
@@ -1370,6 +1377,13 @@ async function startBuild(artifactId) {
   try {
     const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
     if (res.status === 401) { openAuth("signin"); return; }
+    if (res.status === 402) { // out of lesson credits — send them to Pricing
+      const d = await res.json().catch(() => ({}));
+      switchTab("pricing");
+      const note = document.getElementById("pricing-balance");
+      if (note) { note.hidden = false; note.textContent = (d.error || "You're out of lesson credits.") + " Your overview is saved — buy credits and click Generate Lesson again."; note.classList.add("low"); }
+      return;
+    }
     const data = await res.json();
     if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the lesson build.");
     jobId = data.jobId;
@@ -1438,9 +1452,18 @@ function pollJob(jobId, tabId) {
     // Bug 1: once the build job is actually running (the draft→lesson kind flip has committed),
     // reload the iframe ONCE so the open tab drops the preview lock even if the eager reload in
     // startBuild raced the promotion write. Only when this tab is the one on screen.
+    let didReload = false;
     if (reloadAfterPromote === tabId && (job.status === "running" || job.status === "done")) {
       reloadAfterPromote = null;
-      if (t && t.id === activeTabId) reloadViewer();
+      if (t && t.id === activeTabId) { reloadViewer(); didReload = true; }
+    }
+    // Live build (bug: lesson didn't update during generation → user had to refresh). Reload the
+    // viewer each time a new module finishes, while THIS lesson tab is on screen, so the lesson
+    // grows in real time. (Server persists the artifact after every module; the iframe re-renders.)
+    if (t && l && typeof l.builtModules === "number") {
+      if (t._built == null) t._built = 0;
+      if (!didReload && l.builtModules > t._built && t.id === activeTabId) reloadViewer();
+      t._built = l.builtModules;
     }
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard();
     if (job.status === "done" || job.status === "error") {
@@ -1452,6 +1475,7 @@ function pollJob(jobId, tabId) {
       } else if (job.status === "error" && t && t.id === activeTabId) {
         showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
       }
+      if (job.status === "done") loadCredits(); // a completed build spent 1 credit — refresh the pill
       loadDashboard(); loadSuggestions(); return;
     }
     activeJobTimer = setTimeout(tick, 2500);
@@ -1542,6 +1566,7 @@ function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "
 let sb = null;
 let accessToken = null;
 let currentUserEmail = "";
+let currentUserId = "";
 let authMode = "signin";
 let authIsEnabled = false;
 const authOverlay = document.getElementById("auth-overlay");
@@ -1581,6 +1606,7 @@ function applySession(session) {
   accessToken = (session && session.access_token) || null;
   const email = (session && session.user && session.user.email) || "";
   currentUserEmail = email;
+  currentUserId = (session && session.user && session.user.id) || "";
   const signedIn = !!accessToken;
   if (logoutBtn) logoutBtn.hidden = !signedIn;
   if (authWho) { authWho.hidden = !signedIn; authWho.textContent = email; }
@@ -1588,8 +1614,12 @@ function applySession(session) {
   if (authActions) authActions.hidden = signedIn || !authIsEnabled;
   if (signedIn) {
     closeAuth();
-    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
+  } else {
+    updateCreditPill(null);
+    clearCachedCredits();
   }
+  updateProfileUI(signedIn, email);
 }
 
 document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
@@ -1601,12 +1631,13 @@ async function bootAuth() {
   let cfg;
   try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
   authIsEnabled = !!cfg.authEnabled;
+  billingIsEnabled = !!cfg.billingEnabled;
 
   if (!authIsEnabled) {
     // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
     authOverlay.hidden = true;
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
-    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard();
+    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
     return;
   }
 
@@ -1734,3 +1765,243 @@ async function maybeOnboard() {
 bootAuth();
 // Re-open any Trainer tabs the learner had before a refresh (sessionStorage).
 restoreTabs();
+
+// ============================================================================
+// Lesson credits + Pricing — the credit pill in the nav, the slider/cost on the
+// Pricing tab, and Lemon Squeezy checkout (Lemon.js overlay). The webhook is the
+// source of truth for crediting; the front-end just reflects the balance.
+// ============================================================================
+// Live pricing from Lemon Squeezy — replaces the old hardcoded USD. `pricing` is a
+// fallback until /api/pricing loads the real store currency + amounts.
+let pricing = { currency: "USD", paygUnitCents: 99, trialCents: 500, paygFormatted: "", trialFormatted: "" };
+function fmtMoney(cents) {
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: pricing.currency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 2 }).format((cents || 0) / 100); }
+  catch { return ((cents || 0) / 100).toFixed(2) + " " + pricing.currency; }
+}
+function renderPricing() {
+  const slider = document.getElementById("payg-slider");
+  const n = Number(slider && slider.value) || 1;
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  // Single-unit fields prefer LS's own formatted string (matches the dashboard exactly);
+  // totals are computed in the detected currency.
+  set("payg-cost", fmtMoney(n * pricing.paygUnitCents));
+  set("payg-each", pricing.paygFormatted || fmtMoney(pricing.paygUnitCents));
+  set("trial-cost", pricing.trialFormatted || fmtMoney(pricing.trialCents));
+  set("trial-each", fmtMoney(Math.round((pricing.trialCents || 0) / 10)));
+  set("trial-btn-cost", pricing.trialFormatted || fmtMoney(pricing.trialCents));
+}
+async function loadPricing() {
+  try {
+    const res = await fetch("/api/pricing");
+    const d = await res.json();
+    if (d && d.configured && typeof d.paygUnitCents === "number" && d.paygUnitCents > 0) {
+      pricing = { currency: d.currency || "USD", paygUnitCents: d.paygUnitCents, trialCents: d.trialCents || 0, paygFormatted: d.paygFormatted || "", trialFormatted: d.trialFormatted || "" };
+    }
+  } catch { /* keep fallback */ }
+  renderPricing();
+}
+let billingIsEnabled = false;
+const creditPill = document.getElementById("credit-pill");
+const creditCount = document.getElementById("credit-count");
+
+function updateCreditPill(balance) {
+  if (!creditPill) return;
+  if (balance == null) { creditPill.hidden = true; return; }
+  creditPill.hidden = false;
+  if (creditCount) creditCount.textContent = String(balance);
+  creditPill.classList.toggle("empty", balance <= 0);
+}
+
+// Persist the last-known balance so the pill can render INSTANTLY on the next page
+// load — otherwise it stays hidden for ~1-2s while Supabase restores the session and
+// /api/credits round-trips (the "pill flashes away on refresh" bug).
+function cacheCredits(balance) { try { localStorage.setItem("wb-credits", String(balance)); } catch (e) {} }
+function clearCachedCredits() { try { localStorage.removeItem("wb-credits"); } catch (e) {} }
+
+async function loadCredits() {
+  if (!accessToken && authIsEnabled) { updateCreditPill(null); clearCachedCredits(); return; }
+  try {
+    const res = await fetch("/api/credits", { headers: authHeaders() });
+    if (!res.ok) { updateCreditPill(null); clearCachedCredits(); return; }
+    const d = await res.json();
+    const balance = typeof d.balance === "number" ? d.balance : 0;
+    updateCreditPill(balance);
+    cacheCredits(balance);
+    const bal = document.getElementById("pricing-balance");
+    if (bal && !bal.classList.contains("low")) {
+      bal.hidden = false;
+      bal.textContent = `You have ${balance} lesson credit${balance === 1 ? "" : "s"}.`;
+    }
+  } catch { /* keep the optimistic cached pill on a transient error */ }
+}
+
+// Optimistic paint: if we credited this browser before, show that balance immediately
+// on load. loadCredits() reconciles a moment later (and hides on a real sign-out).
+(function showCachedPill() {
+  try { const c = localStorage.getItem("wb-credits"); if (c != null && c !== "") updateCreditPill(Number(c)); } catch (e) {}
+})();
+
+// Poll a few times after a purchase — the webhook credits asynchronously.
+function refreshCreditsRetry(tries) {
+  tries = tries || 6;
+  loadCredits();
+  if (tries > 1) setTimeout(() => refreshCreditsRetry(tries - 1), 2000);
+}
+
+// Pill → Pricing tab.
+if (creditPill) {
+  creditPill.addEventListener("click", () => switchTab("pricing"));
+  creditPill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchTab("pricing"); } });
+}
+
+// ---- Pricing tab interactions ----
+(function initPricing() {
+  const slider = document.getElementById("payg-slider");
+  const nEls = [document.getElementById("payg-n"), document.getElementById("payg-n2"), document.getElementById("buy-payg-n")];
+  const sEl = document.getElementById("payg-s");
+  function syncSlider() {
+    const n = Number(slider.value) || 1;
+    nEls.forEach((el) => { if (el) el.textContent = String(n); });
+    if (sEl) sEl.textContent = n === 1 ? "" : "s";
+    renderPricing(); // currency-aware cost for the current N
+  }
+  if (slider) { slider.addEventListener("input", syncSlider); syncSlider(); }
+  loadPricing(); // pull live currency + amounts from Lemon Squeezy
+
+  async function buy(planId, quantity) {
+    if (authIsEnabled && !accessToken) { openAuth("signin"); return; }
+    if (!billingIsEnabled) { const s = document.getElementById("pricing-soon"); if (s) s.hidden = false; return; }
+    const btn = planId === "trial-launch" ? document.getElementById("buy-trial") : document.getElementById("buy-payg");
+    const label = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Starting checkout…"; }
+    try {
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ planId, quantity }) });
+      if (res.status === 401) { openAuth("signin"); return; }
+      const d = await res.json();
+      if (!res.ok || !d.url) throw new Error(d.detail ? `${d.error || "Checkout failed"} — ${d.detail}` : (d.error || "Couldn't start checkout."));
+      // Open the Lemon.js overlay if available; otherwise fall back to a new tab.
+      if (window.LemonSqueezy && window.LemonSqueezy.Url && typeof window.LemonSqueezy.Url.Open === "function") {
+        window.LemonSqueezy.Url.Open(d.url);
+      } else {
+        window.open(d.url, "_blank");
+      }
+      // Reflect the new balance once the webhook lands.
+      refreshCreditsRetry();
+    } catch (e) {
+      const s = document.getElementById("pricing-soon");
+      if (s) { s.hidden = false; s.textContent = e.message; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }
+  }
+
+  const buyPayg = document.getElementById("buy-payg");
+  const buyTrial = document.getElementById("buy-trial");
+  if (buyPayg) buyPayg.addEventListener("click", () => buy("lessons-payg", Number(slider && slider.value) || 1));
+  if (buyTrial) buyTrial.addEventListener("click", () => buy("trial-launch", 1));
+  const signinLink = document.getElementById("pricing-signin-link");
+  if (signinLink) signinLink.addEventListener("click", (e) => { e.preventDefault(); openAuth("signin"); });
+
+  // Show the right helper line when Pricing is opened.
+  document.querySelectorAll('.tab[data-tab="pricing"], #credit-pill').forEach((el) => {
+    el.addEventListener("click", () => {
+      const needSignin = authIsEnabled && !accessToken;
+      const signinEl = document.getElementById("pricing-signin");
+      const soonEl = document.getElementById("pricing-soon");
+      if (signinEl) signinEl.hidden = !needSignin;
+      if (soonEl) soonEl.hidden = billingIsEnabled || needSignin;
+      if (!needSignin) loadCredits();
+    });
+  });
+})();
+
+// Lemon.js overlay: initialize when the deferred script is ready + refresh on success.
+function setupLemon() {
+  if (typeof window.createLemonSqueezy === "function") {
+    window.createLemonSqueezy();
+    if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === "function") {
+      window.LemonSqueezy.Setup({ eventHandler: (ev) => { if (ev && ev.event === "Checkout.Success") refreshCreditsRetry(); } });
+    }
+  }
+}
+if (document.readyState === "complete") setupLemon();
+else window.addEventListener("load", setupLemon);
+
+// Returning from a hosted checkout (?purchase=success) → land on Pricing, poll the balance, clean the URL.
+(function handlePurchaseReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("purchase") === "success") {
+    switchTab("pricing");
+    refreshCreditsRetry();
+    const note = document.getElementById("pricing-balance");
+    if (note) { note.hidden = false; note.textContent = "Thanks for your purchase! Your credits will appear here in a moment."; }
+    try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+  }
+})();
+
+// ============================================================================
+// Profile menu — top-right avatar replaces the old email + Sign-out in the nav.
+// Click → { Account Details, Sign out }. Account Details shows name/email/credits
+// + a Top-up button. (Email + sign-out are no longer in the top bar.)
+// ============================================================================
+const profileWrap = document.getElementById("profile-wrap");
+const profileBtn = document.getElementById("profile-btn");
+const profileMenu = document.getElementById("profile-menu");
+const profileAvatar = document.getElementById("profile-avatar");
+
+function displayNameFrom(email) {
+  if (!email) return "there";
+  const local = email.split("@")[0].replace(/[._-]+/g, " ");
+  return local.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Show/hide the avatar with the user's initial. Driven from applySession.
+function updateProfileUI(signedIn, email) {
+  if (profileWrap) profileWrap.hidden = !signedIn;
+  if (signedIn && profileAvatar) profileAvatar.textContent = (email || "U").trim().charAt(0).toUpperCase() || "U";
+  if (!signedIn) closeProfileMenu();
+}
+
+function openProfileMenu() { if (profileMenu) { profileMenu.hidden = false; profileBtn.setAttribute("aria-expanded", "true"); } }
+function closeProfileMenu() { if (profileMenu) { profileMenu.hidden = true; profileBtn && profileBtn.setAttribute("aria-expanded", "false"); } }
+
+if (profileBtn) profileBtn.addEventListener("click", (e) => { e.stopPropagation(); profileMenu.hidden ? openProfileMenu() : closeProfileMenu(); });
+document.addEventListener("click", (e) => { if (profileWrap && !profileWrap.contains(e.target)) closeProfileMenu(); });
+
+// --- Account Details modal ---
+const acctOverlay = document.getElementById("acct-overlay");
+async function openAccount() {
+  closeProfileMenu();
+  const nameEl = document.getElementById("acct-name");
+  const emailEl = document.getElementById("acct-email");
+  const credEl = document.getElementById("acct-credits");
+  const uuidEl = document.getElementById("acct-uuid");
+  const planEl = document.getElementById("acct-plan");
+  if (nameEl) nameEl.textContent = displayNameFrom(currentUserEmail);
+  if (emailEl) emailEl.textContent = currentUserEmail || "—";
+  if (uuidEl) uuidEl.textContent = currentUserId || "—";
+  const cached = (() => { try { return localStorage.getItem("wb-credits"); } catch (e) { return null; } })();
+  if (planEl) planEl.textContent = "Pay as you go";
+  if (credEl) credEl.textContent = cached != null && cached !== "" ? `${cached} lesson${cached === "1" ? "" : "s"}` : "…";
+  if (acctOverlay) acctOverlay.hidden = false;
+  // Refresh the credits figure live.
+  try {
+    const res = await fetch("/api/credits", { headers: authHeaders() });
+    if (res.ok) { const d = await res.json(); if (credEl) credEl.textContent = `${d.balance} lesson${d.balance === 1 ? "" : "s"}`; }
+  } catch (e) {}
+}
+function closeAccount() { if (acctOverlay) acctOverlay.hidden = true; }
+
+const pmAccount = document.getElementById("pm-account");
+const pmSignout = document.getElementById("pm-signout");
+if (pmAccount) pmAccount.addEventListener("click", openAccount);
+if (pmSignout) pmSignout.addEventListener("click", async () => {
+  closeProfileMenu();
+  try { if (sb) await sb.auth.signOut(); } catch (e) {}
+  applySession(null);
+});
+const acctClose = document.getElementById("acct-close");
+if (acctClose) acctClose.addEventListener("click", closeAccount);
+if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAccount(); });
+const acctTopup = document.getElementById("acct-topup");
+if (acctTopup) acctTopup.addEventListener("click", () => { closeAccount(); switchTab("pricing"); });

@@ -106,6 +106,7 @@
         </span>
         <button class="tab" role="tab" aria-selected="false" data-tab="dashboard" id="tab-btn-dashboard" hidden>My Lessons</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="library" id="tab-btn-library">Library</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="pricing" id="tab-btn-pricing">Pricing</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="community" id="tab-btn-community">Community</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="build-community" id="tab-btn-build-community">Build for Community</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="build" disabled>
@@ -113,12 +114,24 @@
         </button>
       </nav>
       <div class="topbar-spacer"></div>
+      <a class="credit-pill" id="credit-pill" data-tab="pricing" role="button" tabindex="0" hidden title="Your lesson credits — click to buy more">
+        <svg viewBox="0 0 24 24" class="credit-ico" aria-hidden="true"><path d="M12 2l2.6 6.5L21 9.3l-4.8 4.3L17.5 21 12 17.3 6.5 21l1.3-7.4L3 9.3l6.4-.8z"/></svg>
+        <span id="credit-count">0</span>&nbsp;Lessons
+      </a>
       <div class="auth-actions" id="auth-actions" hidden>
         <button class="ghost" id="btn-signin" type="button">Sign in</button>
         <button class="generate sm" id="btn-signup" type="button">Sign up</button>
       </div>
-      <span class="auth-who" id="auth-who" hidden></span>
-      <button class="ghost" id="logout" hidden>Sign out</button>
+      <div class="profile-wrap" id="profile-wrap" hidden>
+        <button class="profile-btn" id="profile-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Account">
+          <span class="profile-avatar" id="profile-avatar">U</span>
+          <span class="profile-label">profile</span>
+        </button>
+        <div class="profile-menu" id="profile-menu" role="menu" hidden>
+          <button class="profile-item" id="pm-account" type="button" role="menuitem">Account Details</button>
+          <button class="profile-item" id="pm-signout" type="button" role="menuitem">Sign out</button>
+        </div>
+      </div>
     </header>
 
     <!-- ===== TAB: Home (NEW — Halo landing; the only tab with a new layout) ===== -->
@@ -688,7 +701,83 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
     </section>
 
 
+    <!-- ===== TAB: Pricing (lesson credits) ===== -->
+    <section class="tabpanel lib-panel" id="tab-pricing" role="tabpanel" hidden>
+      <div class="pricing-wrap">
+        <div class="pricing-head">
+          <h2>Lesson credits</h2>
+          <p class="pricing-sub">Designing the overview is always free. You spend <strong>1 credit</strong> only when a full lesson finishes building. <span class="pricing-bal" id="pricing-balance" hidden></span></p>
+        </div>
+
+        <div class="pricing-cards">
+          <!-- Pay as you go -->
+          <div class="price-card">
+            <div class="price-tag">Pay as you go</div>
+            <div class="price-amount" id="payg-cost">—</div>
+            <div class="price-per">for <span id="payg-n">1</span> lesson<span id="payg-s"></span> · <span id="payg-each">—</span> each</div>
+            <label class="price-slider-label" for="payg-slider">How many lessons?</label>
+            <input type="range" id="payg-slider" min="1" max="50" value="1" class="price-slider" aria-label="Number of lessons" />
+            <div class="price-slider-row"><span class="price-slider-min">1</span><strong id="payg-n2">1</strong><span class="price-slider-max">50</span></div>
+            <button class="generate" id="buy-payg" type="button">Buy <span id="buy-payg-n">1</span> lesson credit</button>
+            <ul class="price-feats">
+              <li>1 credit = 1 fully generated lesson</li>
+              <li>Free overview preview before you build</li>
+              <li>Credits valid for 12 months</li>
+            </ul>
+          </div>
+          <!-- Trial -->
+          <div class="price-card featured">
+            <div class="price-badge">Best value to start</div>
+            <div class="price-tag">Trial Launch Plan</div>
+            <div class="price-amount" id="trial-cost">—</div>
+            <div class="price-per">10 lessons · just <span id="trial-each">—</span> each</div>
+            <button class="generate" id="buy-trial" type="button">Get 10 lessons for <span id="trial-btn-cost">—</span></button>
+            <ul class="price-feats">
+              <li>10 fully generated lessons</li>
+              <li>~50% off the per-lesson price</li>
+              <li>Credits valid for 12 months</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="pricing-signin" id="pricing-signin" hidden>Please <a href="#" id="pricing-signin-link">sign in</a> to buy lesson credits.</div>
+        <div class="pricing-soon" id="pricing-soon" hidden>Payments aren’t switched on yet — check back shortly.</div>
+
+        <div class="pricing-terms">
+          <h3>What you get</h3>
+          <ul>
+            <li><strong>1 credit = 1 generated lesson</strong> — a complete, interactive, self-contained lesson built to your topic and settings.</li>
+            <li><strong>The overview is free.</strong> Generate and refine the overview / mental-map preview without spending a credit. A credit is charged only when you click <em>Generate Lesson</em> and the full build completes.</li>
+            <li><strong>Failed builds are never charged.</strong> If a build errors out, no credit is deducted.</li>
+            <li><strong>Every account starts with 1 free lesson credit.</strong></li>
+          </ul>
+          <h3>Terms</h3>
+          <ul>
+            <li>Credits are valid for <strong>12 months</strong> from the date of purchase.</li>
+            <li>Credits are <strong>non-refundable</strong> and carry no cash value.</li>
+            <li>Prices are in USD; taxes may apply at checkout.</li>
+            <li>Payments are processed securely by Lemon Squeezy.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Account Details modal ===== -->
+    <div class="acct-overlay" id="acct-overlay" hidden>
+      <div class="acct-card">
+        <button class="acct-close" id="acct-close" type="button" aria-label="Close">×</button>
+        <h2 class="acct-title">Account</h2>
+        <div class="acct-row"><span class="acct-k">Name</span><span class="acct-v" id="acct-name">—</span></div>
+        <div class="acct-row"><span class="acct-k">Email</span><span class="acct-v" id="acct-email">—</span></div>
+        <div class="acct-row"><span class="acct-k">Account ID</span><span class="acct-v acct-uuid" id="acct-uuid">—</span></div>
+        <div class="acct-row"><span class="acct-k">Plan</span><span class="acct-v" id="acct-plan">—</span></div>
+        <div class="acct-row"><span class="acct-k">Lesson credits</span><span class="acct-v acct-credits" id="acct-credits">—</span></div>
+        <button class="generate" id="acct-topup" type="button">Top up credits</button>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
     <script src="/app.js"></script>
   </body>
 </html>

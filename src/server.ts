@@ -38,6 +38,8 @@ import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareL
 import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
+import { getBalance, ensureFreeGrant, addCredits } from "./lib/credits";
+import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
@@ -85,6 +87,44 @@ app.use(cors({
   credentials: true,
 }));
 
+// ---- Lemon Squeezy webhook (RAW body) — MUST be registered BEFORE express.json ----
+// Signature verification needs the exact bytes Lemon Squeezy signed; express.json
+// would consume + reparse them. This route reads the raw Buffer, verifies the HMAC,
+// then credits the buyer. Idempotent (order id is UNIQUE) → always returns 200 so
+// Lemon Squeezy stops retrying, even for duplicates.
+app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" }), async (req, res) => {
+  if (!webhookConfigured()) { res.status(503).json({ error: "Webhook not configured." }); return; }
+  const raw = req.body as Buffer; // express.raw → Buffer
+  const sig = (req.headers["x-signature"] as string | undefined) ?? "";
+  if (!Buffer.isBuffer(raw) || !verifyWebhookSignature(raw, sig)) {
+    res.status(401).json({ error: "Invalid signature." });
+    return;
+  }
+  let order;
+  try { order = parseOrder(JSON.parse(raw.toString("utf8"))); } catch { order = null; }
+  // Only act on the paid event; ack everything else so LS stops retrying.
+  if (!order || (order.eventName !== "order_created" && order.eventName !== "order_paid")) {
+    res.status(200).json({ ok: true, ignored: true });
+    return;
+  }
+  if (!order.userId) { console.warn("[ls-webhook] order missing user_id custom_data", order.orderId); res.status(200).json({ ok: true }); return; }
+  const lessons = lessonsForOrder(order.planId, order.quantity);
+  if (lessons > 0) {
+    try {
+      const { credited } = await addCredits(order.userId, lessons, {
+        reason: "purchase", planId: order.planId, amountUsd: order.amountUsd, lsOrderId: order.orderId,
+      });
+      console.log(`[ls-webhook] order ${order.orderId} ${order.planId} x${order.quantity} → ${lessons} lessons for ${order.userId} (${credited ? "credited" : "duplicate"})`);
+    } catch (e) {
+      // A DB hiccup → 500 so LS retries (still idempotent on the order id).
+      console.error("[ls-webhook] addCredits failed", e);
+      res.status(500).json({ error: "credit failed" });
+      return;
+    }
+  }
+  res.status(200).json({ ok: true });
+});
+
 app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
 app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js, styles.css)
 
@@ -129,8 +169,75 @@ app.get("/api/config", (_req, res) => {
     authEnabled: authEnabled(),
     supabaseUrl: process.env.SUPABASE_URL ?? "",
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+    billingEnabled: billingConfigured(),
+    unitPriceUsd: 0.99,
   });
 });
+
+// ----------------------------------------------------------------------------
+// Lesson credits — balance, checkout. One completed build = 1 credit; the free
+// overview/preview costs nothing. New signed-in users get one free credit.
+// ----------------------------------------------------------------------------
+
+/** GET /api/credits — the signed-in user's spendable balance (grants the free credit on first call). */
+app.get("/api/credits", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.json({ balance: 0, signedIn: false }); return; }
+  // First time we see a signed-in user → grant the one free credit (idempotent).
+  const balance = await ensureFreeGrant(user.id);
+  res.json({ balance, signedIn: true });
+});
+
+/** The public origin to send buyers back to after checkout (Render/host or localhost). */
+function appOrigin(req: express.Request): string {
+  const envUrl = (process.env.APP_URL ?? "").trim();
+  if (envUrl) return envUrl.replace(/\/$/, "");
+  const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0] ?? req.protocol;
+  return `${proto}://${req.headers.host}`;
+}
+
+/**
+ * POST /api/checkout — server-built Lemon Squeezy checkout for the Lemon.js overlay.
+ * Body: { planId: 'trial-launch' | 'lessons-payg', quantity }. Returns { url }.
+ * Quantity is clamped server-side; the webhook is the source of truth for credits.
+ */
+app.post("/api/checkout", heavyLimiter, requireAuth, async (req, res) => {
+  if (!billingConfigured()) { res.status(503).json({ error: "Payments aren't set up yet — check back shortly." }); return; }
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in to buy lesson credits." }); return; }
+  const planId = (req.body?.planId === "trial-launch" ? "trial-launch" : "lessons-payg") as PlanId;
+  const quantity = Math.min(500, Math.max(1, Math.round(Number(req.body?.quantity) || 1)));
+  try {
+    const url = await createCheckout({
+      planId, quantity, userId: user.id, userEmail: user.email,
+      redirectUrl: `${appOrigin(req)}/?purchase=success`,
+    });
+    res.json({ url });
+  } catch (e) {
+    console.error("[checkout]", e);
+    const detail = e instanceof Error ? e.message : String(e);
+    // Surface the upstream Lemon Squeezy reason so checkout failures are diagnosable
+    // (e.g. "store not activated", bad variant id). TODO: hide `detail` once billing is stable.
+    res.status(502).json({ error: "Couldn't start checkout.", detail });
+  }
+});
+
+/**
+ * GET /api/pricing — live prices + store currency from Lemon Squeezy (public; cached).
+ * The pricing page renders these so it always matches the LS config (never hardcoded
+ * USD). LS localizes the FINAL charge to the buyer's country at checkout. On error it
+ * returns the upstream detail (also a quick health probe for the API key + variants).
+ */
+app.get("/api/pricing", async (_req, res) => {
+  if (!billingConfigured()) { res.json({ configured: false }); return; }
+  try {
+    const p = await fetchPricing(Date.now());
+    res.json({ configured: true, ...p });
+  } catch (e) {
+    res.status(502).json({ configured: true, error: "pricing-fetch-failed", detail: e instanceof Error ? e.message : String(e) });
+  }
+});
+
 
 // ----------------------------------------------------------------------------
 // GET /api/lessons — the signed-in user's previous lessons (dashboard). Returns
@@ -262,6 +369,13 @@ app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
   const art = await getArtifact(artifactId);
   if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
   const user = await getUser(req.headers.authorization);
+  // Credit gate: a completed build costs 1 lesson credit. Grant the one free credit
+  // on the first attempt, then block at zero (the buyer is sent to Pricing). Skipped
+  // when the DB/auth is off (local dev) so the open-mode flow stays free.
+  if (user && dbEnabled()) {
+    const bal = await ensureFreeGrant(user.id);
+    if (bal < 1) { res.status(402).json({ error: "You're out of lesson credits. Add more to keep generating.", needCredits: true }); return; }
+  }
   if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
   const job = createJob(user?.id ?? "anon");
   void runBuildJob(job, artifactId);
