@@ -201,8 +201,20 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **💳 BILLING / LESSON CREDITS (2026-06-25) — on STAGING (`agentic-learning-studio-1.onrender.com`), NOT yet prod.**
-  Phase-1 "money path" live on `staging`: per-user lesson credits gate `/api/build` (HTTP 402 when balance < 1;
+- **🩹 GENERATION FIX (2026-06-25, on staging+prod) — capstone.prompt.** Overviews were FAILING ("Couldn't design
+  an overview") on BOTH envs: the skeleton schema requires `synthesis.capstone.prompt`, but the model sometimes
+  returns a `capstone` object without it; `coerceSkeleton` (nodes.ts) only defaulted a wholly-missing capstone, so
+  a present-but-promptless one failed validation → no blueprint (after ~2 architect retries ≈ the 60s "hang").
+  Fix: `coerceSkeleton` now ALWAYS fills `capstone.prompt`. Verified: a skeleton that failed now validates;
+  staging overview ~49s. (Watch for OTHER required-but-omitted skeleton fields surfacing similarly.)
+- **🐢 STAGING PERF (2026-06-25):** the **staging Render service is under-resourced** vs prod's Standard 2GB —
+  `/healthz` ~2.2s, overview ~49s, and **module builds crawl (~1 module / ~7 min)** vs prod's whole build in
+  3.5–6 min. NOT a code/stack problem (Anthropic key healthy, all 3 models 200 in ~1.5s). Action: bump the staging
+  tier to match prod. Also: the local embedding model (Transformers.js/onnx) crashed with a `mutex lock failed`
+  under repeated use locally — the one fragile, CPU-heavy piece (candidate to harden / move to a hosted embed API).
+  **Langfuse "no traces" on staging = `LANGFUSE_*` env simply not set on staging Render** (benign; prod has them).
+- **💳 BILLING / LESSON CREDITS (2026-06-25) — on STAGING + PROD (code `main dcb62f2`). Awaiting prod LS env.**
+  Phase-1 "money path": per-user lesson credits gate `/api/build` (HTTP 402 when balance < 1;
   1 completed build = 1 credit; overview/preview stays free; every signed-in user gets 1 free credit). Lemon
   Squeezy hosted checkout via the Lemon.js overlay + signed webhook `/api/lemonsqueezy/webhook` (raw-body route
   mounted BEFORE `express.json`, HMAC-SHA256 verify, idempotent on `ls_order_id`). Prices + store currency come
@@ -212,9 +224,13 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
     + webhook in `server.ts` · spend in `runBuildJob` (orchestrator.ts, BEFORE `job.status="done"`) ·
     front-end Pricing tab + nav credit pill + profile menu (`public/{index.html,app.js,styles.css}`).
   - **Migration `0013`** (`credit_lots` w/ 12-month `expires_at` + `credit_ledger`, RLS on) applied to **staging DB
-    ONLY** → MUST run on prod Supabase before promoting. LS env (`LEMONSQUEEZY_API_KEY/_WEBHOOK_SECRET/_STORE_ID/
-    _TRIAL_VARIANT_ID/_PAYG_VARIANT_ID` + `APP_URL`) set on STAGING Render; set the same on PROD Render + a prod
-    webhook URL before prod. LS test-mode end-to-end first, then flip to live.
+    AND prod DB** (verified). LS env set on STAGING Render (test mode, verified end-to-end). **PROD Render still
+    needs the LS env** (`LEMONSQUEEZY_API_KEY/_WEBHOOK_SECRET/_STORE_ID=416599/_TRIAL_VARIANT_ID/_PAYG_VARIANT_ID`
+    + `APP_URL=https://prathibhax.com`) → until set, `billingEnabled=false` on prod (gate still works on the free
+    credit; buying is off). Live webhook URL MUST be the **full path** `…/api/lemonsqueezy/webhook` (a bare-domain
+    URL 404s "Cannot POST /" — that was the test-mode bug) and its signing secret must match the env secret.
+  - **Verified on staging (test mode):** real LS purchase credited the buyer (idempotent webhook, valid sig). The
+    checkout-404 was a pasted `#` in the store id (code now digit-sanitizes all LS ids).
   - **PENDING — Phase 2 (NOT built): discount codes + admin panel.** Admin-defined promo codes (e.g. `WB30` =
     30% off the $0.99/lesson) via an **apply-code box** on Pricing, managed in an **admin panel gated to
     `anandp.pareek6@gmail.com`** (env `ADMIN_EMAILS`). Plan: new `promo_codes` table mirrored to LS native
