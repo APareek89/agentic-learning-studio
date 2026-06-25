@@ -679,7 +679,13 @@ function restoreTabs() {
   tabs = data.tabs.map((d) => Object.assign({ id: "t" + tabSeq++, building: false }, d));
   const act = tabs[Math.max(0, Math.min(tabs.length - 1, data.active | 0))];
   renderTabBar();
-  if (act) { switchTab("trainer"); activateTab(act.id); }
+  // Set up the saved Trainer tabs, but land the user back on the top-level tab they were on
+  // (My Lessons / Library / …), NOT always Trainer. `als-toptab` is written by switchTab().
+  if (act) {
+    let top = "trainer"; try { top = sessionStorage.getItem("als-toptab") || "trainer"; } catch { /* ignore */ }
+    activateTab(act.id);
+    switchTab(top);
+  }
   return true;
 }
 openWindowBtn.addEventListener("click", () => { const u = currentViewUrl || (currentArtifactId && "/api/artifact/" + currentArtifactId); if (u) window.open(u, "_blank"); });
@@ -749,6 +755,7 @@ function switchTab(name) {
     t.setAttribute("aria-selected", String(on));
   });
   Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
+  try { sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ } // remember where the user is across refresh
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
@@ -1445,9 +1452,18 @@ function pollJob(jobId, tabId) {
     // Bug 1: once the build job is actually running (the draft→lesson kind flip has committed),
     // reload the iframe ONCE so the open tab drops the preview lock even if the eager reload in
     // startBuild raced the promotion write. Only when this tab is the one on screen.
+    let didReload = false;
     if (reloadAfterPromote === tabId && (job.status === "running" || job.status === "done")) {
       reloadAfterPromote = null;
-      if (t && t.id === activeTabId) reloadViewer();
+      if (t && t.id === activeTabId) { reloadViewer(); didReload = true; }
+    }
+    // Live build (bug: lesson didn't update during generation → user had to refresh). Reload the
+    // viewer each time a new module finishes, while THIS lesson tab is on screen, so the lesson
+    // grows in real time. (Server persists the artifact after every module; the iframe re-renders.)
+    if (t && l && typeof l.builtModules === "number") {
+      if (t._built == null) t._built = 0;
+      if (!didReload && l.builtModules > t._built && t.id === activeTabId) reloadViewer();
+      t._built = l.builtModules;
     }
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard();
     if (job.status === "done" || job.status === "error") {
