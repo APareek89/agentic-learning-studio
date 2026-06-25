@@ -59,6 +59,12 @@ async function main() {
     return pw && !pw.hidden;
   }, null, { timeout: 20000 }).then(() => true).catch(() => false);
   assert("sign in succeeds (profile widget appears)", signedIn);
+  if (!signedIn) {
+    const msg = await page.$eval("#auth-msg", (e) => e.textContent).catch(() => "");
+    console.error(`\n✗ SIGN-IN FAILED${msg ? ` — "${msg.trim()}"` : ""}. Check QA_EMAIL / QA_PASSWORD. Aborting.\n`);
+    await browser.close();
+    process.exit(1);
+  }
   const dashVisible = await page.$eval("#tab-btn-dashboard", (e) => !e.hidden).catch(() => false);
   assert("My Lessons tab appears after sign-in", dashVisible);
   // no extra full-page reload from signing in (SPA, not a redirect)
