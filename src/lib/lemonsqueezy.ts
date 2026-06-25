@@ -27,9 +27,28 @@ function env(name: string): string {
   return (process.env[name] ?? "").trim();
 }
 
-/** Variant id for a plan, from env. */
+/** Lemon Squeezy ids are numeric; the dashboard shows them as "#416599", so people paste the
+ * "#". Strip everything non-digit so a pasted "#416599" still resolves (else checkout 404s). */
+function digits(s: string): string {
+  return (s || "").replace(/[^0-9]/g, "");
+}
+function storeId(): string {
+  return digits(env("LEMONSQUEEZY_STORE_ID"));
+}
+
+/** Variant id (sanitized) for a plan, from env. */
 function variantFor(planId: PlanId): string {
-  return planId === "trial-launch" ? env("LEMONSQUEEZY_TRIAL_VARIANT_ID") : env("LEMONSQUEEZY_PAYG_VARIANT_ID");
+  return digits(planId === "trial-launch" ? env("LEMONSQUEEZY_TRIAL_VARIANT_ID") : env("LEMONSQUEEZY_PAYG_VARIANT_ID"));
+}
+
+/** Best-effort ISO currency from a Lemon Squeezy `price_formatted` string ("₹99.00" → INR). */
+function currencyFromFormatted(f?: string): string | null {
+  if (!f) return null;
+  if (/₹|\bRs\b|INR/i.test(f)) return "INR";
+  if (/€|EUR/i.test(f)) return "EUR";
+  if (/£|GBP/i.test(f)) return "GBP";
+  if (/\$|USD/i.test(f)) return "USD";
+  return null;
 }
 
 /** True when checkout can be created (API key + store + both variants present). */
@@ -57,19 +76,26 @@ async function lsGet(path: string): Promise<any> {
 }
 
 /** A variant's current unit price in cents (modern `prices` resource, with the legacy attr as fallback). */
-async function variantPriceCents(variantId: string): Promise<number> {
-  const v = await lsGet(`/variants/${variantId}`);
-  const legacy = v?.data?.attributes?.price;
-  if (typeof legacy === "number" && legacy > 0) return legacy;
-  const prices = await lsGet(`/prices?filter[variant_id]=${variantId}`);
-  const up = prices?.data?.[0]?.attributes?.unit_price;
-  return typeof up === "number" ? up : 0;
+async function variantPrice(variantId: string): Promise<{ cents: number; formatted?: string }> {
+  const id = digits(variantId);
+  const v = await lsGet(`/variants/${id}`);
+  const a = v?.data?.attributes ?? {};
+  let cents = typeof a.price === "number" && a.price > 0 ? a.price : 0;
+  const formatted: string | undefined = a.price_formatted;
+  if (!cents) {
+    const prices = await lsGet(`/prices?filter[variant_id]=${id}`);
+    const up = prices?.data?.[0]?.attributes?.unit_price;
+    if (typeof up === "number") cents = up;
+  }
+  return { cents, formatted };
 }
 
 export interface PricingInfo {
   currency: string;            // ISO code, e.g. "INR" / "USD"
   paygUnitCents: number;       // per-lesson price in minor units
   trialCents: number;          // trial bundle price in minor units
+  paygFormatted?: string;      // LS's own formatted string ("₹99.00") — authoritative display
+  trialFormatted?: string;
 }
 
 let pricingCache: { at: number; data: PricingInfo } | null = null;
@@ -82,13 +108,19 @@ let pricingCache: { at: number; data: PricingInfo } | null = null;
  */
 export async function fetchPricing(nowMs: number): Promise<PricingInfo> {
   if (pricingCache && nowMs - pricingCache.at < 10 * 60 * 1000) return pricingCache.data;
-  const store = await lsGet(`/stores/${env("LEMONSQUEEZY_STORE_ID")}`);
-  const currency: string = store?.data?.attributes?.currency || env("LEMONSQUEEZY_CURRENCY") || "USD";
-  const [paygUnitCents, trialCents] = await Promise.all([
-    variantPriceCents(env("LEMONSQUEEZY_PAYG_VARIANT_ID")),
-    variantPriceCents(env("LEMONSQUEEZY_TRIAL_VARIANT_ID")),
+  const [payg, trial] = await Promise.all([
+    variantPrice(env("LEMONSQUEEZY_PAYG_VARIANT_ID")),
+    variantPrice(env("LEMONSQUEEZY_TRIAL_VARIANT_ID")),
   ]);
-  const data: PricingInfo = { currency, paygUnitCents, trialCents };
+  // Prefer the currency LS actually formats the price in (matches the dashboard), then the
+  // store's base currency, then env override, then USD.
+  let storeCurrency = "";
+  try { const s = await lsGet(`/stores/${storeId()}`); storeCurrency = s?.data?.attributes?.currency || ""; } catch { /* store read optional */ }
+  const currency: string = currencyFromFormatted(payg.formatted) || storeCurrency || env("LEMONSQUEEZY_CURRENCY") || "USD";
+  const data: PricingInfo = {
+    currency, paygUnitCents: payg.cents, trialCents: trial.cents,
+    paygFormatted: payg.formatted, trialFormatted: trial.formatted,
+  };
   pricingCache = { at: nowMs, data };
   return data;
 }
@@ -160,8 +192,8 @@ export async function createCheckout(args: {
   redirectUrl: string;
 }): Promise<string> {
   if (!billingConfigured()) throw new Error("billing-not-configured");
-  const variantId = variantFor(args.planId);
-  const storeId = env("LEMONSQUEEZY_STORE_ID");
+  const variantId = variantFor(args.planId);   // sanitized (digits only)
+  const store = storeId();                      // sanitized — strips a pasted "#"
   const qty = args.planId === "lessons-payg" ? Math.max(1, Math.round(args.quantity || 1)) : 1;
 
   const body = {
@@ -177,8 +209,8 @@ export async function createCheckout(args: {
         checkout_options: { embed: true },
       },
       relationships: {
-        store: { data: { type: "stores", id: String(storeId) } },
-        variant: { data: { type: "variants", id: String(variantId) } },
+        store: { data: { type: "stores", id: store } },
+        variant: { data: { type: "variants", id: variantId } },
       },
     },
   };

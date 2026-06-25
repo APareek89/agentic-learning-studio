@@ -1755,7 +1755,7 @@ restoreTabs();
 // ============================================================================
 // Live pricing from Lemon Squeezy — replaces the old hardcoded USD. `pricing` is a
 // fallback until /api/pricing loads the real store currency + amounts.
-let pricing = { currency: "USD", paygUnitCents: 99, trialCents: 500 };
+let pricing = { currency: "USD", paygUnitCents: 99, trialCents: 500, paygFormatted: "", trialFormatted: "" };
 function fmtMoney(cents) {
   try { return new Intl.NumberFormat(undefined, { style: "currency", currency: pricing.currency, maximumFractionDigits: 2 }).format((cents || 0) / 100); }
   catch { return ((cents || 0) / 100).toFixed(2) + " " + pricing.currency; }
@@ -1764,18 +1764,20 @@ function renderPricing() {
   const slider = document.getElementById("payg-slider");
   const n = Number(slider && slider.value) || 1;
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  // Single-unit fields prefer LS's own formatted string (matches the dashboard exactly);
+  // totals are computed in the detected currency.
   set("payg-cost", fmtMoney(n * pricing.paygUnitCents));
-  set("payg-each", fmtMoney(pricing.paygUnitCents));
-  set("trial-cost", fmtMoney(pricing.trialCents));
+  set("payg-each", pricing.paygFormatted || fmtMoney(pricing.paygUnitCents));
+  set("trial-cost", pricing.trialFormatted || fmtMoney(pricing.trialCents));
   set("trial-each", fmtMoney(Math.round((pricing.trialCents || 0) / 10)));
-  set("trial-btn-cost", fmtMoney(pricing.trialCents));
+  set("trial-btn-cost", pricing.trialFormatted || fmtMoney(pricing.trialCents));
 }
 async function loadPricing() {
   try {
     const res = await fetch("/api/pricing");
     const d = await res.json();
     if (d && d.configured && typeof d.paygUnitCents === "number" && d.paygUnitCents > 0) {
-      pricing = { currency: d.currency || "USD", paygUnitCents: d.paygUnitCents, trialCents: d.trialCents || 0 };
+      pricing = { currency: d.currency || "USD", paygUnitCents: d.paygUnitCents, trialCents: d.trialCents || 0, paygFormatted: d.paygFormatted || "", trialFormatted: d.trialFormatted || "" };
     }
   } catch { /* keep fallback */ }
   renderPricing();
