@@ -789,21 +789,33 @@ const dashEmpty = document.getElementById("dash-empty");
 const dashActive = document.getElementById("dash-active");
 const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
+let dashboardPollTimer = null;
 async function loadDashboard() {
   try {
-    const res = await fetch("/api/lessons", { headers: authHeaders() });
+    // /api/lessons = saved lessons; /api/jobs/active = builds still running on the SERVER (so a
+    // build that's continuing after a page refresh — when the client poller is gone — still shows).
+    const [res, jobsRes] = await Promise.all([
+      fetch("/api/lessons", { headers: authHeaders() }),
+      fetch("/api/jobs/active", { headers: authHeaders() }).catch(() => null),
+    ]);
     if (!res.ok) return;
     const { lessons } = await res.json();
     dashGrid.innerHTML = "";
     if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
     dashEmpty.hidden = true;
-    // The lesson currently building (if any) shows ONE row here with a live build badge —
-    // no separate "job card" (that's what caused the duplicate row).
-    const buildingTab = tabs.find((t) => t.building);
-    const buildingArt = buildingTab ? buildingTab.art : null;
-    const buildPct = buildingTab ? buildingTab.percent : 0;
-    for (const l of lessons) dashGrid.appendChild(lessonCard(l, l.id === buildingArt ? buildPct : null));
+    // Building progress: merge the local building tab with the server's active-job data.
+    const building = {}; // artifactId -> percent
+    const localBuild = tabs.find((t) => t.building);
+    if (localBuild && localBuild.art) building[localBuild.art] = localBuild.percent || 0;
+    try { if (jobsRes && jobsRes.ok) { const { jobs } = await jobsRes.json(); for (const j of (jobs || [])) if (j.artifactId) building[j.artifactId] = j.percent; } } catch { /* ignore */ }
+    for (const l of lessons) dashGrid.appendChild(lessonCard(l, l.id in building ? building[l.id] : null));
     dashNote.textContent = `${lessons.length} saved · Download to keep a permanent copy`;
+    // If a build is active but there's NO client-side poller (e.g. right after a refresh),
+    // self-refresh so the badge advances + flips to done. During a live generation, pollJob
+    // already drives loadDashboard (activeJobId set) — don't stack a second timer then.
+    if (dashboardPollTimer) { clearTimeout(dashboardPollTimer); dashboardPollTimer = null; }
+    const dashOpen = !document.getElementById("tab-dashboard").hidden;
+    if (Object.keys(building).length && dashOpen && !activeJobId) dashboardPollTimer = setTimeout(loadDashboard, 4000);
   } catch { /* ignore */ }
 }
 function lessonCard(l, buildingPct) {
@@ -2016,8 +2028,22 @@ if (pmAccount) pmAccount.addEventListener("click", openAccount);
 if (pmSignout) pmSignout.addEventListener("click", async () => {
   closeProfileMenu();
   try { if (sb) await sb.auth.signOut(); } catch (e) {}
+  resetWorkspace();   // bug: the previous user's lesson stayed on screen after sign-out
   applySession(null);
 });
+
+// Wipe the lesson workspace on sign-out so the next user lands clean on Home (not still
+// looking at the previous account's generated lesson). Clears tabs, the viewer iframe,
+// the live-lesson globals, the persisted tabs, and the in-flight poller.
+function resetWorkspace() {
+  tabs = []; activeTabId = null; genTabId = null; activeJobId = null;
+  if (activeJobTimer) { clearTimeout(activeJobTimer); activeJobTimer = null; }
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  try { if (viewerFrame) viewerFrame.src = "about:blank"; } catch (e) {}
+  renderTabBar();
+  try { sessionStorage.removeItem(TABS_KEY); sessionStorage.removeItem("als-toptab"); } catch (e) {}
+  switchTab("home");
+}
 const acctClose = document.getElementById("acct-close");
 if (acctClose) acctClose.addEventListener("click", closeAccount);
 if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAccount(); });

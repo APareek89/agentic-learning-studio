@@ -35,7 +35,7 @@ import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
-import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
+import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { getBalance, ensureFreeGrant, addCredits } from "./lib/credits";
@@ -390,6 +390,22 @@ app.get("/api/job/:id", requireAuth, (req, res) => {
     id: job.id, status: job.status, stage: job.stage, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
     lessons: job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status, percent: lessonPercent(l), builtModules: l.builtModules, totalModules: l.totalModules })),
   });
+});
+
+// GET /api/jobs/active — the signed-in user's still-running generations (server source of
+// truth). Lets My Lessons show a build that's continuing AFTER a page refresh, when the
+// client-side poller is gone. Keyed by artifactId so the dashboard can match its rows.
+app.get("/api/jobs/active", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.json({ jobs: [] }); return; }
+  const out = activeJobs(user.id).flatMap((j) =>
+    j.lessons.filter((l) => l.artifactId).map((l) => ({
+      jobId: j.id, artifactId: l.artifactId, title: l.title,
+      status: j.status, lessonStatus: l.status, percent: lessonPercent(l),
+      builtModules: l.builtModules, totalModules: l.totalModules,
+    }))
+  );
+  res.json({ jobs: out });
 });
 
 // GET /api/course/:courseId — ordered lessons of a course (for the lesson-tab strip).
