@@ -92,11 +92,21 @@ app.use(cors({
 // would consume + reparse them. This route reads the raw Buffer, verifies the HMAC,
 // then credits the buyer. Idempotent (order id is UNIQUE) → always returns 200 so
 // Lemon Squeezy stops retrying, even for duplicates.
+// Ring buffer of recent webhook hits — surfaced via /api/billing/diag so we can see
+// whether LS is even reaching staging + the outcome (no Render log access). REMOVE before prod.
+export const recentWebhooks: Array<Record<string, unknown>> = [];
+function logWebhook(entry: Record<string, unknown>): void {
+  recentWebhooks.unshift({ at: new Date().toISOString(), ...entry });
+  if (recentWebhooks.length > 25) recentWebhooks.pop();
+}
+
 app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" }), async (req, res) => {
-  if (!webhookConfigured()) { res.status(503).json({ error: "Webhook not configured." }); return; }
   const raw = req.body as Buffer; // express.raw → Buffer
   const sig = (req.headers["x-signature"] as string | undefined) ?? "";
+  const base = { bodyLen: Buffer.isBuffer(raw) ? raw.length : -1, hasSig: !!sig };
+  if (!webhookConfigured()) { logWebhook({ ...base, stage: "not-configured" }); res.status(503).json({ error: "Webhook not configured." }); return; }
   if (!Buffer.isBuffer(raw) || !verifyWebhookSignature(raw, sig)) {
+    logWebhook({ ...base, stage: "bad-signature" });
     res.status(401).json({ error: "Invalid signature." });
     return;
   }
@@ -104,24 +114,26 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
   try { order = parseOrder(JSON.parse(raw.toString("utf8"))); } catch { order = null; }
   // Only act on the paid event; ack everything else so LS stops retrying.
   if (!order || (order.eventName !== "order_created" && order.eventName !== "order_paid")) {
+    logWebhook({ ...base, stage: "ignored-event", event: order?.eventName });
     res.status(200).json({ ok: true, ignored: true });
     return;
   }
-  if (!order.userId) { console.warn("[ls-webhook] order missing user_id custom_data", order.orderId); res.status(200).json({ ok: true }); return; }
+  if (!order.userId) { logWebhook({ ...base, stage: "no-user-id", orderId: order.orderId, event: order.eventName }); console.warn("[ls-webhook] order missing user_id custom_data", order.orderId); res.status(200).json({ ok: true }); return; }
   const lessons = lessonsForOrder(order.planId, order.quantity);
   if (lessons > 0) {
     try {
       const { credited } = await addCredits(order.userId, lessons, {
         reason: "purchase", planId: order.planId, amountUsd: order.amountUsd, lsOrderId: order.orderId,
       });
+      logWebhook({ ...base, stage: credited ? "credited" : "duplicate", event: order.eventName, userId: order.userId, planId: order.planId, lessons, orderId: order.orderId });
       console.log(`[ls-webhook] order ${order.orderId} ${order.planId} x${order.quantity} → ${lessons} lessons for ${order.userId} (${credited ? "credited" : "duplicate"})`);
     } catch (e) {
-      // A DB hiccup → 500 so LS retries (still idempotent on the order id).
+      logWebhook({ ...base, stage: "credit-error", error: e instanceof Error ? e.message : String(e), userId: order.userId });
       console.error("[ls-webhook] addCredits failed", e);
       res.status(500).json({ error: "credit failed" });
       return;
     }
-  }
+  } else { logWebhook({ ...base, stage: "zero-lessons", planId: order.planId, event: order.eventName }); }
   res.status(200).json({ ok: true });
 });
 
@@ -251,6 +263,7 @@ app.get("/api/billing/diag", async (req, res) => {
     out.checkout = "failed";
     out.checkoutError = e instanceof Error ? e.message : String(e);
   }
+  out.recentWebhooks = recentWebhooks;
   res.json(out);
 });
 
