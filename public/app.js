@@ -1757,7 +1757,7 @@ restoreTabs();
 // fallback until /api/pricing loads the real store currency + amounts.
 let pricing = { currency: "USD", paygUnitCents: 99, trialCents: 500, paygFormatted: "", trialFormatted: "" };
 function fmtMoney(cents) {
-  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: pricing.currency, maximumFractionDigits: 2 }).format((cents || 0) / 100); }
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: pricing.currency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 2 }).format((cents || 0) / 100); }
   catch { return ((cents || 0) / 100).toFixed(2) + " " + pricing.currency; }
 }
 function renderPricing() {
