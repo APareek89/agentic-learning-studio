@@ -238,6 +238,19 @@ app.get("/api/pricing", async (_req, res) => {
   }
 });
 
+// TEMPORARY diagnostic — attempts a server-side checkout and returns the raw Lemon
+// Squeezy outcome so we can read the EXACT checkout error (store activation, etc.)
+// without a logged-in session. Returns no usable checkout URL. REMOVE before prod.
+app.get("/api/billing/diag", async (req, res) => {
+  if (!billingConfigured()) { res.json({ configured: false }); return; }
+  try {
+    await createCheckout({ planId: "trial-launch", quantity: 1, userId: "diag-probe", redirectUrl: `${appOrigin(req)}/?purchase=success` });
+    res.json({ checkout: "ok" });
+  } catch (e) {
+    res.json({ checkout: "failed", detail: e instanceof Error ? e.message : String(e) });
+  }
+});
+
 // ----------------------------------------------------------------------------
 // GET /api/lessons — the signed-in user's previous lessons (dashboard). Returns
 // title, prompt, days remaining (30-day window), and any rating.
