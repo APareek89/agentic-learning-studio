@@ -39,7 +39,7 @@ import { createJob, getJob, lessonPercent, acquireGenSlot } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { getBalance, ensureFreeGrant, addCredits } from "./lib/credits";
-import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
+import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, fetchDiag, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
@@ -243,12 +243,15 @@ app.get("/api/pricing", async (_req, res) => {
 // without a logged-in session. Returns no usable checkout URL. REMOVE before prod.
 app.get("/api/billing/diag", async (req, res) => {
   if (!billingConfigured()) { res.json({ configured: false }); return; }
+  const out = await fetchDiag();
   try {
     await createCheckout({ planId: "trial-launch", quantity: 1, userId: "diag-probe", redirectUrl: `${appOrigin(req)}/?purchase=success` });
-    res.json({ checkout: "ok" });
+    out.checkout = "ok";
   } catch (e) {
-    res.json({ checkout: "failed", detail: e instanceof Error ? e.message : String(e) });
+    out.checkout = "failed";
+    out.checkoutError = e instanceof Error ? e.message : String(e);
   }
+  res.json(out);
 });
 
 // ----------------------------------------------------------------------------

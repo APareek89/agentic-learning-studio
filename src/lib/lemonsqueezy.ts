@@ -93,6 +93,25 @@ export async function fetchPricing(nowMs: number): Promise<PricingInfo> {
   return data;
 }
 
+/**
+ * Diagnostic: report the store + variant status so we can tell WHY a checkout 404s
+ * (draft/unpublished product vs unactivated store vs test/live mismatch). Read-only.
+ */
+export async function fetchDiag(): Promise<any> {
+  const out: any = {};
+  try {
+    const s = await lsGet(`/stores/${env("LEMONSQUEEZY_STORE_ID")}`);
+    out.store = { id: s?.data?.id, name: s?.data?.attributes?.name, currency: s?.data?.attributes?.currency, plan: s?.data?.attributes?.plan, country: s?.data?.attributes?.country };
+  } catch (e) { out.store = { error: e instanceof Error ? e.message : String(e) }; }
+  for (const [k, id] of [["payg", env("LEMONSQUEEZY_PAYG_VARIANT_ID")], ["trial", env("LEMONSQUEEZY_TRIAL_VARIANT_ID")]] as const) {
+    try {
+      const v = await lsGet(`/variants/${id}`);
+      out[k] = { id: v?.data?.id, name: v?.data?.attributes?.name, status: v?.data?.attributes?.status, price: v?.data?.attributes?.price };
+    } catch (e) { out[k] = { error: e instanceof Error ? e.message : String(e) }; }
+  }
+  return out;
+}
+
 /** Lessons to credit for a paid order — server-computed, never from the client. */
 export function lessonsForOrder(planId: string, quantity: number): number {
   if (planId === "trial-launch") return 10;
