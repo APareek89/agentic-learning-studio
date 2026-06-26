@@ -7,9 +7,12 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
-> **2026-06-26 UPDATE:** `staging` is **AHEAD** of `main`/prod — (a) the lesson-toolbar title-removal fix and (b) the new
-> **"Get Hands on" browser-run Python notebooks** (Phase 1 + v2; migration `0015` applied to the STAGING Supabase only). Both
-> are on **staging only**; prod has neither. Promote each to prod after the owner verifies on the staging site (see §7).
+> **2026-06-26 UPDATE — NOW ON STAGING AND PROD (in sync again):** promoted to prod (`origin/main` = `83c98a5`, app content
+> byte-identical to `origin/staging`): (a) the lesson-toolbar title-removal fix, (b) **"Get Hands on" browser-run Python
+> notebooks** (Phase 1 + v2), and (c) two **trainer fixes** — don't reveal a building lesson until module 1 is ready, and
+> force-fresh lesson switch during a build. Migration `0015` (`hands_on_notebooks`) applied to **BOTH** the staging AND prod
+> Supabase projects. Live-verified: `/hands-on` 200 + the `Beta` button present on both onrender hosts. Owner is still
+> reviewing Hands-On on local and may request changes.
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
