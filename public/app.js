@@ -459,6 +459,7 @@ const STAGE_TEXT = {
   start: "Getting started…",
   profiler: "Understanding your goal…",
   retriever: "Gathering grounded sources…",
+  planner: "Mapping the lesson structure…",
   architect: "Designing the lesson outline…",
   seedFirstModule: "Writing your first building block…",
   composer: "Assembling your interactive lesson…",
@@ -603,7 +604,7 @@ function activateTab(id) {
   const buildingFirst = t.type === "lesson" && t.building && !t._firstReady;
   if (t.type === "generating" || buildingFirst) {
     viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
-    genLabel.textContent = buildingFirst ? "Building your lesson — your first section is on its way…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview…");
+    genLabel.textContent = buildingFirst ? "Building your lesson — this takes a couple of minutes. Your first section opens as soon as it's ready…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview — usually about a minute…");
     downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
   } else {
     const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
@@ -1498,7 +1499,25 @@ function pollJob(jobId, tabId) {
   const tick = async () => {
     if (activeJobId !== jobId) return;
     let job;
-    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) { activeJobId = null; genTabId = null; const tt = tabById(tabId); if (tt) { tt.building = false; renderTabBar(); } loadDashboard(); return; } job = await r.json(); }
+    try {
+      const r = await fetch("/api/job/" + jobId, { headers: authHeaders() });
+      if (!r.ok) {
+        // The in-memory job is gone (a Render redeploy/restart dropped it mid-build). Modules persist
+        // to Postgres incrementally, so DON'T revert to 0%/failed — reveal the PERSISTED lesson and
+        // let the artifact's own on-demand queue (/api/module, now durable) finish any remaining
+        // modules. (404 means "poller lost — re-read persisted state," not "failed.")
+        activeJobId = null; genTabId = null; updateGenStatus(false);
+        const tt = tabById(tabId);
+        if (tt) {
+          tt.building = false; tt._firstReady = true;       // reveal persisted state, not the building overlay
+          if (tt.id === activeTabId) activateTab(tt.id);     // loads /api/artifact/:id (built modules + self-building stubs)
+          renderTabBar(); persistTabs();
+        }
+        loadDashboard();
+        return;
+      }
+      job = await r.json();
+    }
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId);

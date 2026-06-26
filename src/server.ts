@@ -35,7 +35,7 @@ import { addUpload, addRepoUpload } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
-import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs } from "./lib/jobs";
+import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
@@ -663,61 +663,94 @@ app.get("/api/artifact/:id/download", async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// POST /api/module — build (or serve from cache) ONE module's body on demand.
-// The artifact's own runtime calls this for each still-stub module (background
-// queue + click-to-prioritize). Returns the rendered fragment to inject.
+// POST /api/module — serve ONE module's body, building it OFF the request when needed.
+// The artifact's own runtime (iframe / standalone page) calls this for each still-stub module
+// (background queue + click-to-prioritize). Returns the rendered fragment to inject, or
+// 202 {building:true} when synthesis is in progress (the runtime then POLLS — see runtime.ts pump).
 // ----------------------------------------------------------------------------
-// PUBLIC (no requireAuth): the artifact's OWN runtime — inside the iframe / a standalone
-// page — calls this to build a still-stub module, and it has no auth token. Gating it 401s
-// progressive building whenever auth is on. It only builds a module for an already-existing
-// artifact (an unguessable UUID, same access model as the public /api/artifact/:id), and
-// results are cached, so the cost/abuse surface is bounded. The expensive entry points that
-// CREATE lessons (/api/generate, /api/learn) stay auth-gated.
-app.post("/api/module", async (req, res) => {
-  const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
-  const art = artifactId ? await getArtifact(artifactId) : undefined;
-  const bp = art?.blueprint;
-  if (!bp || !moduleId) {
-    res.status(404).json({ error: "Unknown artifact or module." });
-    return;
-  }
-  const module = bp.modules.find((m) => m.id === moduleId);
-  if (!module) {
-    res.status(404).json({ error: "No such module." });
-    return;
-  }
+// PUBLIC (no requireAuth): the artifact's OWN runtime has no auth token. It only builds a module for
+// an already-existing artifact (an unguessable UUID, same access model as the public
+// /api/artifact/:id), and results are cached, so the cost/abuse surface is bounded. The expensive
+// entry points that CREATE lessons (/api/generate, /api/learn) stay auth-gated.
 
+/** Deterministic module_cache key for a module of a blueprint (shared by the route + builder). */
+function buildModuleCacheKey(bp: Blueprint, moduleId: string): string {
   const p = bp.learnerProfile;
-  const cacheKey = moduleCacheKey({
+  return moduleCacheKey({
     topic: bp.meta.topic, moduleId, level: p.level, depth: p.depth, examples: p.examples,
     industry: p.industry, density: p.density, visuals: p.visualsRequested, syntax: p.explainSyntax,
     objective: p.objective, buildGoal: p.buildGoal, framework: p.framework, lessonTypes: p.lessonTypes,
   });
+}
+
+// In-flight single-module builds — dedupe so repeated 202 polls don't spawn duplicate synthesis.
+const moduleBuildsInFlight = new Set<string>();
+/**
+ * Build ONE module's body OFF the HTTP request (Render gateway-timeout-safe — B3). Re-fetches the
+ * artifact, runs the deep-dive, caches the fragment, and persists the grown blueprint. Idempotent
+ * (skips if already built) and deduped (one in-flight build per artifact+module); a failed deep-dive
+ * leaves the module as a stub so a later poll re-kicks it.
+ */
+function ensureModuleBuild(artifactId: string, moduleId: string): void {
+  const key = `${artifactId}:${moduleId}`;
+  if (moduleBuildsInFlight.has(key)) return;
+  moduleBuildsInFlight.add(key);
+  void (async () => {
+    try {
+      const art = await getArtifact(artifactId);
+      const bp = art?.blueprint;
+      const module = bp?.modules.find((m) => m.id === moduleId);
+      if (!art || !bp || !module) return;
+      if (module.loadState === "full" && module.blocks.length > 0) return; // already built
+      const { ok } = await runDeepDive(bp, moduleId, { uploadIds: art.uploadIds, referOnly: art.referOnly });
+      if (!ok) return; // leave as a stub; the next poll re-kicks a build
+      const fragmentHtml = renderModuleFragment(module, bp);
+      await query(
+        `insert into module_cache (cache_key, fragment_html) values ($1, $2)
+         on conflict (cache_key) do update set fragment_html = excluded.fragment_html`,
+        [buildModuleCacheKey(bp, moduleId), fragmentHtml]
+      ).catch(() => {});
+      await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) }).catch(() => {});
+    } catch (e) {
+      console.warn("[ensureModuleBuild]", moduleId, e instanceof Error ? e.message : String(e));
+    } finally {
+      moduleBuildsInFlight.delete(key);
+    }
+  })();
+}
+
+app.post("/api/module", async (req, res) => {
+  const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
+  const art = artifactId ? await getArtifact(artifactId) : undefined;
+  const bp = art?.blueprint;
+  if (!bp || !moduleId) { res.status(404).json({ error: "Unknown artifact or module." }); return; }
+  const module = bp.modules.find((m) => m.id === moduleId);
+  if (!module) { res.status(404).json({ error: "No such module." }); return; }
 
   try {
-    // Cache hit → instant, no Claude call.
+    const cacheKey = buildModuleCacheKey(bp, moduleId);
+    // 1) Cache hit → instant, no Claude call.
     const cached = await query<{ fragment_html: string }>(`select fragment_html from module_cache where cache_key = $1`, [cacheKey]);
-    if (cached.length) {
-      res.json({ moduleId, fragmentHtml: cached[0].fragment_html, cached: true });
+    if (cached.length) { res.json({ moduleId, fragmentHtml: cached[0].fragment_html, cached: true }); return; }
+
+    // 2) Already built in the persisted artifact (e.g. runBuildJob finished it) → render now + cache.
+    if (module.loadState === "full" && module.blocks.length > 0) {
+      const fragmentHtml = renderModuleFragment(module, bp);
+      await query(
+        `insert into module_cache (cache_key, fragment_html) values ($1, $2)
+         on conflict (cache_key) do update set fragment_html = excluded.fragment_html`,
+        [cacheKey, fragmentHtml]
+      ).catch(() => {});
+      res.json({ moduleId, fragmentHtml, cached: false });
       return;
     }
 
-    // Miss → generate this module's blocks (same upload grounding as the initial run),
-    // render the fragment, cache it.
-    const { ok } = await runDeepDive(bp, moduleId, { uploadIds: art.uploadIds, referOnly: art.referOnly });
-    if (!ok) {
-      res.status(502).json({ error: "Module generation failed." });
-      return;
-    }
-    const fragmentHtml = renderModuleFragment(module, bp);
-    await query(
-      `insert into module_cache (cache_key, fragment_html) values ($1, $2)
-       on conflict (cache_key) do update set fragment_html = excluded.fragment_html`,
-      [cacheKey, fragmentHtml]
-    ).catch(() => {});
-    // Refresh the stored artifact HTML so reloads / the /full download reflect built modules.
-    await updateArtifact(artifactId!, { blueprint: bp, html: renderArtifact(bp) });
-    res.json({ moduleId, fragmentHtml, cached: false });
+    // 3) Not built → do NOT synthesize on the request (a ~16k-token Sonnet call exceeds Render's
+    //    gateway timeout → 502). If a build job is already building this artifact, IT is the builder
+    //    — just tell the runtime to poll. Otherwise (standalone / library / restarted-mid-build
+    //    lesson) kick a detached single-module build. Either way return 202 so the iframe POLLS.
+    if (!hasActiveBuildForArtifact(artifactId!)) ensureModuleBuild(artifactId!, moduleId);
+    res.status(202).json({ moduleId, building: true });
   } catch (err) {
     console.error("[/api/module]", err);
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });

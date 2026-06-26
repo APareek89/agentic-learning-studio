@@ -441,6 +441,9 @@ export const RUNTIME_JS = String.raw`
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
   var busy=false;
+  // 202/poll state (B3): /api/module builds OFF the request and returns 202 while synthesizing; we
+  // re-queue + poll. MAX_MODULE_POLLS*POLL_MS ~= 5 min backstop before a section is marked failed.
+  var POLL_MS=2500, MAX_MODULE_POLLS=120, pollCount={};
   // Transient toast shown when a learner tries to open a section in preview mode.
   function previewNote(){
     var n=document.getElementById("preview-note");
@@ -457,27 +460,41 @@ export const RUNTIME_JS = String.raw`
   function isStub(id){ var p=panelEl(id); return !!(p && p.classList.contains("is-stub")); }
   // Hide the "your trainer is getting your lesson ready" overview banner once no section is still building.
   function updateBuildBanner(){ var bn=document.getElementById("build-banner"); if(bn && document.querySelectorAll(".navitem.building").length===0) bn.style.display="none"; }
+  function markSectionFailed(id){
+    var nav=navItem(id); if(nav){ nav.classList.remove("building"); nav.classList.add("failed"); }
+    var panel=panelEl(id), b=panel&&panel.querySelector(".building");
+    if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
+  }
   function pump(){
     if(busy || !ARTIFACT_ID) return;
     var id=queue.shift(); if(!id) return;
     if(!isStub(id)){ pump(); return; }            // already built (e.g. via priority) — skip
     busy=true;
     var nav=navItem(id);
+    var st=0;
     fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:id})})
-      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(function(r){ st=r.status; if(!r.ok && r.status!==202) throw new Error("HTTP "+r.status); return r.json().catch(function(){ return {}; }); })
       .then(function(data){
+        // 202 / {building:true}: the body is synthesized OFF the request (no gateway-timeout 502).
+        // Re-queue + poll again shortly — do NOT mark it failed. Backstop after MAX_MODULE_POLLS.
+        if(st===202 || (data && data.building)){
+          pollCount[id]=(pollCount[id]||0)+1;
+          if(pollCount[id]>MAX_MODULE_POLLS){ markSectionFailed(id); busy=false; updateBuildBanner(); pump(); return; }
+          if(queue.indexOf(id)===-1) queue.push(id);   // retry after the others
+          busy=false; setTimeout(pump, POLL_MS); return;
+        }
+        pollCount[id]=0;
         var panel=panelEl(id);
         // Inject into the page body when present (horizontal h-page), else the panel itself.
         var target=panel ? (panel.querySelector(".h-page-body")||panel) : null;
         if(target && data && data.fragmentHtml){ target.innerHTML=data.fragmentHtml; if(panel) panel.classList.remove("is-stub"); hydrate(target); observeReveals(target); }
         if(nav){ nav.classList.remove("building","failed"); }
+        busy=false; updateBuildBanner(); pump();
       })
       .catch(function(){
-        if(nav){ nav.classList.remove("building"); nav.classList.add("failed"); }
-        var panel=panelEl(id), b=panel&&panel.querySelector(".building");
-        if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
-      })
-      .then(function(){ busy=false; updateBuildBanner(); pump(); });
+        markSectionFailed(id);
+        busy=false; updateBuildBanner(); pump();
+      });
   }
   function prioritize(id){
     if(PREVIEW) return;               // preview gate: never build on demand

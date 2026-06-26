@@ -69,8 +69,13 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
       industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", objective: input.objective ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
       framework: input.framework ?? "", readingMode: input.readingMode ?? "", userProfile: input.userProfile ?? {},
     };
+    // B3 measurement: per-stage wall-clock so the slow leg is visible (Langfuse also traces).
+    const ovStart = Date.now();
+    let lap = ovStart;
+    const stageLog = (n: string) => { const t = Date.now(); console.log(`[timing] overview ${n}: ${t - lap}ms`); lap = t; };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await profiler(st as any, cfg("profiler") as any));
+    stageLog("profiler");
     job.status = "running";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = st.profile as any;
@@ -79,18 +84,23 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await retriever(st as any));
-    // OPUS plans the STRUCTURE (lean/fast); the architect (Sonnet) then WRITES the prose from it.
+    stageLog("retriever");
+    // SONNET plans the STRUCTURE (lean/fast — was Opus, the slow leg); the architect (Sonnet) then
+    // WRITES the prose from it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await planner(st as any, cfg("planner") as any));
+    stageLog("planner");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.assign(st, await architect(st as any, cfg("architect") as any));
+    stageLog("architect");
     // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
     // usable blueprint). A validation-GATE miss already carries a repairBlueprint()-fixed
     // best-effort skeleton — ship it rather than pay a second ~56s Opus call. The overview is a
     // FREE, user-reviewed preview (editable via "Edit overview"), so best-effort is the right
     // default; a genuine parse/shape failure (architect returns no blueprint) still re-gens.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) Object.assign(st, await architect(st as any, cfg("architect") as any));
+    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) { Object.assign(st, await architect(st as any, cfg("architect") as any)); stageLog("architect-retry"); }
+    console.log(`[timing] overview TOTAL: ${Date.now() - ovStart}ms`);
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
@@ -166,12 +176,14 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     };
     await Promise.all(bp.modules.filter((m) => m.loadState === "full" && m.blocks.length > 0).map(attachVisual));
 
-    // A1 — build module bodies in PARALLEL with a small concurrency cap (was one-at-a-time).
-    // Cap is low so we don't burst the Anthropic rate/overload limit (a wide fan-out trips it;
-    // the per-call jittered backoff de-syncs the rest). Sharing `bp` is safe: each module writes
-    // only its own slot, and the bp-wide repairBlueprint() is synchronous (atomic in Node) and
-    // skips stub modules, so concurrent builds can't corrupt each other.
-    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 3);
+    // A1/B3 — build module bodies in PARALLEL with a concurrency cap. Raised 3→5 (one wave for a
+    // 5-module lesson) now that prompt caching cuts per-call load: module 1 is built FIRST (below)
+    // so it WRITES the cached MODULE_SYSTEM prefix, then the rest fan out and READ it — so the wave
+    // is both cheaper and lighter on the rate/overload limit (the per-call jittered 429/529 backoff
+    // in withOverloadRetry still covers a burst). Sharing `bp` is safe: each module writes only its
+    // own slot, and the bp-wide repairBlueprint() is synchronous (atomic in Node) and skips stub
+    // modules, so concurrent builds can't corrupt each other. Env-overridable.
+    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 5);
 
     // Persist serially in completion order (A4 — incremental render) so the stored lesson grows
     // monotonically and the front-end shows each module as soon as it's ready. renderArtifact is
@@ -184,18 +196,31 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
       return persistChain;
     };
 
-    let cursor = 0;
-    const buildNext = async (): Promise<void> => {
-      for (;;) {
-        const idx = cursor++;
-        if (idx >= pending.length) return;
-        await runDeepDive(bp, pending[idx].id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config: cfg(`module ${pending[idx].order}: ${pending[idx].title}`) });
-        await attachVisual(pending[idx]);
-        jl.builtModules++;
-        jl.percent = lessonPercent(jl);
-        await persist();
+    // B3 measurement: per-module + total wall-clock (Langfuse also traces; this is the cheap log).
+    const buildStart = Date.now();
+    // DURABILITY (B3): build ONE module with skip-and-continue — a single module that errors (a 502,
+    // an overload that exhausts retries, a parse fault) becomes a STUB and the build CONTINUES, so
+    // the lesson reaches a usable state even if one module fails (the stub then builds on demand via
+    // /api/module). runDeepDive already rides out transient 429/529 internally (withOverloadRetry).
+    let successCount = 0, failCount = 0;
+    const buildOne = async (mod: (typeof bp.modules)[number]): Promise<void> => {
+      const t = Date.now();
+      let ok = false;
+      try {
+        const r = await runDeepDive(bp, mod.id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config: cfg(`module ${mod.order}: ${mod.title}`) });
+        ok = !!r.ok;
+        if (ok) { successCount++; await attachVisual(mod); }
+        else { failCount++; console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" did not build (kept as stub; builds on demand)`); }
+      } catch (e) {
+        failCount++; // never let one module throw the whole build
+        console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" threw — skipping, build continues:`, e instanceof Error ? e.message : String(e));
       }
+      jl.builtModules++; // count toward progress regardless so the build can reach 100%
+      jl.percent = lessonPercent(jl);
+      await persist();
+      console.log(`[timing] build module ${mod.order} "${mod.title}": ${Date.now() - t}ms ok=${ok}`);
     };
+
     // DEFERRED OVERVIEW PROSE: the glossary definitions + synthesis were left empty by the (fast)
     // overview architect — write them HERE, in parallel with the module bodies, so they overlap and
     // add ~0 to the build wall-clock (the preview never showed them). Independent of module blocks.
@@ -207,19 +232,38 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         console.warn("[runBuildJob] overview-prose:", e instanceof Error ? e.message : String(e));
       }
     })();
-    await Promise.all([proseTask, ...Array.from({ length: Math.min(MODULE_CONCURRENCY, pending.length) }, () => buildNext())]);
+
+    // CACHE WARM-UP (B3): build module 1 ALONE first so its call WRITES the cached MODULE_SYSTEM
+    // (+ tool) prefix; only then fan out the rest, which READ the cache (a cache entry is readable
+    // only after the first response streams — a simultaneous fan-out would all miss + each pay full
+    // price). Cost: module 1 doesn't overlap the wave, but the cache reads more than pay it back.
+    let cursor = 0;
+    if (pending.length) await buildOne(pending[cursor++]);
+    const buildNext = async (): Promise<void> => {
+      for (;;) {
+        const idx = cursor++;
+        if (idx >= pending.length) return;
+        await buildOne(pending[idx]);
+      }
+    };
+    const workerCount = Math.min(MODULE_CONCURRENCY, Math.max(0, pending.length - cursor));
+    await Promise.all([proseTask, ...Array.from({ length: workerCount }, () => buildNext())]);
     await persistChain; // make sure the final, complete state is written
+    console.log(`[timing] build TOTAL: ${Date.now() - buildStart}ms (${successCount} ok, ${failCount} failed of ${pending.length})`);
 
     jl.status = "done"; jl.percent = 100;
-    // Charge ONE lesson credit — only on a SUCCESSFUL build. The free overview/preview
-    // never costs; a failure falls through to catch and is never charged. No-op when
-    // there's no user / DB (local open-mode dev). FIFO over the buyer's credit lots.
-    // MUST run BEFORE job.status="done": the front-end refreshes the credit pill the
-    // instant it polls "done", so the deduction has to be committed first or the pill
-    // shows the stale (pre-spend) balance.
-    if (art.userId) {
+    // Charge ONE lesson credit — ONLY on a FULL success (every module built). A partial build (a
+    // module failed → kept as a stub) is left in a usable state but is NOT charged; a hard failure
+    // falls through to catch and is never charged. The free overview/preview never costs. No-op
+    // when there's no user / DB (local open-mode dev). FIFO over the buyer's credit lots. MUST run
+    // BEFORE job.status="done": the front-end refreshes the credit pill the instant it polls "done",
+    // so the deduction has to be committed first or the pill shows the stale (pre-spend) balance.
+    const fullSuccess = failCount === 0; // every pending module built (none kept as a stub)
+    if (fullSuccess && art.userId) {
       try { await spendOne(art.userId); }
       catch (e) { console.error("[runBuildJob] credit deduct failed", e); }
+    } else if (!fullSuccess) {
+      console.warn(`[runBuildJob] partial build (${failCount} stub(s)) — NOT charging; remaining modules build on demand via /api/module.`);
     }
     job.status = "done";
   } catch (e) {
