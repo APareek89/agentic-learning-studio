@@ -203,8 +203,10 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🆕 INDIA COMPLIANCE PAGES + COMPLAINT/CONSENT SYSTEM (2026-06-26, on `staging`; PROD PENDING — incl. migration `0014`).**
-  Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
+- **🟡 COMPLIANCE (India legal pages + complaint/grievance/consent system) — DELIBERATELY PARKED ON `staging` (2026-06-26).**
+  Commit `2a7ba0a`. **DECISION (owner): keep it on staging only for now — do NOT promote to prod yet; finishing it in a later
+  session.** Live + verified on the staging site (`…-1.onrender.com/{security,privacy,terms,report-issue,complaint,grievance}`
+  all 200). Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
   complaint/grievance/data-rights intake. **Migration is `0014_compliance_support.sql`** (the spec said 0013, but 0013 is
   credits_billing) — `support_requests` + `consent_events`, RLS-on/no-policies (like 0008/0013), indexed; applied to
   **STAGING only** (`npm run migrate`) — **PROD NEEDS IT before the prod deploy** (`DATABASE_URL="$PROD_URL" npm run migrate`).
@@ -225,8 +227,13 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
     consent→200; rows in DB with `ip_hash` 64-char (hashed, not raw); email logs payload (no key); no new nav tabs; footer links
     render; consent checkbox shows only in signup + not pre-checked; browser form submit → success + reference id. Test rows cleaned.
   - **CHECKLIST.md** updated (legal pages PARTIAL/lawyer-review-TODO; complaint+consent DONE; company/GST = N/A for individual beta).
-  - **STILL TODO (user):** run `0014` on PROD before promoting; optionally set Resend env on Render for real emails; fill
-    `TODO_CONTACT_ADDRESS`; lawyer review before payments/scale.
+  - **TO RESUME / FINISH (next session):** (1) fill `TODO_CONTACT_ADDRESS` in `terms.html`; (2) run migration `0014` on the
+    PROD DB (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-); DATABASE_URL="$PROD_URL" npm run migrate`) BEFORE any
+    prod promotion (else `/api/support/complaint` 503s on prod); (3) then promote staging→prod (cherry-pick / `checkout
+    origin/staging -- public src supabase` pattern); (4) optional: set `RESEND_API_KEY`/`SUPPORT_FROM_EMAIL` on Render for
+    real complaint emails (without it, complaints still save to `support_requests`); (5) lawyer review before taking payments/scaling.
+  - The **"not legal advice / formal legal review recommended" disclaimer on each page is INTENTIONAL** (liability shield + honesty
+    flag — pages are AI-drafted, not lawyer-vetted; matters most once payments/scale begin). Keep it until a lawyer reviews.
 - **✅ GOOGLE OAUTH ENABLED (2026-06-26) — on BOTH Supabase projects, verified working.** Enabled `external_google`
   on prod (`kdgtlbnlyscdldogxorb`) + staging (`ydgiysthvxhlfpzxyrmy`) via the Supabase **Management API**
   (`PATCH /v1/projects/{ref}/config/auth`, token was user-supplied, NOT persisted). Client ID
