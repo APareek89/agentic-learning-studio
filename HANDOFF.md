@@ -226,34 +226,54 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 >    all with `DATABASE_URL="$PROD_URL"`). Promote: `lib/visuals.ts`, `render/{schema,components,tokens,runtime}.ts`,
 >    `agent/orchestrator.ts`, `scripts/{ingest,backfill}-visuals.ts`, plus the two migrations.
 > KNOWN minor (pre-existing, non-visible): standalone artifact at 375px reports a ~117px phantom scroll while a viz modal is open.
-> ‼️ **SHIP-BLOCKER before prod promote:** lesson **builds are FAILING on staging** (502/404 — see the 🚨 B3 entry below). These
-> three items don't touch the build pipeline, but the build-durability fix should land before/with promoting them, since prod
-> has the same Render gateway-timeout exposure. Re-QA a full build-to-100% on each env before/after promoting.
+> ✅ **SHIP-BLOCKER LIFTED (2026-06-26, `bda97ee` on `origin/staging`):** the build **502/404 ship-blocker is FIXED** (see the B3
+> entry below — `/api/module` now returns 202 + polls instead of synthesizing on the request; `runBuildJob` is per-module
+> resilient; `pollJob` 404 reconstructs persisted state). Verified: `/api/module` returns **202 in <1s** on the staging host
+> (was ~120s synchronous → 502), and a full build to **5/5 = 100%** locally (staging DB; was timing out at 3/5). When promoting
+> these items to prod, `agent/orchestrator.ts` is now shared between item 3 (visuals) and B3 — promote the **current** file.
+> ⚠️ **Final clean 5/5 re-QA on the staging Render host is BLOCKED until the Anthropic spend cap resets** (the staging
+> `ANTHROPIC_API_KEY` hit its specified usage limit — `400 invalid_request_error: "regain access on 2026-07-01 at 00:00 UTC"`;
+> my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
+> charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
 
-- **🚨 B3 — SHIP-BLOCKER: builds are FAILING on staging (not just slow). APPROVED, NOT YET STARTED (next session).**
-  Staging UAT (2026-06-26): overview OK (~41s), but the **full build FAILED twice** — attempt 1 → `404 /api/job/<id>`
-  (poller lost the in-memory job mid-build → UI reverted to 0% after 30%); attempt 2 (clean, no tab-switching) →
-  `502 Bad Gateway on /api/module` (module synthesis exceeds the Render gateway timeout). Billing stayed correct (failed
-  builds never charged: 27→27; lesson reverts to its saved overview for retry). **TWO root causes to fix, both before any
-  prod promote:** (1) **DURABILITY** — `runBuildJob` (orchestrator.ts) builds modules with NO per-module try/catch, so ONE
-  module failure (incl. a 502/overload) fails the WHOLE build; the resilient skip-and-continue pattern already exists in
-  `/api/artifact/:id/full` — port it. The client `pollJob` (app.js) reverts to 0% on a job `404` instead of reconstructing
-  progress from the PERSISTED artifact (modules persist incrementally to Postgres) / `/api/jobs/active` — make 404 mean
-  "poller lost, re-read persisted state," not "failed." (2) **/api/module 502** — that PUBLIC per-module endpoint synthesizes
-  ONE Sonnet ~16k-tok body SYNCHRONOUSLY; on Render it exceeds the gateway timeout → 502. Decouple synthesis from the HTTP
-  request (return the persisted module if ready, else 202 + the iframe POLLS; the background `runBuildJob` is the builder), OR
-  make it fit under the timeout (faster model / lower maxTokens / streamed keep-alive). **Then the original LATENCY work**
-  (overview ≈85s→<60s, build <6min) — faster modules also stops the 502. Approved latency scope = **Tier 1 + measurement +
-  the planner model swap**: (a) **prompt caching** (`cache_control: ephemeral` via `@langchain/anthropic`) on the stable prefix
-  (`MODULE_SYSTEM` + shared blueprint/profile/KB block) across the ~5 module calls in `runBuildJob` — build module 1, await
-  first token, THEN fan out the rest so they READ the cache (cache only readable once the first response streams; min cacheable
-  prefix 4096 tok Opus / 2048 Sonnet); (b) **raise `MAX_MODULE_CONCURRENCY` 3→5** (one wave for a 5-module lesson; existing
-  jittered 429/529 backoff covers the burst); (c) **honest progress copy**; (d) **planner Opus 4.8 → Sonnet 4.6** for the
-  overview (the slow leg; env-overridable `ANTHROPIC_MODEL_*` — `plannerLLM` in `nodes.ts:50`). Add per-stage wall-clock logging
-  (Langfuse already traces) for real before/after. **NO change to the gate/credit logic or the 7 gates.** User said: push to
-  STAGING directly, test, report the latency delta. Pipeline map: `orchestrator.ts` `runOverviewJob`/`runBuildJob`; `nodes.ts`
-  `planner`/`architect`/`runDeepDive`; `llm.ts` `makeLLM` (add a `cacheSystem`/cache_control option); `prompts.ts`
-  `MODULE_SYSTEM`/`moduleUserPrompt`.
+- **✅ B3 — DONE (2026-06-26, `bda97ee` on `origin/staging`): build durability (502/404 ship-blocker) FIXED + latency work landed.**
+  **PART A — durability (the ship-blocker):**
+  (1) **`/api/module` 502 → 202/poll (`server.ts`).** The PUBLIC per-module endpoint no longer synthesizes a ~16k-tok Sonnet
+  body SYNCHRONOUSLY (that exceeded Render's gateway timeout → 502 / a ~120s hang). It now: serves the `module_cache` hit →
+  serves the module if the persisted artifact already has it (renders + caches) → else returns **`202 {building:true}`** and a
+  deduped off-request worker `ensureModuleBuild()` synthesizes it; the iframe POLLS. If a `runBuildJob` is already building the
+  artifact (`hasActiveBuildForArtifact` in `lib/jobs.ts`), IT stays the builder (no double-build). `render/runtime.ts` `pump()`
+  handles the 202 (re-queue + poll every 2.5s, 5-min backstop). Verified on the staging host: **202 in <1s** (was ~120s sync).
+  (2) **`runBuildJob` per-module resilience (`orchestrator.ts`).** Each module builds in a try/catch — one module that errors
+  (502/overload-exhausted/parse) becomes a STUB and the build CONTINUES to a usable 100% (remaining stubs build on demand via
+  /api/module). **Credit now charges ONLY on FULL success** (`failCount===0`) — NOT on a partial/failed build; "charge once,
+  only on full success, never on failure/partial" preserved. Verified locally: a forced single-module failure → build still
+  reaches done (4/5 ok, 1 stub) and **balance unchanged** (no charge); a clean 5/5 build charges exactly 1.
+  (3) **`pollJob` 404 (`public/app.js`).** A Render restart that drops the in-memory job mid-build no longer reverts the UI to
+  0%/failed — 404 now reveals the PERSISTED lesson (`/api/artifact/:id`, built modules + self-building stubs) + reloads the
+  dashboard. (Modules persist to Postgres incrementally; `runBuildJob` promotes `kind` at the start, so the lesson is already
+  in My Lessons.)
+  **PART B — latency (all landed):** (a) **prompt caching** — `cache_control:{type:"ephemeral"}` on `MODULE_SYSTEM` (~7k tok,
+  byte-identical across module calls) via `@langchain/anthropic` in `runDeepDive` (`nodes.ts`); `runBuildJob` builds **module 1
+  first** (writes the cache) THEN fans out modules 2..N which READ it. Verified locally: **`cache_read=8641` on modules 2..N**
+  (`[module-cache]` log; `withStructuredOutput(..., {includeRaw:true})`). (b) **`MAX_MODULE_CONCURRENCY` 3→5** (env-overridable).
+  (c) **planner Opus 4.8 → Sonnet 4.6** (`nodes.ts` `plannerLLM` — the slow overview leg; env-overridable via
+  `ANTHROPIC_MODEL_SONNET`). (d) **honest progress copy** (`app.js` STAGE_TEXT + gen overlay). (e) **per-stage wall-clock
+  logging** (`[timing]` in `orchestrator.ts`: profiler/retriever/planner/architect + per-module + totals).
+  **MEASURED (local, working key + staging DB):** overview ~75s (profiler 6s · retriever 0.3s · **planner 22s** · **architect
+  46s ← now the dominant leg**); build **307s → 5/5 = 100%** (was timing out at **3/5 after >480s** BEFORE; module 1 ~200s incl.
+  a transient retry, modules 2-5 ~80-105s in one cached parallel wave). Overview is improved (~82s→~75s) but still over the
+  <60s target — the bottleneck is now the **architect** skeleton call (46s), which was NOT in the approved caching scope.
+  **NO changes to the gate/credit logic, the 7 Blueprint gates, or the overview→build HITL flow.** Changed files (all in
+  `bda97ee`): `src/server.ts` · `src/agent/orchestrator.ts` · `src/agent/nodes.ts` · `src/lib/jobs.ts` · `src/render/runtime.ts`
+  · `public/app.js`. **PROMOTE TO PROD (after the staging cap resets + a clean 5/5 staging re-QA):** `git checkout origin/staging
+  -- src/server.ts src/agent/orchestrator.ts src/agent/nodes.ts src/lib/jobs.ts src/render/runtime.ts public/app.js` into
+  `main`. **No DB migration.** ⚠️ `agent/orchestrator.ts` is now shared with the visuals item (#3 above) — promote the current
+  file (it contains both). Prod has the SAME Render gateway-timeout exposure, so this should land with/before the other three.
+  **⚠️ OPEN — staging Anthropic spend cap:** the staging `ANTHROPIC_API_KEY` hit its specified usage limit during verification
+  (`400: regain access 2026-07-01 00:00 UTC`), so a clean 5/5 build on the Render host couldn't be captured. Builds degrade
+  gracefully (partial, not charged) meanwhile. Raise the key's limit or re-QA after 2026-07-01. (This is the HANDOFF's
+  long-noted "USER-side: Anthropic spend cap".)
 - **🩹 Prod-UAT Batch 1 fixes — ON STAGING, AWAITING REVIEW BEFORE PROD (2026-06-26; commit `3ad0e1e`).** Seven UAT items,
   each verified locally (Playwright + curl). **B2** SPA history fallback: a catch-all (`app.get(/.*/)` registered LAST in
   `server.ts`) serves `index.html` for non-API/non-asset GETs so `/pricing /library /community /builder /llm-skills` survive
