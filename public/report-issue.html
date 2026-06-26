@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report an issue or complaint — Wizbit / PrathibhaX</title>
+  <meta name="description" content="Report an issue, file a complaint or grievance, or make a privacy/data request to Wizbit / PrathibhaX." />
+  <link rel="icon" type="image/png" href="/wizbit-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/policy.css" />
+</head>
+<body>
+  <header class="policy-top"><div class="in">
+    <a class="policy-brand" href="/"><img src="/wizbit-logo.png" alt="Wizbit" /> Wizbit / PrathibhaX</a>
+    <a class="policy-back" href="/">← Back to Wizbit</a>
+  </div></header>
+
+  <main class="policy-wrap">
+    <h1>Report an issue or complaint</h1>
+    <p class="policy-meta">Last updated: 25 June 2026</p>
+    <div class="policy-disclaimer">This page is provided for product transparency and is not legal advice. Formal legal review is still recommended before taking payments or scaling the service.</div>
+
+    <p>Use this form for technical issues, complaints, grievances, security reports, or privacy / data requests (access, correction, deletion, or consent withdrawal). You’ll get a reference ID. You can also email <a href="mailto:findkailash@gmail.com">findkailash@gmail.com</a> directly.</p>
+    <p style="font-size:14px;color:var(--muted)">Typical timelines: consumer complaints are acknowledged within <strong>48 hours</strong> (resolution aimed at within one month); content / intermediary grievances within <strong>24 hours</strong> (resolved within 15 days where applicable).</p>
+
+    <div class="form-warn">⚠️ Do not include passwords, secrets, Aadhaar, payment card data, CVV, private keys, or unnecessary personal data in this form.</div>
+
+    <form id="report-form" novalidate>
+      <div class="form-row">
+        <label for="rf-category">Category <span class="req">*</span></label>
+        <select id="rf-category" required>
+          <option value="" disabled selected>Choose a category…</option>
+          <option value="privacy_data_request">Privacy / data request</option>
+          <option value="consent_withdrawal">Consent withdrawal</option>
+          <option value="account_deletion">Account deletion</option>
+          <option value="correction_access">Correction / access request</option>
+          <option value="security_vuln">Security vulnerability</option>
+          <option value="community_content">Community content report</option>
+          <option value="billing_refund">Billing / refund</option>
+          <option value="technical">Technical issue</option>
+          <option value="grievance">Complaint / grievance</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="rf-name">Name <span style="color:var(--muted);font-weight:500">(optional)</span></label>
+        <input id="rf-name" type="text" maxlength="100" autocomplete="name" />
+      </div>
+
+      <div class="form-row">
+        <label for="rf-email">Email <span class="req">*</span></label>
+        <input id="rf-email" type="email" maxlength="254" autocomplete="email" required />
+        <div class="form-hint">We use this to respond and to send you a reference ID.</div>
+      </div>
+
+      <div class="form-row">
+        <label for="rf-subject">Subject <span class="req">*</span></label>
+        <input id="rf-subject" type="text" maxlength="160" required />
+      </div>
+
+      <div class="form-row">
+        <label for="rf-message">Message <span class="req">*</span></label>
+        <textarea id="rf-message" maxlength="5000" required placeholder="Describe the issue, complaint, or request. The more specific, the faster we can help."></textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="rf-ref">Related URL / lesson ID / community slug <span style="color:var(--muted);font-weight:500">(optional)</span></label>
+        <input id="rf-ref" type="text" maxlength="500" placeholder="e.g. a lesson link or community course slug" />
+      </div>
+
+      <label class="consent-row">
+        <input id="rf-consent" type="checkbox" />
+        <span>I consent to Wizbit / PrathibhaX processing this information to respond to my request.</span>
+      </label>
+
+      <div class="form-msg" id="rf-msg" hidden></div>
+      <button class="btn-primary" id="rf-submit" type="submit">Submit request</button>
+    </form>
+
+    <footer class="policy-foot">
+      <div class="links"><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/report-issue">Report issue / complaint</a></div>
+      <p>Wizbit / PrathibhaX is operated by Anand Pareek, an individual resident in India. Grievance Officer: Anand Pareek — <a href="mailto:findkailash@gmail.com">findkailash@gmail.com</a>.</p>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById("report-form");
+      var msg = document.getElementById("rf-msg");
+      var submit = document.getElementById("rf-submit");
+      function show(kind, text) { msg.hidden = false; msg.className = "form-msg " + kind; msg.textContent = text; }
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var category = document.getElementById("rf-category").value;
+        var email = document.getElementById("rf-email").value.trim();
+        var subject = document.getElementById("rf-subject").value.trim();
+        var message = document.getElementById("rf-message").value.trim();
+        var consent = document.getElementById("rf-consent").checked;
+        if (!category) { show("err", "Please choose a category."); return; }
+        if (!email || !subject || !message) { show("err", "Please fill in email, subject, and message."); return; }
+        if (!consent) { show("err", "Please tick the consent box to submit."); return; }
+        submit.disabled = true; show("ok", "Sending…");
+        try {
+          var res = await fetch("/api/support/complaint", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              category: category,
+              name: document.getElementById("rf-name").value.trim() || undefined,
+              email: email,
+              subject: subject,
+              message: message,
+              relatedRef: document.getElementById("rf-ref").value.trim() || undefined,
+              consent: true
+            })
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || "Something went wrong. Please email findkailash@gmail.com.");
+          show("ok", "✓ Thank you — your request is logged. Reference ID: " + (data.requestId || "(saved)") + ". We'll be in touch by email.");
+          form.reset();
+        } catch (err) {
+          show("err", "⚠️ " + (err.message || "Couldn't submit. Please email findkailash@gmail.com directly."));
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

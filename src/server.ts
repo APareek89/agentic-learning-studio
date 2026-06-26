@@ -47,6 +47,8 @@ import { makeLLM } from "./agent/llm";
 import { renderArtifact } from "./render/index";
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
+import { saveSupportRequest, saveConsent, CONSENT_VERSION, SUPPORT_CATEGORIES } from "./lib/support";
+import { sendSupportEmail, sendAckEmail } from "./lib/email";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { ChatMessage, ArtifactRef } from "./agent/state";
@@ -133,6 +135,19 @@ app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js
 // let app.js switch to the account tab from window.location. (Static assets above win.)
 app.get("/account", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")));
 
+// Legal / compliance pages at pretty URLs (NOT nav tabs — linked only from the home footer).
+const PAGE_ROUTES: Record<string, string> = {
+  "/security": "security.html",
+  "/privacy": "privacy.html",
+  "/terms": "terms.html",
+  "/report-issue": "report-issue.html",
+  "/complaint": "report-issue.html",
+  "/grievance": "report-issue.html",
+};
+for (const [route, file] of Object.entries(PAGE_ROUTES)) {
+  app.get(route, (_req, res) => res.sendFile(join(PUBLIC_DIR, file)));
+}
+
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
 const ipKey = (req: express.Request) => req.ip || "unknown";
 // Expensive: generation + uploads (CPU, model spend, repo clone).
@@ -141,6 +156,9 @@ const heavyLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, standardHead
 // General API guard (a wide net so one client can't hammer any endpoint).
 const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 600, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey });
 app.use("/api/", apiLimiter);
+// Complaint/grievance intake — tight cap so the form can't be used to spam the operator.
+const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
+  message: { error: "Too many submissions — please wait an hour before sending another, or email findkailash@gmail.com directly." } });
 
 /** Write one named SSE event with a JSON payload onto a response stream. */
 function sseSend(res: express.Response, event: string, data: unknown): void {
@@ -975,6 +993,73 @@ app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
+});
+
+// ----------------------------------------------------------------------------
+// Support / complaint / grievance / data-rights intake (the /report-issue form).
+// PUBLIC: anyone can file a complaint or data request without an account. The
+// request is ALWAYS persisted to support_requests (the durable record — never
+// dropped); an operator email is sent best-effort if Resend is configured.
+// ----------------------------------------------------------------------------
+const SupportSchema = z.object({
+  category: z.enum(SUPPORT_CATEGORIES),
+  name: z.string().trim().max(100).optional(),
+  email: z.string().trim().email().max(254),
+  subject: z.string().trim().min(1).max(160),
+  message: z.string().trim().min(1).max(5000),
+  relatedRef: z.string().trim().max(500).optional(),
+  consent: z.literal(true), // the required "I consent…" checkbox
+});
+app.post("/api/support/complaint", supportLimiter, async (req, res) => {
+  const parsed = SupportSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    res.status(400).json({ error: first?.path?.[0] === "consent" ? "Please tick the consent box to submit." : `Please check the form — ${first?.message ?? "invalid input"}.` });
+    return;
+  }
+  const b = parsed.data;
+  const consentText = "I consent to Wizbit / PrathibhaX processing this information to respond to my request.";
+  const userAgent = String(req.headers["user-agent"] || "").slice(0, 400);
+  let saved;
+  try {
+    saved = await saveSupportRequest({
+      category: b.category, name: b.name, email: b.email, subject: b.subject, message: b.message,
+      relatedRef: b.relatedRef, consentText, consentVersion: CONSENT_VERSION, userAgent, ip: req.ip,
+    });
+  } catch (e) { console.error("[support] save failed:", (e as Error).message); }
+  if (!saved) {
+    // We could not record it — do NOT pretend success; point the user at direct email.
+    res.status(503).json({ error: "We couldn't record your request right now. Please email findkailash@gmail.com directly." });
+    return;
+  }
+  const payload = { requestId: saved.id, category: b.category, name: b.name, email: b.email, subject: b.subject,
+    message: b.message, relatedRef: b.relatedRef, userAgent, createdAt: saved.createdAt };
+  sendSupportEmail(payload).catch(() => {}); // best-effort operator notification
+  sendAckEmail(payload).catch(() => {});     // best-effort acknowledgement to the submitter
+  res.json({ ok: true, requestId: saved.id });
+});
+
+// POST /api/consent — append a consent event (e.g. the signup Terms+Privacy checkbox).
+// PUBLIC: consent is logged at signup, possibly before a session exists; user id is
+// attached when a bearer token is present.
+app.post("/api/consent", async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  const ConsentSchema = z.object({
+    consentType: z.string().trim().max(60).optional(),
+    email: z.string().trim().email().max(254).optional(),
+  });
+  const parsed = ConsentSchema.safeParse(req.body ?? {});
+  if (!parsed.success) { res.status(400).json({ error: "Invalid consent payload." }); return; }
+  await saveConsent({
+    userId: user?.id,
+    email: parsed.data.email || user?.email,
+    consentType: parsed.data.consentType || "signup_terms_privacy",
+    consentVersion: CONSENT_VERSION,
+    consentText: "I agree to the Terms and acknowledge the Privacy Notice.",
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 400),
+    ip: req.ip,
+  });
+  res.json({ ok: true });
 });
 
 // Health check — runs a LIVE `select 1` so a bad DATABASE_URL (e.g. an unencoded

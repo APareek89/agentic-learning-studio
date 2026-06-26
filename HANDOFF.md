@@ -203,6 +203,30 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🆕 INDIA COMPLIANCE PAGES + COMPLAINT/CONSENT SYSTEM (2026-06-26, on `staging`; PROD PENDING — incl. migration `0014`).**
+  Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
+  complaint/grievance/data-rights intake. **Migration is `0014_compliance_support.sql`** (the spec said 0013, but 0013 is
+  credits_billing) — `support_requests` + `consent_events`, RLS-on/no-policies (like 0008/0013), indexed; applied to
+  **STAGING only** (`npm run migrate`) — **PROD NEEDS IT before the prod deploy** (`DATABASE_URL="$PROD_URL" npm run migrate`).
+  - **Pages** (static, served at pretty URLs via `PAGE_ROUTES` in `server.ts`; NOT nav tabs — linked only from the home
+    footer): `public/{security,privacy,terms,report-issue}.html` + shared `public/policy.css`. Routes: `/security` `/privacy`
+    `/terms` `/report-issue` (+ `/complaint` `/grievance` → report-issue). "Last updated: 25 June 2026" + the not-legal-advice
+    disclaimer on each. `TODO_CONTACT_ADDRESS` placeholder left in Terms (user fills). Forbidden words (company/Pvt Ltd/LLP/
+    directors/corporate entity) verified absent; "incorporated"/"registered office" only in the N/A-negation + future-entity uses.
+  - **Backend**: `src/lib/support.ts` (saveSupportRequest/saveConsent, **sha256-HASHED ip**, CONSENT_VERSION='2026-06-25',
+    SUPPORT_CATEGORIES) · `src/lib/email.ts` (Resend via REST — no SDK dep; **graceful-optional**: complaint is ALWAYS stored
+    in DB, email is best-effort + logs payload when `RESEND_API_KEY` unset, so nothing is dropped) · `POST /api/support/complaint`
+    (Zod, **5/hr/IP** `supportLimiter`, 503 only if the DB save itself fails) · `POST /api/consent`. `.env.example` adds
+    `RESEND_API_KEY`/`SUPPORT_FROM_EMAIL`/`SUPPORT_TO_EMAIL=findkailash@gmail.com` (all optional).
+  - **Frontend**: home footer gains Security/Privacy/Terms/Report links (`#tab-home .foot-legal`); the auth PAGE signup mode
+    gains a REQUIRED, never-pre-ticked "I agree to the Terms and acknowledge the Privacy Notice" checkbox (`#auth-consent`) →
+    `logSignupConsent()` → `/api/consent`. (Existing `/api/community/report` flow untouched.)
+  - **Verified locally (:5070):** tsc clean; all 6 routes 200; complaint valid→200+id / missing-consent→400 / bad-category→400;
+    consent→200; rows in DB with `ip_hash` 64-char (hashed, not raw); email logs payload (no key); no new nav tabs; footer links
+    render; consent checkbox shows only in signup + not pre-checked; browser form submit → success + reference id. Test rows cleaned.
+  - **CHECKLIST.md** updated (legal pages PARTIAL/lawyer-review-TODO; complaint+consent DONE; company/GST = N/A for individual beta).
+  - **STILL TODO (user):** run `0014` on PROD before promoting; optionally set Resend env on Render for real emails; fill
+    `TODO_CONTACT_ADDRESS`; lawyer review before payments/scale.
 - **✅ GOOGLE OAUTH ENABLED (2026-06-26) — on BOTH Supabase projects, verified working.** Enabled `external_google`
   on prod (`kdgtlbnlyscdldogxorb`) + staging (`ydgiysthvxhlfpzxyrmy`) via the Supabase **Management API**
   (`PATCH /v1/projects/{ref}/config/auth`, token was user-supplied, NOT persisted). Client ID

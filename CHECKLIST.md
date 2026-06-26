@@ -58,9 +58,11 @@ Status tags: `[DONE]` already in the app · `[PARTIAL]` started, needs finishing
 - [x] **`[PARTIAL]` Contributor course moderation + abuse.** DONE: a **"report" path** on every community tile (`/api/community/report`) that **auto-hides** a lesson after ≥3 reports (`hidden` column, migration `0009`, filtered from all listings). Contributor courses still **auto-publish with no pre-review** (v1). Remaining: (1) an admin review/approval queue + manual unpublish/ban UI, (2) publish rate-limits / require verified email, (3) IP/originality check on uploaded content (§9), (4) legal review of the contributor agreement copy.
 
 ## 5. Compliance & legal `[TODO]` (lawyer-reviewed)
-- [ ] **Terms of Service** (incl. acceptable use, no-warranty on AI output, liability cap).
-- [ ] **Privacy Policy** (what you collect — email, prompts, uploads, usage; processors — Anthropic, Supabase, Render, billing provider; data location; retention; user rights).
-- [ ] **AI-content disclosure** — lessons are AI-generated; say so, and that they may contain errors (you already have a separate content-validation step elsewhere — reference it).
+- [x] **`[PARTIAL]` India-ready compliance pages live** (footer-linked, pretty URLs `/security` `/privacy` `/terms` `/report-issue`, + `/complaint` `/grievance` aliases). Individual-operator language throughout (Anand Pareek, an individual resident in India — NOT a company; GST/registered-office = N/A). Covers DPDP, IT Intermediary Rules, Consumer Protection E-Commerce Rules, CERT-In, RBI tokenisation refs. **Still TODO: lawyer review** before taking payments/scaling; fill `TODO_CONTACT_ADDRESS`.
+- [x] **`[DONE]` Complaint / grievance / data-rights form** at `/report-issue` → `POST /api/support/complaint` (Zod, 5/hr/IP rate limit, stored in `support_requests` with HASHED ip, best-effort Resend email to findkailash@gmail.com). Categories: privacy/data-request, consent-withdrawal, account-deletion, correction/access, security-vuln, community-content, billing/refund, technical, grievance, other.
+- [x] **`[DONE]` Consent capture** — required (never pre-ticked) "I agree to the Terms and acknowledge the Privacy Notice" checkbox on sign-up → `POST /api/consent` → `consent_events` audit log (migration `0014`).
+- [x] **`[DONE]` AI-content disclosure** — Terms §2 + Privacy state lessons are AI-generated and may contain errors; no professional advice; no warranty on accuracy.
+- [ ] **`[N/A — individual-operator beta]` Company registration / GSTIN** — not applicable while operated by an individual; revisit if the app moves to a registered entity.
 - [ ] **DPA / sub-processor list** (Anthropic, Supabase, Render, Paddle/Stripe). Anthropic API data is not trained on by default — cite that in your privacy stance.
 - [ ] **GDPR/CCPA**: consent for analytics/cookies, data-subject request process, deletion/export (§3).
 - [ ] **Refund/cancellation policy** (your MoR may mandate one).

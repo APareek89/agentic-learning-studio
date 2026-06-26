@@ -1613,6 +1613,8 @@ const authSubmit = document.getElementById("auth-submit");
 const authSwitchText = document.getElementById("auth-switch-text");
 const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
+const authConsentRow = document.getElementById("auth-consent-row");
+const authConsent = document.getElementById("auth-consent");
 const logoutBtn = document.getElementById("logout");
 const authWho = document.getElementById("auth-who");
 
@@ -1639,7 +1641,16 @@ function setAuthMode(mode) {
   authSwitchText.textContent = signup ? "Already have an account?" : "New here?";
   authToggle.textContent = signup ? "Sign in" : "Create an account";
   authPassword.autocomplete = signup ? "new-password" : "current-password";
+  // The Terms+Privacy consent checkbox is required for sign-up only.
+  if (authConsentRow) authConsentRow.hidden = !signup;
+  if (authConsent && !signup) authConsent.checked = false;
   showAuthMsg("");
+}
+// Record the signup consent (Terms + Privacy). Best-effort; the server attaches the user id
+// when a session token exists, else logs it against the email.
+function logSignupConsent(email) {
+  fetch("/api/consent", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ consentType: "signup_terms_privacy", email }) }).catch(() => {});
 }
 function applySession(session) {
   accessToken = (session && session.access_token) || null;
@@ -1734,6 +1745,9 @@ async function bootAuth() {
     const email = authEmail.value.trim();
     const password = authPassword.value;
     if (!email || password.length < 6) { showAuthMsg("Enter an email and a 6+ character password.", "err"); return; }
+    if (authMode === "signup" && authConsent && !authConsent.checked) {
+      showAuthMsg("Please agree to the Terms and acknowledge the Privacy Notice to create an account.", "err"); return;
+    }
     authSubmit.disabled = true;
     showAuthMsg("Working…");
     try {
@@ -1746,10 +1760,12 @@ async function bootAuth() {
           showAuthMsg("This email is already registered — sign in instead (or reset your password).", "err");
         } else if (!d.session) {
           // Email confirmation is ON → verify before signing in.
+          logSignupConsent(email);
           setAuthMode("signin"); authEmail.value = email;
           showAuthMsg("✉️ Verify your email — we sent a confirmation link to " + email + ". Click it, then sign in here.", "ok");
         } else {
           // Email confirmation is OFF on the project → signed in immediately.
+          logSignupConsent(email);
           showAuthMsg("Account created — you're signed in.", "ok");
         }
       } else {
