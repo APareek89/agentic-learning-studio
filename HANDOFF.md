@@ -85,6 +85,8 @@ auto-deploys to Render).
 - **`.env` DB vars:** `DATABASE_URL` = **STAGING** (`ydgiysthvxhlfpzxyrmy`, ap-south-1) — the app + all default tooling use this; never repoint it at prod. `PROD_DATABASE_URL` = **PROD** (`kdgtlbnlyscdldogxorb`, ap-southeast-2) — used ONLY for explicit prod data migrations, by overriding per-command: `PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`.
 - **WORKFLOW FOR CLAUDE (default):** do work on **`staging`** (or local→`staging`), push to `staging`, and let the USER verify on the staging site. **Merge `staging`→`main` ONLY after the user explicitly confirms.** Never push features straight to `main` — `main` is live (prathibhax.com, auto-deploys). Verify (`tsc`, local run) before pushing to `staging`.
 - **Staging KB:** the RAG `chunks` are reference data, so a fresh staging DB has an empty knowledge base (generations still work, just ungrounded). Populate it once with `SRC_DATABASE_URL="<prod URI>" node scripts/copy-kb.mjs` (copies documents/chunks/glossary/kb_updates prod→staging, idempotent) or re-ingest from source (`npm run ingest`).
+- **QA + DataforSEO creds (NOT committed — secrets live in `~/.claude/secrets/als-qa-creds`, chmod 600):** QA test accounts are **staging `pojidov934@divahd.com`** / **prod `grz1q@web-library.net`** (passwords in the secrets file as `QA_STAGING_PASSWORD`/`QA_PROD_PASSWORD`). Run: `set -a; . ~/.claude/secrets/als-qa-creds; QA_BASE_URL=<url> QA_EMAIL=$QA_STAGING_EMAIL QA_PASSWORD=$QA_STAGING_PASSWORD npm run qa`. **DataforSEO** creds are in the SAME secrets file (`DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`, 16-char pw, confirmed working — ~$47 balance Jun 2026; source `~/Documents/DFSEO.rtf`). Call via curl Basic-auth + `--cacert "$CA"` (Python urllib's TLS doesn't trust the corp proxy; curl does). Plaintext secrets are deliberately kept OUT of this committed file even though the repo is private.
+- **Prod is reachable at `https://agentic-learning-studio.onrender.com` / staging at `…-1.onrender.com`** (the custom domain `prathibhax.com` does NOT resolve from the agent sandbox — use the onrender URLs to verify deploys).
 
 ---
 
@@ -201,6 +203,43 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🆕 BATCH 2 — 3 bugs + 3 improvements (2026-06-26, on `staging`; PROD PENDING user OK):**
+  - **Bug 1 — dark-mode blue text.** Artifact dark mode (`[data-theme="dark"]` in `tokens.ts`) never overrode `--accent`/
+    `--accent-2`, so accent TEXT stayed dark-blue (low contrast). Fix: lift `--accent-2`→`#9db8ff` in the dark block +
+    light overrides (`#7aa2ff`) for the `--accent` TEXT selectors (`a`,`.eyebrow`,`.deeper-toggle`,`.hx-see`,`.ov-covers li::before`).
+    `--accent` itself stays saturated so filled chips/buttons keep readable white text. (App shell has no dark mode — artifact only.)
+  - **Bug 2 — code syntax highlighting (VS Code Dark+).** `components.ts` now has a self-contained, language-agnostic
+    single-pass tokenizer `highlightCode()` (no CDN/JS — the artifact is sandboxed); `codeBlock` wraps tokens in
+    `<span class="tk-*">` (every token esc()'d → Copy still yields verbatim source). Token CSS in `tokens.ts`
+    (`pre.code .tk-c/.tk-s/.tk-k/.tk-n/.tk-f/.tk-t`). Verified: keyword #569cd6, string #ce9178, number #b5cea8, fn #dcdcaa.
+  - **Bug 3 — reading a lesson bounced to Overview when a WIP module finished.** Cause: `pollJob` (app.js) `reloadViewer()`s
+    the iframe on each new `builtModules`, and the fresh render defaulted to overview. Fix = preserve position: runtime tracks
+    `curMod` (set in `showPane`/`enterWorkbench`/`showOverview`), reports it in the `als-progress` postMessage; host stores
+    `currentViewModule` + appends `?module=` in `reloadViewer`; `/api/artifact/:id` reads `?module=` → `renderArtifact`
+    `opts.currentModuleId` → lesson-config → runtime restores that module on init instead of the overview. (Couldn't repro the
+    live build-reload locally w/o spending a credit, but runtime JS is valid — 0 console errors — and the chain is wired end-to-end.)
+  - **Imp 1 — Sign in/up is now a dedicated full PAGE** (`#tab-auth`, 50/50 split: product story left, form right) with
+    **Google + Apple OAuth** (`sb.auth.signInWithOAuth`) + email/password. The modal (`#auth-overlay`) was removed; `openAuth()`
+    now `switchTab("auth")` so every gated-action call site is unchanged; `closeAuth()` returns to Home. ⚠️ **OAuth needs the
+    providers ENABLED in Supabase** (Auth→Providers) for staging AND prod projects — Google needs an OAuth client; Apple needs
+    an Apple Developer Service ID + key. Until enabled, the buttons show a provider-not-enabled error (email/password works).
+  - **Imp 2 — nav polish.** Credit pill is now borderless (no box, matches the nav) with a **graduation-cap** icon (was a star).
+    The community share popup + name input were already enlarged in Batch 1 (`.share-card`/`.share-name`).
+  - **Imp 3 —** configurator hero "What do you want to understand?" → **"What do you want to learn?"**.
+  - **SEO refined with REAL DataforSEO data (done; on `staging`).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
+    US monthly volumes (KD): **what is agentic ai 33,100** · agentic ai (broad) 110,000/KD56 · agentic ai definition/define 14,800 ·
+    **agentic ai vs generative ai 4,400/KD11** · **agentic ai course 3,600/KD9** · **agentic ai examples 1,600/KD10** ·
+    **agentic ai frameworks 1,000/KD7** · how to build ai agents 1,600 · **ai learning platform 1,000/LOW-comp** · agentic ai
+    certification 1,300 · **"interactive ai learning" only 10/mo** (was over-weighted in Batch-1 — now removed). Applied on the
+    landing: title/meta/OG/Twitter now lead with "AI learning platform" + "agentic AI course"; kw-chips swapped to
+    "Agentic AI course"/"AI learning platform"; hero sub reworded; **2 new FAQ Q&As + matching FAQPage schema** ("What is agentic
+    AI?" → the 33k cluster; "How is agentic AI different from generative AI?" → 4,400/KD11) for the big informational + GEO win;
+    SoftwareApplication gained a `keywords` field + platform-worded description. Verified: 1 H1, valid JSON-LD (7 FAQ Qs, all
+    visible-matched), title 61 chars. **Winnable next targets (low KD): agentic-ai-vs-generative-ai, agentic-ai-examples,
+    agentic-ai-frameworks, agentic-ai-course** — candidates for dedicated content pages later.
+  - **Verified locally:** `tsc --noEmit` clean; `node --check public/app.js` OK; Playwright — auth page (50/50 + Google/Apple),
+    dark-mode accent text light, code = VS Code Dark+, pill borderless, hero text. **Not run:** `npm run qa` (creds in
+    `~/.claude/secrets/als-qa-creds`); the live Bug-3 build-reload (needs a paid generation).
 - **🆕 3 FIXES (2026-06-26, on `staging` AND `main`/prod — cherry-picked `eef06e7`):**
   - **(1) Account = full PAGE at `/account`** (was the `#acct-overlay` MODAL). New `<section id="tab-account">` full-width
     panel (Profile card: name·email·Account ID(UUID)·plan·credits-remaining + Top-up; Usage card: 3 stat tiles
@@ -239,6 +278,10 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   progress in My Lessons (light self-poll when no client poller is active). OPEN: lesson-click flicker
   (module→overview) — needs a fully-built lesson to repro; AbortController on loaders (low-impact); nested-control
   click-bubble has no explicit automated assertion yet.
+  - **QA TEST ACCOUNTS (throwaway temp-mail, QA-only):** STAGING = `pojidov934@divahd.com`;
+    PROD = `grz1q@web-library.net`. Passwords are deliberately NOT committed here (they'd live in git history) — pass
+    them via `QA_EMAIL`/`QA_PASSWORD` env to `npm run qa`. The owner holds them; they're in the session prompt that set
+    up this work. (Prod password ends in `@1989`, not `#1989`.)
 - **🩹 GENERATION FIX (2026-06-25, on staging+prod) — capstone.prompt.** Overviews were FAILING ("Couldn't design
   an overview") on BOTH envs: the skeleton schema requires `synthesis.capstone.prompt`, but the model sometimes
   returns a `capstone` object without it; `coerceSkeleton` (nodes.ts) only defaulted a wholly-missing capstone, so

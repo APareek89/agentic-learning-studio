@@ -35,11 +35,13 @@ export const RUNTIME_JS = String.raw`
   var moduleIds = Array.prototype.map.call(document.querySelectorAll(".navitem:not(.nav-special)"), function(b){ return b.getAttribute("data-goto"); });
   var total = moduleIds.length || 1;
   var visited = {};
+  var curMod = null; // module currently on screen (null = overview). Reported to the host so a
+                     // live-build reload of this iframe can RESTORE the reader's place (not bounce to overview).
   function markVisited(id){ if(moduleIds.indexOf(id) !== -1 && !visited[id]){ visited[id]=1; setProgress(); } }
   function setProgress(){ var n=Object.keys(visited).length; var pct=Math.round(n/total*100); var bar=document.querySelector(".progress > i"); if(bar) bar.style.width = pct+"%";
     // Relay progress to the host app (this iframe is unauthenticated; the host persists it
     // server-side + uses the count for the "share & save" popup). Harmless when standalone.
-    try { if(window.parent && window.parent!==window) window.parent.postMessage({type:"als-progress", visited:n, total:total, percent:pct}, "*"); } catch(e){} }
+    try { if(window.parent && window.parent!==window) window.parent.postMessage({type:"als-progress", visited:n, total:total, percent:pct, module:curMod}, "*"); } catch(e){} }
 
   // ---- HORIZONTAL reading mode (paged deck): nav + modal + per-page Next ----
   var HORIZ = document.body.getAttribute("data-reading")==="horizontal";
@@ -71,8 +73,9 @@ export const RUNTIME_JS = String.raw`
     var i=hOrder.indexOf(mid); if(i<0) return false;
     hPanes.forEach(function(p,k){ p.classList.toggle("hidden", k!==i); });
     hMod=i; hTab=0;
+    curMod = i>0 ? mid : null; // pane 0 is the Overview
     if(curPane() && curPane().getAttribute("data-stub")) prioritize(mid);
-    hRenderTab(); return true;
+    hRenderTab(); setProgress(); return true;
   }
   function hStep(d){ var n=curTabs().length, ni=hTab+d; if(ni<0||ni>=n) return; hTab=ni; hRenderTab(); }
   // "See details" on an example box → open the FULL block in the modal.
@@ -98,13 +101,16 @@ export const RUNTIME_JS = String.raw`
   function enterWorkbench(id){
     var ov=document.getElementById("overview"), wb=document.getElementById("workbench"), back=document.getElementById("to-overview");
     if(ov) ov.hidden=true; if(wb) wb.hidden=false; if(back) back.hidden=false;
+    curMod = id;
     activatePanel(id);
+    setProgress();
     window.scrollTo(0,0);
   }
   function showOverview(){
     var ov=document.getElementById("overview"), wb=document.getElementById("workbench"), back=document.getElementById("to-overview");
     if(ov) ov.hidden=false; if(wb) wb.hidden=true; if(back) back.hidden=true;
-    closePopover(); window.scrollTo(0,0);
+    curMod = null;
+    closePopover(); setProgress(); window.scrollTo(0,0);
   }
   function activatePanel(id){
     var found=false;
@@ -451,7 +457,11 @@ export const RUNTIME_JS = String.raw`
   hydrate(document);
   observeReveals(document);
   setProgress();
-  if(HORIZ) showPane(hOrder[0]); // start on the Overview pane, first tab
+  // Restore the reader's place after a live-build reload (cfg.currentModuleId comes from the
+  // host via ?module=). Falls back to the Overview when absent/invalid.
+  var restoreId = cfg.currentModuleId && navItem(cfg.currentModuleId) ? cfg.currentModuleId : null;
+  if(HORIZ){ showPane(restoreId && hOrder.indexOf(restoreId)>0 ? restoreId : hOrder[0]); }
+  else if(restoreId){ enterWorkbench(restoreId); if(isStub(restoreId)) prioritize(restoreId); }
   pump();             // start building the remaining modules, one by one
 })();
 `;

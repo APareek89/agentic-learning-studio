@@ -541,7 +541,10 @@ app.get("/api/artifact/:id", async (req, res) => {
   if (art.blueprint) {
     // A draft (un-approved overview) renders preview-only — overview shown, nothing builds.
     const previewOnly = art.kind === OVERVIEW_DRAFT_KIND;
-    try { res.send(renderArtifact(art.blueprint, { previewOnly })); return; }
+    // ?module=<id> — the host passes the reader's current module on a live-build reload so the
+    // runtime restores it instead of bouncing to the overview.
+    const currentModuleId = typeof req.query.module === "string" ? req.query.module : undefined;
+    try { res.send(renderArtifact(art.blueprint, { previewOnly, currentModuleId })); return; }
     catch (e) { console.warn("[artifact] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(art.html);
