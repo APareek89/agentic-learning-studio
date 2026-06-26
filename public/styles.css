@@ -37,7 +37,9 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+/* min-height (not height) so body grows with content — a fixed 100% height capped the
+   sticky topbar's containing block to one viewport, so the nav scrolled away. */
+html, body { min-height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 
 .landing[hidden], .workspace[hidden], #viewer-frame[hidden], .viewer-empty[hidden],
@@ -48,6 +50,8 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .topbar {
   display: flex; align-items: center; gap: 22px;
   padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border);
+  /* Keep the nav pinned to the top while any tab (incl. Home) scrolls. */
+  position: sticky; top: 0; z-index: 50;
 }
 .brand { font-weight: 800; font-family: var(--font-head); display: flex; align-items: center; gap: 9px; }
 .brand .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent);
@@ -59,6 +63,8 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .tab.active { color: var(--accent-2); background: var(--accent-weak); }
 .tab:disabled { color: #aab; cursor: not-allowed; display: flex; align-items: center; gap: 7px; }
 .soon { font-size: 10px; font-weight: 700; text-transform: uppercase; background: #eceef6; color: #8b90a6; padding: 2px 6px; border-radius: 999px; }
+.tab-free { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; vertical-align: middle;
+  background: #e7f7ee; color: #15935a; padding: 2px 6px; border-radius: 999px; margin-left: 5px; }
 .topbar-spacer { flex: 1; }
 .auth-actions { display: flex; align-items: center; gap: 8px; }
 
@@ -171,8 +177,8 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 
 /* Open-lessons DROPDOWN under the "Trainer" main tab (Fix 4 — was a visible bar that ate width). */
 .tab-dd { position: relative; display: inline-flex; align-items: center; }
-.tab-caret { border: none; background: transparent; color: var(--muted); font: inherit; font-size: 11px; line-height: 1;
-  padding: 5px 4px; margin-left: -4px; border-radius: 8px; cursor: pointer; }
+.tab-caret { border: none; background: transparent; color: var(--ink-2); font: inherit; font-size: 16px; font-weight: 400; line-height: 1;
+  padding: 4px 6px; margin-left: -2px; border-radius: 8px; cursor: pointer; }
 .tab-caret[hidden] { display: none; }
 .tab-caret:hover, .tab-dd.open .tab-caret { color: var(--accent-2); background: var(--accent-weak); }
 .tab-dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; min-width: 230px; max-width: 320px;

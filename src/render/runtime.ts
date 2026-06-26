@@ -448,7 +448,10 @@ export const RUNTIME_JS = String.raw`
   function previewNote(){
     var n=document.getElementById("preview-note");
     if(!n){ n=document.createElement("div"); n.id="preview-note"; document.body.appendChild(n);
-      n.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:var(--ink,#15171c);color:#fff;font:600 13px/1.4 inherit;padding:10px 16px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:84vw;text-align:center;opacity:0;transition:opacity .15s"; }
+      // Theme-INDEPENDENT dark toast + white text: var(--ink) inverts to a LIGHT color in dark
+      // mode, which made this banner white-on-light (invisible) — the #1 reason users didn't know to
+      // click "Generate Lesson". Hardcode a dark bg so it reads in both light AND dark mode.
+      n.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#15171c;color:#fff;font:600 13px/1.4 inherit;padding:10px 16px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.35);max-width:84vw;text-align:center;opacity:0;transition:opacity .15s"; }
     n.textContent="🔒 This is the free overview — click “Generate Lesson” to build and read the full sections.";
     requestAnimationFrame(function(){ n.style.opacity="1"; });
     clearTimeout(n._t); n._t=setTimeout(function(){ n.style.opacity="0"; },3200);
