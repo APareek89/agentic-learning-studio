@@ -209,6 +209,21 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🖼️ Catalog thumbnails moved PixelBin CDN → Supabase Storage (2026-06-26, ON STAGING AND PROD; promote `d5cb676`).** The
+  Library/Community card covers (`.lib-cover` background `--cov-img`) no longer use `cdn.pixelbin.io`. They now load from each
+  environment's OWN **Supabase Storage public bucket `lesson-thumbs`** (CDN-backed, edge-cached) — 10 optimized webp images
+  (~5–10KB each), one per category (`agents/rag/llms/frameworks/generative/evaluation/infrastructure/safety/foundations/build`).
+  `app.js` `setThumbBase(cfg.supabaseUrl)` (called in `bootAuth` after `/api/config`) builds
+  `<supabaseUrl>/storage/v1/object/public/lesson-thumbs/<key>.webp`, so staging + prod each serve from their own project; cards
+  fall back to the flat category colour if Supabase is unavailable. **Bucket setup is CONTENT, not a migration** (object bytes
+  can't live in SQL): the `lesson-thumbs` bucket (`public=true`) + the 10 webp were created on BOTH Supabase projects. To
+  re-create/refresh (e.g. new categories): the `.env` has NO service-role key, so upload as a signed-in user — (1) SQL on the
+  target DB: `insert into storage.buckets (id,name,public) values ('lesson-thumbs','lesson-thumbs',true) on conflict (id) do
+  update set public=true;` + a TEMP scoped policy `create policy tmp_thumb_upload on storage.objects for all to authenticated
+  using (bucket_id='lesson-thumbs' and auth.uid()='<qa-user-id>'::uuid) with check (…same…);` (2) `POST
+  <supabaseUrl>/storage/v1/object/lesson-thumbs/<k>.webp` with a fresh QA-user `Bearer` JWT + `Content-Type: image/webp` +
+  `x-upsert: true`; (3) `drop policy tmp_thumb_upload on storage.objects;`. QA users: staging `pojidov934@divahd.com`, prod
+  `grz1q@web-library.net` (secrets file). NOTE: NO new persisted secret was added; PixelBin can be retired for thumbnails.
 - **🏷️ Credit balance unit "lessons" → "credits" (2026-06-26, ON STAGING AND PROD; promote `44af30e`).** Pure terminology: the
   user-facing BALANCE now reads "credits", not "lessons". Changed 3 displays — the nav credit pill (`#credit-count` span in
   `public/index.html`: `&nbsp;Lessons` → `&nbsp;Credits`, + tooltip "Your credits — click to buy more"), the Account "Credits
