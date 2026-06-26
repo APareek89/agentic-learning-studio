@@ -249,6 +249,35 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 > my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
 > charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
 
+- **🔎 FULL STAGING AUDIT — see [`STAGING_AUDIT.md`](STAGING_AUDIT.md) (2026-06-27, `8f1c8e2`).** A read-only code /
+  security / scalability / resilience audit + the full generation-pipeline data-flow map (input → agents → output → user
+  context). Owner to review tomorrow. **Headline P0s** (full detail + P1/P2/P3 + ops runbook in the doc):
+  - **P0-1 unmetered model-spend faucet** — `POST /api/module` is public, unrate-limited, takes no gen slot, and runs real
+    ~16k-tok Sonnet builds (via `ensureModuleBuild`) for FREE; the credit is only charged in `runBuildJob`. A known artifact
+    UUID = free paid generation. (Pre-existing: the old synchronous `/api/module` was also free; B3 made it async.) **Decide:**
+    add a light gen-slot + per-IP rate-limit to `/api/module`, and/or only allow on-demand builds for artifacts owned by the
+    caller. Trade-off: `/api/module` must stay token-less for the lesson iframe — gate by cost/rate, not auth.
+  - **P0-2 unauthenticated expensive `/api/upload` + `/api/upload-repo`** (CPU/embedding, `git clone`, unbounded in-mem
+    `uploads` Map) → DoS/OOM. **Decide:** rate-limit + cap + TTL-evict the uploads Map.
+  - **P0-3 `jobs` Map never pruned** (`src/lib/jobs.ts`) — siblings `skillgen`/`handson` sweep, this one doesn't → slow OOM.
+    Quick fix: add the same periodic sweep.
+  - **P0-4 credit charge depends on the process surviving the whole build** — a restart/deploy (or the `/api/module`
+    recovery path) yields a free lesson; the bare `-1` spend is non-idempotent. **Architectural:** make the charge idempotent
+    (key it to the artifact + a "charged" flag) so it survives restarts and can't double/under-charge.
+  - **✅ P0-5 zero-module build charged — FIXED (`8f1c8e2`):** `fullSuccess` now requires `pending.length > 0`.
+  - **P0-6 backups/PITR undefined** — confirm Supabase PITR is on for BOTH DBs + do a restore drill (single biggest
+    data-loss risk; all durable state has one home). See the doc's runbook.
+  - **13× P1** incl: per-resource authz (`/api/build` can charge another user; `/api/ask/expand` edits any lesson),
+    `module_cache` key omits `uploadIds`/`referOnly` (cross-user upload-grounded leak), `runBuildJob`⇄`ensureModuleBuild`
+    last-write-wins blueprint clobber, iframe sandbox effectively disabled (`allow-scripts allow-same-origin` + CSP off),
+    DB `rejectUnauthorized:false`, uploaded-doc grounding silently lost on restart, migrations manual/untracked (no
+    `schema_migrations`). All in `STAGING_AUDIT.md` with file:line + fixes.
+- **🔑 Anthropic API limit (the staging-build blocker):** the `400 "regain access 2026-07-01"` is a **monthly SPEND cap**
+  (not a rate limit). Raise it in console.anthropic.com → **Settings → Limits** (org AND the key's **Workspace** — workspace
+  limit overrides org) and ensure **Billing** has credit/auto-reload. Give **prod** a high cap, **staging** a modest one
+  (~$2-5 covers a clean 5/5 build). Code already degrades gracefully on the cap. After raising it (or after 2026-07-01),
+  run the clean 5/5 staging build-to-100% + the live dark-mode lesson check that the cap blocked.
+
 - **✅ B3 — DONE (2026-06-26, `bda97ee` on `origin/staging`): build durability (502/404 ship-blocker) FIXED + latency work landed.**
   **PART A — durability (the ship-blocker):**
   (1) **`/api/module` 502 → 202/poll (`server.ts`).** The PUBLIC per-module endpoint no longer synthesizes a ~16k-tok Sonnet
