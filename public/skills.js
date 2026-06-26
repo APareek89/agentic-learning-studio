@@ -98,11 +98,14 @@
   });
   if (repoUrlInput) repoUrlInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addRepoEl.click(); } });
 
+  const mySkillsState = document.getElementById("skill-myskills-state");
+
   // ---- state machine ----
   function show(state) {
     if (formState) formState.hidden = state !== "form";
     if (progState) progState.hidden = state !== "progress";
     if (resultState) resultState.hidden = state !== "result";
+    if (mySkillsState) mySkillsState.hidden = state !== "myskills";
     window.scrollTo(0, 0);
   }
   const progFill = document.getElementById("skill-prog-fill");
@@ -154,7 +157,7 @@
         job = await r.json();
       } catch (e) { showError("Lost the generation — please try again."); return; }
       setProgress(job.percent || 0);
-      if (job.status === "done") { if (job.skill) renderResult(job.skill, job.grounded); else showError("Generation finished but returned nothing — try again."); return; }
+      if (job.status === "done") { if (job.skill) renderResult(job.skill, job.grounded, job.saved); else showError("Generation finished but returned nothing — try again."); return; }
       if (job.status === "error") { showError(job.error || "Generation failed — try again."); return; }
       pollTimer = setTimeout(tick, 1500);
     };
@@ -222,13 +225,23 @@
     return `<ul class="skill-sources">${ss.map((s) => { const t = escapeHtml(s.title || s.url || "Source"); return s.url ? `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${t}</a></li>` : `<li>${t}</li>`; }).join("")}</ul>`;
   }
 
-  function renderResult(skill, grounded) {
+  function renderResult(skill, grounded, saved) {
     currentSkill = skill;
     const meta = skill.meta || {};
     const overview = skill.overview || {};
     const howToUse = skill.howToUse || {};
     if (resTitle) resTitle.textContent = meta.name || "Your skill";
     if (groundedBadge) groundedBadge.hidden = !grounded;
+    // "Saved to My Skills" chip (created once, lives in the result head).
+    let savedBadge = document.getElementById("skill-saved-badge");
+    if (!savedBadge && resTitle) {
+      savedBadge = document.createElement("span");
+      savedBadge.id = "skill-saved-badge";
+      savedBadge.className = "skill-saved-badge";
+      savedBadge.textContent = "✓ Saved to My Skills";
+      resTitle.parentNode.appendChild(savedBadge);
+    }
+    if (savedBadge) savedBadge.hidden = !saved;
     pane.innerHTML =
       `<div class="skill-mod" data-mod="overview"><h3>${escapeHtml(meta.name || "Skill")}</h3>` +
         `<p class="skill-sub">${escapeHtml(meta.task || "")} · for <strong>${escapeHtml(meta.llmInterface || "your LLM")}</strong></p>` +
@@ -284,4 +297,91 @@
       all.textContent = orig; all.disabled = false;
     }
   });
+
+  // ---- Nav dropdown (Build a Skill / My Skills) — mirrors the Trainer dropdown ----
+  const skillsDd = document.getElementById("skills-dd");
+  const skillsCaret = document.getElementById("skills-caret");
+  const skillsMenu = document.getElementById("skills-menu");
+  function closeSkillsMenu() { if (skillsMenu) skillsMenu.hidden = true; if (skillsCaret) skillsCaret.setAttribute("aria-expanded", "false"); if (skillsDd) skillsDd.classList.remove("open"); }
+  if (skillsCaret) skillsCaret.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = skillsMenu.hidden;
+    skillsMenu.hidden = !open;
+    skillsCaret.setAttribute("aria-expanded", String(open));
+    skillsDd.classList.toggle("open", open);
+  });
+  document.addEventListener("click", (e) => { if (skillsDd && !skillsDd.contains(e.target)) closeSkillsMenu(); });
+
+  function goBuild() { switchTab("llm-skills"); closeSkillsMenu(); show("form"); }
+  function goMySkills() { switchTab("llm-skills"); closeSkillsMenu(); show("myskills"); loadMySkills(); }
+  const menuBuild = document.getElementById("skills-menu-build");
+  const menuMine = document.getElementById("skills-menu-mine");
+  if (menuBuild) menuBuild.addEventListener("click", goBuild);
+  if (menuMine) menuMine.addEventListener("click", goMySkills);
+  // The main "LLM Skills" tab button opens Build a Skill (the generic switchTab also runs).
+  const mainBtn = document.getElementById("tab-btn-llm-skills");
+  if (mainBtn) mainBtn.addEventListener("click", () => { show("form"); });
+  const buildNewBtn = document.getElementById("skill-build-new");
+  if (buildNewBtn) buildNewBtn.addEventListener("click", goBuild);
+
+  // ---- My Skills list ----
+  const listEl = document.getElementById("skill-myskills-list");
+  const noteEl = document.getElementById("skill-myskills-note");
+  async function loadMySkills() {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    if (noteEl) noteEl.textContent = "Loading…";
+    if (authRequiredAndOut()) { if (noteEl) noteEl.textContent = ""; openAuth("signin"); return; }
+    let skills = [];
+    try {
+      const r = await fetch("/api/skills", { headers: authHeaders() });
+      if (r.status === 401) { if (noteEl) noteEl.textContent = ""; openAuth("signin"); return; }
+      skills = (await r.json()).skills || [];
+    } catch (e) { if (noteEl) noteEl.textContent = "Couldn't load your skills."; return; }
+    if (!skills.length) {
+      if (noteEl) noteEl.textContent = "";
+      listEl.innerHTML = `<div class="skill-empty-card">No saved skills yet. <button class="linklike" id="skill-empty-build" type="button">Build your first skill →</button></div>`;
+      const eb = document.getElementById("skill-empty-build"); if (eb) eb.addEventListener("click", goBuild);
+      return;
+    }
+    if (noteEl) noteEl.textContent = `${skills.length} saved skill${skills.length === 1 ? "" : "s"}`;
+    listEl.innerHTML = skills.map((s) => {
+      const date = s.createdAt ? new Date(s.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+      const grounded = s.grounded ? `<span class="ms-badge">✓ KB-grounded</span>` : "";
+      return `<div class="ms-card" data-id="${escapeHtml(s.id)}">
+        <div class="ms-main">
+          <div class="ms-title">${escapeHtml(s.name)}</div>
+          <div class="ms-task">${escapeHtml(s.task || "")}</div>
+          <div class="ms-meta"><span class="ms-iface">${escapeHtml(s.llmInterface || "")}</span>${grounded}<span class="ms-date">${escapeHtml(date)}</span></div>
+        </div>
+        <div class="ms-actions">
+          <button class="vbtn ms-open" data-id="${escapeHtml(s.id)}" type="button">Open</button>
+          <button class="vbtn ms-del" data-id="${escapeHtml(s.id)}" type="button" title="Delete">🗑</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  if (listEl) listEl.addEventListener("click", async (e) => {
+    const open = e.target.closest(".ms-open");
+    const del = e.target.closest(".ms-del");
+    if (open) { openSavedSkill(open.dataset.id); return; }
+    if (del) {
+      const id = del.dataset.id;
+      del.disabled = true;
+      try {
+        const r = await fetch("/api/skill/saved/" + encodeURIComponent(id), { method: "DELETE", headers: authHeaders() });
+        if (r.ok) { const card = del.closest(".ms-card"); if (card) card.remove(); loadMySkills(); }
+        else del.disabled = false;
+      } catch (err) { del.disabled = false; }
+    }
+  });
+  async function openSavedSkill(id) {
+    try {
+      const r = await fetch("/api/skill/saved/" + encodeURIComponent(id), { headers: authHeaders() });
+      if (r.status === 401) { openAuth("signin"); return; }
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.skill) renderResult(d.skill, d.grounded, true);
+    } catch (e) { /* ignore */ }
+  }
 })();

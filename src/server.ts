@@ -37,7 +37,7 @@ import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, sa
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
-import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, type SkillInput } from "./lib/skillgen";
+import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { getBalance, ensureFreeGrant, addCredits, getAccountSummary } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
@@ -454,7 +454,10 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
     refDocIds: Array.isArray(body.refDocIds) ? (body.refDocIds as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 12) : [],
   };
   const user = await getUser(req.headers.authorization);
-  // Cache hit → return a job that's already done (no gen slot needed).
+  input.userId = user?.id ?? "";
+  input.userEmail = user?.email ?? "";
+  // Cache hit → return a job that's already done (no gen slot needed). Still persist
+  // it to THIS user's My Skills (fire-and-forget; never blocks the response).
   const cached = getCachedSkill(input);
   if (cached) {
     const job = createSkillJob(user?.id ?? "anon");
@@ -462,6 +465,8 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
     job.grounded = (cached.sources ?? []).some((s) => !!s.url);
     job.percent = 100;
     job.status = "done";
+    job.saved = true;
+    void persistSkill(input.userId, input.userEmail, cached, !!job.grounded);
     res.json({ jobId: job.id });
     return;
   }
@@ -476,7 +481,32 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
 app.get("/api/skill/job/:id", requireAuth, (req, res) => {
   const job = getSkillJob(req.params.id);
   if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
-  res.json({ id: job.id, status: job.status, percent: job.percent, error: job.error, grounded: job.grounded, skill: job.skill });
+  res.json({ id: job.id, status: job.status, percent: job.percent, error: job.error, grounded: job.grounded, saved: job.saved, skill: job.skill });
+});
+
+// GET /api/skills — the signed-in user's saved skills (My Skills list).
+app.get("/api/skills", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.json({ skills: [] }); return; }
+  const skills = await listSavedSkills(user.id, user.email);
+  res.json({ skills });
+});
+
+// GET /api/skill/saved/:id — full package of one saved skill (to re-open it).
+app.get("/api/skill/saved/:id", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  const row = await getSavedSkill(req.params.id, user.id, user.email);
+  if (!row) { res.status(404).json({ error: "That skill wasn't found." }); return; }
+  res.json(row);
+});
+
+// DELETE /api/skill/saved/:id — remove a saved skill from My Skills.
+app.delete("/api/skill/saved/:id", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
+  const ok = await deleteSavedSkill(req.params.id, user.id, user.email);
+  res.json({ ok });
 });
 
 // GET /api/jobs/active — the signed-in user's still-running generations (server source of

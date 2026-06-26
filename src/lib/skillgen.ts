@@ -24,7 +24,7 @@ import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { makeLLM, withOverloadRetry } from "../agent/llm";
 import { retrieve } from "../rag/retrieve";
-import { ragEnabled } from "./db";
+import { ragEnabled, dbEnabled, query } from "./db";
 import { retrieveFromUploads } from "./uploads";
 import { releaseGenSlot } from "./jobs";
 import { sha256 } from "./hash";
@@ -83,6 +83,9 @@ export interface SkillInput {
   constraints?: string;
   skillName?: string;
   refDocIds?: string[];
+  /** Who to persist the result under (My Skills). Empty for open-mode/anon. */
+  userId?: string;
+  userEmail?: string;
 }
 
 export interface SkillJob {
@@ -95,7 +98,84 @@ export interface SkillJob {
   skill?: SkillPackage;
   /** True when the "Agent Skills" KB grounded this generation. */
   grounded?: boolean;
+  /** True once persisted to the user's My Skills. */
+  saved?: boolean;
   createdAt: number;
+}
+
+// ---------------------------------------------------------------------------
+// Persistence — "My Skills" (durable history; mirrors My Lessons). Graceful-
+// optional: every fn is a safe no-op when there's no DB / no user.
+// ---------------------------------------------------------------------------
+export interface SavedSkillRow {
+  id: string;
+  slug: string;
+  name: string;
+  task: string;
+  llmInterface: string;
+  grounded: boolean;
+  createdAt: string;
+}
+
+/** Upsert a generated skill into the user's history (keyed by user+slug). */
+export async function persistSkill(userId: string, email: string, pkg: SkillPackage, grounded: boolean): Promise<string | null> {
+  if (!dbEnabled() || (!userId && !email)) return null;
+  try {
+    const rows = await query<{ id: string }>(
+      `insert into generated_skills (user_id, user_email, slug, name, task, llm_interface, grounded, skill)
+       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+       on conflict (user_id, slug) do update set
+         user_email = excluded.user_email, name = excluded.name, task = excluded.task,
+         llm_interface = excluded.llm_interface, grounded = excluded.grounded,
+         skill = excluded.skill, created_at = now()
+       returning id::text`,
+      [userId || null, email || null, pkg.meta.slug, pkg.meta.name, pkg.meta.task, pkg.meta.llmInterface, grounded, JSON.stringify(pkg)]
+    );
+    return rows[0]?.id ?? null;
+  } catch (e) {
+    console.warn("[persistSkill]", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
+/** A user's saved skills, newest first (matched by id OR email, like lessons). */
+export async function listSavedSkills(userId: string, email = ""): Promise<SavedSkillRow[]> {
+  if (!dbEnabled() || (!userId && !email)) return [];
+  const rows = await query<{ id: string; slug: string; name: string; task: string | null; llm_interface: string | null; grounded: boolean; created_at: Date }>(
+    `select id::text, slug, name, task, llm_interface, grounded, created_at
+       from generated_skills
+      where (user_id = $1 or ($2 <> '' and user_email = $2))
+      order by created_at desc
+      limit 200`,
+    [userId || "", email || ""]
+  ).catch(() => []);
+  return rows.map((r) => ({
+    id: r.id, slug: r.slug, name: r.name, task: r.task ?? "", llmInterface: r.llm_interface ?? "",
+    grounded: !!r.grounded, createdAt: r.created_at ? new Date(r.created_at).toISOString() : "",
+  }));
+}
+
+/** Fetch one saved skill's full package (scoped to the requesting user). */
+export async function getSavedSkill(id: string, userId: string, email = ""): Promise<{ skill: SkillPackage; grounded: boolean } | null> {
+  if (!dbEnabled() || !id || (!userId && !email)) return null;
+  const rows = await query<{ skill: SkillPackage; grounded: boolean }>(
+    `select skill, grounded from generated_skills
+      where id = $1 and (user_id = $2 or ($3 <> '' and user_email = $3)) limit 1`,
+    [id, userId || "", email || ""]
+  ).catch(() => []);
+  if (!rows[0]) return null;
+  return { skill: rows[0].skill, grounded: !!rows[0].grounded };
+}
+
+/** Delete a saved skill (scoped to the requesting user). Returns true if removed. */
+export async function deleteSavedSkill(id: string, userId: string, email = ""): Promise<boolean> {
+  if (!dbEnabled() || !id || (!userId && !email)) return false;
+  const rows = await query<{ id: string }>(
+    `delete from generated_skills
+      where id = $1 and (user_id = $2 or ($3 <> '' and user_email = $3)) returning id::text`,
+    [id, userId || "", email || ""]
+  ).catch(() => []);
+  return rows.length > 0;
 }
 
 const skillJobs = new Map<string, SkillJob>();
@@ -291,6 +371,8 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
       job.grounded = (cached.sources ?? []).some((s) => !!s.url);
       job.percent = 100;
       job.status = "done";
+      const id = await persistSkill(input.userId ?? "", input.userEmail ?? "", cached, !!job.grounded);
+      job.saved = !!id;
       return;
     }
 
@@ -371,6 +453,8 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
     job.percent = 100;
     job.status = "done";
     skillCache.set(skillCacheKey(input), pkg);
+    const savedId = await persistSkill(input.userId ?? "", input.userEmail ?? "", pkg, grounded);
+    job.saved = !!savedId;
   } catch (e) {
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);
