@@ -259,7 +259,9 @@ pre.code .tk-t{color:#4ec9b0}
 .term-chip .i{font-size:9px;margin-left:5px}
 #popover{position:fixed;z-index:60;max-width:300px;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:12px 14px;font-size:13px;display:none}
 #popover.on{display:block}
-#popover .pt{font-weight:700;margin-bottom:3px}
+#popover .pclose{position:absolute;top:4px;right:6px;border:none;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 5px;border-radius:6px}
+#popover .pclose:hover{color:var(--accent-2);background:var(--accent-weak)}
+#popover .pt{font-weight:700;margin-bottom:3px;padding-right:18px}
 #popover .px{font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
 #popover .pn{color:var(--ink-soft)}
 #popover .ptech{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}

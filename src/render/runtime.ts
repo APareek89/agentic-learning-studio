@@ -113,6 +113,7 @@ export const RUNTIME_JS = String.raw`
     closePopover(); setProgress(); window.scrollTo(0,0);
   }
   function activatePanel(id){
+    closePopover(); // a (i) term popover must not linger across module navigation
     var found=false;
     document.querySelectorAll(".panel").forEach(function(p){ var on = p.getAttribute("data-panel")===id; p.classList.toggle("active", on); if(on) found=true; });
     document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-goto")===id); });
@@ -127,7 +128,7 @@ export const RUNTIME_JS = String.raw`
     var tech = (showTech && t.technicalNote) ? '<div class="ptech">'+esc(t.technicalNote)+'</div>' : '';
     var acr = t.acronymExpansion ? '<div class="px">'+esc(t.acronymExpansion)+'</div>' : '';
     var src = (t.sources && t.sources.length) ? '<div class="psrc">Source: '+esc(t.sources.join(", "))+'</div>' : '';
-    pop.innerHTML = '<div class="pt">'+esc(t.label)+'</div>'+acr+'<div class="pn">'+esc(t.laymanDefinition)+'</div>'+tech+src;
+    pop.innerHTML = '<button class="pclose" type="button" aria-label="Close">×</button><div class="pt">'+esc(t.label)+'</div>'+acr+'<div class="pn">'+esc(t.laymanDefinition)+'</div>'+tech+src;
     pop.classList.add("on");
     var r = btn.getBoundingClientRect();
     var top = r.bottom + 8, left = Math.min(r.left, window.innerWidth - 320);
@@ -150,6 +151,7 @@ export const RUNTIME_JS = String.raw`
   function closeViz(){ var open=document.querySelectorAll(".viz-modal"); for(var i=0;i<open.length;i++){ open[i].hidden=true; } }
   // ---- one delegated click handler ----
   document.addEventListener("click", function(ev){
+    if(ev.target.closest(".pclose")){ closePopover(); return; } // visible close on the (i) popover
     var vizCta = ev.target.closest(".viz-cta");
     if(vizCta){ var id=vizCta.getAttribute("data-viz"), all=document.querySelectorAll(".viz-modal"); for(var vi=0;vi<all.length;vi++){ if(all[vi].getAttribute("data-viz-for")===id){ all[vi].hidden=false; break; } } return; }
     if(ev.target.closest(".viz-x")){ var vmx=ev.target.closest(".viz-modal"); if(vmx) vmx.hidden=true; return; }
@@ -267,8 +269,9 @@ export const RUNTIME_JS = String.raw`
     var conf=kcConf(item), lat=kcLatency(item);
     item.setAttribute("data-done","1");
     item.querySelectorAll(".kc-opt").forEach(function(o){ o.setAttribute("disabled","1"); });
-    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,choiceIndex:choice,confidence:conf,latencyMs:lat}).then(function(res){
+    var gid=kcGradeId();
+    if(!gid){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
+    kcCheck(Object.assign({blockId:bid,questionId:qid,choiceIndex:choice,confidence:conf,latencyMs:lat},gid)).then(function(res){
       if(res.correct){ btn.classList.add("correct"); }
       else{ btn.classList.add("wrong"); if(typeof res.correctIndex==="number"){ var c=item.querySelectorAll(".kc-opt")[res.correctIndex]; if(c) c.classList.add("correct"); } }
       kcShow(item,!!res.correct);
@@ -281,8 +284,9 @@ export const RUNTIME_JS = String.raw`
     var conf=kcConf(item), lat=kcLatency(item);
     var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback grading"; fb.textContent="Grading your answer…"; }
     btn.setAttribute("disabled","1");
-    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,text:inp.value.trim(),confidence:conf,latencyMs:lat}).then(function(res){
+    var gid=kcGradeId();
+    if(!gid){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
+    kcCheck(Object.assign({blockId:bid,questionId:qid,text:inp.value.trim(),confidence:conf,latencyMs:lat},gid)).then(function(res){
       kcShow(item,!!res.correct,res.feedback||(res.correct?"Correct ✓":"Not quite"));
     }).catch(function(){ btn.removeAttribute("disabled"); if(fb){ fb.className="kc-feedback no"; fb.textContent="Couldn't grade — try again."; } });
   }
@@ -427,6 +431,13 @@ export const RUNTIME_JS = String.raw`
   // whichever it is back to a Blueprint.
   var _hl=(location.pathname||"").match(/\/(?:api\/artifact|api\/lesson|api\/community\/lesson)\/([^\/?#]+)/);
   var HANDSON_LESSON=_hl?_hl[1]:ARTIFACT_ID;
+  // Knowledge-check grading id: live user lessons grade by artifactId; PUBLIC Library /
+  // Community lessons grade by SLUG (the server resolves the prebuilt/community Blueprint).
+  // Only a downloaded file:// page (no match at all) can't be graded.
+  var _ls=(location.pathname||"").match(/\/api\/(community\/lesson|lesson)\/([^\/?#]+)/);
+  var LESSON_SLUG=_ls?_ls[2]:"";
+  var LESSON_SRC=_ls?(_ls[1]==="community/lesson"?"community":"library"):"";
+  function kcGradeId(){ return ARTIFACT_ID ? {artifactId:ARTIFACT_ID} : (LESSON_SLUG ? {slug:LESSON_SLUG, source:LESSON_SRC} : null); }
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
   var busy=false;

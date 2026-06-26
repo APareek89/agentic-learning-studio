@@ -808,6 +808,10 @@ const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
 let dashboardPollTimer = null;
 async function loadDashboard() {
+  // Don't fire authed fetches before the Supabase token is attached (a boot tab-restore can
+  // call this before bootAuth/applySession resolves → 401 race). applySession re-runs the
+  // dashboard load once the session is ready, so simply skipping here is safe.
+  if (authRequiredAndOut()) return;
   try {
     // /api/lessons = saved lessons; /api/jobs/active = builds still running on the SERVER (so a
     // build that's continuing after a page refresh — when the client poller is gone — still shows).
@@ -820,11 +824,14 @@ async function loadDashboard() {
     dashGrid.innerHTML = "";
     if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
     dashEmpty.hidden = true;
-    // Building progress: merge the local building tab with the server's active-job data.
+    // Building progress. The SERVER's active-jobs list is AUTHORITATIVE when available: a
+    // completed build won't appear there, so it must NOT show a stale "Building…" from a local
+    // tab whose poller stopped (multitask/refresh — the B5 bug). Only fall back to the local
+    // building tab when the server's list is unavailable.
     const building = {}; // artifactId -> percent
-    const localBuild = tabs.find((t) => t.building);
-    if (localBuild && localBuild.art) building[localBuild.art] = localBuild.percent || 0;
-    try { if (jobsRes && jobsRes.ok) { const { jobs } = await jobsRes.json(); for (const j of (jobs || [])) if (j.artifactId) building[j.artifactId] = j.percent; } } catch { /* ignore */ }
+    let serverJobsOk = false;
+    try { if (jobsRes && jobsRes.ok) { serverJobsOk = true; const { jobs } = await jobsRes.json(); for (const j of (jobs || [])) if (j.artifactId) building[j.artifactId] = j.percent; } } catch { /* ignore */ }
+    if (!serverJobsOk) { const localBuild = tabs.find((t) => t.building); if (localBuild && localBuild.art) building[localBuild.art] = localBuild.percent || 0; }
     for (const l of lessons) dashGrid.appendChild(lessonCard(l, l.id in building ? building[l.id] : null));
     dashNote.textContent = `${lessons.length} saved · Download to keep a permanent copy`;
     // If a build is active but there's NO client-side poller (e.g. right after a refresh),
@@ -2103,8 +2110,13 @@ function gotoAccount(push) {
 }
 function openAccount() { gotoAccount(true); }
 // If we boot (or finish signing in) on /account, show the page without a second push.
+// Map a deep-linked / refreshed URL to its tab so /pricing, /library, etc. land on the
+// right tab (the server's SPA fallback serves the shell; this routes once auth state is known).
+const URL_TAB_MAP = { "/builder": "configurator", "/library": "library", "/community": "community", "/pricing": "pricing", "/llm-skills": "llm-skills", "/build-community": "build-community", "/trainer": "trainer" };
 function routeFromUrl() {
-  if (location.pathname.replace(/\/+$/, "") === "/account") gotoAccount(false);
+  const p = location.pathname.replace(/\/+$/, "");
+  if (p === "/account") { gotoAccount(false); return; }
+  if (URL_TAB_MAP[p]) switchTab(URL_TAB_MAP[p]);
 }
 function fmtMemberSince(iso) {
   if (!iso) return "—";

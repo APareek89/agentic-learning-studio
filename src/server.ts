@@ -734,29 +734,21 @@ app.get("/api/artifact/:id/full", async (req, res) => {
     return;
   }
   try {
-    // Build every stub, but NEVER let the download hang or hard-fail (the cause of the
-    // browser's "Site wasn't available"). We time-box the build and skip any module that
-    // errors, then always serve the best-available HTML — a download with a couple of
-    // "building…" sections beats a failed download. Re-check between passes so a build
-    // running concurrently in the open lesson's queue can't leave a straggler stub.
-    const DEADLINE_MS = 55_000;
-    const startedAt = Date.now();
     const isStub = (m: (typeof bp.modules)[number]) => !(m.loadState === "full" && m.blocks.length > 0);
-    for (let pass = 0; pass < 4; pass++) {
-      const stubs = bp.modules.filter(isStub);
-      if (!stubs.length) break;
-      let bailed = false;
-      for (const m of stubs) {
-        if (Date.now() - startedAt > DEADLINE_MS) { bailed = true; break; }
-        try { await runDeepDive(bp, m.id, { uploadIds: art.uploadIds, referOnly: art.referOnly }); }
-        catch (e) { console.warn(`[/full] module "${m.id}" failed, skipping:`, (e as Error).message?.slice(0, 100)); }
-      }
-      if (bailed) { console.warn(`[/full] build deadline hit for ${art.id}; serving partial.`); break; }
+    // If the lesson is STILL BUILDING, do NOT block trying to finish it here — that's the
+    // background queue's job, and building a module takes longer than the browser/proxy ~30s
+    // timeout, so the download used to hang. Serve the best-available HTML IMMEDIATELY (the
+    // unbuilt sections carry their own "building…" note); a re-download once it's done gets the
+    // complete file. A completed lesson has no stubs and downloads in full as before.
+    if (bp.modules.some(isStub)) {
+      const partial = art.html || renderArtifact(bp);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}-partial.html"`);
+      res.setHeader("X-Lesson-Building", "1"); // a still-building lesson — re-download when complete
+      res.send(partial);
+      return;
     }
     const html = renderArtifact(bp);
-    // Persist best-effort — but DON'T block the download if the DB is down (the classic
-    // Render misconfig). The download must succeed regardless of persistence.
-    void updateArtifact(req.params.id, { blueprint: bp, html }).catch(() => {});
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}.html"`);
     res.send(html);
@@ -833,11 +825,20 @@ app.post("/api/ask/expand", requireAuth, async (req, res) => {
 // the iframe (no auth token). Same access model as /api/artifact/:id; only reads/grades an
 // existing artifact's stored questions.
 app.post("/api/check", async (req, res) => {
-  const { artifactId, blockId, questionId, choiceIndex, text } = (req.body ?? {}) as {
-    artifactId?: string; blockId?: string; questionId?: string; choiceIndex?: number; text?: string;
+  const { artifactId, slug, source, blockId, questionId, choiceIndex, text } = (req.body ?? {}) as {
+    artifactId?: string; slug?: string; source?: string; blockId?: string; questionId?: string; choiceIndex?: number; text?: string;
   };
-  const art = artifactId ? await getArtifact(artifactId) : undefined;
-  const bp = art?.blueprint;
+  // Resolve the blueprint: live user lessons by artifactId; PUBLIC Library / Community
+  // lessons by slug (so their knowledge checks grade for real, not "needs the live app").
+  let bp: Blueprint | undefined;
+  if (artifactId) {
+    bp = (await getArtifact(artifactId))?.blueprint;
+  } else if (typeof slug === "string" && slug) {
+    const table = source === "community" ? "community_lessons" : "prebuilt_lessons";
+    const rows = await query<{ blueprint: unknown }>(`select blueprint from ${table} where slug = $1 limit 1`, [slug]).catch(() => []);
+    const raw = rows[0]?.blueprint;
+    bp = raw ? ((typeof raw === "string" ? JSON.parse(raw) : raw) as Blueprint) : undefined;
+  }
   if (!bp || !blockId || !questionId) { res.status(404).json({ error: "Unknown lesson/question." }); return; }
   // Find the knowledgeCheck block + question across all modules.
   let q: Extract<Block, { kind: "knowledgeCheck" }>["questions"][number] | undefined;
@@ -1189,6 +1190,20 @@ app.get("/healthz", async (_req, res) => {
     catch (e) { db = false; dbError = e instanceof Error ? e.message.slice(0, 120) : String(e); }
   }
   res.json({ ok: true, db, dbConfigured: dbEnabled(), dbError, rag: db, auth: authEnabled() });
+});
+
+// ----------------------------------------------------------------------------
+// SPA history fallback (registered LAST). Tabs are in-app state with no per-tab
+// route, so a direct-load / refresh / share of /pricing, /library, /community,
+// /builder, /llm-skills used to hit Express → "Cannot GET /pricing" (404). Serve
+// the app shell for any GET that isn't an /api call and isn't a real asset (a path
+// with a "." extension), so those deep-links load the SPA; the client then routes
+// to the matching tab. Static assets (served above) and /api/* still win / 404 as
+// JSON. POST/etc. fall through to Express's default 404.
+// ----------------------------------------------------------------------------
+app.get(/.*/, (req, res, next) => {
+  if (req.path.startsWith("/api/") || req.path.includes(".")) return next();
+  res.sendFile(join(PUBLIC_DIR, "index.html"));
 });
 
 // ----------------------------------------------------------------------------
