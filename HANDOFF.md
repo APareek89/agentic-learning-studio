@@ -85,7 +85,8 @@ auto-deploys to Render).
 - **`.env` DB vars:** `DATABASE_URL` = **STAGING** (`ydgiysthvxhlfpzxyrmy`, ap-south-1) — the app + all default tooling use this; never repoint it at prod. `PROD_DATABASE_URL` = **PROD** (`kdgtlbnlyscdldogxorb`, ap-southeast-2) — used ONLY for explicit prod data migrations, by overriding per-command: `PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`.
 - **WORKFLOW FOR CLAUDE (default):** do work on **`staging`** (or local→`staging`), push to `staging`, and let the USER verify on the staging site. **Merge `staging`→`main` ONLY after the user explicitly confirms.** Never push features straight to `main` — `main` is live (prathibhax.com, auto-deploys). Verify (`tsc`, local run) before pushing to `staging`.
 - **Staging KB:** the RAG `chunks` are reference data, so a fresh staging DB has an empty knowledge base (generations still work, just ungrounded). Populate it once with `SRC_DATABASE_URL="<prod URI>" node scripts/copy-kb.mjs` (copies documents/chunks/glossary/kb_updates prod→staging, idempotent) or re-ingest from source (`npm run ingest`).
-- **QA + DataforSEO creds (NOT committed — secrets live in `~/.claude/secrets/als-qa-creds`, chmod 600):** QA test accounts are **staging `pojidov934@divahd.com`** / **prod `grz1q@web-library.net`** (passwords in the secrets file as `QA_STAGING_PASSWORD`/`QA_PROD_PASSWORD`). Run: `set -a; . ~/.claude/secrets/als-qa-creds; QA_BASE_URL=<url> QA_EMAIL=$QA_STAGING_EMAIL QA_PASSWORD=$QA_STAGING_PASSWORD npm run qa`. `DATAFORSEO_LOGIN=anandpareek@gofynd.com` (password pending — user's paste was truncated). Plaintext secrets are deliberately kept OUT of this committed file even though the repo is private.
+- **QA + DataforSEO creds (NOT committed — secrets live in `~/.claude/secrets/als-qa-creds`, chmod 600):** QA test accounts are **staging `pojidov934@divahd.com`** / **prod `grz1q@web-library.net`** (passwords in the secrets file as `QA_STAGING_PASSWORD`/`QA_PROD_PASSWORD`). Run: `set -a; . ~/.claude/secrets/als-qa-creds; QA_BASE_URL=<url> QA_EMAIL=$QA_STAGING_EMAIL QA_PASSWORD=$QA_STAGING_PASSWORD npm run qa`. **DataforSEO** creds are in the SAME secrets file (`DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`, 16-char pw, confirmed working — ~$47 balance Jun 2026; source `~/Documents/DFSEO.rtf`). Call via curl Basic-auth + `--cacert "$CA"` (Python urllib's TLS doesn't trust the corp proxy; curl does). Plaintext secrets are deliberately kept OUT of this committed file even though the repo is private.
+- **Prod is reachable at `https://agentic-learning-studio.onrender.com` / staging at `…-1.onrender.com`** (the custom domain `prathibhax.com` does NOT resolve from the agent sandbox — use the onrender URLs to verify deploys).
 
 ---
 
@@ -225,9 +226,17 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   - **Imp 2 — nav polish.** Credit pill is now borderless (no box, matches the nav) with a **graduation-cap** icon (was a star).
     The community share popup + name input were already enlarged in Batch 1 (`.share-card`/`.share-name`).
   - **Imp 3 —** configurator hero "What do you want to understand?" → **"What do you want to learn?"**.
-  - **SEO / DataforSEO (PENDING user):** the DataforSEO password the user pasted was TRUNCATED (`e9d86a705ae092af…`) — need
-    the full value before running keyword/SERP enrichment. `DATAFORSEO_LOGIN=anandpareek@gofynd.com`. Positioning: "agentic
-    learning platform for AI content." (Batch-1 SEO — title/meta/H1/JSON-LD/robots/sitemap — already shipped to staging+prod.)
+  - **SEO refined with REAL DataforSEO data (done; on `staging`).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
+    US monthly volumes (KD): **what is agentic ai 33,100** · agentic ai (broad) 110,000/KD56 · agentic ai definition/define 14,800 ·
+    **agentic ai vs generative ai 4,400/KD11** · **agentic ai course 3,600/KD9** · **agentic ai examples 1,600/KD10** ·
+    **agentic ai frameworks 1,000/KD7** · how to build ai agents 1,600 · **ai learning platform 1,000/LOW-comp** · agentic ai
+    certification 1,300 · **"interactive ai learning" only 10/mo** (was over-weighted in Batch-1 — now removed). Applied on the
+    landing: title/meta/OG/Twitter now lead with "AI learning platform" + "agentic AI course"; kw-chips swapped to
+    "Agentic AI course"/"AI learning platform"; hero sub reworded; **2 new FAQ Q&As + matching FAQPage schema** ("What is agentic
+    AI?" → the 33k cluster; "How is agentic AI different from generative AI?" → 4,400/KD11) for the big informational + GEO win;
+    SoftwareApplication gained a `keywords` field + platform-worded description. Verified: 1 H1, valid JSON-LD (7 FAQ Qs, all
+    visible-matched), title 61 chars. **Winnable next targets (low KD): agentic-ai-vs-generative-ai, agentic-ai-examples,
+    agentic-ai-frameworks, agentic-ai-course** — candidates for dedicated content pages later.
   - **Verified locally:** `tsc --noEmit` clean; `node --check public/app.js` OK; Playwright — auth page (50/50 + Google/Apple),
     dark-mode accent text light, code = VS Code Dark+, pill borderless, hero text. **Not run:** `npm run qa` (creds in
     `~/.claude/secrets/als-qa-creds`); the live Bug-3 build-reload (needs a paid generation).
