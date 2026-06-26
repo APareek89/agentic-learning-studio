@@ -40,7 +40,18 @@ export const ARTIFACT_CSS = String.raw`
      light boxes with invisible (light-on-light) text. Dark tints matched to the blk-* set. */
   --info-weak:#142149; --ok-weak:#0e2419; --warn-weak:#241d0f; --danger-weak:#2a1416;
   --code-bg:#070b18; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.5);
+  /* Emphasis text + inline code use --accent-2; the light-theme dark-blue (#1d4ed8) is
+     low-contrast on a dark background, so lift it to a light, readable blue in dark mode. */
+  --accent-2:#9db8ff;
 }
+/* Dark mode: accent-colored TEXT must read light on dark. (--accent itself stays saturated
+   so filled chips/buttons — the "(i)" badge, Reveal, active nav number, "Open →" — keep
+   readable white text.) */
+[data-theme="dark"] a,
+[data-theme="dark"] .eyebrow,
+[data-theme="dark"] .deeper-toggle,
+[data-theme="dark"] .hx-see,
+[data-theme="dark"] .ov-covers li::before{color:#7aa2ff}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.65;font-size:16px}
@@ -194,6 +205,13 @@ table.dm td.when{background:var(--accent-weak);color:var(--accent-2);font-weight
 .ex .pane-functional{padding:14px}
 pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:12.8px;line-height:1.6}
 pre.code .cm{color:#7f88b3}
+/* VS Code "Dark+" syntax tokens (the code surface is always dark in both themes). */
+pre.code .tk-c{color:#6a9955;font-style:italic}
+pre.code .tk-s{color:#ce9178}
+pre.code .tk-k{color:#569cd6}
+pre.code .tk-n{color:#b5cea8}
+pre.code .tk-f{color:#dcdcaa}
+pre.code .tk-t{color:#4ec9b0}
 .code-path{font-size:11px;color:var(--faint);padding:7px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);font-family:var(--font-mono)}
 .copy{float:right;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);font:inherit;font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer}
 /* which tab is active */

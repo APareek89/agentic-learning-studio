@@ -18,7 +18,7 @@ function escAttr(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
 
-export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean } = {}): string {
+export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; currentModuleId?: string } = {}): string {
   const p = bp.learnerProfile;
   // The glossary is embedded as inert JSON; the runtime parses it for popovers.
   // We escape `<` so a stray "</script>" inside a definition can't break out.
@@ -33,7 +33,10 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean } = 
   // the learner approves. Driven by `previewOnly` in the config.
   const previewOnly = !!opts.previewOnly;
   const stubModuleIds = previewOnly ? [] : bp.modules.filter((m) => !(m.loadState === "full" && m.blocks.length > 0)).map((m) => m.id);
-  const configJson = JSON.stringify({ stubModuleIds, previewOnly }).replace(/</g, "\\u003c");
+  // currentModuleId: when the host reloads this iframe mid-read (a background module finished
+  // building), it passes the module the reader was on so the runtime restores it (no overview bounce).
+  const currentModuleId = opts.currentModuleId && bp.modules.some((m) => m.id === opts.currentModuleId) ? opts.currentModuleId : undefined;
+  const configJson = JSON.stringify({ stubModuleIds, previewOnly, currentModuleId }).replace(/</g, "\\u003c");
   // Optional per-industry accent override (only the accent token changes).
   const accentStyle = bp.meta.accent ? `<style>:root{--accent:${escAttr(bp.meta.accent)}}</style>` : "";
 

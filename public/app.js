@@ -83,6 +83,8 @@ function axisToValues(enumStr) {
 let currentArtifactId = null;
 let currentThreadId = null;
 let currentViewUrl = null; // what "open in new window" points at (artifact OR library lesson)
+let currentViewModule = null; // module the reader is on in the viewer iframe (null = overview); used to
+                              // restore their place when a live-build reload re-renders the iframe.
 let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
 let activeJobId = null;
 let activeJobTimer = null;
@@ -580,7 +582,7 @@ function closeTab(id) {
 
 function showNoTabs() {
   activeTabId = null;
-  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
   viewerFrame.hidden = true; genOverlay.hidden = true; viewerEmpty.hidden = false;
   downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
   document.getElementById("viewer-title").textContent = "Lesson";
@@ -594,7 +596,7 @@ function activateTab(id) {
   if (!t) return;
   activeTabId = id;
   toggleChat(false); chatLog.innerHTML = "";
-  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
   basePrompt = t.prompt || t.title || "";
   document.getElementById("viewer-title").textContent = t.title || "Lesson";
   if (t.type === "generating") {
@@ -632,7 +634,10 @@ function reloadViewer() {
   const base = "/api/artifact/" + t.art;
   currentViewUrl = base;
   viewerFrame.hidden = false; viewerEmpty.hidden = true; genOverlay.hidden = true;
-  viewerFrame.src = base + "?v=" + Date.now();
+  // Keep the reader on their current module across a live-build reload (Bug: finishing WIP
+  // modules used to bounce them back to the overview).
+  const mq = currentViewModule ? "&module=" + encodeURIComponent(currentViewModule) : "";
+  viewerFrame.src = base + "?v=" + Date.now() + mq;
 }
 
 // Fix 4: render the open lessons into the dropdown menu UNDER the "Trainer" tab (was a visible
@@ -743,7 +748,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account", auth: "tab-auth" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -759,9 +764,9 @@ function switchTab(name) {
   if (name !== "account" && location.pathname.replace(/\/+$/, "") === "/account") {
     try { history.replaceState({}, "", "/"); } catch { /* ignore */ }
   }
-  // Remember where the user is across refresh — but never "account" (it lives at /account,
-  // restored from the URL, not from this top-tab memory).
-  try { if (name !== "account") sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ }
+  // Remember where the user is across refresh — but never "account" (URL-restored) or "auth"
+  // (a transient sign-in page; a refresh shouldn't dump them back onto it).
+  try { if (name !== "account" && name !== "auth") sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ }
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
@@ -1137,6 +1142,9 @@ window.addEventListener("message", (e) => {
   if (e.source !== viewerFrame.contentWindow) return;
   const d = e.data;
   if (!d || d.type !== "als-progress") return;
+  // Track which module the reader is on (for ALL lessons, before the owned-only guard) so a
+  // live-build reload can restore their place instead of bouncing them to the overview.
+  currentViewModule = typeof d.module === "string" ? d.module : null;
   if (!currentLessonOwned || !currentArtifactId) return; // only the user's own lessons
   const lessonId = currentArtifactId;
   // Persist (authed; the host has the token, the iframe doesn't).
@@ -1612,8 +1620,16 @@ function authHeaders() { return accessToken ? { Authorization: "Bearer " + acces
 function authRequiredAndOut() { return authIsEnabled && !accessToken; }
 function showAuthMsg(text, kind) { authMsg.hidden = !text; authMsg.textContent = text || ""; authMsg.className = "auth-msg" + (kind ? " " + kind : ""); }
 // The overlay is an on-demand MODAL (gates generation/dashboard; browsing stays open).
-function openAuth(mode) { setAuthMode(mode || "signin"); authLoading.hidden = true; authForm.hidden = false; authOverlay.hidden = false; }
-function closeAuth() { authOverlay.hidden = true; }
+// Auth is a full PAGE now (#tab-auth), not a modal. openAuth() routes to it; every existing
+// gated-action call site (openAuth("signin"/"signup")) keeps working unchanged.
+function openAuth(mode) {
+  setAuthMode(mode || "signin");
+  if (authLoading) authLoading.hidden = true;
+  if (authForm) authForm.hidden = false;
+  switchTab("auth");
+  window.scrollTo(0, 0);
+}
+function closeAuth() { if (!document.getElementById("tab-auth").hidden) switchTab("home"); }
 function setAuthMode(mode) {
   authMode = mode;
   const signup = mode === "signup";
@@ -1648,8 +1664,23 @@ function applySession(session) {
 
 document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
 document.getElementById("btn-signup").addEventListener("click", () => openAuth("signup"));
-if (authClose) authClose.addEventListener("click", closeAuth);
-authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
+
+// OAuth (Google / Apple) — Supabase redirects out and back to the app origin. The provider
+// must be enabled in the Supabase project (Auth → Providers) for this to succeed.
+async function oauthSignIn(provider) {
+  if (!sb) { showAuthMsg("Sign-in isn't ready yet — please try again in a moment.", "err"); return; }
+  showAuthMsg("Redirecting to " + (provider === "google" ? "Google" : "Apple") + "…", "ok");
+  try {
+    const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + "/" } });
+    if (error) throw error;
+  } catch (err) {
+    showAuthMsg((err && err.message) || "Couldn't start " + provider + " sign-in.", "err");
+  }
+}
+const oauthGoogle = document.getElementById("oauth-google");
+const oauthApple = document.getElementById("oauth-apple");
+if (oauthGoogle) oauthGoogle.addEventListener("click", () => oauthSignIn("google"));
+if (oauthApple) oauthApple.addEventListener("click", () => oauthSignIn("apple"));
 
 async function bootAuth() {
   let cfg;
@@ -1659,7 +1690,6 @@ async function bootAuth() {
 
   if (!authIsEnabled) {
     // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
-    authOverlay.hidden = true;
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
     loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
     routeFromUrl(); // honor a /account deep-link in open (no-auth) mode too
@@ -2077,7 +2107,7 @@ if (pmSignout) pmSignout.addEventListener("click", async () => {
 function resetWorkspace() {
   tabs = []; activeTabId = null; genTabId = null; activeJobId = null;
   if (activeJobTimer) { clearTimeout(activeJobTimer); activeJobTimer = null; }
-  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null;
+  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
   try { if (viewerFrame) viewerFrame.src = "about:blank"; } catch (e) {}
   renderTabBar();
   try { sessionStorage.removeItem(TABS_KEY); sessionStorage.removeItem("als-toptab"); } catch (e) {}

@@ -107,6 +107,47 @@ function tree(node: import("./schema").TreeNode): string {
   return `<li>${node.question ? esc(node.question) : ""}<ul>${branches}</ul></li>`;
 }
 
+// ---- syntax highlighting (self-contained, VS Code Dark+ palette) ----
+// A single-pass, language-agnostic tokenizer. The artifact is a sandboxed, self-contained
+// HTML doc (no CDN/JS highlighter allowed), so we colour code at render time by wrapping
+// tokens in <span class="tk-*">. Every token's text is esc()'d, so the output is XSS-safe and
+// `textContent` (used by the Copy button) still returns the original source verbatim.
+const HL_KEYWORDS = new Set([
+  "abstract","and","as","async","await","break","case","catch","class","const","continue","def",
+  "default","del","do","elif","else","enum","except","export","extends","false","final","finally",
+  "for","from","fun","func","function","global","go","goto","if","impl","implements","import","in",
+  "instanceof","interface","is","lambda","let","match","module","namespace","new","nil","none","not",
+  "null","or","override","package","pass","print","private","protected","public","raise","require",
+  "return","self","static","struct","super","suspend","switch","this","throw","throws","trait","true",
+  "try","type","typeof","undefined","union","use","using","val","var","void","when","where","while",
+  "with","yield",
+]);
+const HL_TYPES = new Set([
+  "int","str","float","bool","list","dict","set","tuple","string","number","boolean","object","char",
+  "long","short","byte","double","any","unknown","never","Array","Object","String","Number","Boolean",
+  "Promise","Map","Set","List","Dict","Optional","console","Exception","Error","self","cls",
+]);
+function highlightCode(code: string): string {
+  // Groups: 1 line-comment · 2 block-comment · 3 string · 4 number · 5 identifier · 6 ws · 7 other.
+  const re = /(\/\/[^\n]*|#[^\n]*|--[^\n]*)|(\/\*[\s\S]*?\*\/)|("""[\s\S]*?"""|'''[\s\S]*?'''|`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(0[xX][0-9a-fA-F]+|\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|([A-Za-z_$][\w$]*)|(\s+)|([^\s\w])/g;
+  let out = "";
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(code)) !== null) {
+    if (m[1] != null || m[2] != null) out += `<span class="tk-c">${esc(m[0])}</span>`;
+    else if (m[3] != null) out += `<span class="tk-s">${esc(m[3])}</span>`;
+    else if (m[4] != null) out += `<span class="tk-n">${esc(m[4])}</span>`;
+    else if (m[5] != null) {
+      const w = m[5];
+      const lower = w.toLowerCase();
+      if (HL_KEYWORDS.has(lower)) out += `<span class="tk-k">${esc(w)}</span>`;
+      else if (HL_TYPES.has(w)) out += `<span class="tk-t">${esc(w)}</span>`;
+      else if (/^\s*\(/.test(code.slice(re.lastIndex, re.lastIndex + 8))) out += `<span class="tk-f">${esc(w)}</span>`;
+      else out += esc(w);
+    } else out += esc(m[0]); // whitespace / punctuation → default colour
+  }
+  return out;
+}
+
 // ---- code example ----
 function codeBlock(b: Extract<Block, { kind: "codeExample" }>, bp: Blueprint): string {
   const path = b.filePath ? `<div class="code-path">${esc(b.filePath)} · ${esc(b.language)}</div>` : "";
@@ -121,7 +162,7 @@ function codeBlock(b: Extract<Block, { kind: "codeExample" }>, bp: Blueprint): s
           .map((s) => `<dt><code>${esc(s.part)}</code></dt><dd>${esc(s.explains)}</dd>`)
           .join("")}</dl></div>`
       : "";
-  return `<div class="ex"><button class="copy">Copy</button>${path}<pre class="code">${esc(b.code)}</pre></div>${syntax}${explain}${predict}`;
+  return `<div class="ex"><button class="copy">Copy</button>${path}<pre class="code">${highlightCode(b.code)}</pre></div>${syntax}${explain}${predict}`;
 }
 
 // ---- interactive visual blocks (data-only; the runtime draws + wires them) ----
