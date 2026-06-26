@@ -1141,7 +1141,15 @@ window.addEventListener("message", (e) => {
   // one now on screen. (The iframe is sandboxed → e.origin may be "null"; e.source is the guard.)
   if (e.source !== viewerFrame.contentWindow) return;
   const d = e.data;
-  if (!d || d.type !== "als-progress") return;
+  if (!d) return;
+  // "⚡ Get Hands on" → open the browser-run notebook page in a new tab.
+  if (d.type === "als-handson") {
+    const lid = encodeURIComponent(d.lessonId || "");
+    const mid = encodeURIComponent(d.moduleId || "");
+    if (lid) window.open(`/hands-on?lesson=${lid}&module=${mid}`, "_blank");
+    return;
+  }
+  if (d.type !== "als-progress") return;
   // Track which module the reader is on (for ALL lessons, before the owned-only guard) so a
   // live-build reload can restore their place instead of bouncing them to the overview.
   currentViewModule = typeof d.module === "string" ? d.module : null;
