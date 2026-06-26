@@ -205,6 +205,39 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🧪 "Get Hands on" — browser-run Python notebooks (2026-06-26, Phase 1 built + verified LOCAL-ONLY; NOT migrated, NOT
+  deployed, pending owner review).** A SEPARATE, ADDITIVE subsystem — it does NOT touch the lesson-gen pipeline, Blueprint
+  schema, the 7 gates, or the credit flow. On an ELIGIBLE lesson a `⚡ Get Hands on` button (after the Concept/Functional/Code
+  toggles) opens a new tab (`/hands-on?lesson=…&module=…`) with a JupyterLab-ish page that runs Python ENTIRELY in the browser
+  via Pyodide (the server NEVER runs generated code). FREE (no credit spend). Notebooks are generated LAZILY on click and
+  CACHED per (lesson, module).
+  - **New files:** `src/render/eligibility.ts` (`handsOnEligible(bp, module?)` — deterministic $0 blocker-regex gate, shared by
+    renderer + server); `src/lib/handson.ts` (NotebookSchema, server-side code-cell VALIDATION + 1 stricter retry [covers a
+    parse-throw OR validation fail] + safe fallback, Haiku gen, DB+memory cache, `resolveBlueprint` [user lessons / Library
+    slug / Community slug], in-memory job registry); `public/hands-on.html` (auth via /api/config + getSession; %-progress;
+    cells; Pyodide v0.26.4 from CDN, lazy numpy/pandas; Run + Shift+Enter; matches the app's Plus-Jakarta/blue look + mobile);
+    `supabase/migrations/0015_handson.sql` (`hands_on_notebooks` cache table, RLS-on/no-policies like 0013/0014, idempotent).
+  - **Additive touch-points (Hands-On only):** `components.ts` (gated launch button after `contentToggles`, vertical + horizontal
+    headers); `tokens.ts` (`.handson-btn` CSS); `runtime.ts` (`.handson-btn` click → postMessage `als-handson` to parent +
+    standalone `window.open` fallback; `HANDSON_LESSON` URL matcher for artifact/lesson/community); `app.js` (`als-handson`
+    listener → opens the tab); `server.ts` (`POST /api/hands-on/start` + `GET /api/hands-on/job/:id`, both requireAuth +
+    heavyLimiter; `GET /hands-on` page route).
+  - **DB / migration NOT applied (per owner guardrail "DO NOT run the migration on any cloud DB until I approve"):** the lib
+    degrades gracefully — if `hands_on_notebooks` is missing the DB cache is skipped and an in-process MEMORY cache serves
+    repeats (so "second click = instant" works locally without the table). Apply `0015` to **staging** (not prod) on approval to
+    make the cache durable: `npm run migrate`.
+  - **Verified locally (:5070, tsc clean, Playwright):** button shows on eligible lessons (the-agent-loop, tokenization,
+    chunking, rag-eval, llm-as-judge) and is ABSENT on ineligible ones (fine-tuning, rlhf, gpus, deploy/vllm, openai-sdk);
+    `/start` returns a cache hit instantly, else a jobId; live Haiku gen produced valid 3–5-cell notebooks (the-agent-loop,
+    tokenization, llm-as-judge, chunking — all `source:"live"`, no fallback after the retry fix); 422 on an ineligible lesson,
+    404 unknown, 401 unauth; the page renders cells, Pyodide kernel goes ready, Run ▶ AND Shift+Enter execute Python in-browser
+    and print output (tokenizer demo printed tokens + count); ineligible → "Not available here" notice; button-click opens the
+    correct new tab; mobile (375px) reflows with no overflow. 0 console errors (only an expected 422 network log + favicon 404).
+  - **NEXT — Phase 2 (template library "RAG"):** `src/handson/templates/*` (8–15 hand-vetted, validated, runnable notebooks
+    per cluster) + `clusterFor()` (keyword heuristic → optional bge-small embedding similarity) → serve a strong template match
+    verbatim ($0, `source:'template'`), else live Haiku (optionally few-shot-seeded). Plus a `scripts/handson-test.ts` smoke
+    test, a Regenerate (bypass-cache) control, Run-all/Restart polish, sessionStorage cell-edit memory (already in v1),
+    SCHEMA_VERSION bump to invalidate cache. THEN: owner review → push to staging → verify → promote to prod.
 - **🩹 Lesson toolbar alignment fix (2026-06-26, ON `staging` ONLY — NOT yet on `main`/prod).** In the artifact's inner
   vertical-mode top bar (`.topbar` rendered by `components.ts renderBody` — the toolbar that sits BELOW the host "Ask more"
   viewer bar), a long lesson title in `.tb-center .brand-mini` widened the bar and pushed the Concept/Functional/Code/
