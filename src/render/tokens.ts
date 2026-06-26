@@ -75,6 +75,10 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
 .progress{height:6px;width:120px;background:var(--border);border-radius:99px;overflow:hidden}
 .progress > i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s ease}
 .tbtn{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;padding:5px 11px;border-radius:8px;cursor:pointer}
+/* "⚡ Get Hands on" launch button — a primary-styled tbtn after the lens toggles */
+.tbtn.handson-btn{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.tbtn.handson-btn:hover{filter:brightness(1.07)}
+.tbtn.handson-btn .ho-beta{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,.24);color:#fff;border-radius:5px;padding:1px 5px;line-height:1.4}
 
 /* ---- hero ---- */
 .hero{padding:14px 0 6px}

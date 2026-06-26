@@ -45,6 +45,7 @@ import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
 import { makeLLM } from "./agent/llm";
 import { renderArtifact } from "./render/index";
+import { handsOnEligible, resolveBlueprint, peekCache, createHandsOnJob, getHandsOnJob, runHandsOnJob } from "./lib/handson";
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
 import { saveSupportRequest, saveConsent, CONSENT_VERSION, SUPPORT_CATEGORIES } from "./lib/support";
@@ -134,6 +135,8 @@ app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js
 // refresh. There's no client-side router beyond this one path, so serve index.html and
 // let app.js switch to the account tab from window.location. (Static assets above win.)
 app.get("/account", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")));
+// Hands-On notebook page (browser-run Pyodide practice). Opened in a new tab from a lesson.
+app.get("/hands-on", (_req, res) => res.sendFile(join(PUBLIC_DIR, "hands-on.html")));
 
 // Legal / compliance pages at pretty URLs (NOT nav tabs — linked only from the home footer).
 const PAGE_ROUTES: Record<string, string> = {
@@ -853,6 +856,40 @@ app.get("/api/lesson/:slug", async (req, res) => {
     catch (e) { console.warn("[lesson] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(rows[0].html);
+});
+
+// ----------------------------------------------------------------------------
+// Hands-On notebooks — a SEPARATE, ADDITIVE flow. Generated LAZILY on click and
+// cached per (lesson, module). FREE (no credit spend). The SERVER NEVER RUNS the
+// generated code — it runs in the user's browser via Pyodide; we only validate +
+// cache the structured notebook JSON.
+// ----------------------------------------------------------------------------
+// POST /api/hands-on/start — resolve the lesson's blueprint, re-check eligibility,
+// return a cache hit instantly, else kick a detached generator and return a jobId.
+app.post("/api/hands-on/start", heavyLimiter, requireAuth, async (req, res) => {
+  const lessonId = typeof req.body?.lessonId === "string" ? req.body.lessonId.trim() : "";
+  const moduleId = typeof req.body?.moduleId === "string" && req.body.moduleId.trim() ? req.body.moduleId.trim() : null;
+  if (!lessonId) { res.status(400).json({ error: "Missing 'lessonId'." }); return; }
+  const bp = await resolveBlueprint(lessonId);
+  if (!bp) { res.status(404).json({ error: "Lesson not found." }); return; }
+  const module = moduleId ? bp.modules.find((m) => m.id === moduleId) : undefined;
+  if (!handsOnEligible(bp, module)) {
+    res.status(422).json({ error: "A runnable hands-on notebook isn't available for this lesson." });
+    return;
+  }
+  const hit = await peekCache(lessonId, moduleId);
+  if (hit) { res.json({ status: "done", notebook: hit.notebook, source: hit.source }); return; }
+  const user = await getUser(req.headers.authorization);
+  const job = createHandsOnJob(user?.id ?? "anon");
+  void runHandsOnJob(job, lessonId, moduleId, bp);
+  res.json({ status: "pending", jobId: job.id });
+});
+
+// GET /api/hands-on/job/:id — poll the generator's progress.
+app.get("/api/hands-on/job/:id", requireAuth, (req, res) => {
+  const job = getHandsOnJob(req.params.id);
+  if (!job) { res.status(404).json({ error: "That hands-on job wasn't found (it may have finished or the server restarted)." }); return; }
+  res.json({ status: job.status, percent: job.percent, notebook: job.notebook, source: job.source, error: job.error });
 });
 
 // ----------------------------------------------------------------------------

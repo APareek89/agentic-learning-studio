@@ -95,7 +95,6 @@ let currentLessonOwned = false; // is the open Trainer lesson the user's own (el
 let contribBuild = false; // is the active overview/build a "Build for Community" contributor course?
 let contribPublishId = null; // artifactId to auto-publish to Community once its build finishes
 let lastBuildArtifactId = null; // last lesson we tried to build (so a failed build can be retried)
-let reloadAfterPromote = null; // tabId whose iframe must reload once a build confirms (Bug 1: drop the preview lock)
 // Fix 4: the open lessons live in a DROPDOWN under the "Trainer" main tab (sub-tabs) instead of
 // a visible bar that ate horizontal space. lessonTabsEl is now that dropdown's menu container.
 const lessonTabsEl = document.getElementById("trainer-tabs-menu");
@@ -599,15 +598,22 @@ function activateTab(id) {
   currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
   basePrompt = t.prompt || t.title || "";
   document.getElementById("viewer-title").textContent = t.title || "Lesson";
-  if (t.type === "generating") {
+  // Bug 2: while a build hasn't finished its FIRST module, show the "building" overlay instead of
+  // the lesson — so we never land the reader on a still-empty / work-in-progress module.
+  const buildingFirst = t.type === "lesson" && t.building && !t._firstReady;
+  if (t.type === "generating" || buildingFirst) {
     viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
-    genLabel.textContent = (t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview…";
+    genLabel.textContent = buildingFirst ? "Building your lesson — your first section is on its way…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview…");
     downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
   } else {
     const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
     currentViewUrl = url;
     genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
-    if (viewerFrame.getAttribute("src") !== url) viewerFrame.src = url;
+    // Bug 1: when a build is running in ANOTHER tab, the iframe may currently be showing that WIP
+    // lesson (the live-build reload cache-busts its src). FORCE a fresh load of the selected lesson
+    // so the reader is never left stuck on the building lesson's content.
+    const fresh = (activeJobId && t.id !== genTabId) ? url + (url.indexOf("?") < 0 ? "?" : "&") + "v=" + Date.now() : url;
+    if (viewerFrame.getAttribute("src") !== fresh) viewerFrame.src = fresh;
     if (t.type === "overview") {
       overviewArtifactId = t.art;
       downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(true);
@@ -1141,7 +1147,15 @@ window.addEventListener("message", (e) => {
   // one now on screen. (The iframe is sandboxed → e.origin may be "null"; e.source is the guard.)
   if (e.source !== viewerFrame.contentWindow) return;
   const d = e.data;
-  if (!d || d.type !== "als-progress") return;
+  if (!d) return;
+  // "⚡ Get Hands on" → open the browser-run notebook page in a new tab.
+  if (d.type === "als-handson") {
+    const lid = encodeURIComponent(d.lessonId || "");
+    const mid = encodeURIComponent(d.moduleId || "");
+    if (lid) window.open(`/hands-on?lesson=${lid}&module=${mid}`, "_blank");
+    return;
+  }
+  if (d.type !== "als-progress") return;
   // Track which module the reader is on (for ALL lessons, before the owned-only guard) so a
   // live-build reload can restore their place instead of bouncing them to the overview.
   currentViewModule = typeof d.module === "string" ? d.module : null;
@@ -1424,17 +1438,12 @@ async function startBuild(artifactId) {
   if (contribBuild) contribPublishId = artifactId; // auto-publish this one to Community when built
   // Promote the overview tab into a (building) lesson tab and open it — readable as it builds.
   let t = tabs.find((x) => x.art === artifactId) || tabById(activeTabId);
-  if (t) { t.type = "lesson"; t.art = artifactId; t.building = true; t.percent = 30; t.prompt = t.prompt || basePrompt; genTabId = t.id; activateTab(t.id); }
-  else { t = openTab({ type: "lesson", title: "Building…", art: artifactId, building: true, percent: 30 }); genTabId = t ? t.id : null; }
-  // BUG 1 FIX: the iframe was already showing /api/artifact/<id> as a PREVIEW-LOCKED overview
-  // draft; activateTab() skips the reload because the URL path is unchanged, so clicking a module
-  // still hit the "🔒 overview" lock until a manual refresh. Build promotes the draft → lesson
-  // (kind flip) server-side, after which /api/artifact/:id re-renders WITHOUT the preview lock.
-  // Reload the iframe (cache-busted) so it picks up the unlocked render immediately. We arm a
-  // one-time reload in pollJob too (fires once job.status === "running", i.e. the kind flip has
-  // definitely committed) to close the small async race on the promotion write.
-  reloadAfterPromote = genTabId;
-  reloadViewer();
+  if (t) { t.type = "lesson"; t.art = artifactId; t.building = true; t._firstReady = false; t.percent = 30; t.prompt = t.prompt || basePrompt; genTabId = t.id; activateTab(t.id); }
+  else { t = openTab({ type: "lesson", title: "Building…", art: artifactId, building: true, percent: 30 }); if (t) t._firstReady = false; genTabId = t ? t.id : null; }
+  // Bug 2: do NOT reveal the lesson yet. activateTab() shows the "building" overlay until the FIRST
+  // module is ready; pollJob flips `_firstReady` + re-activates the tab, which loads the now-promoted
+  // (kind-flipped, preview-lock-dropped) lesson. (Was: an eager reloadViewer() here that dropped the
+  // reader straight onto a still-WIP module.)
   updateGenStatus(true);
   pollJob(jobId, genTabId);
 }
@@ -1480,20 +1489,18 @@ function pollJob(jobId, tabId) {
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId);
     if (t) { t.percent = (l && l.percent) || t.percent; renderTabBar(); }
-    // Bug 1: once the build job is actually running (the draft→lesson kind flip has committed),
-    // reload the iframe ONCE so the open tab drops the preview lock even if the eager reload in
-    // startBuild raced the promotion write. Only when this tab is the one on screen.
     let didReload = false;
-    if (reloadAfterPromote === tabId && (job.status === "running" || job.status === "done")) {
-      reloadAfterPromote = null;
-      if (t && t.id === activeTabId) { reloadViewer(); didReload = true; }
-    }
-    // Live build (bug: lesson didn't update during generation → user had to refresh). Reload the
-    // viewer each time a new module finishes, while THIS lesson tab is on screen, so the lesson
-    // grows in real time. (Server persists the artifact after every module; the iframe re-renders.)
     if (t && l && typeof l.builtModules === "number") {
       if (t._built == null) t._built = 0;
-      if (!didReload && l.builtModules > t._built && t.id === activeTabId) reloadViewer();
+      // Bug 2: reveal the lesson only once the FIRST module is built (until then activateTab shows
+      // the "building" overlay). Re-activating loads the now-promoted, preview-unlocked lesson.
+      if (t.building && !t._firstReady && l.builtModules >= 1) {
+        t._firstReady = true;
+        if (t.id === activeTabId) { activateTab(t.id); didReload = true; }
+      }
+      // Live build: as each LATER module lands, refresh the open lesson — only while it's the tab on
+      // screen AND already revealed — so it grows in real time. (Server persists after every module.)
+      if (!didReload && t._firstReady && l.builtModules > t._built && t.id === activeTabId) reloadViewer();
       t._built = l.builtModules;
     }
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard();

@@ -153,8 +153,17 @@ export const RUNTIME_JS = String.raw`
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
       if(ev.target.id==="hmodal"){ closeModal(); return; }
     }
-    var t = ev.target.closest("[data-deepdive],[data-goto],[data-hmod],#hx-next,#hx-back,.hx-see,#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf");
+    var t = ev.target.closest("[data-deepdive],[data-goto],[data-hmod],#hx-next,#hx-back,.hx-see,#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf,.handson-btn");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
+
+    // "⚡ Get Hands on" → open the browser-run notebook page in a NEW TAB. Inside the
+    // host iframe we ask the parent to open it (it knows the window); standalone we open it ourselves.
+    if(t.matches(".handson-btn")){
+      var hoMod = curMod || "";
+      try { if(window.parent && window.parent!==window){ window.parent.postMessage({type:"als-handson", lessonId:HANDSON_LESSON, moduleId:hoMod||null}, "*"); return; } } catch(e){}
+      window.open("/hands-on?lesson="+encodeURIComponent(HANDSON_LESSON)+"&module="+encodeURIComponent(hoMod), "_blank");
+      return;
+    }
 
     // Horizontal: module nav (left), tab Back/Next (top-right), and example "See details".
     if(HORIZ && t.matches("[data-hmod]")){ showPane(t.getAttribute("data-hmod")); return; }
@@ -407,6 +416,11 @@ export const RUNTIME_JS = String.raw`
   // file:// page has no match → ARTIFACT_ID "" → no fetching, which is correct.)
   var _m=(location.pathname||"").match(/\/api\/artifact\/([^\/?#]+)/);
   var ARTIFACT_ID=_m?_m[1]:"";
+  // Hands-On lesson id: works for user lessons (/api/artifact/<id>) AND public Library /
+  // Community lessons (/api/lesson/<slug>, /api/community/lesson/<slug>). The server resolves
+  // whichever it is back to a Blueprint.
+  var _hl=(location.pathname||"").match(/\/(?:api\/artifact|api\/lesson|api\/community\/lesson)\/([^\/?#]+)/);
+  var HANDSON_LESSON=_hl?_hl[1]:ARTIFACT_ID;
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
   var busy=false;
