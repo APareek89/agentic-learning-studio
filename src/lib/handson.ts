@@ -22,6 +22,7 @@ import { makeLLM } from "../agent/llm";
 import { dbEnabled, query } from "./db";
 import { getArtifact } from "./artifacts";
 import { sha256 } from "./hash";
+import { localEmbeddings, toVectorLiteral } from "../rag/embed";
 import { handsOnEligible } from "../render/eligibility";
 import type { Blueprint, Module } from "../render/schema";
 
@@ -49,7 +50,7 @@ export const NotebookSchema = z.object({
 });
 export type Notebook = z.infer<typeof NotebookSchema>;
 
-export type NotebookSource = "live" | "template" | "fallback";
+export type NotebookSource = "live" | "retrieved" | "template" | "fallback";
 export interface NotebookResult {
   notebook: Notebook;
   source: NotebookSource;
@@ -211,6 +212,45 @@ function safeFallbackNotebook(topic: string): Notebook {
 }
 
 // ============================================================================
+// KB (self-growing): every generated notebook is embedded (bge-small / 384d) and
+// indexed, so a NEW lesson on a SIMILAR topic retrieves a prior example instead of
+// regenerating. Free + local embeddings; graceful if the model/DB is unavailable.
+// ============================================================================
+// Cosine similarity for two lessons to count as "the same topic" worth reusing.
+const KB_SIM_THRESHOLD = 0.86;
+
+// The semantic identifier we embed = the topic + module title + summary.
+function embedTextFor(ctx: NotebookContext): string {
+  return [ctx.topic, ctx.moduleTitle, ctx.moduleSummary].filter(Boolean).join(" — ").slice(0, 800);
+}
+
+// Nearest prior notebook by embedding (≥ threshold). Skips fallbacks (no embedding stored).
+async function searchKB(embedText: string): Promise<{ notebook: Notebook; sim: number } | null> {
+  if (!dbEnabled() || !embedText) return null;
+  try {
+    // Symmetric similarity: embed the search topic the SAME way stored topics are embedded
+    // (both as passages — NOT the asymmetric query prefix), since we're matching topic↔topic.
+    const [vec] = await localEmbeddings.embedPassages([embedText]);
+    const lit = toVectorLiteral(vec);
+    const rows = await query<{ notebook: Notebook | string; sim: number | string }>(
+      `select notebook, 1 - (embedding <=> $1::vector) as sim
+         from hands_on_notebooks
+        where embedding is not null and source <> 'fallback'
+        order by embedding <=> $1::vector
+        limit 1`,
+      [lit]
+    );
+    if (rows.length && Number(rows[0].sim) >= KB_SIM_THRESHOLD) {
+      const nb = typeof rows[0].notebook === "string" ? (JSON.parse(rows[0].notebook) as Notebook) : rows[0].notebook;
+      return { notebook: nb, sim: Number(rows[0].sim) };
+    }
+  } catch (e) {
+    console.warn("[handson] KB search unavailable:", (e as Error).message?.slice(0, 100));
+  }
+  return null;
+}
+
+// ============================================================================
 // CACHE (DB durable + in-memory fallback) + getOrCreate
 // ============================================================================
 const memCache = new Map<string, NotebookResult>();
@@ -236,18 +276,29 @@ async function readCache(key: string): Promise<NotebookResult | null> {
   return null;
 }
 
-async function writeCache(key: string, lessonId: string, moduleId: string | null, result: NotebookResult, model: string): Promise<void> {
+async function writeCache(key: string, lessonId: string, moduleId: string | null, result: NotebookResult, model: string, embedText?: string): Promise<void> {
   memCache.set(key, result);
   if (!dbEnabled()) return;
+  // Push to the KB: embed the topic text so SIMILAR future lessons can retrieve this notebook.
+  // Skip fallbacks (generic/low-quality) so they're never reused. Embedding is best-effort.
+  let embedLit: string | null = null;
+  if (embedText && result.source !== "fallback") {
+    try {
+      const [vec] = await localEmbeddings.embedPassages([embedText]);
+      embedLit = toVectorLiteral(vec);
+    } catch {
+      /* embeddings unavailable → store the notebook without a vector (exact-cache only) */
+    }
+  }
   try {
     await query(
-      `insert into hands_on_notebooks (lesson_id, module_id, cache_key, notebook, source, model)
-         values ($1, $2, $3, $4, $5, $6)
+      `insert into hands_on_notebooks (lesson_id, module_id, cache_key, notebook, source, model, embed_text, embedding)
+         values ($1, $2, $3, $4, $5, $6, $7, $8::vector)
          on conflict (cache_key) do nothing`,
-      [lessonId, moduleId, key, JSON.stringify(result.notebook), result.source, model]
+      [lessonId, moduleId, key, JSON.stringify(result.notebook), result.source, model, embedText ?? null, embedLit]
     );
   } catch {
-    /* table may not exist yet → the memory cache still serves this session */
+    /* table/columns may be missing (migration not applied) → the memory cache still serves */
   }
 }
 
@@ -264,6 +315,16 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
 
   const module = moduleId ? bp.modules.find((m) => m.id === moduleId) : undefined;
   const ctx = buildContext(bp, module);
+  const embedText = embedTextFor(ctx);
+
+  // KB retrieval: does a SIMILAR lesson's notebook already exist? Reuse it ($0, instant, no model
+  // call). Re-store it under THIS lesson's key + embedding so the KB keeps growing around this topic.
+  const kb = await searchKB(embedText);
+  if (kb) {
+    const reused: NotebookResult = { notebook: kb.notebook, source: "retrieved" };
+    await writeCache(key, lessonId, moduleId, reused, `kb:${kb.sim.toFixed(3)}`, embedText);
+    return reused;
+  }
 
   let result: NotebookResult;
   let model = "claude-haiku";
@@ -298,7 +359,7 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
     model = "fallback";
   }
 
-  await writeCache(key, lessonId, moduleId, result, model);
+  await writeCache(key, lessonId, moduleId, result, model, embedText);
   return result;
 }
 
