@@ -7,8 +7,9 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
-> **2026-06-26 UPDATE:** `staging` is now **1 commit AHEAD** of `main`/prod — the lesson-toolbar title-removal fix (see §7) is
-> on **staging only**. Promote to prod after the owner verifies on the staging site.
+> **2026-06-26 UPDATE:** `staging` is **AHEAD** of `main`/prod — (a) the lesson-toolbar title-removal fix and (b) the new
+> **"Get Hands on" browser-run Python notebooks** (Phase 1 + v2; migration `0015` applied to the STAGING Supabase only). Both
+> are on **staging only**; prod has neither. Promote each to prod after the owner verifies on the staging site (see §7).
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
@@ -205,12 +206,22 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🧪 "Get Hands on" — browser-run Python notebooks (2026-06-26, Phase 1 built + verified LOCAL-ONLY; NOT migrated, NOT
-  deployed, pending owner review).** A SEPARATE, ADDITIVE subsystem — it does NOT touch the lesson-gen pipeline, Blueprint
-  schema, the 7 gates, or the credit flow. On an ELIGIBLE lesson a `⚡ Get Hands on` button (after the Concept/Functional/Code
-  toggles) opens a new tab (`/hands-on?lesson=…&module=…`) with a JupyterLab-ish page that runs Python ENTIRELY in the browser
+- **🧪 "Get Hands on" — browser-run Python notebooks (2026-06-26, Phase 1 + v2 enhancements ON `staging`; migration `0015`
+  applied to STAGING — NOT prod).** A SEPARATE, ADDITIVE subsystem — it does NOT touch the lesson-gen pipeline, Blueprint
+  schema, the 7 gates, or the credit flow. On an ELIGIBLE lesson a `⚡ Get Hands on · Beta` button (after the Concept/Functional/
+  Code toggles) opens a new tab (`/hands-on?lesson=…&module=…`) with a JupyterLab page that runs Python ENTIRELY in the browser
   via Pyodide (the server NEVER runs generated code). FREE (no credit spend). Notebooks are generated LAZILY on click and
   CACHED per (lesson, module).
+  - **v2 enhancements (owner-requested, 2026-06-26):** (1) every CODE cell carries a `heading` + `explain` (what it does + what
+    output to expect), rendered ABOVE the editor; (2) a SECOND Haiku agent verifies/fixes the code (up to 2 passes) so it runs
+    error-free + prints output — re-validated for safety, graceful fallback; (3) the button shows a `Beta` tag; (4) code cells
+    render as a JupyterLab notebook via CodeMirror 5 (Python syntax colours, `In[n]:`/`Out[n]:` prompts); (5) the gen prompt
+    forces every cell to PRINT illustrative output that demonstrates the concept (agent steps, retrieval results, metrics…);
+    (6) the notebook spans 80% of the screen width. `SCHEMA_VERSION` bumped to `v2` (invalidated the old cache).
+  - **DEPLOY STATE:** code pushed to `staging`; migration `0015` (table `hands_on_notebooks`) **applied to the STAGING Supabase
+    only** (`npm run migrate`; durable DB cache verified — survives a server restart). **PROD (`main`) has neither.** Promote to
+    prod on owner approval: cherry-pick the Hands-On commits → `main`, then `DATABASE_URL="$PROD_URL" npm run migrate` BEFORE the
+    prod deploy (the lib degrades gracefully if the table is missing — in-memory cache only — but the durable cache needs it).
   - **New files:** `src/render/eligibility.ts` (`handsOnEligible(bp, module?)` — deterministic $0 blocker-regex gate, shared by
     renderer + server); `src/lib/handson.ts` (NotebookSchema, server-side code-cell VALIDATION + 1 stricter retry [covers a
     parse-throw OR validation fail] + safe fallback, Haiku gen, DB+memory cache, `resolveBlueprint` [user lessons / Library
