@@ -743,7 +743,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -755,7 +755,13 @@ function switchTab(name) {
     t.setAttribute("aria-selected", String(on));
   });
   Object.entries(TAB_PANELS).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.hidden = n !== name; });
-  try { sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ } // remember where the user is across refresh
+  // Account is the one tab with its own URL — leaving it returns the address bar to "/".
+  if (name !== "account" && location.pathname.replace(/\/+$/, "") === "/account") {
+    try { history.replaceState({}, "", "/"); } catch { /* ignore */ }
+  }
+  // Remember where the user is across refresh — but never "account" (it lives at /account,
+  // restored from the URL, not from this top-tab memory).
+  try { if (name !== "account") sessionStorage.setItem("als-toptab", name); } catch { /* ignore */ }
   if (name === "dashboard") loadDashboard();
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
@@ -843,7 +849,7 @@ function lessonCard(l, buildingPct) {
     <div class="lr-actions">
       <button class="ghost lr-open" type="button">${isCourse ? "Open course" : "Open"}</button>
       ${isCourse ? "" : `<a class="ghost lr-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
-      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Community Share — 30% off"}</button>
+      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Community Share — 1 Free Lesson"}</button>
     </div>`;
   el.querySelector(".lr-open").addEventListener("click", () => {
     if (isCourse) { openCourseById(l.courseId, l.title); return; }
@@ -971,7 +977,7 @@ function openLibraryLesson(slug, title) { openTab({ type: "library", title: titl
 
 // ============================================================================
 // Community courses — learner-shared lessons (public browse), likes, and the
-// "Community Share & save 30%" flow (My Lessons + the Trainer 2-module popup).
+// "Community Share — 1 Free Lesson" flow (My Lessons + the Trainer 2-module popup).
 // ============================================================================
 const commSearch = document.getElementById("comm-search");
 const commFeatured = document.getElementById("comm-featured");
@@ -1083,7 +1089,7 @@ const shareName = document.getElementById("share-name");
 const shareMsg = document.getElementById("share-msg");
 const shareGo = document.getElementById("share-go");
 const codeOverlay = document.getElementById("code-overlay");
-const codeValue = document.getElementById("code-value");
+const codeSub = document.getElementById("code-sub");
 let shareLessonId = null;
 const offeredShare = {}; // per-lesson, so the Trainer popup only fires once per session
 
@@ -1108,17 +1114,18 @@ shareGo.addEventListener("click", async () => {
     if (!res.ok) throw new Error(data.error || "Couldn't share this lesson.");
     markShared(shareLessonId);
     shareOverlay.hidden = true;
-    codeValue.textContent = data.code || "—";
+    // Tailor the success copy: a fresh reward vs. an already-shared / cap-reached share.
+    if (codeSub) codeSub.innerHTML = data.rewarded
+      ? "Your lesson is now in <strong>Community courses</strong>, and we've added <strong>1 free lesson</strong> to your account 🎉"
+      : "Your lesson is now live in <strong>Community courses</strong>. Thanks for contributing!";
     codeOverlay.hidden = false;
+    if (data.rewarded) loadCredits(); // a free lesson landed — refresh the nav pill
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard(); // refresh the row → "✓ Shared"
   } catch (e) {
     shareMsg.hidden = false; shareMsg.textContent = "⚠️ " + e.message;
   } finally {
-    shareGo.disabled = false; shareGo.textContent = "Share & get my code →";
+    shareGo.disabled = false; shareGo.textContent = "Share & get my free lesson →";
   }
-});
-document.getElementById("code-copy").addEventListener("click", () => {
-  try { navigator.clipboard.writeText(codeValue.textContent || ""); } catch { /* ignore */ }
 });
 document.getElementById("code-view").addEventListener("click", () => { codeOverlay.hidden = true; switchTab("community"); commLoaded = false; loadCommunity(); });
 
@@ -1636,6 +1643,7 @@ function applySession(session) {
     clearCachedCredits();
   }
   updateProfileUI(signedIn, email);
+  routeFromUrl(); // honor a /account deep-link once auth state is known
 }
 
 document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
@@ -1654,6 +1662,7 @@ async function bootAuth() {
     authOverlay.hidden = true;
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
     loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
+    routeFromUrl(); // honor a /account deep-link in open (no-auth) mode too
     return;
   }
 
@@ -1998,29 +2007,59 @@ function closeProfileMenu() { if (profileMenu) { profileMenu.hidden = true; prof
 if (profileBtn) profileBtn.addEventListener("click", (e) => { e.stopPropagation(); profileMenu.hidden ? openProfileMenu() : closeProfileMenu(); });
 document.addEventListener("click", (e) => { if (profileWrap && !profileWrap.contains(e.target)) closeProfileMenu(); });
 
-// --- Account Details modal ---
-const acctOverlay = document.getElementById("acct-overlay");
-async function openAccount() {
+// --- Account page (/account) ---
+// Reached from the profile menu AND as a real URL, so it deep-links and survives a
+// refresh. The profile menu only shows when signed in; a direct /account hit while
+// signed out bounces to the sign-in modal (and lands here once auth completes).
+function gotoAccount(push) {
   closeProfileMenu();
-  const nameEl = document.getElementById("acct-name");
-  const emailEl = document.getElementById("acct-email");
-  const credEl = document.getElementById("acct-credits");
-  const uuidEl = document.getElementById("acct-uuid");
-  const planEl = document.getElementById("acct-plan");
-  if (nameEl) nameEl.textContent = displayNameFrom(currentUserEmail);
-  if (emailEl) emailEl.textContent = currentUserEmail || "—";
-  if (uuidEl) uuidEl.textContent = currentUserId || "—";
+  if (authRequiredAndOut()) { openAuth("signin"); return; }
+  switchTab("account");
+  if (push !== false) { try { history.pushState({ tab: "account" }, "", "/account"); } catch (e) {} }
+  window.scrollTo(0, 0);
+  loadAccount();
+}
+function openAccount() { gotoAccount(true); }
+// If we boot (or finish signing in) on /account, show the page without a second push.
+function routeFromUrl() {
+  if (location.pathname.replace(/\/+$/, "") === "/account") gotoAccount(false);
+}
+function fmtMemberSince(iso) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }); }
+  catch (e) { return "—"; }
+}
+async function loadAccount() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  // Paint what we already know instantly; /api/account fills usage + the live balance.
+  set("acct-name", displayNameFrom(currentUserEmail));
+  set("acct-email", currentUserEmail || "—");
+  set("acct-uuid", currentUserId || "—");
   const cached = (() => { try { return localStorage.getItem("wb-credits"); } catch (e) { return null; } })();
-  if (planEl) planEl.textContent = "Pay as you go";
-  if (credEl) credEl.textContent = cached != null && cached !== "" ? `${cached} lesson${cached === "1" ? "" : "s"}` : "…";
-  if (acctOverlay) acctOverlay.hidden = false;
-  // Refresh the credits figure live.
+  set("acct-credits", cached != null && cached !== "" ? `${cached} lesson${cached === "1" ? "" : "s"}` : "…");
   try {
-    const res = await fetch("/api/credits", { headers: authHeaders() });
-    if (res.ok) { const d = await res.json(); if (credEl) credEl.textContent = `${d.balance} lesson${d.balance === 1 ? "" : "s"}`; }
+    const res = await fetch("/api/account", { headers: authHeaders() });
+    if (!res.ok) return;
+    const d = await res.json();
+    set("acct-name", displayNameFrom(d.email || currentUserEmail));
+    set("acct-email", d.email || currentUserEmail || "—");
+    set("acct-uuid", d.userId || currentUserId || "—");
+    set("acct-plan", d.plan || "Free");
+    set("acct-credits", `${d.balance} lesson${d.balance === 1 ? "" : "s"}`);
+    set("acct-lessons", String(d.lessonsGenerated ?? 0));
+    set("acct-spent", String(d.creditsSpent ?? 0));
+    set("acct-bought", String(d.creditsPurchased ?? 0));
+    set("acct-since", fmtMemberSince(d.memberSince));
+    updateCreditPill(d.balance); cacheCredits(d.balance); // keep the nav pill in sync
   } catch (e) {}
 }
-function closeAccount() { if (acctOverlay) acctOverlay.hidden = true; }
+// Back/forward between /account and the rest of the SPA.
+window.addEventListener("popstate", () => {
+  if (location.pathname.replace(/\/+$/, "") === "/account") { gotoAccount(false); return; }
+  let top = "home"; try { top = sessionStorage.getItem("als-toptab") || "home"; } catch (e) {}
+  if (top === "account") top = "home";
+  switchTab(top);
+});
 
 const pmAccount = document.getElementById("pm-account");
 const pmSignout = document.getElementById("pm-signout");
@@ -2044,8 +2083,5 @@ function resetWorkspace() {
   try { sessionStorage.removeItem(TABS_KEY); sessionStorage.removeItem("als-toptab"); } catch (e) {}
   switchTab("home");
 }
-const acctClose = document.getElementById("acct-close");
-if (acctClose) acctClose.addEventListener("click", closeAccount);
-if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAccount(); });
 const acctTopup = document.getElementById("acct-topup");
-if (acctTopup) acctTopup.addEventListener("click", () => { closeAccount(); switchTab("pricing"); });
+if (acctTopup) acctTopup.addEventListener("click", () => switchTab("pricing"));

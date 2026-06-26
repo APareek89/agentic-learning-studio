@@ -201,6 +201,44 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🆕 3 FIXES (2026-06-26, on `staging` AND `main`/prod — cherry-picked `eef06e7`):**
+  - **(1) Account = full PAGE at `/account`** (was the `#acct-overlay` MODAL). New `<section id="tab-account">` full-width
+    panel (Profile card: name·email·Account ID(UUID)·plan·credits-remaining + Top-up; Usage card: 3 stat tiles
+    lessons-generated·credits-spent·credits-purchased + member-since). `app.js`: `account` in `TAB_PANELS`; `openAccount()`
+    → `gotoAccount()` does `switchTab('account')` + `history.pushState('/account')` + `loadAccount()`; `popstate` +
+    `routeFromUrl()` (called from `applySession`) deep-link/refresh handling; `switchTab` resets URL→`/` when leaving account
+    and never persists `account` to `als-toptab`. Server: **`GET /api/account`** (auth) → `getAccountSummary()` in
+    `credits.ts` (credit_ledger spent/purchased + lessons count + getBalance + member-since); **`app.get('/account')` SPA
+    fallback** serves index.html (none existed → a direct hit/refresh would 404). The old modal markup/CSS/handlers removed.
+  - **(2) Community Share reward = 1 FREE LESSON** (was a 30%-off discount code). `community.ts shareLesson`:
+    `addCredits(userId,1,{reason:'grant',planId:'community-share',lsOrderId:'share:<lessonId>'})` — idempotent per shared
+    lesson + per-user `SHARE_REWARD_CAP=20`; returns `rewarded`. Discount-code minting + `discountCode()` removed (the
+    `discount_codes` table is now unused but left in place; no migration needed). Server share route returns `rewarded`.
+    UI: every "Share & save 30%" / "Community Share — 30% off" → "Community Share — 1 Free Lesson"; share-modal popup +
+    name input ENLARGED (`.share-card`/`.share-name`); success popup repurposed to "1 free lesson added!" (`#code-sub`,
+    dynamic on `rewarded`); `loadCredits()` refreshes the pill after a rewarded share. (`code-box`/`code-hint`/`code-copy` removed.)
+  - **(3) Landing SEO** (via `seo-pro` skill; NOTE: the DataforSEO creds the task pointed at DON'T exist —
+    `SEO Codex final/.../methodology.json` says "No live DataForSEO credential"; used Google Suggest for keyword grounding).
+    Collapsed **2 H1s → 1** (home hero H1 kept, keyword-forward "Learn agentic AI…"; configurator `#hero-title` demoted to
+    `<h2 class="hero-title">`, CSS selector broadened so it looks identical). New `<title>`/meta + canonical
+    (`https://prathibhax.com/`) + robots meta + OG/Twitter + **JSON-LD `@graph`** (Organization·WebSite·SoftwareApplication·
+    FAQPage mirroring the 5 visible Q&As). New **`public/robots.txt` + `public/sitemap.xml`** (served statically; sitemap
+    Disallows `/api/`+`/account`). Hero copy enriched for "agentic-AI lessons / interactive AI learning".
+  - **Verified:** `tsc --noEmit` clean; local :5070 — 1 `<h1>`, valid JSON-LD (4 types), title/meta/canonical present,
+    `/robots.txt`+`/sitemap.xml`+`/account` 200, `/api/account` 401 gated; Playwright eyeball of the account page + share
+    modal (0 console errors, correct layout/labels). **NOT run: `npm run qa`** (needs `QA_PASSWORD` — user has the staging
+    test acct; run after the staging deploy). **Watch:** the preview tool launches `npm start` from the MAIN repo
+    (`agentic-learning-studio`), not this worktree — verify the worktree server directly, not via `preview_start`.
+- **🧪 QA PASS (2026-06-25, on staging+prod `main 71cf976`):** parameterized Playwright harness `scripts/qa.mjs`
+  (`npm run qa`, env `QA_BASE_URL/QA_EMAIL/QA_PASSWORD`, no committed creds) — auth, rapid nav/state, credit pill,
+  generation progress, no-console-errors/no-full-reload guards. 13/13 on staging. Fixes shipped this pass:
+  (1) **sign-out resets the workspace → Home** (`resetWorkspace()` in app.js — was leaving the previous user's
+  lesson on screen); (2) **`als-progress` source guard** (`e.source === viewerFrame.contentWindow` — stale iframe
+  can't mis-attribute progress); (3) **central credit refresh** on focus/visibilitychange; (4) **`GET /api/jobs/active`**
+  (exposes `jobs.ts activeJobs()`) merged into `loadDashboard` so a build continuing after a refresh still shows
+  progress in My Lessons (light self-poll when no client poller is active). OPEN: lesson-click flicker
+  (module→overview) — needs a fully-built lesson to repro; AbortController on loaders (low-impact); nested-control
+  click-bubble has no explicit automated assertion yet.
 - **🩹 GENERATION FIX (2026-06-25, on staging+prod) — capstone.prompt.** Overviews were FAILING ("Couldn't design
   an overview") on BOTH envs: the skeleton schema requires `synthesis.capstone.prompt`, but the model sometimes
   returns a `capstone` object without it; `coerceSkeleton` (nodes.ts) only defaulted a wholly-missing capstone, so
