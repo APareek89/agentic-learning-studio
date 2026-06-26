@@ -203,7 +203,19 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🆕 BATCH 2 — 3 bugs + 3 improvements (2026-06-26, on `staging`; PROD PENDING user OK):**
+- **✅ GOOGLE OAUTH ENABLED (2026-06-26) — on BOTH Supabase projects, verified working.** Enabled `external_google`
+  on prod (`kdgtlbnlyscdldogxorb`) + staging (`ydgiysthvxhlfpzxyrmy`) via the Supabase **Management API**
+  (`PATCH /v1/projects/{ref}/config/auth`, token was user-supplied, NOT persisted). Client ID
+  `531095044572-693tek38p9v87qrsat8d4spglck1ppc6.apps.googleusercontent.com` (secret lives only in Supabase).
+  Verified end-to-end: GoTrue `/auth/v1/settings` → `google:true` on both; the live prod auth page shows the
+  "Continue with Google" button; and Supabase's `/auth/v1/authorize?provider=google` → Google **accepts** the
+  redirect (`…supabase.co/auth/v1/callback` is in the Google client's Authorized redirect URIs — no mismatch).
+  **APPLE = deferred** (needs the paid Apple Developer account + Services ID/.p8/JWT secret; button stays hidden
+  until enabled — no code change needed then; the frontend gates buttons on GoTrue's enabled-providers list).
+- **✅ ALL "BATCH 2 + SEO + OAuth-gating" WORK IS NOW ON STAGING AND PROD.** `origin/main 9292cb0` == `origin/staging
+  d40544c` for `public/`+`src/` (byte-identical; verified `git diff`). Only un-promoted file = `scripts/qa.mjs`
+  (a 6-line test-harness tweak, non-runtime). Prod = `agentic-learning-studio.onrender.com`, staging = `…-1.onrender.com`.
+- **🆕 BATCH 2 — 3 bugs + 3 improvements (2026-06-26, on `staging` AND `main`/prod — promoted `9292cb0`):**
   - **Bug 1 — dark-mode blue text.** Artifact dark mode (`[data-theme="dark"]` in `tokens.ts`) never overrode `--accent`/
     `--accent-2`, so accent TEXT stayed dark-blue (low contrast). Fix: lift `--accent-2`→`#9db8ff` in the dark block +
     light overrides (`#7aa2ff`) for the `--accent` TEXT selectors (`a`,`.eyebrow`,`.deeper-toggle`,`.hx-see`,`.ov-covers li::before`).
@@ -226,7 +238,7 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   - **Imp 2 — nav polish.** Credit pill is now borderless (no box, matches the nav) with a **graduation-cap** icon (was a star).
     The community share popup + name input were already enlarged in Batch 1 (`.share-card`/`.share-name`).
   - **Imp 3 —** configurator hero "What do you want to understand?" → **"What do you want to learn?"**.
-  - **SEO refined with REAL DataforSEO data (done; on `staging`).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
+  - **SEO refined with REAL DataforSEO data (done; on `staging` AND prod).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
     US monthly volumes (KD): **what is agentic ai 33,100** · agentic ai (broad) 110,000/KD56 · agentic ai definition/define 14,800 ·
     **agentic ai vs generative ai 4,400/KD11** · **agentic ai course 3,600/KD9** · **agentic ai examples 1,600/KD10** ·
     **agentic ai frameworks 1,000/KD7** · how to build ai agents 1,600 · **ai learning platform 1,000/LOW-comp** · agentic ai
