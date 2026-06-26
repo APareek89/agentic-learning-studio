@@ -209,8 +209,14 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🧪 "Get Hands on" — browser-run Python notebooks (2026-06-26, Phase 1 + v2 enhancements ON `staging`; migration `0015`
-  applied to STAGING — NOT prod).** A SEPARATE, ADDITIVE subsystem — it does NOT touch the lesson-gen pipeline, Blueprint
+- **🏷️ Credit balance unit "lessons" → "credits" (2026-06-26, ON STAGING AND PROD; promote `44af30e`).** Pure terminology: the
+  user-facing BALANCE now reads "credits", not "lessons". Changed 3 displays — the nav credit pill (`#credit-count` span in
+  `public/index.html`: `&nbsp;Lessons` → `&nbsp;Credits`, + tooltip "Your credits — click to buy more"), the Account "Credits
+  remaining" value (`app.js` `set("acct-credits", … credit…)`), and the pricing balance note (`app.js` `loadCredits`: "You have
+  X credits"). The pricing page already explains **1 credit = 1 lesson**, so the conversion is clear. UNCHANGED on purpose: the
+  **My Lessons** tab name, the Library/Community "lessons", and the "1 credit = 1 generated lesson" pricing copy. No behaviour /
+  DB change (the credit ledger + `/api/credits`/`/api/account` already return a numeric `balance`; the unit was always a
+  client-side label). Verified: pill renders "5 Credits".
   schema, the 7 gates, or the credit flow. On an ELIGIBLE lesson a `⚡ Get Hands on · Beta` button (after the Concept/Functional/
   Code toggles) opens a new tab (`/hands-on?lesson=…&module=…`) with a JupyterLab page that runs Python ENTIRELY in the browser
   via Pyodide (the server NEVER runs generated code). FREE (no credit spend). Notebooks are generated LAZILY on click and
