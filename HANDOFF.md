@@ -203,7 +203,57 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🆕 BATCH 2 — 3 bugs + 3 improvements (2026-06-26, on `staging`; PROD PENDING user OK):**
+- **🟡 COMPLIANCE (India legal pages + complaint/grievance/consent system) — DELIBERATELY PARKED ON `staging` (2026-06-26).**
+  Commit `2a7ba0a`. **DECISION (owner): keep it on staging only for now — do NOT promote to prod yet; finishing it in a later
+  session.** Live + verified on the staging site (`…-1.onrender.com/{security,privacy,terms,report-issue,complaint,grievance}`
+  all 200). Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
+  complaint/grievance/data-rights intake. **Migration is `0014_compliance_support.sql`** (the spec said 0013, but 0013 is
+  credits_billing) — `support_requests` + `consent_events`, RLS-on/no-policies (like 0008/0013), indexed; applied to
+  **STAGING only** (`npm run migrate`) — **PROD NEEDS IT before the prod deploy** (`DATABASE_URL="$PROD_URL" npm run migrate`).
+  - **Pages** (static, served at pretty URLs via `PAGE_ROUTES` in `server.ts`; NOT nav tabs — linked only from the home
+    footer): `public/{security,privacy,terms,report-issue}.html` + shared `public/policy.css`. Routes: `/security` `/privacy`
+    `/terms` `/report-issue` (+ `/complaint` `/grievance` → report-issue). "Last updated: 25 June 2026" + the not-legal-advice
+    disclaimer on each. `TODO_CONTACT_ADDRESS` placeholder left in Terms (user fills). Forbidden words (company/Pvt Ltd/LLP/
+    directors/corporate entity) verified absent; "incorporated"/"registered office" only in the N/A-negation + future-entity uses.
+  - **Backend**: `src/lib/support.ts` (saveSupportRequest/saveConsent, **sha256-HASHED ip**, CONSENT_VERSION='2026-06-25',
+    SUPPORT_CATEGORIES) · `src/lib/email.ts` (Resend via REST — no SDK dep; **graceful-optional**: complaint is ALWAYS stored
+    in DB, email is best-effort + logs payload when `RESEND_API_KEY` unset, so nothing is dropped) · `POST /api/support/complaint`
+    (Zod, **5/hr/IP** `supportLimiter`, 503 only if the DB save itself fails) · `POST /api/consent`. `.env.example` adds
+    `RESEND_API_KEY`/`SUPPORT_FROM_EMAIL`/`SUPPORT_TO_EMAIL=findkailash@gmail.com` (all optional).
+  - **Frontend**: home footer gains Security/Privacy/Terms/Report links (`#tab-home .foot-legal`); the auth PAGE signup mode
+    gains a REQUIRED, never-pre-ticked "I agree to the Terms and acknowledge the Privacy Notice" checkbox (`#auth-consent`) →
+    `logSignupConsent()` → `/api/consent`. (Existing `/api/community/report` flow untouched.)
+  - **Verified locally (:5070):** tsc clean; all 6 routes 200; complaint valid→200+id / missing-consent→400 / bad-category→400;
+    consent→200; rows in DB with `ip_hash` 64-char (hashed, not raw); email logs payload (no key); no new nav tabs; footer links
+    render; consent checkbox shows only in signup + not pre-checked; browser form submit → success + reference id. Test rows cleaned.
+  - **CHECKLIST.md** updated (legal pages PARTIAL/lawyer-review-TODO; complaint+consent DONE; company/GST = N/A for individual beta).
+  - **TO RESUME / FINISH (next session):** (1) fill `TODO_CONTACT_ADDRESS` in `terms.html`; (2) run migration `0014` on the
+    PROD DB (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-); DATABASE_URL="$PROD_URL" npm run migrate`) BEFORE any
+    prod promotion (else `/api/support/complaint` 503s on prod); (3) then promote staging→prod (cherry-pick / `checkout
+    origin/staging -- public src supabase` pattern); (4) optional: set `RESEND_API_KEY`/`SUPPORT_FROM_EMAIL` on Render for
+    real complaint emails (without it, complaints still save to `support_requests`); (5) lawyer review before taking payments/scaling.
+  - The "not legal advice" disclaimer was **REMOVED from all 4 pages per the owner's decision** (2026-06-26) — owner will get
+    the pages legally reviewed themselves. (`.policy-disclaimer` CSS left in place but unused.)
+- **✅ GOOGLE OAUTH ENABLED (2026-06-26) — on BOTH Supabase projects, verified working.** Enabled `external_google`
+  on prod (`kdgtlbnlyscdldogxorb`) + staging (`ydgiysthvxhlfpzxyrmy`) via the Supabase **Management API**
+  (`PATCH /v1/projects/{ref}/config/auth`, token was user-supplied, NOT persisted). Client ID
+  `531095044572-693tek38p9v87qrsat8d4spglck1ppc6.apps.googleusercontent.com` (secret lives only in Supabase).
+  Verified end-to-end: GoTrue `/auth/v1/settings` → `google:true` on both; the live prod auth page shows the
+  "Continue with Google" button; and Supabase's `/auth/v1/authorize?provider=google` → Google **accepts** the
+  redirect (`…supabase.co/auth/v1/callback` is in the Google client's Authorized redirect URIs — no mismatch).
+  **APPLE = deferred** (needs the paid Apple Developer account + Services ID/.p8/JWT secret; button stays hidden
+  until enabled — no code change needed then; the frontend gates buttons on GoTrue's enabled-providers list).
+  - **🩹 SITE-URL FIX (2026-06-26):** after Google sign-in users were bounced to `http://localhost:3000/#access_token=…`
+    (ERR_CONNECTION_REFUSED) — the projects still had Supabase's DEFAULT `site_url=http://localhost:3000` and an EMPTY
+    `uri_allow_list`, so the OAuth redirect fell back to that dead default. Fixed via Management API `PATCH …/config/auth`:
+    **staging** `site_url=https://agentic-learning-studio-1.onrender.com`, allow-list = staging + `localhost:5070`;
+    **prod** `site_url=https://prathibhax.com`, allow-list = prathibhax.com + www + `agentic-learning-studio.onrender.com` +
+    `localhost:5070` (all with `/**`). Not a custom-domain issue. (`oauthSignIn` sends `redirectTo=origin+"/"`; the client's
+    default `detectSessionInUrl` picks up the `#access_token` on return — no code change needed.)
+- **✅ ALL "BATCH 2 + SEO + OAuth-gating" WORK IS NOW ON STAGING AND PROD.** `origin/main 9292cb0` == `origin/staging
+  d40544c` for `public/`+`src/` (byte-identical; verified `git diff`). Only un-promoted file = `scripts/qa.mjs`
+  (a 6-line test-harness tweak, non-runtime). Prod = `agentic-learning-studio.onrender.com`, staging = `…-1.onrender.com`.
+- **🆕 BATCH 2 — 3 bugs + 3 improvements (2026-06-26, on `staging` AND `main`/prod — promoted `9292cb0`):**
   - **Bug 1 — dark-mode blue text.** Artifact dark mode (`[data-theme="dark"]` in `tokens.ts`) never overrode `--accent`/
     `--accent-2`, so accent TEXT stayed dark-blue (low contrast). Fix: lift `--accent-2`→`#9db8ff` in the dark block +
     light overrides (`#7aa2ff`) for the `--accent` TEXT selectors (`a`,`.eyebrow`,`.deeper-toggle`,`.hx-see`,`.ov-covers li::before`).
@@ -226,7 +276,7 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   - **Imp 2 — nav polish.** Credit pill is now borderless (no box, matches the nav) with a **graduation-cap** icon (was a star).
     The community share popup + name input were already enlarged in Batch 1 (`.share-card`/`.share-name`).
   - **Imp 3 —** configurator hero "What do you want to understand?" → **"What do you want to learn?"**.
-  - **SEO refined with REAL DataforSEO data (done; on `staging`).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
+  - **SEO refined with REAL DataforSEO data (done; on `staging` AND prod).** Creds now in `~/.claude/secrets/als-qa-creds` (working).
     US monthly volumes (KD): **what is agentic ai 33,100** · agentic ai (broad) 110,000/KD56 · agentic ai definition/define 14,800 ·
     **agentic ai vs generative ai 4,400/KD11** · **agentic ai course 3,600/KD9** · **agentic ai examples 1,600/KD10** ·
     **agentic ai frameworks 1,000/KD7** · how to build ai agents 1,600 · **ai learning platform 1,000/LOW-comp** · agentic ai
