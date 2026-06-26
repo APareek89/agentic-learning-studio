@@ -268,6 +268,9 @@ pre.code .tk-t{color:#4ec9b0}
 .checklist li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;display:flex;gap:9px}
 .checklist li::before{content:"☐";color:var(--accent)}
 .capstone{margin-top:14px;background:var(--accent-weak);border-radius:var(--radius-sm);padding:13px 15px;font-size:14px}
+.synth-lead{margin:6px 0 8px;color:var(--ink-soft)}
+.recap-list{margin:8px 0 6px;padding-left:20px}
+.recap-list li{margin:7px 0;font-size:14.5px}
 .cites{margin-top:30px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
 .cites h3{font-size:13px;color:var(--ink)}
 .cites ol{padding-left:18px}

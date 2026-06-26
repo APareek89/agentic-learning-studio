@@ -507,7 +507,28 @@ function synthesisInner(bp: Blueprint): string {
     : "";
   const check = s.checklist.length ? `<h3>Decision checklist</h3><ul class="checklist">${s.checklist.map((c) => `<li>${esc(c.label)}</li>`).join("")}</ul>` : "";
   const cap = `<div class="capstone"><strong>Try it:</strong> ${esc(s.capstone.prompt)}</div>`;
-  return `<div class="eyebrow">Putting it together</div><h2>Synthesis</h2>${s.recap ? richText(s.recap, bp) : ""}${ref}${order}${check}${cap}`;
+  // Fallback: if the model's synthesis prose is empty (the overview-prose pass that fills recap/
+  // buildOrder/checklist failed during build, or this is an old/draft blueprint), derive a real
+  // recap + decision checklist from the module spine so "Putting it together" is never just the
+  // lone capstone line. Deterministic, $0 — and every re-render of an existing lesson gets it.
+  const thin = !s.recap && !s.buildOrder.length && !s.checklist.length && !s.referenceArchitecture;
+  const derived = thin ? derivedSynthesis(bp) : "";
+  return `<div class="eyebrow">Putting it together</div><h2>Synthesis</h2>${s.recap ? richText(s.recap, bp) : ""}${ref}${order}${check}${derived}${cap}`;
+}
+
+/** Build a recap (module title + summary) and a decision checklist from the modules — used only
+ *  when the generated synthesis came back empty. */
+function derivedSynthesis(bp: Blueprint): string {
+  const mods = bp.modules.filter((m) => (m.title || "").trim());
+  if (!mods.length) return "";
+  const recap = `<p class="synth-lead">Here's the throughline of what this lesson covered:</p><ul class="recap-list">${mods
+    .map((m) => { const sum = (m.summary || "").trim(); return `<li><strong>${esc(m.title)}</strong>${sum ? ` — ${esc(sum)}` : ""}</li>`; })
+    .join("")}</ul>`;
+  const decisions = bp.modules.map((m) => (m.decisionItForces || "").trim()).filter(Boolean);
+  const check = decisions.length
+    ? `<h3>Decisions this lesson raised</h3><ul class="checklist">${decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`
+    : "";
+  return recap + check;
 }
 
 function whatsNew(bp: Blueprint): string {

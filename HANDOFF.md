@@ -203,11 +203,27 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🟡 COMPLIANCE (India legal pages + complaint/grievance/consent system) — DELIBERATELY PARKED ON `staging` (2026-06-26).**
-  Commit `2a7ba0a`. **DECISION (owner): keep it on staging only for now — do NOT promote to prod yet; finishing it in a later
-  session.** Live + verified on the staging site (`…-1.onrender.com/{security,privacy,terms,report-issue,complaint,grievance}`
-  all 200). Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
-  complaint/grievance/data-rights intake. **Migration is `0014_compliance_support.sql`** (the spec said 0013, but 0013 is
+- **🩹 SYNTHESIS "Putting it together" was near-empty (2026-06-26, fix on `staging`; promote w/ next prod push).** A lesson's
+  final Synthesis pane showed only the lone capstone line ("Try it: Apply what you learned to <topic>") — confirmed by data:
+  the stored blueprint had `recap`/`buildOrder`/`checklist` all EMPTY (the generic capstone is `coerceSkeleton`'s default,
+  `nodes.ts:368`). ROOT CAUSE: the **overview-prose pass (`writeOverviewProse`, `nodes.ts:716`) that fills synthesis during
+  the build had failed/produced nothing** for that lesson (errors are caught → `return null` → build completes anyway leaving
+  synthesis empty). NOTE: the earlier subagent's "`needSynthesis` is false because buildOrder:[] exists" theory was WRONG —
+  `[] && 0` is falsy so `needSynthesis` is already true; the real cause is the LLM pass silently failing. **FIX (renderer-side,
+  high-leverage):** `synthesisInner` in `components.ts` now, when synthesis is fully empty, calls new `derivedSynthesis(bp)` to
+  build a "throughline" recap (each module's `title` + `summary`) + a "Decisions this lesson raised" checklist (modules'
+  `decisionItForces`). Deterministic, $0, and — because artifacts RE-RENDER from the stored blueprint on every view — it fixes
+  **every existing thin-synthesis lesson instantly, no regeneration**. (`.synth-lead`/`.recap-list` CSS in tokens.ts.) Verified
+  against the real prod lesson "GraphQL as a Data-Fetching Layer for Agents" → 5-item recap + checklist render. (Secondary: the
+  generation reliability of `writeOverviewProse` could be hardened with a retry/deterministic-fill, but the renderer fallback
+  makes a thin synthesis undisplayable, so not urgent.)
+- **✅ COMPLIANCE (India legal pages + complaint/grievance/consent system) — NOW ON `staging` AND `main`/prod (2026-06-26, prod
+  promote `31a258e`; migration `0014` applied to BOTH DBs).** Pages live at `/{security,privacy,terms,report-issue,complaint,
+  grievance}`. Individual-operator (Anand Pareek, NOT a company; GST/registered-office = N/A) legal pages + a general
+  complaint/grievance/data-rights intake. Contact address shows "available on request — findkailash@gmail.com" (swap in a real
+  postal address when available). The "not legal advice" disclaimer was removed (owner getting own legal review). STILL: set
+  Resend env on Render for live complaint emails (optional — complaints save to `support_requests` regardless); lawyer review
+  before payments. **Migration is `0014_compliance_support.sql`** (the spec said 0013, but 0013 is
   credits_billing) — `support_requests` + `consent_events`, RLS-on/no-policies (like 0008/0013), indexed; applied to
   **STAGING only** (`npm run migrate`) — **PROD NEEDS IT before the prod deploy** (`DATABASE_URL="$PROD_URL" npm run migrate`).
   - **Pages** (static, served at pretty URLs via `PAGE_ROUTES` in `server.ts`; NOT nav tabs — linked only from the home
