@@ -754,7 +754,7 @@ function resetToLanding() {
 }
 
 // ---- Tabs (Configurator / Trainer / My Lessons / Library) ----
-const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account", auth: "tab-auth" };
+const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", "llm-skills": "tab-llm-skills", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account", auth: "tab-auth" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
   t.addEventListener("click", () => switchTab(t.dataset.tab));
@@ -923,15 +923,22 @@ const CATEGORY_STYLE = {
 };
 const DEFAULT_STYLE = { bg: "#EEF2F6", icon: "#64748B", text: "#334155", svg: svgIcon(`<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>`) };
 
-// Per-category thumbnail BACKGROUND templates (PixelBin CDN, delivered optimized:
-// ~640px wide, webp, compressed → ~20-40KB each). Used as the lib-cover background behind
-// the existing card content. Library + Community both read this via catStyle().
-const THUMB_BASE = "https://cdn.pixelbin.io/v2/round-dust-e06b92/t.resize(w:640)~t.toFormat(f:webp)~t.compress()/lesson-thumbs/";
+// Per-category thumbnail images (optimized webp, ~5–10KB each) live in THIS environment's own
+// Supabase Storage public bucket `lesson-thumbs` (CDN-backed). The base URL is derived from the
+// supabaseUrl that /api/config returns, so staging + prod each serve from their OWN project.
+// Library + Community read these via catStyle().img; set by setThumbBase() once config loads.
 const CATEGORY_IMG = {
   "Agents": "agents", "RAG": "rag", "LLMs": "llms", "Frameworks": "frameworks", "Generative": "generative",
   "Evaluation": "evaluation", "Infrastructure": "infrastructure", "Safety": "safety", "Foundations": "foundations", "Build Projects": "build",
 };
-for (const [cat, key] of Object.entries(CATEGORY_IMG)) { if (CATEGORY_STYLE[cat]) CATEGORY_STYLE[cat].img = THUMB_BASE + key + ".png"; }
+function setThumbBase(supabaseUrl) {
+  if (!supabaseUrl) return; // no Supabase → cards fall back to their flat category colour
+  const base = supabaseUrl.replace(/\/$/, "") + "/storage/v1/object/public/lesson-thumbs/";
+  for (const [cat, key] of Object.entries(CATEGORY_IMG)) { if (CATEGORY_STYLE[cat]) CATEGORY_STYLE[cat].img = base + key + ".webp"; }
+  // refresh covers if a catalog already rendered before config arrived
+  if (libLoaded) renderLibrary();
+  if (commLoaded) renderCommunity();
+}
 
 function catStyle(cat) { return CATEGORY_STYLE[cat] || DEFAULT_STYLE; }
 async function loadLibrary() {
@@ -1725,6 +1732,7 @@ async function bootAuth() {
   try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
   authIsEnabled = !!cfg.authEnabled;
   billingIsEnabled = !!cfg.billingEnabled;
+  setThumbBase(cfg.supabaseUrl); // point catalog thumbnails at this env's own Supabase Storage bucket
 
   if (!authIsEnabled) {
     // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
