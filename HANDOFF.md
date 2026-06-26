@@ -230,18 +230,27 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   A small **"Visualize this"** CTA on a lesson module opens a ~65% popup with a curated, self-contained concept diagram
   (inline SVG; no iframe/external fetch). Additive: a deterministic retrieval post-step + one OPTIONAL `module.visual
   {title,svg}` schema field + a CTA/popup in the renderer — the lesson-gen model output, the 7 gates, and the credit flow
-  are UNCHANGED. Source diagrams = `~/Documents/KB - Visuals/custom-html-v3 + v4` (129). **Migration `0018_lesson_visuals.sql`
-  (pgvector 384d + HNSW, RLS-on/no-policies) is APPLIED to the STAGING DB**, ingested (129 rows, all embedded) and backfilled
-  (library: 96/100 lessons, 133 visuals). Files: `src/lib/visuals.ts` (retrieveVisual: keyword/identifier match →
+  are UNCHANGED. **Diagram source = `~/Documents/KB - Visuals/custom-html-v5` (129; the high-quality REPLACEMENT for the
+  earlier low-quality v3/v4 set — swapped 2026-06-26, commit `2402f53`).** v5 is a pure DATA swap: same `visual_id` /
+  `kb_identifier_keys` / `keywords` per concept (so retrieval + schema + renderer are untouched), only the SVG bytes +
+  shared CSS changed (now `assets/diagram.css`). **Migration `0018_lesson_visuals.sql` (pgvector 384d + HNSW,
+  RLS-on/no-policies) is APPLIED to the STAGING DB**, and the v5 set is ingested (129 rows, all embedded) + backfilled
+  (library: 96/100 lessons, 132 visuals) on STAGING. Files: `src/lib/visuals.ts` (retrieveVisual: keyword/identifier match →
   embedding fallback @0.84, symmetric embedPassages; env-tuneable `VISUAL_SIM_THRESHOLD`/`VISUAL_KEYWORD_MIN`),
-  `scripts/ingest-visuals.ts` (extract `<svg>` + INLINE v3.css SCOPED under `.viz-svg` so page rules can't leak),
-  `scripts/backfill-visuals.ts` (no regen — re-renders from blueprint), `src/render/{schema,components,tokens,runtime}.ts`,
-  `src/agent/orchestrator.ts` (auto-attach per module on new builds; try/catch never fails a build). Verified locally
-  (Playwright desktop+mobile): CTA → 65% popup with the right diagram, ✕/Esc/backdrop close, NO CSS leak (body stays
-  `display:block`), mobile reflows, 0 console errors, tsc clean. **KNOWN: the current diagram set is low-quality and will be
-  REPLACED by a new set (re-run `ingest-visuals.ts` → `backfill-visuals.ts`; upsert by `visual_id` + `clearVisualCache()`).**
-  **PROMOTE TO PROD (after review):** `checkout origin/staging --` the 9 paths into `main`, then
-  `DATABASE_URL="$PROD_URL" npm run migrate && DATABASE_URL="$PROD_URL" npx tsx scripts/ingest-visuals.ts && DATABASE_URL="$PROD_URL" npx tsx scripts/backfill-visuals.ts`.
+  `scripts/ingest-visuals.ts` (FOLDERS=`[custom-html-v5]`; reads `assets/diagram.css` per folder; extract `<svg>` + INLINE
+  CSS SCOPED under `.viz-svg` so page rules can't leak), `scripts/backfill-visuals.ts` (no regen — re-renders from blueprint;
+  now CLEARS a module's stale visual before re-attaching → idempotent across diagram swaps),
+  `src/render/{schema,components,tokens,runtime}.ts`, `src/agent/orchestrator.ts` (auto-attach per module on new builds;
+  try/catch never fails a build). Verified locally + on the STAGING onrender host (Playwright desktop+mobile): CTA → 65%
+  popup with the new clean v5 diagram, ✕/Esc/backdrop close, NO CSS leak, correct concept per unchanged identifiers, 0
+  console errors, tsc clean. **TO RE-SWAP a future diagram set:** drop it in a folder, point `FOLDERS` at it, then per env:
+  `delete from lesson_visuals;` → `ingest-visuals.ts` → `backfill-visuals.ts`. **MINOR (pre-existing, non-visible):** the
+  standalone artifact at 375px reports a ~117px phantom scroll while the viz modal is open (the modal/diagram render fine;
+  the artifact is normally iframed) — modal CSS unchanged by the swap; left as-is.
+  **PROD: NOT YET — the visuals feature isn't on `main`/prod** (no `0018`, no visuals code on `main`). When the feature is
+  promoted: `checkout origin/staging --` the ~11 paths into `main`, then `DATABASE_URL="$PROD_URL" npm run migrate &&
+  DATABASE_URL="$PROD_URL" npx tsx scripts/ingest-visuals.ts && DATABASE_URL="$PROD_URL" npx tsx scripts/backfill-visuals.ts`
+  (already v5 from the start — no separate prod swap needed).
 - **🧩 LLM Skills tab — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commits `e4be14c` + `da61062`).** A new
   top-nav **"LLM Skills"** dropdown (mirrors the Trainer dropdown) with two items: **Build a Skill** and **My Skills**.
   *Build a Skill* turns a free-text brief (LLM interface · task · data sources · access method + 4 optional fields, NO
