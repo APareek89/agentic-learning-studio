@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hands-on · Wizbit</title>
+    <link rel="icon" type="image/png" href="/wizbit-logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Match the host app's palette + fonts (styles.css). JupyterLab-ish notebook look. */
+      :root {
+        --bg: #f5f8ff; --surface: #ffffff; --surface-2: #eef3fd;
+        --ink: #0f1729; --ink-2: #3c4660; --muted: #56607a;
+        --accent: #2563eb; --accent-2: #1d4ed8; --accent-weak: #e8efff;
+        --border: #e3e9f5; --border-strong: #d0d9ee;
+        --ok: #1d9e75; --danger: #d2433a;
+        --code-bg: #0b1228; --code-ink: #e7ecff;
+        --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body { background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.55; }
+      a { color: var(--accent); }
+
+      /* Header */
+      .nb-head { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 14px;
+        padding: 12px 22px; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+      .nb-brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 16px; }
+      .nb-brand img { width: 26px; height: 26px; object-fit: contain; }
+      .nb-title { font-weight: 700; font-size: 15px; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .nb-spacer { flex: 1; }
+      .nb-kernel { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+      .nb-dot { width: 9px; height: 9px; border-radius: 50%; background: #f0a92b; }
+      .nb-dot.ready { background: var(--ok); }
+      .nb-dot.err { background: var(--danger); }
+      .nb-btn { border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); font: inherit;
+        font-size: 13px; font-weight: 600; padding: 7px 13px; border-radius: 9px; cursor: pointer; }
+      .nb-btn:hover { border-color: var(--accent); color: var(--accent-2); }
+      .nb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .nb-btn.primary:hover { filter: brightness(1.07); color: #fff; }
+      .nb-btn[disabled] { opacity: 0.5; cursor: default; }
+
+      /* Wrap */
+      .nb-wrap { max-width: 860px; margin: 0 auto; padding: 26px 20px 80px; }
+
+      /* Preparing / progress */
+      .prep { text-align: center; padding: 70px 20px; }
+      .prep h1 { font-size: 22px; margin: 0 0 8px; }
+      .prep p { color: var(--muted); margin: 0 0 20px; }
+      .pbar { height: 9px; max-width: 420px; margin: 0 auto; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+      .pbar > i { display: block; height: 100%; width: 8%; background: var(--accent); border-radius: 999px; transition: width 0.4s ease; }
+      .prep .pct { margin-top: 10px; font-size: 13px; color: var(--muted); }
+      .notice { max-width: 520px; margin: 70px auto; text-align: center; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; padding: 30px 28px; box-shadow: 0 10px 30px rgba(37,99,235,0.08); }
+      .notice h1 { font-size: 20px; margin: 0 0 8px; }
+      .notice p { color: var(--muted); margin: 0 0 18px; }
+
+      /* Notebook */
+      .nb-doc-title { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
+      .nb-doc-note { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+      .cell { margin: 14px 0; }
+      .cell-md { font-size: 15px; color: var(--ink-2); }
+      .cell-md h1 { font-size: 21px; color: var(--ink); margin: 18px 0 6px; }
+      .cell-md h2 { font-size: 18px; color: var(--ink); margin: 16px 0 6px; }
+      .cell-md h3 { font-size: 15.5px; color: var(--ink); margin: 14px 0 6px; }
+      .cell-md p { margin: 7px 0; }
+      .cell-md code { font-family: var(--mono); font-size: 0.88em; background: var(--accent-weak); color: var(--accent-2); padding: 1px 6px; border-radius: 6px; }
+      .cell-code { border: 1px solid var(--border-strong); border-radius: 12px; overflow: hidden; background: var(--surface); }
+      .cc-bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+      .cc-run { border: none; background: var(--accent); color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+      .cc-run:hover { filter: brightness(1.07); }
+      .cc-run[disabled] { opacity: 0.55; cursor: default; }
+      .cc-hint { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+      .cc-spin { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); border-top-color: #fff; animation: spin 0.7s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .cc-src { width: 100%; border: none; outline: none; resize: vertical; font-family: var(--mono); font-size: 13px; line-height: 1.6;
+        padding: 12px 14px; color: var(--code-ink); background: var(--code-bg); min-height: 44px; tab-size: 4; }
+      .cc-out { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+        padding: 0; margin: 0; border-top: 1px solid var(--border); }
+      .cc-out:empty { display: none; }
+      .cc-out .out-block { padding: 11px 14px; border-top: 1px solid var(--border); }
+      .cc-out .out-block:first-child { border-top: none; }
+      .cc-out .out-std { color: var(--ink); background: var(--surface); }
+      .cc-out .out-err { color: var(--danger); background: #fff5f5; }
+      .reduced { font-size: 12px; color: var(--muted); }
+
+      @media (max-width: 560px) {
+        .nb-head { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+        .nb-title { flex-basis: 100%; order: 3; }
+        .nb-wrap { padding: 18px 14px 70px; }
+        .nb-doc-title { font-size: 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nb-head">
+      <span class="nb-brand"><img src="/wizbit-logo.png" alt="Wizbit" /> Wizbit</span>
+      <span class="nb-title" id="nb-lesson-title">Hands-on</span>
+      <span class="nb-spacer"></span>
+      <span class="nb-kernel" id="nb-kernel"><span class="nb-dot" id="nb-dot"></span><span id="nb-kernel-text">Kernel: idle</span></span>
+      <button class="nb-btn" id="nb-runall" disabled>▶ Run all</button>
+      <button class="nb-btn" id="nb-restart" disabled>↻ Restart</button>
+      <button class="nb-btn" id="nb-regen" hidden title="Regenerate (bypass cache)">⟳ Regenerate</button>
+    </header>
+
+    <main class="nb-wrap">
+      <!-- Preparing state -->
+      <section class="prep" id="prep">
+        <h1>Preparing your hands-on notebook…</h1>
+        <p id="prep-sub">Designing a tiny runnable Python exercise for this lesson.</p>
+        <div class="pbar"><i id="prep-bar"></i></div>
+        <div class="pct" id="prep-pct">8%</div>
+      </section>
+
+      <!-- Not-available / error notice -->
+      <section class="notice" id="notice" hidden>
+        <h1 id="notice-h">Not available</h1>
+        <p id="notice-p"></p>
+        <a class="nb-btn" id="notice-link" href="/">← Back to Wizbit</a>
+      </section>
+
+      <!-- The notebook -->
+      <section id="nb" hidden>
+        <h1 class="nb-doc-title" id="nb-doc-title"></h1>
+        <p class="nb-doc-note" id="nb-doc-note"></p>
+        <div id="cells"></div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      "use strict";
+      const PYODIDE_VERSION = "v0.26.4";
+      const qs = new URLSearchParams(location.search);
+      const LESSON_ID = qs.get("lesson") || "";
+      const MODULE_ID = qs.get("module") || "";
+
+      const el = (id) => document.getElementById(id);
+      const escapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+      function showNotice(title, msg) {
+        el("prep").hidden = true;
+        el("nb").hidden = true;
+        el("notice-h").textContent = title;
+        el("notice-p").textContent = msg;
+        el("notice").hidden = false;
+      }
+      function setProgress(p, sub) {
+        const pct = Math.max(0, Math.min(100, Math.round(p)));
+        el("prep-bar").style.width = pct + "%";
+        el("prep-pct").textContent = pct + "%";
+        if (sub) el("prep-sub").textContent = sub;
+      }
+
+      // ---- Auth: build a Supabase client from /api/config; getSession() for the bearer ----
+      let sb = null;
+      async function getToken() {
+        let cfg;
+        try {
+          cfg = await fetch("/api/config").then((r) => r.json());
+        } catch (e) { return { authEnabled: false, token: null }; }
+        if (!cfg.authEnabled || !cfg.supabaseUrl || !cfg.supabaseAnonKey) return { authEnabled: false, token: null };
+        try {
+          sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+          const { data } = await sb.auth.getSession();
+          return { authEnabled: true, token: data && data.session ? data.session.access_token : null };
+        } catch (e) { return { authEnabled: true, token: null }; }
+      }
+      function authHeaders(token) {
+        return token ? { Authorization: "Bearer " + token } : {};
+      }
+
+      // ---- Minimal, safe markdown (source is escaped first, so this can't inject) ----
+      function renderMarkdown(src) {
+        const lines = String(src).split("\n");
+        let html = "", para = [];
+        const flush = () => { if (para.length) { html += "<p>" + inline(para.join(" ")) + "</p>"; para = []; } };
+        for (const raw of lines) {
+          const line = raw.replace(/\s+$/, "");
+          let m;
+          if ((m = /^###\s+(.*)/.exec(line))) { flush(); html += "<h3>" + inline(m[1]) + "</h3>"; }
+          else if ((m = /^##\s+(.*)/.exec(line))) { flush(); html += "<h2>" + inline(m[1]) + "</h2>"; }
+          else if ((m = /^#\s+(.*)/.exec(line))) { flush(); html += "<h1>" + inline(m[1]) + "</h1>"; }
+          else if (line.trim() === "") { flush(); }
+          else { para.push(line); }
+        }
+        flush();
+        return html;
+      }
+      function inline(s) {
+        let out = escapeHtml(s);
+        out = out.replace(/`([^`]+)`/g, (_m, c) => "<code>" + c + "</code>");
+        out = out.replace(/\*\*([^*]+)\*\*/g, (_m, c) => "<strong>" + c + "</strong>");
+        return out;
+      }
+
+      // ---- Pyodide (lazy) ----
+      let pyodide = null;
+      let pyLoading = null;
+      const loadedPkgs = new Set();
+      function setKernel(state, text) {
+        const dot = el("nb-dot");
+        dot.className = "nb-dot" + (state === "ready" ? " ready" : state === "err" ? " err" : "");
+        el("nb-kernel-text").textContent = text;
+      }
+      async function ensurePyodide() {
+        if (pyodide) return pyodide;
+        if (pyLoading) return pyLoading;
+        setKernel("starting", "Kernel starting…");
+        pyLoading = (async () => {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/pyodide.js`;
+            s.onload = resolve; s.onerror = () => reject(new Error("Failed to load Pyodide"));
+            document.head.appendChild(s);
+          });
+          pyodide = await window.loadPyodide({ indexURL: `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/` });
+          setKernel("ready", "Kernel ready");
+          el("nb-runall").disabled = false;
+          el("nb-restart").disabled = false;
+          return pyodide;
+        })();
+        try { return await pyLoading; }
+        catch (e) { setKernel("err", "Kernel failed"); pyLoading = null; throw e; }
+      }
+      async function ensurePackagesFor(src) {
+        const need = [];
+        if (/\b(import\s+numpy|from\s+numpy)\b/.test(src) && !loadedPkgs.has("numpy")) need.push("numpy");
+        if (/\b(import\s+pandas|from\s+pandas)\b/.test(src) && !loadedPkgs.has("pandas")) need.push("pandas");
+        if (need.length) {
+          setKernel("starting", "Loading " + need.join(", ") + "…");
+          await pyodide.loadPackage(need);
+          need.forEach((p) => loadedPkgs.add(p));
+          setKernel("ready", "Kernel ready");
+        }
+      }
+
+      // ---- Run a single code cell ----
+      async function runCell(cell) {
+        const src = cell.srcEl.value;
+        const out = cell.outEl;
+        out.innerHTML = "";
+        cell.runEl.disabled = true;
+        const orig = cell.runEl.innerHTML;
+        cell.runEl.innerHTML = '<span class="cc-spin"></span> Running';
+        try {
+          await ensurePyodide();
+          await ensurePackagesFor(src);
+          let buf = "";
+          pyodide.setStdout({ batched: (s) => { buf += s; } });
+          pyodide.setStderr({ batched: (s) => { buf += s; } });
+          let result;
+          try {
+            result = await pyodide.runPythonAsync(src);
+          } finally {
+            pyodide.setStdout({}); pyodide.setStderr({});
+          }
+          let text = buf;
+          if (result !== undefined && result !== null) {
+            const r = result && result.toString ? result.toString() : String(result);
+            if (r !== "undefined") text += (text && !text.endsWith("\n") ? "\n" : "") + r;
+            if (result && result.destroy) { try { result.destroy(); } catch (e) {} }
+          }
+          if (text.trim() === "") text = "✓ ran (no output)";
+          const block = document.createElement("div");
+          block.className = "out-block out-std";
+          block.textContent = text;
+          out.appendChild(block);
+        } catch (e) {
+          const block = document.createElement("div");
+          block.className = "out-block out-err";
+          block.textContent = (e && e.message) ? e.message : String(e);
+          out.appendChild(block);
+        } finally {
+          cell.runEl.disabled = false;
+          cell.runEl.innerHTML = orig;
+        }
+      }
+
+      // ---- Render the notebook ----
+      const cellObjs = [];
+      function renderNotebook(nb) {
+        el("prep").hidden = true;
+        el("notice").hidden = true;
+        el("nb").hidden = false;
+        el("nb-doc-title").textContent = nb.title || "Hands-on";
+        el("nb-lesson-title").textContent = nb.title || "Hands-on";
+        document.title = (nb.title || "Hands-on") + " · Wizbit";
+        if (nb.kernelNote) el("nb-doc-note").textContent = nb.kernelNote; else el("nb-doc-note").hidden = true;
+        const host = el("cells");
+        host.innerHTML = "";
+        cellObjs.length = 0;
+        (nb.cells || []).forEach((c, i) => {
+          if (c.type === "markdown") {
+            const d = document.createElement("div");
+            d.className = "cell cell-md";
+            d.innerHTML = renderMarkdown(c.source || "");
+            host.appendChild(d);
+          } else {
+            const wrap = document.createElement("div");
+            wrap.className = "cell cell-code";
+            const bar = document.createElement("div");
+            bar.className = "cc-bar";
+            const run = document.createElement("button");
+            run.className = "cc-run"; run.type = "button"; run.innerHTML = "▶ Run";
+            const hint = document.createElement("span");
+            hint.className = "cc-hint"; hint.textContent = "Shift+Enter to run";
+            bar.appendChild(run); bar.appendChild(hint);
+            const ta = document.createElement("textarea");
+            ta.className = "cc-src"; ta.spellcheck = false; ta.value = (c.source || "");
+            ta.rows = Math.min(16, Math.max(2, (c.source || "").split("\n").length));
+            // restore an edit from this session, if any
+            const skey = "handson:" + LESSON_ID + ":" + MODULE_ID + ":" + i;
+            try { const saved = sessionStorage.getItem(skey); if (saved != null) ta.value = saved; } catch (e) {}
+            ta.addEventListener("input", () => { try { sessionStorage.setItem(skey, ta.value); } catch (e) {} });
+            const out = document.createElement("div");
+            out.className = "cc-out";
+            wrap.appendChild(bar); wrap.appendChild(ta); wrap.appendChild(out);
+            host.appendChild(wrap);
+            const obj = { srcEl: ta, outEl: out, runEl: run };
+            cellObjs.push(obj);
+            run.addEventListener("click", () => runCell(obj));
+            ta.addEventListener("keydown", (ev) => {
+              if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runCell(obj); }
+            });
+          }
+        });
+        // Warm the kernel in the background so the first Run is quick.
+        ensurePyodide().catch(() => {});
+      }
+
+      el("nb-runall").addEventListener("click", async () => {
+        for (const c of cellObjs) { await runCell(c); }
+      });
+      el("nb-restart").addEventListener("click", async () => {
+        pyodide = null; pyLoading = null; loadedPkgs.clear();
+        el("nb-runall").disabled = true; el("nb-restart").disabled = true;
+        cellObjs.forEach((c) => { c.outEl.innerHTML = ""; });
+        await ensurePyodide().catch(() => {});
+      });
+
+      // ---- Flow: start → (cache hit ? render : poll job) ----
+      async function start() {
+        if (!LESSON_ID) { showNotice("Nothing to run", "No lesson was specified."); return; }
+        const { authEnabled, token } = await getToken();
+        if (authEnabled && !token) {
+          showNotice("Please sign in", "Hands-on practice is free, but you need to be signed in. Open Wizbit, sign in, then click “Get Hands on” again.");
+          el("notice-link").textContent = "← Open Wizbit to sign in";
+          return;
+        }
+        let res, data;
+        try {
+          res = await fetch("/api/hands-on/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders(token) },
+            body: JSON.stringify({ lessonId: LESSON_ID, moduleId: MODULE_ID || null }),
+          });
+          data = await res.json();
+        } catch (e) { showNotice("Couldn't start", "Something went wrong reaching the server. Please try again."); return; }
+
+        if (res.status === 422) { showNotice("Not available here", data.error || "A runnable hands-on notebook isn't available for this lesson."); return; }
+        if (res.status === 401) { showNotice("Please sign in", "Your session expired. Open Wizbit, sign in, then try again."); return; }
+        if (!res.ok) { showNotice("Couldn't start", data.error || "Please try again in a moment."); return; }
+
+        if (data.status === "done" && data.notebook) { setProgress(100); renderNotebook(data.notebook); return; }
+        if (data.jobId) { pollJob(data.jobId, token); return; }
+        showNotice("Couldn't start", "Unexpected response from the server.");
+      }
+
+      async function pollJob(jobId, token) {
+        setProgress(15, "Designing a tiny runnable Python exercise…");
+        let tries = 0;
+        const tick = async () => {
+          tries++;
+          let j;
+          try {
+            const r = await fetch("/api/hands-on/job/" + jobId, { headers: authHeaders(token) });
+            j = await r.json();
+            if (r.status === 404) { showNotice("Couldn't prepare it", "The notebook job expired. Please try again."); return; }
+          } catch (e) { /* transient */ }
+          if (j) {
+            if (typeof j.percent === "number") setProgress(Math.max(15, j.percent));
+            if (j.status === "done" && j.notebook) { setProgress(100); renderNotebook(j.notebook); return; }
+            if (j.status === "error") { showNotice("Couldn't prepare it", j.error || "Generation failed. Please try again."); return; }
+          }
+          if (tries > 60) { showNotice("Taking too long", "Preparing the notebook timed out. Please try again."); return; }
+          setTimeout(tick, 1200);
+        };
+        tick();
+      }
+
+      start();
+    </script>
+  </body>
+</html>
