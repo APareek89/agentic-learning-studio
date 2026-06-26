@@ -209,6 +209,22 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🧩 LLM Skills tab — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commits `e4be14c` + `da61062`).** A new
+  top-nav **"LLM Skills"** dropdown (mirrors the Trainer dropdown) with two items: **Build a Skill** and **My Skills**.
+  *Build a Skill* turns a free-text brief (LLM interface · task · data sources · access method + 4 optional fields, NO
+  dropdowns) + optional file/repo references into an installable **Agent Skill** (`SKILL.md` + scripts), shown IN-TAB as a
+  3-module + Sources result (syntax-highlighted preview · per-file download · Download-all .zip). Grounded by the **"Agent
+  Skills" KB category** (`retrieve()` gained an additive `category` filter); generates ungrounded (logged) if the KB is
+  absent. *My Skills* lists each user's saved skills like My Lessons (open / delete). **FREE in v1**, **Sonnet**
+  (`makeLLM("sonnet").withStructuredOutput(SkillPackageSchema)` — model emits STRUCTURED JSON only, app renders escaped).
+  Files: `src/lib/skillgen.ts` (schema + detached job + SKILL.md sanitize + persist), `src/rag/retrieve.ts` (category
+  filter), `src/server.ts` (`/api/skill/generate` · `/api/skill/job/:id` · `/api/skills` · `/api/skill/saved/:id`),
+  `public/skills.js` + `skills.css` (own files; avoid app.js/styles.css contention), `public/index.html` (nav + tab).
+  **Migration `0017_generated_skills.sql` is APPLIED to the STAGING DB** (generated_skills, RLS-on/no-policies). Verified
+  locally (Playwright desktop): tab/form (no dropdowns, blue band) · upload chip · generate→result · rail switching ·
+  SKILL.md frontmatter (kebab `name` + "Use when…" desc) · per-file + zip download · grounded sources · My Skills
+  save/list/open/delete · 0 console errors · tsc clean. **PROMOTE TO PROD (after review):** `checkout origin/staging --`
+  the 7 paths into `main`, then `DATABASE_URL="$PROD_URL" npm run migrate` to apply `0017` to the PROD DB.
 - **🖼️ Catalog thumbnails moved PixelBin CDN → Supabase Storage (2026-06-26, ON STAGING AND PROD; promote `d5cb676`).** The
   Library/Community card covers (`.lib-cover` background `--cov-img`) no longer use `cdn.pixelbin.io`. They now load from each
   environment's OWN **Supabase Storage public bucket `lesson-thumbs`** (CDN-backed, edge-cached) — 10 optimized webp images
