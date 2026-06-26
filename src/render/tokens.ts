@@ -338,6 +338,11 @@ body.show-syntax .syntax-panel{display:block}
 @keyframes bspin{to{transform:rotate(360deg)}}
 .building.failed{border-style:solid;border-color:var(--danger);color:var(--danger);cursor:pointer}
 .building.failed .bspin{display:none}
+/* Friendly "lesson still building" banner on the overview (hidden by the runtime when done). */
+.build-banner{display:flex;align-items:center;gap:13px;margin:18px 0;padding:15px 18px;border:1px solid var(--accent);background:var(--accent-weak);border-radius:var(--radius);color:var(--ink)}
+.build-banner .bspin{width:16px;height:16px;border-width:2.5px}
+.build-banner .bb-txt strong{display:block;font-size:14.5px;color:var(--ink)}
+.build-banner .bb-txt .muted{font-size:13px;color:var(--muted);margin-top:2px}
 .navitem .ni-status{flex:none;width:7px;height:7px;border-radius:50%;background:transparent;margin-left:auto}
 .navitem.building .ni-status{background:var(--warn);animation:pulse 1.1s infinite}
 .navitem.failed .ni-status{background:var(--danger);animation:none}

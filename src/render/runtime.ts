@@ -424,6 +424,8 @@ export const RUNTIME_JS = String.raw`
   // Matches both the vertical workbench panel and the horizontal h-page (both carry data-module).
   function panelEl(id){ return document.querySelector('[data-module="'+cssEsc(id)+'"]'); }
   function isStub(id){ var p=panelEl(id); return !!(p && p.classList.contains("is-stub")); }
+  // Hide the "your trainer is getting your lesson ready" overview banner once no section is still building.
+  function updateBuildBanner(){ var bn=document.getElementById("build-banner"); if(bn && document.querySelectorAll(".navitem.building").length===0) bn.style.display="none"; }
   function pump(){
     if(busy || !ARTIFACT_ID) return;
     var id=queue.shift(); if(!id) return;
@@ -444,7 +446,7 @@ export const RUNTIME_JS = String.raw`
         var panel=panelEl(id), b=panel&&panel.querySelector(".building");
         if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
       })
-      .then(function(){ busy=false; pump(); });
+      .then(function(){ busy=false; updateBuildBanner(); pump(); });
   }
   function prioritize(id){
     if(PREVIEW) return;               // preview gate: never build on demand
