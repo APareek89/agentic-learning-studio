@@ -1929,7 +1929,7 @@ async function loadCredits() {
     const bal = document.getElementById("pricing-balance");
     if (bal && !bal.classList.contains("low")) {
       bal.hidden = false;
-      bal.textContent = `You have ${balance} lesson credit${balance === 1 ? "" : "s"}.`;
+      bal.textContent = `You have ${balance} credit${balance === 1 ? "" : "s"}.`;
     }
   } catch { /* keep the optimistic cached pill on a transient error */ }
 }
@@ -2119,7 +2119,7 @@ async function loadAccount() {
     set("acct-email", d.email || currentUserEmail || "—");
     set("acct-uuid", d.userId || currentUserId || "—");
     set("acct-plan", d.plan || "Free");
-    set("acct-credits", `${d.balance} lesson${d.balance === 1 ? "" : "s"}`);
+    set("acct-credits", `${d.balance} credit${d.balance === 1 ? "" : "s"}`);
     set("acct-lessons", String(d.lessonsGenerated ?? 0));
     set("acct-spent", String(d.creditsSpent ?? 0));
     set("acct-bought", String(d.creditsPurchased ?? 0));
