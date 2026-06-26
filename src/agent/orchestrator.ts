@@ -258,7 +258,10 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     // when there's no user / DB (local open-mode dev). FIFO over the buyer's credit lots. MUST run
     // BEFORE job.status="done": the front-end refreshes the credit pill the instant it polls "done",
     // so the deduction has to be committed first or the pill shows the stale (pre-spend) balance.
-    const fullSuccess = failCount === 0; // every pending module built (none kept as a stub)
+    // FULL success = there WAS work to do AND every pending module built (none kept as a stub).
+    // `pending.length > 0` guards the empty-pending case (a re-build / double-click where everything
+    // was already built) so we never charge a credit for building nothing. (Audit P0-5.)
+    const fullSuccess = pending.length > 0 && failCount === 0;
     if (fullSuccess && art.userId) {
       try { await spendOne(art.userId); }
       catch (e) { console.error("[runBuildJob] credit deduct failed", e); }
