@@ -1682,6 +1682,26 @@ const oauthApple = document.getElementById("oauth-apple");
 if (oauthGoogle) oauthGoogle.addEventListener("click", () => oauthSignIn("google"));
 if (oauthApple) oauthApple.addEventListener("click", () => oauthSignIn("apple"));
 
+// Show an OAuth button ONLY for providers actually enabled in Supabase (read from GoTrue's
+// public /auth/v1/settings). So the buttons stay hidden until Google/Apple are turned on in
+// the Supabase dashboard, and then appear automatically — no code/env change needed.
+async function applyOAuthProviders(supabaseUrl, anonKey) {
+  let ext = {};
+  try {
+    const r = await fetch(supabaseUrl.replace(/\/$/, "") + "/auth/v1/settings", { headers: { apikey: anonKey } });
+    if (r.ok) ext = (await r.json()).external || {};
+  } catch (e) { /* leave all hidden on error — email/password still works */ }
+  const g = document.getElementById("oauth-google");
+  const a = document.getElementById("oauth-apple");
+  if (g) g.hidden = !ext.google;
+  if (a) a.hidden = !ext.apple;
+  const anyOn = !!(ext.google || ext.apple);
+  const row = document.querySelector(".oauth-row");
+  const orDiv = document.querySelector(".auth-or");
+  if (row) row.hidden = !anyOn;
+  if (orDiv) orDiv.hidden = !anyOn;
+}
+
 async function bootAuth() {
   let cfg;
   try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
@@ -1701,6 +1721,7 @@ async function bootAuth() {
     return;
   }
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  applyOAuthProviders(cfg.supabaseUrl, cfg.supabaseAnonKey); // reveal only enabled OAuth buttons
   setAuthMode("signup"); // new visitors default to sign-up
 
   const { data } = await sb.auth.getSession();
