@@ -247,11 +247,16 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
     404 unknown, 401 unauth; the page renders cells, Pyodide kernel goes ready, Run ▶ AND Shift+Enter execute Python in-browser
     and print output (tokenizer demo printed tokens + count); ineligible → "Not available here" notice; button-click opens the
     correct new tab; mobile (375px) reflows with no overflow. 0 console errors (only an expected 422 network log + favicon 404).
-  - **NEXT — Phase 2 (template library "RAG"):** `src/handson/templates/*` (8–15 hand-vetted, validated, runnable notebooks
-    per cluster) + `clusterFor()` (keyword heuristic → optional bge-small embedding similarity) → serve a strong template match
-    verbatim ($0, `source:'template'`), else live Haiku (optionally few-shot-seeded). Plus a `scripts/handson-test.ts` smoke
-    test, a Regenerate (bypass-cache) control, Run-all/Restart polish, sessionStorage cell-edit memory (already in v1),
-    SCHEMA_VERSION bump to invalidate cache. THEN: owner review → push to staging → verify → promote to prod.
+  - **✅ Phase 2 — SELF-GROWING KB (2026-06-26, ON STAGING AND PROD; migration `0016` on BOTH DBs).** Instead of a hand-curated
+    template library, the KB is LEARNED from generations: in `src/lib/handson.ts`, every generated notebook's topic text
+    (`embedTextFor` = topic + module title + summary) is embedded (bge-small/384d via `src/rag/embed` `embedPassages` —
+    SYMMETRIC, NOT the query prefix) and stored on the row; before generating, `searchKB` cosine-matches the nearest prior
+    notebook (hnsw index) and REUSES it when `sim >= KB_SIM_THRESHOLD` (0.86) → `source:'retrieved'`, $0, no model call, and it
+    re-stores under the new key+embedding so the KB grows around the topic. Fallbacks store no embedding (never reused);
+    pre-`0016` rows have NULL embedding (exact-cache only). Migration `0016_handson_kb.sql` = `embed_text` + `embedding(384)` +
+    `hands_on_notebooks_embedding_hnsw` (cosine); additive/idempotent; graceful if the embedder/DB is down. Verified: RAG-eval
+    metrics↔faithfulness (0.89) → retrieved the same notebook; embeddings/vector-search (<0.67) → fresh; exact re-request still
+    instant. (Promote commit `00c2608`.) FUTURE: tune the threshold from real traffic; optional Regenerate (bypass-cache) control.
 - **🩹 Lesson toolbar alignment fix (2026-06-26, ON `staging` ONLY — NOT yet on `main`/prod).** In the artifact's inner
   vertical-mode top bar (`.topbar` rendered by `components.ts renderBody` — the toolbar that sits BELOW the host "Ask more"
   viewer bar), a long lesson title in `.tb-center .brand-mini` widened the bar and pushed the Concept/Functional/Code/
