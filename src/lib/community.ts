@@ -2,10 +2,10 @@
  * # Community Courses — learner-shared lessons (public, browse-anywhere)
  *
  * When a learner shares one of their lessons, we SNAPSHOT it here (their own
- * lessons expire in 30 days; community shares must persist) and mint a discount
- * code for their next purchase (functionality only — checkout redemption is wired
- * to billing later; see checklist.MD). Served like the Library: public, instant,
- * re-rendered from the stored Blueprint.
+ * lessons expire in 30 days; community shares must persist) and reward them with
+ * 1 free lesson credit (idempotent per shared lesson + a per-user cap, so it can't
+ * be farmed). Served like the Library: public, instant, re-rendered from the stored
+ * Blueprint.
  *
  * Degrades to empty/no-op when the DB is off (graceful-optional), like lessons.ts.
  */
@@ -17,6 +17,7 @@ import { renderArtifact } from "../render/index";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { makeLLM } from "../agent/llm";
+import { addCredits } from "./credits";
 
 export interface CommunityCard {
   slug: string;
@@ -78,9 +79,9 @@ async function classifyThumbCategory(title: string, topic: string, description: 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "lesson";
 }
-function discountCode(): string {
-  return "SHARE30-" + randomBytes(5).toString("hex").toUpperCase().slice(0, 8);
-}
+
+/** Most free lesson credits a single account can ever earn from community shares. */
+const SHARE_REWARD_CAP = 20;
 
 /** All community lessons (newest first). The front-end derives "featured" = top 10 by likes. */
 export async function listCommunity(): Promise<CommunityCard[]> {
@@ -133,13 +134,13 @@ export async function likeCommunity(slug: string): Promise<number | null> {
   return rows.length ? rows[0].likes : null;
 }
 
-export interface ShareResult { ok: boolean; slug?: string; code?: string; error?: string; already?: boolean }
+export interface ShareResult { ok: boolean; slug?: string; rewarded?: boolean; error?: string; already?: boolean }
 
 /**
  * Snapshot a learner's lesson into the community pool.
- * - Regular share (default): mints a 30%-off discount code for the sharer.
+ * - Regular share (default): rewards the sharer with 1 free lesson credit.
  * - Contributor publish (`opts.contributor`): credits the contributor's registered
- *   name and does NOT mint a discount (they publish as their role, not for the incentive).
+ *   name and does NOT grant a reward (they publish as their role, not for the incentive).
  */
 export async function shareLesson(
   lessonId: string, user: { id: string; email: string }, displayName?: string, opts: { contributor?: boolean } = {}
@@ -187,25 +188,28 @@ export async function shareLesson(
     return { ok: false, error: "Couldn't share this lesson. " + ((e as Error).message?.slice(0, 80) ?? "") };
   }
 
-  // Contributor publishes don't carry the discount incentive.
+  // Contributor publishes don't carry the reward incentive.
   if (opts.contributor) return { ok: true, slug };
 
-  // Anti-farm: at most ONE unredeemed share code per user — if they already have one,
-  // return it instead of minting another (stops sharing many lessons to farm codes).
-  const existingCode = await query<{ code: string }>(
-    `select code from discount_codes where user_id = $1 and source = 'community_share' and redeemed = false order by created_at desc limit 1`,
+  // Reward: 1 free lesson credit. Idempotent per shared lesson (ls_order_id =
+  // 'share:<lessonId>'), so re-sharing the same lesson can't farm credits; plus a
+  // per-user cap on how many shares can ever be rewarded (defense-in-depth — sharing
+  // a lesson you already paid a credit to build is roughly break-even, but cap anyway).
+  const earned = await query<{ n: string }>(
+    `select count(*)::text as n from credit_lots where user_id = $1 and plan_id = 'community-share'`,
     [user.id]
   ).catch(() => []);
-  if (existingCode.length) return { ok: true, slug, code: existingCode[0].code };
+  let rewarded = false;
+  if (Number(earned[0]?.n ?? 0) < SHARE_REWARD_CAP) {
+    const { credited } = await addCredits(user.id, 1, {
+      reason: "grant",
+      planId: "community-share",
+      lsOrderId: `share:${lessonId}`,
+    }).catch(() => ({ credited: false, balance: 0 }));
+    rewarded = credited;
+  }
 
-  const code = discountCode();
-  await query(
-    `insert into discount_codes (code, user_id, user_email, lesson_id, percent, source)
-     values ($1,$2,$3,$4,30,'community_share')`,
-    [code, user.id, user.email, lessonId]
-  ).catch(() => { /* code is best-effort; the share already succeeded */ });
-
-  return { ok: true, slug, code };
+  return { ok: true, slug, rewarded };
 }
 
 // ============================================================================

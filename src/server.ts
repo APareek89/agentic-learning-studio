@@ -38,7 +38,7 @@ import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareL
 import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
-import { getBalance, ensureFreeGrant, addCredits } from "./lib/credits";
+import { getBalance, ensureFreeGrant, addCredits, getAccountSummary } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -127,6 +127,11 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
 
 app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
 app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js, styles.css)
+
+// SPA route: the Account page is a real URL (/account) so it deep-links + survives a
+// refresh. There's no client-side router beyond this one path, so serve index.html and
+// let app.js switch to the account tab from window.location. (Static assets above win.)
+app.get("/account", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")));
 
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
 const ipKey = (req: express.Request) => req.ip || "unknown";
@@ -250,6 +255,18 @@ app.get("/api/lessons", requireAuth, async (req, res) => {
     return;
   }
   res.json({ lessons: await listLessons(user.id, user.email ?? "") });
+});
+
+// GET /api/account — the signed-in user's account + usage summary for the /account page
+// (identity, plan, live balance, lessons generated, credits spent, member-since).
+app.get("/api/account", requireAuth, async (req, res) => {
+  const user = await getUser(req.headers.authorization);
+  if (!user) {
+    res.status(401).json({ error: "Please sign in." });
+    return;
+  }
+  const summary = await getAccountSummary(user.id, user.email ?? "");
+  res.json({ ...summary, userId: user.id, email: user.email ?? "" });
 });
 
 // GET /api/preferences — the user's stored landing selections (to pre-fill the form).
@@ -852,8 +869,8 @@ app.post("/api/community/report", async (req, res) => {
   res.json({ ok: true, hidden: r.hidden });
 });
 
-// POST /api/community/share — snapshot the learner's lesson public + mint a discount code.
-// With { contributor: true } it publishes as a contributor (credited name, no discount).
+// POST /api/community/share — snapshot the learner's lesson public + grant 1 free lesson.
+// With { contributor: true } it publishes as a contributor (credited name, no reward).
 app.post("/api/community/share", requireAuth, async (req, res) => {
   const { lessonId, displayName, contributor } = (req.body ?? {}) as { lessonId?: string; displayName?: string; contributor?: boolean };
   const user = await getUser(req.headers.authorization);
@@ -861,7 +878,7 @@ app.post("/api/community/share", requireAuth, async (req, res) => {
   if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
   const result = await shareLesson(lessonId, { id: user.id, email: user.email ?? "" }, displayName, { contributor: !!contributor });
   if (!result.ok) { res.status(400).json({ error: result.error || "Couldn't share." }); return; }
-  res.json({ ok: true, slug: result.slug, code: result.code, already: result.already });
+  res.json({ ok: true, slug: result.slug, rewarded: result.rewarded, already: result.already });
 });
 
 // ----------------------------------------------------------------------------

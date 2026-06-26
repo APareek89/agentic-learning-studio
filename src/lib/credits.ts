@@ -104,6 +104,61 @@ export async function ensureFreeGrant(userId: string): Promise<number> {
   return balance;
 }
 
+/** A signed-in user's account + usage summary — backs the /account page. */
+export interface AccountSummary {
+  /** Live spendable balance (same number as /api/credits). */
+  balance: number;
+  /** Lifetime credits consumed by completed builds (sum of the −1 generation ledger rows). */
+  creditsSpent: number;
+  /** Lifetime credits bought (sum of the +N purchase ledger rows). */
+  creditsPurchased: number;
+  /** Total lessons this user has generated (every completed build). */
+  lessonsGenerated: number;
+  /** A human label for the plan — "Pay as you go" once they've bought, else "Free". */
+  plan: string;
+  /** ISO timestamp of their first activity (first credit grant or first lesson), or null. */
+  memberSince: string | null;
+}
+
+/**
+ * Aggregate the /account page's usage stats. Credits come from the append-only
+ * `credit_ledger` (purchases = +N rows, generations = −1 rows); lesson count comes
+ * from `lessons` (matched by id OR email, like the dashboard, so a learner's history
+ * follows their email). Graceful-optional: with no DB it returns zeroes.
+ */
+export async function getAccountSummary(userId: string, email = ""): Promise<AccountSummary> {
+  const balance = await getBalance(userId);
+  const empty: AccountSummary = { balance, creditsSpent: 0, creditsPurchased: 0, lessonsGenerated: 0, plan: "Free", memberSince: null };
+  if (!userId || !dbEnabled()) return empty;
+  const led = await query<{ spent: string; purchased: string }>(
+    `select coalesce(sum(case when delta < 0 then -delta else 0 end), 0)::text as spent,
+            coalesce(sum(case when reason = 'purchase' then delta else 0 end), 0)::text as purchased
+       from credit_ledger where user_id = $1`,
+    [userId]
+  ).catch(() => []);
+  const les = await query<{ n: string }>(
+    `select count(*)::text as n from lessons
+      where (user_id = $1 or ($2 <> '' and user_email = $2)) and kind = 'learning-artifact'`,
+    [userId, email]
+  ).catch(() => []);
+  const ms = await query<{ since: Date | null }>(
+    `select least(
+              (select min(created_at) from credit_ledger where user_id = $1),
+              (select min(created_at) from lessons where user_id = $1 or ($2 <> '' and user_email = $2))
+            ) as since`,
+    [userId, email]
+  ).catch(() => []);
+  const purchased = Number(led[0]?.purchased ?? 0);
+  return {
+    balance,
+    creditsSpent: Number(led[0]?.spent ?? 0),
+    creditsPurchased: purchased,
+    lessonsGenerated: Number(les[0]?.n ?? 0),
+    plan: purchased > 0 ? "Pay as you go" : "Free",
+    memberSince: ms[0]?.since ? new Date(ms[0].since).toISOString() : null,
+  };
+}
+
 /**
  * Spend one credit off the OLDEST non-expired lot, atomically (row-locked so two
  * concurrent builds can't double-spend the same lot). Writes a −1 ledger row.
