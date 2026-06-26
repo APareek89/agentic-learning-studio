@@ -31,8 +31,12 @@ function parseBp(v: unknown): Blueprint | null {
 async function attachToLesson(bp: Blueprint, category?: string): Promise<number> {
   let n = 0;
   const used = new Set<string>();
+  // CLEAR any previously-attached visual first, then re-attach from the CURRENT lesson_visuals
+  // table. This makes the backfill correctly idempotent across diagram swaps: re-running replaces
+  // a stale SVG (e.g. an older diagram set) with the fresh one — retrieveVisual is deterministic,
+  // so unchanged identifiers re-match the same concept, now carrying the new SVG bytes.
+  for (const m of bp.modules) m.visual = undefined;
   for (const m of bp.modules) {
-    if (m.visual) { used.add(m.visual.title); continue; } // keep an existing one
     try {
       const hit = await retrieveVisual({ topic: bp.meta.title, moduleTitle: m.title, moduleSummary: m.summary, category });
       if (hit && !used.has(hit.visualId)) {
@@ -54,8 +58,9 @@ async function backfillTable(table: string, label: string): Promise<void> {
     const bp = parseBp(r.blueprint);
     if (!bp || !Array.isArray(bp.modules)) continue;
     lessons++;
+    const hadBefore = bp.modules.some((m) => !!m.visual); // so a now-unmatched lesson gets its stale visual CLEARED too
     const n = await attachToLesson(bp, r.category ?? undefined);
-    if (n > 0) {
+    if (n > 0 || hadBefore) {
       visuals += n;
       try {
         await query(`update ${table} set blueprint = $1::jsonb, html = $2 where slug = $3`, [JSON.stringify(bp), renderArtifact(bp), r.slug]);

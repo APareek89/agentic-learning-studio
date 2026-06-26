@@ -20,7 +20,12 @@ import { query, dbEnabled, rawPool } from "../src/lib/db";
 import { localEmbeddings, toVectorLiteral } from "../src/rag/embed";
 
 const BASE = process.env.VISUALS_DIR || "/Users/anandpareek/Documents/KB - Visuals";
-const FOLDERS = ["custom-html-v3", "custom-html-v4"];
+// v5 is the high-quality drop-in replacement: ONE folder now holds every concept (same
+// visual_id / kb_identifier_keys / keywords as v3+v4), with a new shared `assets/diagram.css`.
+const FOLDERS = ["custom-html-v5"];
+// The shared stylesheet filename per folder (v5 → diagram.css; older sets used v3.css). The
+// ingester reads it from the SAME folder the diagrams come from and inlines it (scoped).
+const CSS_CANDIDATES = ["diagram.css", "v3.css"];
 
 interface Asset {
   visual_id: string;
@@ -83,8 +88,13 @@ async function main() {
       console.warn(`• ${folder}: no manifest (${(e as Error).message}) — skipping`);
       continue;
     }
-    const v3css = await readFile(join(folderPath, "assets", "v3.css"), "utf8").catch(() => "");
-    const scopedCss = scopeCss(v3css);
+    // Read the shared stylesheet from THIS folder (v5 → diagram.css; older → v3.css) and scope it.
+    let css = "";
+    for (const name of CSS_CANDIDATES) {
+      css = await readFile(join(folderPath, "assets", name), "utf8").catch(() => "");
+      if (css) break;
+    }
+    const scopedCss = scopeCss(css);
     const assets = manifest.assets ?? [];
     console.log(`• ${folder}: ${assets.length} assets`);
     for (const a of assets) {
