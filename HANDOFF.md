@@ -209,6 +209,22 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **📊 Lesson visuals ("Visualize this") — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commit `2a200fe`).**
+  A small **"Visualize this"** CTA on a lesson module opens a ~65% popup with a curated, self-contained concept diagram
+  (inline SVG; no iframe/external fetch). Additive: a deterministic retrieval post-step + one OPTIONAL `module.visual
+  {title,svg}` schema field + a CTA/popup in the renderer — the lesson-gen model output, the 7 gates, and the credit flow
+  are UNCHANGED. Source diagrams = `~/Documents/KB - Visuals/custom-html-v3 + v4` (129). **Migration `0018_lesson_visuals.sql`
+  (pgvector 384d + HNSW, RLS-on/no-policies) is APPLIED to the STAGING DB**, ingested (129 rows, all embedded) and backfilled
+  (library: 96/100 lessons, 133 visuals). Files: `src/lib/visuals.ts` (retrieveVisual: keyword/identifier match →
+  embedding fallback @0.84, symmetric embedPassages; env-tuneable `VISUAL_SIM_THRESHOLD`/`VISUAL_KEYWORD_MIN`),
+  `scripts/ingest-visuals.ts` (extract `<svg>` + INLINE v3.css SCOPED under `.viz-svg` so page rules can't leak),
+  `scripts/backfill-visuals.ts` (no regen — re-renders from blueprint), `src/render/{schema,components,tokens,runtime}.ts`,
+  `src/agent/orchestrator.ts` (auto-attach per module on new builds; try/catch never fails a build). Verified locally
+  (Playwright desktop+mobile): CTA → 65% popup with the right diagram, ✕/Esc/backdrop close, NO CSS leak (body stays
+  `display:block`), mobile reflows, 0 console errors, tsc clean. **KNOWN: the current diagram set is low-quality and will be
+  REPLACED by a new set (re-run `ingest-visuals.ts` → `backfill-visuals.ts`; upsert by `visual_id` + `clearVisualCache()`).**
+  **PROMOTE TO PROD (after review):** `checkout origin/staging --` the 9 paths into `main`, then
+  `DATABASE_URL="$PROD_URL" npm run migrate && DATABASE_URL="$PROD_URL" npx tsx scripts/ingest-visuals.ts && DATABASE_URL="$PROD_URL" npx tsx scripts/backfill-visuals.ts`.
 - **🧩 LLM Skills tab — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commits `e4be14c` + `da61062`).** A new
   top-nav **"LLM Skills"** dropdown (mirrors the Trainer dropdown) with two items: **Build a Skill** and **My Skills**.
   *Build a Skill* turns a free-text brief (LLM interface · task · data sources · access method + 4 optional fields, NO
