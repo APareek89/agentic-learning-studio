@@ -203,7 +203,7 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
-- **🩹 SYNTHESIS "Putting it together" was near-empty (2026-06-26, fix on `staging`; promote w/ next prod push).** A lesson's
+- **🩹 SYNTHESIS "Putting it together" was near-empty (2026-06-26, fix NOW ON `staging` AND `main`/prod — promote `94ff2c7`).** A lesson's
   final Synthesis pane showed only the lone capstone line ("Try it: Apply what you learned to <topic>") — confirmed by data:
   the stored blueprint had `recap`/`buildOrder`/`checklist` all EMPTY (the generic capstone is `coerceSkeleton`'s default,
   `nodes.ts:368`). ROOT CAUSE: the **overview-prose pass (`writeOverviewProse`, `nodes.ts:716`) that fills synthesis during
