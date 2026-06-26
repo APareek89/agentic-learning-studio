@@ -440,6 +440,15 @@ export function isBuilt(m: Module): boolean {
   return m.loadState === "full" && m.blocks.length > 0;
 }
 
+/** A friendly "still building" banner for the OVERVIEW — shown when the lesson is opened
+ *  while some modules are still being built (e.g. "Open" from My Lessons mid-build). The
+ *  runtime (#build-banner) hides it once every section has finished. Not shown in the free
+ *  preview-only overview (modules are intentionally un-built there). */
+function buildBanner(bp: Blueprint, previewOnly: boolean): string {
+  if (previewOnly || !bp.modules.some((m) => !isBuilt(m))) return "";
+  return `<div class="build-banner" id="build-banner"><span class="bspin"></span><div class="bb-txt"><strong>Just a little bit longer — your trainer is getting your lesson ready.</strong><div class="muted">Explore the map below; each section opens the moment it's built.</div></div></div>`;
+}
+
 // ---- the INNER content of a built module (head + body). Reused both inline AND as
 //      the fragment the runtime injects when a background module finishes. ----
 export function moduleInner(m: Module, bp: Blueprint): string {
@@ -730,7 +739,7 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
   // Panes: overview (active), each module (tabbed), synthesis, sources. The runtime shows
   // one pane + one tab at a time and drives the shared header's Back/Next.
   const panes =
-    `<section class="hx-mod" data-hmod="_map"><div class="hx-tab" data-ti="0" data-label="Overview" data-eyebrow="Lesson overview"><div class="hx-concept">${heroInner(bp, metaBits)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}</div></div></section>` +
+    `<section class="hx-mod" data-hmod="_map"><div class="hx-tab" data-ti="0" data-label="Overview" data-eyebrow="Lesson overview"><div class="hx-concept">${heroInner(bp, metaBits)}${buildBanner(bp, !!opts.previewOnly)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}</div></div></section>` +
     bp.modules.map((m) => modulePaneH(m, bp, false)).join("") +
     specialPane("_synth", "Putting it together", "Synthesis", synthesisInner(bp)) +
     (hasCitations ? specialPane("_sources", "Sources", "Provenance", citationsInner(bp)) : "");
@@ -829,6 +838,7 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
         ${bp.meta.thesis ? `<p class="thesis">${esc(bp.meta.thesis)}</p>` : ""}
         <div class="meta-line">${metaBits.map((m) => `<span>${esc(m)}</span>`).join("")}</div>
       </div>
+      ${buildBanner(bp, !!opts.previewOnly)}
       ${recapBanner(bp)}
       ${provenanceBanner(bp)}
       ${whatsNew(bp)}
