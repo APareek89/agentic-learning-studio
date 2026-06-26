@@ -226,10 +226,25 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 >    all with `DATABASE_URL="$PROD_URL"`). Promote: `lib/visuals.ts`, `render/{schema,components,tokens,runtime}.ts`,
 >    `agent/orchestrator.ts`, `scripts/{ingest,backfill}-visuals.ts`, plus the two migrations.
 > KNOWN minor (pre-existing, non-visible): standalone artifact at 375px reports a ~117px phantom scroll while a viz modal is open.
+> ‼️ **SHIP-BLOCKER before prod promote:** lesson **builds are FAILING on staging** (502/404 — see the 🚨 B3 entry below). These
+> three items don't touch the build pipeline, but the build-durability fix should land before/with promoting them, since prod
+> has the same Render gateway-timeout exposure. Re-QA a full build-to-100% on each env before/after promoting.
 
-- **⚡ B3 generation-latency optimization — APPROVED, NOT YET STARTED (next session; user OK'd 2026-06-26, incl. Opus→Sonnet
-  planner).** Overview ≈85s (target <60s), build >6min (target <6min). Approved scope = **Tier 1 + measurement + the planner
-  model swap**: (a) **prompt caching** (`cache_control: ephemeral` via `@langchain/anthropic`) on the stable prefix
+- **🚨 B3 — SHIP-BLOCKER: builds are FAILING on staging (not just slow). APPROVED, NOT YET STARTED (next session).**
+  Staging UAT (2026-06-26): overview OK (~41s), but the **full build FAILED twice** — attempt 1 → `404 /api/job/<id>`
+  (poller lost the in-memory job mid-build → UI reverted to 0% after 30%); attempt 2 (clean, no tab-switching) →
+  `502 Bad Gateway on /api/module` (module synthesis exceeds the Render gateway timeout). Billing stayed correct (failed
+  builds never charged: 27→27; lesson reverts to its saved overview for retry). **TWO root causes to fix, both before any
+  prod promote:** (1) **DURABILITY** — `runBuildJob` (orchestrator.ts) builds modules with NO per-module try/catch, so ONE
+  module failure (incl. a 502/overload) fails the WHOLE build; the resilient skip-and-continue pattern already exists in
+  `/api/artifact/:id/full` — port it. The client `pollJob` (app.js) reverts to 0% on a job `404` instead of reconstructing
+  progress from the PERSISTED artifact (modules persist incrementally to Postgres) / `/api/jobs/active` — make 404 mean
+  "poller lost, re-read persisted state," not "failed." (2) **/api/module 502** — that PUBLIC per-module endpoint synthesizes
+  ONE Sonnet ~16k-tok body SYNCHRONOUSLY; on Render it exceeds the gateway timeout → 502. Decouple synthesis from the HTTP
+  request (return the persisted module if ready, else 202 + the iframe POLLS; the background `runBuildJob` is the builder), OR
+  make it fit under the timeout (faster model / lower maxTokens / streamed keep-alive). **Then the original LATENCY work**
+  (overview ≈85s→<60s, build <6min) — faster modules also stops the 502. Approved latency scope = **Tier 1 + measurement +
+  the planner model swap**: (a) **prompt caching** (`cache_control: ephemeral` via `@langchain/anthropic`) on the stable prefix
   (`MODULE_SYSTEM` + shared blueprint/profile/KB block) across the ~5 module calls in `runBuildJob` — build module 1, await
   first token, THEN fan out the rest so they READ the cache (cache only readable once the first response streams; min cacheable
   prefix 4096 tok Opus / 2048 Sonnet); (b) **raise `MAX_MODULE_CONCURRENCY` 3→5** (one wave for a 5-module lesson; existing
