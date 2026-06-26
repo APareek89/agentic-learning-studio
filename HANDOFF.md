@@ -225,6 +225,19 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 >    `0018_lesson_visuals.sql`** + ingest + backfill on PROD DB (`npm run migrate` → `ingest-visuals.ts` → `backfill-visuals.ts`,
 >    all with `DATABASE_URL="$PROD_URL"`). Promote: `lib/visuals.ts`, `render/{schema,components,tokens,runtime}.ts`,
 >    `agent/orchestrator.ts`, `scripts/{ingest,backfill}-visuals.ts`, plus the two migrations.
+> 4. **B3 build durability + latency** (`bda97ee`) — the 502/404 ship-blocker fix + caching/planner/concurrency (full
+>    detail in the B3 bullet below). **No DB migration.** Promote: `src/server.ts`, `src/agent/{orchestrator,nodes}.ts`,
+>    `src/lib/jobs.ts`, `src/render/runtime.ts`, `public/app.js`. ⚠️ `orchestrator.ts` + `render/runtime.ts` are shared with
+>    item 3 (visuals) — promote the CURRENT files (they contain both). ⚠️ A clean 5/5 *generation* re-QA on the Render host is
+>    blocked until the staging Anthropic spend cap resets (2026-07-01) — verified locally (5/5) + 202/no-502 on the host.
+> 5. **Home + nav UI batch** (`d5e9235`) — broadened home messaging to the whole AI landscape (new H1, broadened sub/chips,
+>    a new `#ai-areas` box: 8 grouped topic areas / 50 chips below the community band); **sticky top nav** (`.topbar`
+>    position:sticky + `html,body` height→min-height); **Library "FREE" pill**; **LLM Skills tab moved after My Lessons**;
+>    **bigger/lighter dropdown caret**; **dark-mode fix** for the "free overview" toast in the lesson iframe (was white-on-light
+>    → invisible; now hardcoded dark bg). **No DB migration.** Promote: `public/{index.html,home.css,styles.css}`,
+>    `src/render/runtime.ts` (runtime.ts also shared with items 3+4 — promote current). Verified: home in-browser (Playwright,
+>    sticky pinned at scrollY=5481) + served HTML/CSS/runtime bytes. Dark-mode toast fix verified in served bytes (the
+>    end-to-end dark lesson view needs a built lesson → re-confirm visually after the Anthropic cap resets).
 > KNOWN minor (pre-existing, non-visible): standalone artifact at 375px reports a ~117px phantom scroll while a viz modal is open.
 > ✅ **SHIP-BLOCKER LIFTED (2026-06-26, `bda97ee` on `origin/staging`):** the build **502/404 ship-blocker is FIXED** (see the B3
 > entry below — `/api/module` now returns 202 + polls instead of synthesizing on the request; `runBuildJob` is per-module
