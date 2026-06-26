@@ -209,6 +209,36 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+
+> ### ✅ VERIFIED ON STAGING — READY TO PROMOTE TO PROD (as of 2026-06-26)
+> Staging = `https://agentic-learning-studio-1.onrender.com` (Supabase `ydgiyst…`). Prod = `https://agentic-learning-studio.onrender.com`
+> (Supabase `kdgtlbnl…`). Each item below is on `origin/staging` and verified (Playwright + curl); promote to `main` with the
+> usual `git checkout origin/staging -- <paths>` pattern, then run any per-item DB step against the **PROD** DB
+> (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`).
+>
+> 1. **UAT Batch 1 fixes** (`3ad0e1e`) — B2 SPA fallback · B6 401-race · B5 stale-build badge · B8 library KC grading ·
+>    B9 popover · B4 mobile header · download-mid-build. **No DB migration.** Promote: 6 files (`server.ts`,
+>    `render/{runtime,tokens}.ts`, `public/{app.js,styles.css,home.css}`).
+> 2. **LLM Skills tab** (`e4be14c`+`da61062`) — Build a Skill / My Skills dropdown. **Migration `0017_generated_skills.sql`**
+>    (apply to PROD DB). Promote: `lib/skillgen.ts`, `rag/retrieve.ts`, `server.ts`, `public/{index.html,skills.js,skills.css,app.js}`, migration.
+> 3. **Lesson visuals + v5 swap** (`2a200fe`+`2402f53`) — "Visualize this" CTA/popup, v5 diagrams. **Migration
+>    `0018_lesson_visuals.sql`** + ingest + backfill on PROD DB (`npm run migrate` → `ingest-visuals.ts` → `backfill-visuals.ts`,
+>    all with `DATABASE_URL="$PROD_URL"`). Promote: `lib/visuals.ts`, `render/{schema,components,tokens,runtime}.ts`,
+>    `agent/orchestrator.ts`, `scripts/{ingest,backfill}-visuals.ts`, plus the two migrations.
+> KNOWN minor (pre-existing, non-visible): standalone artifact at 375px reports a ~117px phantom scroll while a viz modal is open.
+
+- **⚡ B3 generation-latency optimization — APPROVED, NOT YET STARTED (next session; user OK'd 2026-06-26, incl. Opus→Sonnet
+  planner).** Overview ≈85s (target <60s), build >6min (target <6min). Approved scope = **Tier 1 + measurement + the planner
+  model swap**: (a) **prompt caching** (`cache_control: ephemeral` via `@langchain/anthropic`) on the stable prefix
+  (`MODULE_SYSTEM` + shared blueprint/profile/KB block) across the ~5 module calls in `runBuildJob` — build module 1, await
+  first token, THEN fan out the rest so they READ the cache (cache only readable once the first response streams; min cacheable
+  prefix 4096 tok Opus / 2048 Sonnet); (b) **raise `MAX_MODULE_CONCURRENCY` 3→5** (one wave for a 5-module lesson; existing
+  jittered 429/529 backoff covers the burst); (c) **honest progress copy**; (d) **planner Opus 4.8 → Sonnet 4.6** for the
+  overview (the slow leg; env-overridable `ANTHROPIC_MODEL_*` — `plannerLLM` in `nodes.ts:50`). Add per-stage wall-clock logging
+  (Langfuse already traces) for real before/after. **NO change to the gate/credit logic or the 7 gates.** User said: push to
+  STAGING directly, test, report the latency delta. Pipeline map: `orchestrator.ts` `runOverviewJob`/`runBuildJob`; `nodes.ts`
+  `planner`/`architect`/`runDeepDive`; `llm.ts` `makeLLM` (add a `cacheSystem`/cache_control option); `prompts.ts`
+  `MODULE_SYSTEM`/`moduleUserPrompt`.
 - **🩹 Prod-UAT Batch 1 fixes — ON STAGING, AWAITING REVIEW BEFORE PROD (2026-06-26; commit `3ad0e1e`).** Seven UAT items,
   each verified locally (Playwright + curl). **B2** SPA history fallback: a catch-all (`app.get(/.*/)` registered LAST in
   `server.ts`) serves `index.html` for non-API/non-asset GETs so `/pricing /library /community /builder /llm-skills` survive
