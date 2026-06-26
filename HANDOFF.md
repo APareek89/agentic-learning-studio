@@ -203,6 +203,12 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🩹 "Lesson still building" overview banner (2026-06-26, on `staging`→`main`/prod).** Opening a lesson mid-build (e.g. "Open"
+  from My Lessons before the build finishes) landed on the overview with no signal. Added `buildBanner()` in `components.ts`
+  (shown in BOTH the vertical + horizontal overview when any module `!isBuilt`; suppressed when `previewOnly`): "Just a little
+  bit longer — your trainer is getting your lesson ready." Runtime `updateBuildBanner()` (`runtime.ts`) hides `#build-banner`
+  once no `.navitem.building` remain. CSS `.build-banner` in `tokens.ts`. Verified locally w/ Playwright (renders for a building
+  blueprint, absent when built/preview, 0 console errors). Re-renders from stored blueprint → applies to existing lessons too.
 - **🎨 UI REDESIGN MOCKUPS (2026-06-26, LOOK-AND-FEEL exploration — NOT wired to the app, UNTRACKED, local-only).** Owner wants a
   more professional, Coursera/Udemy-inspired look (visual only, no UX/feature change). Variation 1 (Coursera-inspired) built as
   static mockups in **`public/mockups/`** (`index/home/builder/trainer/my-lessons.html` + `mock.css`) — **Source Sans 3** (Coursera's
