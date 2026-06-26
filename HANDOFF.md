@@ -232,8 +232,8 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
     prod promotion (else `/api/support/complaint` 503s on prod); (3) then promote staging→prod (cherry-pick / `checkout
     origin/staging -- public src supabase` pattern); (4) optional: set `RESEND_API_KEY`/`SUPPORT_FROM_EMAIL` on Render for
     real complaint emails (without it, complaints still save to `support_requests`); (5) lawyer review before taking payments/scaling.
-  - The **"not legal advice / formal legal review recommended" disclaimer on each page is INTENTIONAL** (liability shield + honesty
-    flag — pages are AI-drafted, not lawyer-vetted; matters most once payments/scale begin). Keep it until a lawyer reviews.
+  - The "not legal advice" disclaimer was **REMOVED from all 4 pages per the owner's decision** (2026-06-26) — owner will get
+    the pages legally reviewed themselves. (`.policy-disclaimer` CSS left in place but unused.)
 - **✅ GOOGLE OAUTH ENABLED (2026-06-26) — on BOTH Supabase projects, verified working.** Enabled `external_google`
   on prod (`kdgtlbnlyscdldogxorb`) + staging (`ydgiysthvxhlfpzxyrmy`) via the Supabase **Management API**
   (`PATCH /v1/projects/{ref}/config/auth`, token was user-supplied, NOT persisted). Client ID
@@ -243,6 +243,13 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   redirect (`…supabase.co/auth/v1/callback` is in the Google client's Authorized redirect URIs — no mismatch).
   **APPLE = deferred** (needs the paid Apple Developer account + Services ID/.p8/JWT secret; button stays hidden
   until enabled — no code change needed then; the frontend gates buttons on GoTrue's enabled-providers list).
+  - **🩹 SITE-URL FIX (2026-06-26):** after Google sign-in users were bounced to `http://localhost:3000/#access_token=…`
+    (ERR_CONNECTION_REFUSED) — the projects still had Supabase's DEFAULT `site_url=http://localhost:3000` and an EMPTY
+    `uri_allow_list`, so the OAuth redirect fell back to that dead default. Fixed via Management API `PATCH …/config/auth`:
+    **staging** `site_url=https://agentic-learning-studio-1.onrender.com`, allow-list = staging + `localhost:5070`;
+    **prod** `site_url=https://prathibhax.com`, allow-list = prathibhax.com + www + `agentic-learning-studio.onrender.com` +
+    `localhost:5070` (all with `/**`). Not a custom-domain issue. (`oauthSignIn` sends `redirectTo=origin+"/"`; the client's
+    default `detectSessionInUrl` picks up the `#access_token` on return — no code change needed.)
 - **✅ ALL "BATCH 2 + SEO + OAuth-gating" WORK IS NOW ON STAGING AND PROD.** `origin/main 9292cb0` == `origin/staging
   d40544c` for `public/`+`src/` (byte-identical; verified `git diff`). Only un-promoted file = `scripts/qa.mjs`
   (a 6-line test-harness tweak, non-runtime). Prod = `agentic-learning-studio.onrender.com`, staging = `…-1.onrender.com`.
