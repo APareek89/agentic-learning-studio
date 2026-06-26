@@ -209,6 +209,23 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🩹 Prod-UAT Batch 1 fixes — ON STAGING, AWAITING REVIEW BEFORE PROD (2026-06-26; commit `3ad0e1e`).** Seven UAT items,
+  each verified locally (Playwright + curl). **B2** SPA history fallback: a catch-all (`app.get(/.*/)` registered LAST in
+  `server.ts`) serves `index.html` for non-API/non-asset GETs so `/pricing /library /community /builder /llm-skills` survive
+  refresh/deep-link/share; `routeFromUrl()` (app.js) maps those paths to their tab (NO URL-push — by decision). **B6** load
+  401 race: `loadDashboard()` returns early until the Supabase token is attached (`applySession` re-runs it) → 0 boot 401s.
+  **B5** stale "Building… X%": `loadDashboard` is now SERVER-AUTHORITATIVE (a completed build absent from `/api/jobs/active`
+  can't show a stale badge from a dead local poller); the `X%` itself was reading-progress (working as designed). **B8**
+  Library/Community knowledge checks now grade for REAL: `/api/check` resolves the prebuilt/community Blueprint **by slug**
+  (`{slug,source}`), and the artifact runtime sends the slug for `/api/lesson/*` + `/api/community/lesson/*` pages (was
+  `!ARTIFACT_ID` → "Saved (grading needs the live app)"). **B9** (i) popover: `closePopover()` on vertical module nav +
+  a visible `×`. **B4** mobile header (375px): CSS-only — the 9-tab bar becomes a horizontal-scroll strip + reflow (no
+  overlap/overflow); also fixed a Home feature-row grid overflow (`minmax(0,1fr)` + `min-width:0`). **Download mid-build:**
+  `/api/artifact/:id/full` serves best-available HTML immediately when modules are stubs (no 30s hang); a completed lesson
+  downloads full. **B7 (community ♥) needed NO change** — it works; the UAT's "no network call" was the per-browser like
+  dedupe on an already-liked lesson (verified: like fires, count 2→3). Files: `server.ts` · `render/{runtime,tokens}.ts` ·
+  `public/{app.js,styles.css,home.css}`. NO DB migration. **Still pending (separate sign-off):** B3 latency (plan), B1 DNS.
+  **PROMOTE TO PROD (after review):** `checkout origin/staging --` those 6 files into `main` (no migration).
 - **📊 Lesson visuals ("Visualize this") — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commit `2a200fe`).**
   A small **"Visualize this"** CTA on a lesson module opens a ~65% popup with a curated, self-contained concept diagram
   (inline SVG; no iframe/external fetch). Additive: a deterministic retrieval post-step + one OPTIONAL `module.visual
