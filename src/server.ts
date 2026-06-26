@@ -37,6 +37,7 @@ import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, sa
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
+import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
 import { getBalance, ensureFreeGrant, addCredits, getAccountSummary } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
@@ -428,6 +429,54 @@ app.get("/api/job/:id", requireAuth, (req, res) => {
     id: job.id, status: job.status, stage: job.stage, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
     lessons: job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status, percent: lessonPercent(l), builtModules: l.builtModules, totalModules: l.totalModules })),
   });
+});
+
+// ----------------------------------------------------------------------------
+// LLM Skills — turn a free-text brief into an installable Agent Skill.
+// POST /api/skill/generate (requireAuth, FREE in v1) → detached job → {jobId}.
+// The browser polls GET /api/skill/job/:id. Grounded by the "Agent Skills" KB
+// category when present; generates ungrounded (logged) if not yet ingested.
+// ----------------------------------------------------------------------------
+app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const str = (v: unknown, max = 5000) => (typeof v === "string" ? v.slice(0, max) : "");
+  const task = str(body.task).trim();
+  if (!task) { res.status(400).json({ error: "Tell me what the skill is for (the 'task' field)." }); return; }
+  const input: SkillInput = {
+    llmInterface: str(body.llmInterface, 200),
+    task,
+    dataSources: str(body.dataSources, 2000),
+    accessMethod: str(body.accessMethod, 2000),
+    exampleRequest: str(body.exampleRequest, 2000),
+    tools: str(body.tools, 2000),
+    constraints: str(body.constraints, 2000),
+    skillName: str(body.skillName, 120),
+    refDocIds: Array.isArray(body.refDocIds) ? (body.refDocIds as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 12) : [],
+  };
+  const user = await getUser(req.headers.authorization);
+  // Cache hit → return a job that's already done (no gen slot needed).
+  const cached = getCachedSkill(input);
+  if (cached) {
+    const job = createSkillJob(user?.id ?? "anon");
+    job.skill = cached;
+    job.grounded = (cached.sources ?? []).some((s) => !!s.url);
+    job.percent = 100;
+    job.status = "done";
+    res.json({ jobId: job.id });
+    return;
+  }
+  // Take a generation slot LAST (a failure above can't leak it); the job releases it in its finally.
+  if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot right now — please try again in a minute." }); return; }
+  const job = createSkillJob(user?.id ?? "anon");
+  void runSkillJob(job, input);
+  res.json({ jobId: job.id });
+});
+
+// GET /api/skill/job/:id — live progress + the finished skill package.
+app.get("/api/skill/job/:id", requireAuth, (req, res) => {
+  const job = getSkillJob(req.params.id);
+  if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
+  res.json({ id: job.id, status: job.status, percent: job.percent, error: job.error, grounded: job.grounded, skill: job.skill });
 });
 
 // GET /api/jobs/active — the signed-in user's still-running generations (server source of

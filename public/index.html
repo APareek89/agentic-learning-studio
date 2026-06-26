@@ -171,6 +171,7 @@
       <nav class="tabs" role="tablist">
         <button class="tab active" role="tab" aria-selected="true" data-tab="home">Home</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="configurator">Builder</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="llm-skills" id="tab-btn-llm-skills">LLM Skills</button>
         <!-- Trainer + its open-lessons dropdown (the old visible tab bar moved in here). -->
         <span class="tab-dd" id="trainer-dd">
           <button class="tab" role="tab" aria-selected="false" data-tab="trainer" id="tab-btn-trainer">Trainer</button>
@@ -571,6 +572,115 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
       </section>
     </main>
 
+    <!-- ===== TAB: LLM Skills (turn a brief into an installable Agent Skill) ===== -->
+    <main class="tabpanel" id="tab-llm-skills" role="tabpanel" hidden>
+      <!-- STATE 1 — the brief form -->
+      <section class="landing" id="skill-form-state">
+        <div class="hero-band">
+          <div class="hero-content">
+            <h2 class="hero-title">Build a Skill for your task</h2>
+            <p class="sub">
+              Describe what you want your LLM to do — we'll generate an installable Skill
+              (<code>SKILL.md</code> + scripts) you can drop into Claude Code, Codex, Cursor and more.
+            </p>
+          </div>
+        </div>
+
+        <div class="landing-inner">
+          <div class="prompt-card">
+            <!-- Core free-text fields (NO dropdowns) -->
+            <label class="ctx ctx-row">
+              <span class="ctx-label">LLM interface</span>
+              <input id="skill-interface" type="text" placeholder="e.g. Claude Code, Codex, Cursor, Gemini CLI" />
+            </label>
+            <label class="ctx ctx-row">
+              <span class="ctx-label">Task the skill is for</span>
+              <textarea id="skill-task" rows="2" placeholder="The core thing the skill should do — e.g. 'triage incoming support tickets and draft replies'"></textarea>
+            </label>
+            <div class="ctx-grid">
+              <label class="ctx">
+                <span class="ctx-label">Data sources</span>
+                <input id="skill-data" type="text" placeholder="e.g. our Postgres DB, a folder of PDFs, the GitHub API" />
+              </label>
+              <label class="ctx">
+                <span class="ctx-label">Method to access data</span>
+                <input id="skill-access" type="text" placeholder="e.g. REST API, local files, SQL, an MCP server, a CLI" />
+              </label>
+            </div>
+
+            <p class="opts-note">Everything below is optional — the more you add, the sharper the skill.</p>
+            <label class="ctx ctx-row">
+              <span class="ctx-label">Example request you'd give the skill</span>
+              <input id="skill-example" type="text" placeholder="e.g. 'summarize last week's tickets by theme'" />
+            </label>
+            <div class="ctx-grid">
+              <label class="ctx">
+                <span class="ctx-label">Tools / commands it should use</span>
+                <input id="skill-tools" type="text" placeholder="optional — e.g. curl, psql, gh" />
+              </label>
+              <label class="ctx">
+                <span class="ctx-label">Skill name</span>
+                <input id="skill-name" type="text" placeholder="optional — auto-generated if blank" />
+              </label>
+            </div>
+            <label class="ctx ctx-row">
+              <span class="ctx-label">Constraints / what it must NOT do</span>
+              <textarea id="skill-constraints" rows="2" placeholder="optional — e.g. 'never send emails, never delete records'"></textarea>
+            </label>
+
+            <!-- Reference upload (same pattern as the Builder) -->
+            <div class="uploads">
+              <div class="uploads-head">
+                <input type="file" id="skill-file-input" multiple hidden
+                  accept=".pdf,.docx,.md,.txt,.html,.htm,.json,.js,.ts,.jsx,.tsx,.mjs,.py,.java,.go,.rb,.rs,.css,.scss,.yaml,.yml,.sql,.sh,.xml" />
+                <button class="ghost" id="skill-add-docs" type="button">📎 Add reference files</button>
+              </div>
+              <div class="repo-row">
+                <input id="skill-repo-url" type="url" placeholder="…or paste a public GitHub repo URL (I'll clone &amp; read it)" autocomplete="off" />
+                <button class="ghost" id="skill-add-repo" type="button">＋ Add repo</button>
+              </div>
+              <div class="upload-chips" id="skill-upload-chips"></div>
+              <div class="upload-hint" id="skill-upload-hint" hidden></div>
+            </div>
+
+            <div class="prompt-actions">
+              <span class="hint" id="skill-gen-note">Free · generates a SKILL.md + scripts you can download</span>
+              <button class="generate" id="skill-generate">Generate Skill</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATE 2 — generating -->
+      <section class="skill-progress" id="skill-progress-state" hidden>
+        <div class="skill-progress-card">
+          <span class="gen-spin"></span>
+          <span class="skill-prog-label" id="skill-prog-label">Designing your skill…</span>
+          <div class="skill-prog-bar"><div class="skill-prog-fill" id="skill-prog-fill"></div></div>
+          <span class="gen-sub">Grounding in the Agent Skills knowledge base, then writing SKILL.md + scripts.</span>
+          <div class="skill-prog-err" id="skill-prog-err" hidden></div>
+        </div>
+      </section>
+
+      <!-- STATE 3 — result (left module rail + content pane) -->
+      <section class="skill-result" id="skill-result-state" hidden>
+        <div class="skill-result-head">
+          <button class="vbtn" id="skill-new" type="button">← New skill</button>
+          <span class="skill-result-title" id="skill-result-title">Your skill</span>
+          <span class="skill-grounded-badge" id="skill-grounded" hidden>✓ Grounded in the Agent Skills KB</span>
+        </div>
+        <div class="skill-layout">
+          <nav class="skill-rail" id="skill-rail" aria-label="Skill sections">
+            <button class="skill-rail-item active" data-mod="overview" type="button"><span class="sr-num">1</span> Skill Overview</button>
+            <button class="skill-rail-item" data-mod="howto" type="button"><span class="sr-num">2</span> How to Use</button>
+            <button class="skill-rail-item" data-mod="files" type="button"><span class="sr-num">3</span> Get your Skill</button>
+            <button class="skill-rail-item" data-mod="sources" type="button"><span class="sr-num">4</span> Sources</button>
+          </nav>
+          <div class="skill-pane" id="skill-pane"></div>
+        </div>
+      </section>
+    </main>
+
     <!-- ===== TAB: Trainer (the lesson workspace; persists the open lesson) ===== -->
     <section class="tabpanel" id="tab-trainer" role="tabpanel" hidden>
       <!-- WORKSPACE: full-screen lesson; an "Ask more" chat slides in on the right -->
@@ -930,5 +1040,6 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
     <script src="/app.js"></script>
+    <script src="/skills.js"></script>
   </body>
 </html>
