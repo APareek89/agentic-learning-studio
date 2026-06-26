@@ -757,7 +757,7 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
       <div class="hx-head">
         <div class="hx-htext"><div class="hx-eyebrow" id="hx-eyebrow"></div><div class="hx-title" id="hx-title"></div></div>
         <div class="hx-grow"></div>
-        <div class="hx-tools">${toggles}${handsOnEligible(bp) ? `<button class="tbtn handson-btn" type="button" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on</button>` : ""}<div class="progress" title="Progress"><i></i></div></div>
+        <div class="hx-tools">${toggles}${handsOnEligible(bp) ? `<button class="tbtn handson-btn" type="button" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on<span class="ho-beta">Beta</span></button>` : ""}<div class="progress" title="Progress"><i></i></div></div>
         <div class="hx-pos" id="hx-pos"></div>
         <button class="hx-nav hx-back" id="hx-back" type="button" hidden>← Back</button>
         <button class="hx-nav hx-next" id="hx-next" type="button">Next →</button>
@@ -826,7 +826,7 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
     <div class="tb-left"><button class="tbtn nav-back" id="to-overview" hidden>← Overview</button></div>
     <div class="tb-right">
       ${contentToggles ? `<div class="toggle-group" role="group" aria-label="Show or hide content">${contentToggles}</div>` : ""}
-      ${handsOnEligible(bp) ? `<button class="tbtn handson-btn" type="button" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on</button>` : ""}
+      ${handsOnEligible(bp) ? `<button class="tbtn handson-btn" type="button" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on<span class="ho-beta">Beta</span></button>` : ""}
       <div class="progress" title="Progress"><i></i></div>
     </div>
   </div></div>

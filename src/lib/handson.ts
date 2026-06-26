@@ -26,16 +26,26 @@ import { handsOnEligible } from "../render/eligibility";
 import type { Blueprint, Module } from "../render/schema";
 
 // Bumping this invalidates every cached notebook (cache_key includes it).
-export const SCHEMA_VERSION = "v1";
+// v2: code cells carry heading/explain + every cell must print illustrative output + a verify pass.
+export const SCHEMA_VERSION = "v2";
 
 // ---- Notebook shape (shared by live gen + Phase-2 templates) ----
 export const NotebookSchema = z.object({
   title: z.string(),
   kernelNote: z.string().optional(),
   cells: z
-    .array(z.object({ type: z.enum(["markdown", "code"]), source: z.string() }))
-    .min(3)
-    .max(5),
+    .array(
+      z.object({
+        type: z.enum(["markdown", "code"]),
+        source: z.string(),
+        // For CODE cells: a short heading + a 1–2 line "what this does + what output to expect"
+        // note, rendered ABOVE the editor so every code block is explained.
+        heading: z.string().optional(),
+        explain: z.string().optional(),
+      })
+    )
+    .min(2)
+    .max(6),
 });
 export type Notebook = z.infer<typeof NotebookSchema>;
 
@@ -101,15 +111,49 @@ export function validateNotebook(nb: Notebook): { ok: boolean; reason?: string }
 // ============================================================================
 // GENERATION (Phase 1 — live Haiku)
 // ============================================================================
-const HANDSON_SYSTEM = `Generate a TINY runnable Python notebook (3–5 cells) so a learner can practice ONE idea from their lesson.
-Rules:
-- Pure standard-library Python (numpy/pandas ONLY if truly needed).
-- Use TINY HARDCODED data inline — no datasets, no downloads.
+const HANDSON_SYSTEM = `Generate a TINY runnable Python notebook (2–4 code cells) so a learner can practice ONE idea from their lesson AND SEE IT WORK.
+HARD RULES:
+- Pure standard-library Python (numpy/pandas ONLY if essential). TINY HARDCODED data inline — no datasets, no downloads.
 - NO network, NO API keys, NO paid-model SDKs (openai/anthropic/etc), NO training, NO GPU, NO file writes, NO shell/subprocess.
-- Cell 1 = imports/setup; then a tiny data cell; then 1–3 short cells that PRINT their output.
-- Keep markdown minimal (a short title + one-line intros). Code must run top-to-bottom with no edits.
+- The code MUST run top-to-bottom with NO errors and NO edits. Define every name before use; keep variables/state consistent across cells.
+- EVERY code cell MUST PRINT a clear, illustrative output that DEMONSTRATES the concept so the learner SEES it happen — e.g. an
+  agent loop printing each step's decision/action/observation, a retriever printing the top matches with scores, a tokenizer
+  printing the tokens, an evaluation printing the metric. Never leave a cell with no visible output.
+FOR EACH CODE CELL also fill:
+- heading: a short title (≤6 words).
+- explain: 1–2 plain sentences = what this code does + what output to expect.
+STRUCTURE: an optional 1-cell markdown intro, then 2–4 code cells that build on each other (setup → demonstrate → vary).
 Output ONLY the structured notebook.`;
 const STRICT_SUFFIX = `STRICTER PASS: your previous attempt used a forbidden construct. Use ONLY: math, random, json, statistics, collections, itertools, functools, datetime, re, dataclasses, typing (and numpy/pandas only if essential). No file/network/shell/eval/exec/imports outside that list.`;
+
+// A SECOND Haiku agent reviews the generated notebook and returns a corrected version that is
+// guaranteed (to its best reasoning) to run top-to-bottom with no error and print output — the
+// "feedback loop" gate. (The server never RUNS the code; Pyodide does, client-side.)
+const VERIFY_SYSTEM = `You are a meticulous Python reviewer. You are given a tiny notebook (markdown + code cells) that will run TOP-TO-BOTTOM in a restricted Pyodide kernel. Only these imports are allowed: math, random, json, statistics, collections, itertools, functools, datetime, re, dataclasses, typing, numpy, pandas. No network, files, shell, eval/exec, or paid-model SDKs.
+Carefully trace execution and FIX any problem so it runs CLEANLY:
+- syntax errors, NameError (use-before-define across cells), TypeError, IndexError/KeyError, infinite loops, wrong indentation.
+- a code cell that produces NO visible output → add a print(...) that demonstrates the result.
+- a disallowed import or unsafe call → rewrite with allowed tools only.
+Keep it TINY, keep the same title/structure, and keep each code cell's heading + explain accurate to the (possibly fixed) code.
+Return the corrected notebook and set ok=true ONLY if the original already ran cleanly and printed output for every code cell (no fix needed).`;
+const VerifySchema = z.object({ ok: z.boolean(), notebook: NotebookSchema });
+
+async function verifyNotebook(nb: Notebook): Promise<{ ok: boolean; notebook: Notebook }> {
+  try {
+    const llm = makeLLM("haiku", 0).withStructuredOutput(VerifySchema, { name: "verify_notebook" });
+    const out = await llm.invoke([
+      new SystemMessage(VERIFY_SYSTEM),
+      new HumanMessage("Review and fix this notebook so EVERY code cell runs with no error and prints clear output:\n\n" + JSON.stringify(nb).slice(0, 7000)),
+    ]);
+    const fixed = NotebookSchema.parse(out.notebook);
+    const v = validateNotebook(fixed); // never accept a "fix" that breaks the safety rules
+    if (!v.ok) return { ok: true, notebook: nb };
+    return { ok: !!out.ok, notebook: fixed };
+  } catch (e) {
+    console.warn(`[handson] verify pass unavailable for "${nb.title}":`, (e as Error).message?.slice(0, 100));
+    return { ok: true, notebook: nb }; // verifier down → proceed with the validated notebook
+  }
+}
 
 export interface NotebookContext {
   topic: string;
@@ -158,10 +202,10 @@ function safeFallbackNotebook(topic: string): Notebook {
     title: `Hands-on: ${topic}`.slice(0, 80),
     kernelNote: "A tiny runnable warm-up you can edit and re-run.",
     cells: [
-      { type: "markdown", source: "# Hands-on warm-up\nA tiny Python demo that runs in your browser. Click a code cell and press **Shift+Enter**." },
-      { type: "code", source: "# Standard library only\nimport math, random\nrandom.seed(0)\nprint(\"ready\")" },
-      { type: "code", source: "# Tiny hardcoded data — tweak it and re-run\nnums = [random.randint(1, 100) for _ in range(8)]\nprint(\"numbers:\", nums)\nprint(\"mean:\", round(sum(nums) / len(nums), 2))" },
-      { type: "code", source: "# A small computation\nfor deg in [0, 30, 45, 60, 90]:\n    print(deg, \"->\", round(math.cos(math.radians(deg)), 3))" },
+      { type: "markdown", source: "# Hands-on warm-up\nA tiny Python demo that runs in your browser. Click a code cell and press **Shift+Enter** (or **▶ Run**)." },
+      { type: "code", heading: "Set up", explain: "Imports the standard library and seeds randomness so results are repeatable. Output: prints \"ready\".", source: "import math, random\nrandom.seed(0)\nprint(\"ready\")" },
+      { type: "code", heading: "Generate and summarise data", explain: "Builds a tiny list of numbers and prints them with their mean. Output: the list, then its average.", source: "nums = [random.randint(1, 100) for _ in range(8)]\nprint(\"numbers:\", nums)\nprint(\"mean:\", round(sum(nums) / len(nums), 2))" },
+      { type: "code", heading: "A small computation", explain: "Prints the cosine of a few angles. Output: each angle mapped to its cosine value.", source: "for deg in [0, 30, 45, 60, 90]:\n    print(deg, \"->\", round(math.cos(math.radians(deg)), 3))" },
     ],
   };
 }
@@ -241,6 +285,13 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
   let nb = await tryGen(false);
   if (!nb) nb = await tryGen(true);
   if (nb) {
+    // Feedback loop: a second Haiku agent traces + fixes the code so it runs error-free and
+    // prints output. Up to 2 passes; stop as soon as it certifies the notebook is clean.
+    for (let i = 0; i < 2; i++) {
+      const vr = await verifyNotebook(nb);
+      nb = vr.notebook;
+      if (vr.ok) break;
+    }
     result = { notebook: nb, source: "live" };
   } else {
     result = { notebook: safeFallbackNotebook(ctx.topic), source: "fallback" };

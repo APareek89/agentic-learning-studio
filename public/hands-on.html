@@ -11,15 +11,18 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+    <!-- CodeMirror 5: editable, syntax-highlighted Python cells (the JupyterLab look) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css" />
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
     <style>
-      /* Match the host app's palette + fonts (styles.css). JupyterLab-ish notebook look. */
+      /* Match the host app's palette + fonts (styles.css). Notebook = JupyterLab look. */
       :root {
         --bg: #f5f8ff; --surface: #ffffff; --surface-2: #eef3fd;
         --ink: #0f1729; --ink-2: #3c4660; --muted: #56607a;
         --accent: #2563eb; --accent-2: #1d4ed8; --accent-weak: #e8efff;
         --border: #e3e9f5; --border-strong: #d0d9ee;
         --ok: #1d9e75; --danger: #d2433a;
-        --code-bg: #0b1228; --code-ink: #e7ecff;
         --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
       }
@@ -33,6 +36,7 @@
         padding: 12px 22px; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
       .nb-brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 16px; }
       .nb-brand img { width: 26px; height: 26px; object-fit: contain; }
+      .nb-beta { font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: var(--accent-weak); color: var(--accent-2); border-radius: 5px; padding: 2px 6px; }
       .nb-title { font-weight: 700; font-size: 15px; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .nb-spacer { flex: 1; }
       .nb-kernel { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
@@ -42,12 +46,10 @@
       .nb-btn { border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); font: inherit;
         font-size: 13px; font-weight: 600; padding: 7px 13px; border-radius: 9px; cursor: pointer; }
       .nb-btn:hover { border-color: var(--accent); color: var(--accent-2); }
-      .nb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-      .nb-btn.primary:hover { filter: brightness(1.07); color: #fff; }
       .nb-btn[disabled] { opacity: 0.5; cursor: default; }
 
-      /* Wrap */
-      .nb-wrap { max-width: 860px; margin: 0 auto; padding: 26px 20px 80px; }
+      /* Wrap — the notebook spans ~80% of the screen width on desktop. */
+      .nb-wrap { width: 80%; max-width: 1400px; margin: 0 auto; padding: 26px 0 80px; }
 
       /* Preparing / progress */
       .prep { text-align: center; padding: 70px 20px; }
@@ -61,59 +63,72 @@
       .notice h1 { font-size: 20px; margin: 0 0 8px; }
       .notice p { color: var(--muted); margin: 0 0 18px; }
 
-      /* Notebook */
-      .nb-doc-title { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
-      .nb-doc-note { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
-      .cell { margin: 14px 0; }
-      .cell-md { font-size: 15px; color: var(--ink-2); }
+      /* Notebook doc */
+      .nb-doc-title { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
+      .nb-doc-note { color: var(--muted); font-size: 14.5px; margin: 0 0 18px; }
+      .cell-md { font-size: 15px; color: var(--ink-2); margin: 14px 0; }
       .cell-md h1 { font-size: 21px; color: var(--ink); margin: 18px 0 6px; }
       .cell-md h2 { font-size: 18px; color: var(--ink); margin: 16px 0 6px; }
       .cell-md h3 { font-size: 15.5px; color: var(--ink); margin: 14px 0 6px; }
       .cell-md p { margin: 7px 0; }
       .cell-md code { font-family: var(--mono); font-size: 0.88em; background: var(--accent-weak); color: var(--accent-2); padding: 1px 6px; border-radius: 6px; }
-      .cell-code { border: 1px solid var(--border-strong); border-radius: 12px; overflow: hidden; background: var(--surface); }
-      .cc-bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
-      .cc-run { border: none; background: var(--accent); color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-      .cc-run:hover { filter: brightness(1.07); }
-      .cc-run[disabled] { opacity: 0.55; cursor: default; }
-      .cc-hint { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+
+      /* Jupyter-style code cell: heading + explain ABOVE, In[ ]: editor, Out[ ]: output. */
+      .jp-cell { margin: 22px 0; }
+      .jp-cell-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+      .jp-titles { min-width: 0; }
+      .jp-cell-head { font-weight: 700; font-size: 16px; color: var(--ink); margin: 0 0 2px; }
+      .jp-cell-explain { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+      .jp-run { flex: none; border: 1px solid var(--accent); background: var(--accent); color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; padding: 6px 13px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+      .jp-run:hover { filter: brightness(1.07); }
+      .jp-run[disabled] { opacity: 0.55; cursor: default; }
+      .jp-label { font-family: var(--mono); font-size: 12px; color: #303f9f; margin: 0 0 3px; }
+      .jp-label.out { color: #b71c1c; margin: 9px 0 3px; }
+      .jp-area { border: 1px solid #cfd6e4; border-left: 3px solid var(--accent); border-radius: 6px; overflow: hidden; background: #fff; }
+      .jp-output { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; padding: 10px 12px; background: #f7f9fc; border: 1px solid #e6eaf2; border-radius: 6px; color: var(--ink); }
+      .jp-output.err { color: var(--danger); background: #fff5f5; border-color: #f1c6c6; }
       .cc-spin { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); border-top-color: #fff; animation: spin 0.7s linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
-      .cc-src { width: 100%; border: none; outline: none; resize: vertical; font-family: var(--mono); font-size: 13px; line-height: 1.6;
-        padding: 12px 14px; color: var(--code-ink); background: var(--code-bg); min-height: 44px; tab-size: 4; }
-      .cc-out { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
-        padding: 0; margin: 0; border-top: 1px solid var(--border); }
-      .cc-out:empty { display: none; }
-      .cc-out .out-block { padding: 11px 14px; border-top: 1px solid var(--border); }
-      .cc-out .out-block:first-child { border-top: none; }
-      .cc-out .out-std { color: var(--ink); background: var(--surface); }
-      .cc-out .out-err { color: var(--danger); background: #fff5f5; }
-      .reduced { font-size: 12px; color: var(--muted); }
 
-      @media (max-width: 560px) {
+      /* CodeMirror sizing + Jupyter (ipython) syntax palette */
+      .CodeMirror { height: auto; font-family: var(--mono); font-size: 13px; line-height: 1.55; }
+      .CodeMirror-scroll { min-height: 1.4em; }
+      /* fallback textarea (if the CDN editor fails to load) */
+      .jp-fallback { width: 100%; border: none; outline: none; resize: vertical; font-family: var(--mono); font-size: 13px; line-height: 1.55; padding: 10px 12px; color: var(--ink); background: #fff; min-height: 44px; tab-size: 4; }
+      .cm-s-default .cm-keyword { color: #008000; font-weight: bold; }
+      .cm-s-default .cm-builtin { color: #008000; }
+      .cm-s-default .cm-string { color: #ba2121; }
+      .cm-s-default .cm-comment { color: #408080; font-style: italic; }
+      .cm-s-default .cm-number { color: #098658; }
+      .cm-s-default .cm-def { color: #0000ff; }
+      .cm-s-default .cm-variable-2 { color: #19177c; }
+      .cm-s-default .cm-operator { color: #aa22ff; }
+      .cm-s-default .cm-meta { color: #aa22ff; }
+
+      @media (max-width: 760px) {
         .nb-head { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
         .nb-title { flex-basis: 100%; order: 3; }
-        .nb-wrap { padding: 18px 14px 70px; }
+        .nb-wrap { width: auto; padding: 18px 14px 70px; }
         .nb-doc-title { font-size: 22px; }
+        .jp-cell-headrow { flex-direction: column; }
       }
     </style>
   </head>
   <body>
     <header class="nb-head">
-      <span class="nb-brand"><img src="/wizbit-logo.png" alt="Wizbit" /> Wizbit</span>
+      <span class="nb-brand"><img src="/wizbit-logo.png" alt="Wizbit" /> Wizbit <span class="nb-beta">Beta</span></span>
       <span class="nb-title" id="nb-lesson-title">Hands-on</span>
       <span class="nb-spacer"></span>
       <span class="nb-kernel" id="nb-kernel"><span class="nb-dot" id="nb-dot"></span><span id="nb-kernel-text">Kernel: idle</span></span>
       <button class="nb-btn" id="nb-runall" disabled>▶ Run all</button>
       <button class="nb-btn" id="nb-restart" disabled>↻ Restart</button>
-      <button class="nb-btn" id="nb-regen" hidden title="Regenerate (bypass cache)">⟳ Regenerate</button>
     </header>
 
     <main class="nb-wrap">
       <!-- Preparing state -->
       <section class="prep" id="prep">
         <h1>Preparing your hands-on notebook…</h1>
-        <p id="prep-sub">Designing a tiny runnable Python exercise for this lesson.</p>
+        <p id="prep-sub">Designing a tiny runnable Python exercise — and checking it runs cleanly.</p>
         <div class="pbar"><i id="prep-bar"></i></div>
         <div class="pct" id="prep-pct">8%</div>
       </section>
@@ -145,16 +160,12 @@
       const escapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
       function showNotice(title, msg) {
-        el("prep").hidden = true;
-        el("nb").hidden = true;
-        el("notice-h").textContent = title;
-        el("notice-p").textContent = msg;
-        el("notice").hidden = false;
+        el("prep").hidden = true; el("nb").hidden = true;
+        el("notice-h").textContent = title; el("notice-p").textContent = msg; el("notice").hidden = false;
       }
       function setProgress(p, sub) {
         const pct = Math.max(0, Math.min(100, Math.round(p)));
-        el("prep-bar").style.width = pct + "%";
-        el("prep-pct").textContent = pct + "%";
+        el("prep-bar").style.width = pct + "%"; el("prep-pct").textContent = pct + "%";
         if (sub) el("prep-sub").textContent = sub;
       }
 
@@ -162,9 +173,8 @@
       let sb = null;
       async function getToken() {
         let cfg;
-        try {
-          cfg = await fetch("/api/config").then((r) => r.json());
-        } catch (e) { return { authEnabled: false, token: null }; }
+        try { cfg = await fetch("/api/config").then((r) => r.json()); }
+        catch (e) { return { authEnabled: false, token: null }; }
         if (!cfg.authEnabled || !cfg.supabaseUrl || !cfg.supabaseAnonKey) return { authEnabled: false, token: null };
         try {
           sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
@@ -172,9 +182,7 @@
           return { authEnabled: true, token: data && data.session ? data.session.access_token : null };
         } catch (e) { return { authEnabled: true, token: null }; }
       }
-      function authHeaders(token) {
-        return token ? { Authorization: "Bearer " + token } : {};
-      }
+      const authHeaders = (token) => (token ? { Authorization: "Bearer " + token } : {});
 
       // ---- Minimal, safe markdown (source is escaped first, so this can't inject) ----
       function renderMarkdown(src) {
@@ -201,12 +209,10 @@
       }
 
       // ---- Pyodide (lazy) ----
-      let pyodide = null;
-      let pyLoading = null;
+      let pyodide = null, pyLoading = null;
       const loadedPkgs = new Set();
       function setKernel(state, text) {
-        const dot = el("nb-dot");
-        dot.className = "nb-dot" + (state === "ready" ? " ready" : state === "err" ? " err" : "");
+        el("nb-dot").className = "nb-dot" + (state === "ready" ? " ready" : state === "err" ? " err" : "");
         el("nb-kernel-text").textContent = text;
       }
       async function ensurePyodide() {
@@ -222,8 +228,7 @@
           });
           pyodide = await window.loadPyodide({ indexURL: `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/` });
           setKernel("ready", "Kernel ready");
-          el("nb-runall").disabled = false;
-          el("nb-restart").disabled = false;
+          el("nb-runall").disabled = false; el("nb-restart").disabled = false;
           return pyodide;
         })();
         try { return await pyLoading; }
@@ -242,13 +247,16 @@
       }
 
       // ---- Run a single code cell ----
+      let execCount = 0;
+      function cellSource(cell) { return cell.cm ? cell.cm.getValue() : cell.ta.value; }
       async function runCell(cell) {
-        const src = cell.srcEl.value;
-        const out = cell.outEl;
-        out.innerHTML = "";
+        const src = cellSource(cell);
         cell.runEl.disabled = true;
         const orig = cell.runEl.innerHTML;
         cell.runEl.innerHTML = '<span class="cc-spin"></span> Running';
+        cell.outWrap.hidden = false;
+        cell.outEl.className = "jp-output";
+        cell.outEl.textContent = "…";
         try {
           await ensurePyodide();
           await ensurePackagesFor(src);
@@ -256,92 +264,96 @@
           pyodide.setStdout({ batched: (s) => { buf += s; } });
           pyodide.setStderr({ batched: (s) => { buf += s; } });
           let result;
-          try {
-            result = await pyodide.runPythonAsync(src);
-          } finally {
-            pyodide.setStdout({}); pyodide.setStderr({});
-          }
+          try { result = await pyodide.runPythonAsync(src); }
+          finally { pyodide.setStdout({}); pyodide.setStderr({}); }
           let text = buf;
           if (result !== undefined && result !== null) {
             const r = result && result.toString ? result.toString() : String(result);
             if (r !== "undefined") text += (text && !text.endsWith("\n") ? "\n" : "") + r;
             if (result && result.destroy) { try { result.destroy(); } catch (e) {} }
           }
-          if (text.trim() === "") text = "✓ ran (no output)";
-          const block = document.createElement("div");
-          block.className = "out-block out-std";
-          block.textContent = text;
-          out.appendChild(block);
+          execCount++;
+          cell.inLabel.textContent = "In [" + execCount + "]:";
+          cell.outLabel.textContent = "Out [" + execCount + "]:";
+          cell.outEl.className = "jp-output";
+          cell.outEl.textContent = text.trim() === "" ? "✓ ran (no output)" : text;
         } catch (e) {
-          const block = document.createElement("div");
-          block.className = "out-block out-err";
-          block.textContent = (e && e.message) ? e.message : String(e);
-          out.appendChild(block);
+          cell.outEl.className = "jp-output err";
+          cell.outEl.textContent = (e && e.message) ? e.message : String(e);
         } finally {
-          cell.runEl.disabled = false;
-          cell.runEl.innerHTML = orig;
+          cell.runEl.disabled = false; cell.runEl.innerHTML = orig;
         }
       }
 
       // ---- Render the notebook ----
       const cellObjs = [];
       function renderNotebook(nb) {
-        el("prep").hidden = true;
-        el("notice").hidden = true;
-        el("nb").hidden = false;
+        el("prep").hidden = true; el("notice").hidden = true; el("nb").hidden = false;
         el("nb-doc-title").textContent = nb.title || "Hands-on";
         el("nb-lesson-title").textContent = nb.title || "Hands-on";
         document.title = (nb.title || "Hands-on") + " · Wizbit";
         if (nb.kernelNote) el("nb-doc-note").textContent = nb.kernelNote; else el("nb-doc-note").hidden = true;
-        const host = el("cells");
-        host.innerHTML = "";
-        cellObjs.length = 0;
+        const host = el("cells"); host.innerHTML = ""; cellObjs.length = 0;
+
         (nb.cells || []).forEach((c, i) => {
-          if (c.type === "markdown") {
+          if (c.type !== "code") {
             const d = document.createElement("div");
-            d.className = "cell cell-md";
+            d.className = "cell-md";
             d.innerHTML = renderMarkdown(c.source || "");
             host.appendChild(d);
-          } else {
-            const wrap = document.createElement("div");
-            wrap.className = "cell cell-code";
-            const bar = document.createElement("div");
-            bar.className = "cc-bar";
-            const run = document.createElement("button");
-            run.className = "cc-run"; run.type = "button"; run.innerHTML = "▶ Run";
-            const hint = document.createElement("span");
-            hint.className = "cc-hint"; hint.textContent = "Shift+Enter to run";
-            bar.appendChild(run); bar.appendChild(hint);
-            const ta = document.createElement("textarea");
-            ta.className = "cc-src"; ta.spellcheck = false; ta.value = (c.source || "");
-            ta.rows = Math.min(16, Math.max(2, (c.source || "").split("\n").length));
-            // restore an edit from this session, if any
-            const skey = "handson:" + LESSON_ID + ":" + MODULE_ID + ":" + i;
-            try { const saved = sessionStorage.getItem(skey); if (saved != null) ta.value = saved; } catch (e) {}
-            ta.addEventListener("input", () => { try { sessionStorage.setItem(skey, ta.value); } catch (e) {} });
-            const out = document.createElement("div");
-            out.className = "cc-out";
-            wrap.appendChild(bar); wrap.appendChild(ta); wrap.appendChild(out);
-            host.appendChild(wrap);
-            const obj = { srcEl: ta, outEl: out, runEl: run };
-            cellObjs.push(obj);
-            run.addEventListener("click", () => runCell(obj));
-            ta.addEventListener("keydown", (ev) => {
-              if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runCell(obj); }
-            });
+            return;
           }
+          // CODE cell — JupyterLab style with a heading + explanation above it.
+          const cell = document.createElement("div");
+          cell.className = "jp-cell";
+          const heading = c.heading || ("Step " + (cellObjs.length + 1));
+          const explain = c.explain || "Run this cell to see the output.";
+          cell.innerHTML =
+            '<div class="jp-cell-headrow"><div class="jp-titles">' +
+              '<div class="jp-cell-head">' + escapeHtml(heading) + '</div>' +
+              '<div class="jp-cell-explain">' + escapeHtml(explain) + '</div>' +
+            '</div><button class="jp-run" type="button">▶ Run</button></div>' +
+            '<div class="jp-label">In [ ]:</div>' +
+            '<div class="jp-area"><textarea class="jp-fallback"></textarea></div>' +
+            '<div class="jp-out-wrap" hidden><div class="jp-label out">Out [ ]:</div><div class="jp-output"></div></div>';
+          host.appendChild(cell);
+
+          const ta = cell.querySelector("textarea");
+          ta.value = c.source || "";
+          ta.rows = Math.min(18, Math.max(2, (c.source || "").split("\n").length));
+          const obj = {
+            ta, cm: null, runEl: cell.querySelector(".jp-run"),
+            inLabel: cell.querySelector(".jp-label"), outLabel: cell.querySelector(".jp-label.out"),
+            outWrap: cell.querySelector(".jp-out-wrap"), outEl: cell.querySelector(".jp-output"),
+          };
+          cellObjs.push(obj);
+
+          const skey = "handson:" + LESSON_ID + ":" + MODULE_ID + ":" + i;
+          try { const saved = sessionStorage.getItem(skey); if (saved != null) ta.value = saved; } catch (e) {}
+
+          if (window.CodeMirror) {
+            obj.cm = window.CodeMirror.fromTextArea(ta, {
+              mode: "python", lineNumbers: true, indentUnit: 4, viewportMargin: Infinity,
+              extraKeys: { "Shift-Enter": () => runCell(obj) },
+            });
+            obj.cm.on("change", () => { try { sessionStorage.setItem(skey, obj.cm.getValue()); } catch (e) {} });
+          } else {
+            // graceful fallback: plain textarea editor + Shift+Enter
+            ta.addEventListener("input", () => { try { sessionStorage.setItem(skey, ta.value); } catch (e) {} });
+            ta.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runCell(obj); } });
+          }
+          obj.runEl.addEventListener("click", () => runCell(obj));
         });
-        // Warm the kernel in the background so the first Run is quick.
+
+        // Warm the kernel so the first Run is quick.
         ensurePyodide().catch(() => {});
       }
 
-      el("nb-runall").addEventListener("click", async () => {
-        for (const c of cellObjs) { await runCell(c); }
-      });
+      el("nb-runall").addEventListener("click", async () => { for (const c of cellObjs) await runCell(c); });
       el("nb-restart").addEventListener("click", async () => {
-        pyodide = null; pyLoading = null; loadedPkgs.clear();
+        pyodide = null; pyLoading = null; loadedPkgs.clear(); execCount = 0;
         el("nb-runall").disabled = true; el("nb-restart").disabled = true;
-        cellObjs.forEach((c) => { c.outEl.innerHTML = ""; });
+        cellObjs.forEach((c) => { c.outWrap.hidden = true; c.outEl.textContent = ""; c.inLabel.textContent = "In [ ]:"; });
         await ensurePyodide().catch(() => {});
       });
 
@@ -374,7 +386,7 @@
       }
 
       async function pollJob(jobId, token) {
-        setProgress(15, "Designing a tiny runnable Python exercise…");
+        setProgress(15, "Designing a tiny runnable Python exercise — and checking it runs cleanly…");
         let tries = 0;
         const tick = async () => {
           tries++;
@@ -389,7 +401,7 @@
             if (j.status === "done" && j.notebook) { setProgress(100); renderNotebook(j.notebook); return; }
             if (j.status === "error") { showNotice("Couldn't prepare it", j.error || "Generation failed. Please try again."); return; }
           }
-          if (tries > 60) { showNotice("Taking too long", "Preparing the notebook timed out. Please try again."); return; }
+          if (tries > 90) { showNotice("Taking too long", "Preparing the notebook timed out. Please try again."); return; }
           setTimeout(tick, 1200);
         };
         tick();
