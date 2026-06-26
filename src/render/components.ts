@@ -450,6 +450,17 @@ function buildBanner(bp: Blueprint, previewOnly: boolean): string {
   return `<div class="build-banner" id="build-banner"><span class="bspin"></span><div class="bb-txt"><strong>Just a little bit longer — your trainer is getting your lesson ready.</strong><div class="muted">Explore the map below; each section opens the moment it's built.</div></div></div>`;
 }
 
+// ---- "Visualize this" CTA + popup for a module that has a curated diagram. The
+//      SVG is OUR curated content (self-contained, scoped); the title is escaped.
+//      The artifact iframe is sandboxed, so the inline SVG is safe to render as-is. ----
+const VIZ_ICON = '<svg class="viz-ico" viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>';
+function vizParts(m: Module): { cta: string; modal: string } {
+  if (!m.visual || !m.visual.svg) return { cta: "", modal: "" };
+  const cta = `<button class="viz-cta" type="button" data-viz="${escAttr(m.id)}" aria-haspopup="dialog">${VIZ_ICON}<span>Visualize this</span></button>`;
+  const modal = `<div class="viz-modal" data-viz-for="${escAttr(m.id)}" hidden role="dialog" aria-modal="true" aria-label="${escAttr(m.visual.title)}"><div class="viz-card"><button class="viz-x" type="button" aria-label="Close">✕</button><div class="viz-modal-title">${esc(m.visual.title)}</div><div class="viz-figure">${m.visual.svg}</div></div></div>`;
+  return { cta, modal };
+}
+
 // ---- the INNER content of a built module (head + body). Reused both inline AND as
 //      the fragment the runtime injects when a background module finishes. ----
 export function moduleInner(m: Module, bp: Blueprint): string {
@@ -485,7 +496,8 @@ export function moduleInner(m: Module, bp: Blueprint): string {
   const nextHtml = next
     ? `<button class="next-step" data-deepdive="${escAttr(next.id)}">Next${ordered ? ` · step ${next.order}` : ""}: ${esc(next.title)} →</button>`
     : `<button class="next-step" data-goto="_synth">Finish → Putting it together</button>`;
-  return `${head}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}${keyTerms(m.termIds, bp)}${core.map((b) => block(b, bp)).join("")}${deeperHtml}${nextHtml}</div>`;
+  const viz = vizParts(m);
+  return `${head}${viz.cta}<div class="module-body"><p>${esc(m.summary)}</p>${obj}${forces}${keyTerms(m.termIds, bp)}${core.map((b) => block(b, bp)).join("")}${deeperHtml}${nextHtml}</div>${viz.modal}`;
 }
 
 /** The fragment served by POST /api/module and injected into the panel by the runtime. */
@@ -681,8 +693,9 @@ function modulePaneH(m: Module, bp: Blueprint, activeMod: boolean): string {
     return `<section class="hx-mod${hidden}" data-hmod="${escAttr(m.id)}" data-module="${escAttr(m.id)}" data-stub="1"><div class="hx-tab" data-ti="0" data-label="${escAttr(m.title)}" data-eyebrow="Module ${m.order}"><div class="hx-concept"><p>${esc(m.summary)}</p>${obj}<div class="building"><span class="bspin"></span> Building this section… <span class="muted">it'll fill in shortly</span></div></div></div></section>`;
   }
   const tabs = moduleTabsH(m, bp);
-  const tabHtml = tabs.map((t, i) => `<div class="hx-tab${i === 0 ? "" : " hidden"}" data-ti="${i}" data-label="${escAttr(t.label)}" data-eyebrow="${escAttr(t.eyebrow)}"${t.check ? ' data-check="1"' : ""}>${t.html}</div>`).join("");
-  return `<section class="hx-mod${hidden}" data-hmod="${escAttr(m.id)}" data-module="${escAttr(m.id)}" data-tabs="${tabs.length}">${tabHtml}</section>`;
+  const viz = vizParts(m);
+  const tabHtml = tabs.map((t, i) => `<div class="hx-tab${i === 0 ? "" : " hidden"}" data-ti="${i}" data-label="${escAttr(t.label)}" data-eyebrow="${escAttr(t.eyebrow)}"${t.check ? ' data-check="1"' : ""}>${i === 0 ? viz.cta : ""}${t.html}</div>`).join("");
+  return `<section class="hx-mod${hidden}" data-hmod="${escAttr(m.id)}" data-module="${escAttr(m.id)}" data-tabs="${tabs.length}">${tabHtml}${viz.modal}</section>`;
 }
 
 /**

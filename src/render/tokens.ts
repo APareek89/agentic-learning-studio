@@ -561,6 +561,20 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
 .hmodal-body .deeper-toggle{display:none}
 .kc-pending .kc-intro{color:var(--muted)}
 
+/* ---- "Visualize this" CTA + diagram popup (curated concept diagrams) ---- */
+.viz-cta{display:inline-flex;align-items:center;gap:7px;margin:2px 0 14px;padding:7px 13px;border:1px solid var(--accent);border-radius:999px;background:var(--accent-weak);color:var(--accent-2);font:inherit;font-size:13px;font-weight:700;cursor:pointer;line-height:1}
+.viz-cta:hover{background:var(--accent);color:#fff}
+.viz-cta .viz-ico{fill:currentColor;flex:none}
+.viz-modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(8,12,24,.6);padding:24px}
+.viz-modal[hidden]{display:none}
+.viz-card{position:relative;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--shadow);width:min(65vw,860px);max-height:88vh;overflow:auto;padding:22px 24px 24px}
+.viz-x{position:absolute;top:12px;right:14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);font:inherit;font-size:18px;line-height:1;width:30px;height:30px;border-radius:8px;cursor:pointer;z-index:2}
+.viz-x:hover{border-color:var(--accent);color:var(--accent-2)}
+.viz-modal-title{font-family:var(--font-head);font-weight:700;font-size:17px;margin:0 40px 14px 0;color:var(--ink)}
+.viz-figure{width:100%}
+.viz-figure svg.viz-svg{display:block;width:100%;height:auto;max-height:65vh}
+@media (max-width:640px){.viz-card{width:92vw;padding:18px 16px 20px}.viz-figure svg.viz-svg{max-height:60vh}}
+
 /* ---- horizontal v2: left = lesson modules; right = the active module's TABS ---- */
 .hx-head{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex:none}
 .hx-eyebrow{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-2)}

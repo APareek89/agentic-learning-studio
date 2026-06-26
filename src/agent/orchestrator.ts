@@ -19,6 +19,7 @@
 import { profiler, retriever, planner, architect, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { spendOne } from "../lib/credits";
+import { retrieveVisual } from "../lib/visuals";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
 import { makeRootedLangfuseHandler } from "../lib/langfuse";
@@ -153,6 +154,18 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     jl.builtModules = bp.modules.length - pending.length;
     jl.percent = lessonPercent(jl);
 
+    // Attach a CURATED concept diagram to a module when one strongly matches (deterministic
+    // retrieval — NOT model output; one visual per module, max). try/catch so a visual lookup
+    // can NEVER fail a build. Already-built modules (e.g. a seeded Module 1) get a pass here too.
+    const attachVisual = async (mod: (typeof bp.modules)[number]): Promise<void> => {
+      try {
+        if (mod.visual) return;
+        const hit = await retrieveVisual({ topic: bp.meta.title, moduleTitle: mod.title, moduleSummary: mod.summary });
+        if (hit) mod.visual = { title: hit.title, svg: hit.svg };
+      } catch { /* never fail a build over a visual */ }
+    };
+    await Promise.all(bp.modules.filter((m) => m.loadState === "full" && m.blocks.length > 0).map(attachVisual));
+
     // A1 — build module bodies in PARALLEL with a small concurrency cap (was one-at-a-time).
     // Cap is low so we don't burst the Anthropic rate/overload limit (a wide fan-out trips it;
     // the per-call jittered backoff de-syncs the rest). Sharing `bp` is safe: each module writes
@@ -177,6 +190,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         const idx = cursor++;
         if (idx >= pending.length) return;
         await runDeepDive(bp, pending[idx].id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config: cfg(`module ${pending[idx].order}: ${pending[idx].title}`) });
+        await attachVisual(pending[idx]);
         jl.builtModules++;
         jl.percent = lessonPercent(jl);
         await persist();

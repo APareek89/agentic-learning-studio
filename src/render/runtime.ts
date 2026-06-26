@@ -146,8 +146,14 @@ export const RUNTIME_JS = String.raw`
   function flash(btn){ var o=btn.textContent; btn.textContent="Copied"; setTimeout(function(){btn.textContent=o;},1200); }
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+  // ---- "Visualize this" curated-diagram popup (vertical AND horizontal) ----
+  function closeViz(){ var open=document.querySelectorAll(".viz-modal"); for(var i=0;i<open.length;i++){ open[i].hidden=true; } }
   // ---- one delegated click handler ----
   document.addEventListener("click", function(ev){
+    var vizCta = ev.target.closest(".viz-cta");
+    if(vizCta){ var id=vizCta.getAttribute("data-viz"), all=document.querySelectorAll(".viz-modal"); for(var vi=0;vi<all.length;vi++){ if(all[vi].getAttribute("data-viz-for")===id){ all[vi].hidden=false; break; } } return; }
+    if(ev.target.closest(".viz-x")){ var vmx=ev.target.closest(".viz-modal"); if(vmx) vmx.hidden=true; return; }
+    if(ev.target.classList && ev.target.classList.contains("viz-modal")){ ev.target.hidden=true; return; }
     // Horizontal modal: a backdrop or close-button click dismisses it (handle before .closest).
     if(HORIZ){
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
@@ -214,7 +220,7 @@ export const RUNTIME_JS = String.raw`
     }
   });
 
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ closeViz(); if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
   window.addEventListener("resize", closePopover);
 
   // ---- knowledge check (grades via /api/check; MCQ vs the stored Blueprint, freeText by LLM) ----
