@@ -7,6 +7,8 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
+> **2026-06-26 UPDATE:** `staging` is now **1 commit AHEAD** of `main`/prod — the lesson-toolbar title-removal fix (see §7) is
+> on **staging only**. Promote to prod after the owner verifies on the staging site.
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
@@ -203,6 +205,21 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🩹 Lesson toolbar alignment fix (2026-06-26, ON `staging` ONLY — NOT yet on `main`/prod).** In the artifact's inner
+  vertical-mode top bar (`.topbar` rendered by `components.ts renderBody` — the toolbar that sits BELOW the host "Ask more"
+  viewer bar), a long lesson title in `.tb-center .brand-mini` widened the bar and pushed the Concept/Functional/Code/
+  Explain-syntax toggles + progress onto extra rows (see owner screenshot of "Building a Voice-Enabled Customer Support Agent
+  with LangChain & LangGraph"). **FIX:** removed the `.tb-center`/`.brand-mini` title element entirely (one-line delete in
+  `components.ts`); the lesson title still shows in the HOST viewer bar (`#viewer-title`), so nothing is lost. Now `.tb-left`
+  (← Overview) + `.tb-right` (toggles + progress) split the bar and the toolbar stays on ONE row regardless of title length.
+  Artifacts RE-RENDER from the stored blueprint, so existing lessons pick it up too. Verified locally (:5070): `tsc --noEmit`
+  clean, 0 console errors, all toolbar buttons at the same top offset in BOTH the overview and workbench views.
+  **STATUS: pushed to `staging` (origin/staging) — NOT promoted to `main`/prod.** Promote with the usual staging→prod pattern
+  once the owner verifies on the staging site.
+  - **NOTE — reverted UI restyle:** a separate UI-restyle exploration (Source Sans 3 font + Coursera-style nav/builder/
+    my-lessons/trainer redesign across `index.html`/`styles.css`/`app.js`/`tokens.ts`/`runtime.ts`/`index.ts`) was built then
+    **REVERTED at the owner's request** (the earlier Plus-Jakarta look is kept). The mockups stay untracked in `public/mockups/`
+    (unshipped). The ONLY thing that shipped to staging is the toolbar title-removal above.
 - **🩹 "Lesson still building" overview banner (2026-06-26, on `staging`→`main`/prod).** Opening a lesson mid-build (e.g. "Open"
   from My Lessons before the build finishes) landed on the overview with no signal. Added `buildBanner()` in `components.ts`
   (shown in BOTH the vertical + horizontal overview when any module `!isBuilt`; suppressed when `previewOnly`): "Just a little

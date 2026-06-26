@@ -823,7 +823,6 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
   return `
   <div class="topbar"><div class="topbar-in">
     <div class="tb-left"><button class="tbtn nav-back" id="to-overview" hidden>← Overview</button></div>
-    <div class="tb-center"><span class="brand-mini">${esc(bp.meta.title)}</span></div>
     <div class="tb-right">
       ${contentToggles ? `<div class="toggle-group" role="group" aria-label="Show or hide content">${contentToggles}</div>` : ""}
       <div class="progress" title="Progress"><i></i></div>
