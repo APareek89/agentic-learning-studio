@@ -203,6 +203,15 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+- **🎨 UI REDESIGN MOCKUPS (2026-06-26, LOOK-AND-FEEL exploration — NOT wired to the app, UNTRACKED, local-only).** Owner wants a
+  more professional, Coursera/Udemy-inspired look (visual only, no UX/feature change). Variation 1 (Coursera-inspired) built as
+  static mockups in **`public/mockups/`** (`index/home/builder/trainer/my-lessons.html` + `mock.css`) — **Source Sans 3** (Coursera's
+  font), professional blue (`--brand:#0b5cff`), catalog cards w/ gradient thumbnails + ratings, clean nav/hero/footer. View at
+  `localhost:5070/mockups/index.html` or open the files (relative paths). These are NOT committed/deployed (throwaway). NEXT:
+  owner to pick a direction → optionally generate 8–10 real thumbnail/hero images via the **PixelBin connector (nanoBanana)**
+  (the MCP gate needs an estimate-prediction-cost confirmation first) → then apply the chosen look to the REAL app
+  (`public/index.html`/`styles.css`/`home.css` + the artifact renderer) as a proper styling pass. Possible variations: a
+  Udemy-style (darker, denser, purple accent) alternative if requested.
 - **🩹 SYNTHESIS "Putting it together" was near-empty (2026-06-26, fix NOW ON `staging` AND `main`/prod — promote `94ff2c7`).** A lesson's
   final Synthesis pane showed only the lone capstone line ("Try it: Apply what you learned to <topic>") — confirmed by data:
   the stored blueprint had `recap`/`buildOrder`/`checklist` all EMPTY (the generic capstone is `coerceSkeleton`'s default,
