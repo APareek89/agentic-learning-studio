@@ -50,6 +50,7 @@ import { handsOnEligible, resolveBlueprint, peekCache, createHandsOnJob, getHand
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
 import { saveSupportRequest, saveConsent, CONSENT_VERSION, SUPPORT_CATEGORIES } from "./lib/support";
+import { saveFeedback, logEvent } from "./lib/beta";
 import { sendSupportEmail, sendAckEmail } from "./lib/email";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
@@ -171,6 +172,8 @@ const heavyLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, standardHead
 const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 600, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey });
 app.use("/api/", apiLimiter);
 // Complaint/grievance intake — tight cap so the form can't be used to spam the operator.
+// Beta feedback: modest per-IP cap so the popup can't be used to spam, but generous enough for a tester.
+const betaLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey });
 const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
   message: { error: `Too many submissions — please wait an hour before sending another, or email ${CONTACT_EMAIL} directly.` } });
 
@@ -1236,6 +1239,30 @@ app.post("/api/support/complaint", supportLimiter, async (req, res) => {
   sendSupportEmail(payload).catch(() => {}); // best-effort operator notification
   sendAckEmail(payload).catch(() => {});     // best-effort acknowledgement to the submitter
   res.json({ ok: true, requestId: saved.id });
+});
+
+// ---- Beta traction (one-week launch): free-text feedback + lightweight event capture ----
+// Both are graceful: a DB hiccup never blocks the user, and they accept anonymous calls (we attach
+// the signed-in user when a valid token is present).
+app.post("/api/feedback", betaLimiter, async (req, res) => {
+  const message = typeof req.body?.message === "string" ? req.body.message : "";
+  if (!message.trim()) { res.status(400).json({ ok: false, error: "Please enter some feedback." }); return; }
+  const user = await getUser(req.headers.authorization).catch(() => null);
+  const saved = await saveFeedback({
+    message, userId: user?.id, userEmail: user?.email,
+    userAgent: String(req.headers["user-agent"] || ""), ip: req.ip,
+  });
+  res.json({ ok: !!saved });
+});
+
+app.post("/api/event", async (req, res) => {
+  const name = typeof req.body?.name === "string" ? req.body.name : "";
+  if (!name.trim()) { res.status(400).json({ ok: false }); return; }
+  const user = await getUser(req.headers.authorization).catch(() => null);
+  const ref = typeof req.body?.ref === "string" ? req.body.ref : undefined;
+  const props = (req.body && typeof req.body.props === "object" && req.body.props && !Array.isArray(req.body.props)) ? req.body.props : {};
+  await logEvent(name, { userId: user?.id, userEmail: user?.email, ref, props });
+  res.json({ ok: true });
 });
 
 // POST /api/consent — append a consent event (e.g. the signup Terms+Privacy checkbox).

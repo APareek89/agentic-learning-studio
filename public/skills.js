@@ -159,7 +159,7 @@
         job = await r.json();
       } catch (e) { showError("Lost the generation — please try again."); return; }
       setProgress(job.percent || 0);
-      if (job.status === "done") { if (job.skill) { renderResult(job.skill, job.grounded, job.saved); if (job.saved) loadMySkills(); } else showError("Generation finished but returned nothing — try again."); return; }
+      if (job.status === "done") { if (job.skill) { if (window.track) window.track("skill_generated", job.skill && job.skill.slug); renderResult(job.skill, job.grounded, job.saved); if (job.saved) loadMySkills(); } else showError("Generation finished but returned nothing — try again."); return; }
       if (job.status === "error") { showError(job.error || "Generation failed — try again."); return; }
       pollTimer = setTimeout(tick, 1500);
     };

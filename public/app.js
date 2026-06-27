@@ -1020,7 +1020,7 @@ function renderLibrary() {
 }
 libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
 
-function openLibraryLesson(slug, title) { openTab({ type: "library", title: title, slug: slug }); }
+function openLibraryLesson(slug, title) { track("library_lesson_opened", slug); openTab({ type: "library", title: title, slug: slug }); }
 
 // ---- Item 4: "while you wait" — relevant free Library lessons shown during overview generation ----
 const genSuggest = document.getElementById("gen-suggest");
@@ -1082,8 +1082,8 @@ function openBuyCredits(msg) {
   // the "buy" CTA is hidden via CSS, and the caller's `msg` is charging-oriented, so we override it.
   const t = document.getElementById("buy-modal-title");
   const m = document.getElementById("buy-modal-msg");
-  if (t) t.textContent = "You've used your free beta lessons";
-  if (m) m.textContent = "Thanks for trying the beta! You've used your 2 free lessons — your lessons are saved in My Lessons, and more is coming soon.";
+  if (t) t.textContent = "Thanks for learning with us!";
+  if (m) m.textContent = "We'll be back soon. You've used your free beta lessons — your lessons stay saved in My Lessons.";
   buyModal.hidden = false;
 }
 function closeBuyCredits() { if (buyModal) buyModal.hidden = true; }
@@ -1273,6 +1273,8 @@ window.addEventListener("message", (e) => {
   const lessonId = currentArtifactId;
   // Persist (authed; the host has the token, the iframe doesn't).
   fetch("/api/progress", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ lessonId, percent: d.percent || 0, visited: d.visited || 0, total: d.total || 0 }) }).catch(() => {});
+  // Beta traction: count a completed lesson once, when the reader reaches 100%.
+  if ((d.percent || 0) >= 100 && lessonId) { window.__alsCompleted = window.__alsCompleted || new Set(); if (!window.__alsCompleted.has(lessonId)) { window.__alsCompleted.add(lessonId); track("lesson_completed", lessonId); } }
   // After two modules, offer the share-and-save once (unless already shared).
   if ((d.visited || 0) >= 2 && !offeredShare[lessonId] && !isShared(lessonId)) {
     offeredShare[lessonId] = 1;
@@ -1670,7 +1672,7 @@ function pollJob(jobId, tabId) {
       } else if (job.status === "error" && t && t.id === activeTabId) {
         showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
       }
-      if (job.status === "done") loadCredits(); // a completed build spent 1 credit — refresh the pill
+      if (job.status === "done") { loadCredits(); track("lesson_generated", t && t.art); } // a completed build spent 1 credit — refresh the pill
       loadDashboard(); loadSuggestions(); return;
     }
     activeJobTimer = setTimeout(tick, 2500);
@@ -1815,6 +1817,7 @@ function setAuthMode(mode) {
 function logSignupConsent(email) {
   fetch("/api/consent", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ consentType: "signup_terms_privacy", email }) }).catch(() => {});
+  track("signup", email); // beta traction: count of new sign-ups
 }
 function applySession(session) {
   accessToken = (session && session.access_token) || null;
@@ -2337,4 +2340,38 @@ if (acctTopup) acctTopup.addEventListener("click", () => switchTab("pricing"));
   const close = () => { el.hidden = true; try { sessionStorage.setItem("als-mobile-notice-dismissed", "1"); } catch { /* ignore */ } };
   const btn = document.getElementById("mn-dismiss");
   if (btn) btn.addEventListener("click", close);
+})();
+
+// ===== Beta traction: lightweight event tracking + feedback popup (additive; never blocks a flow) =====
+function track(name, ref, props) {
+  try {
+    fetch("/api/event", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ name: name, ref: ref || undefined, props: props || {} }) }).catch(() => {});
+  } catch { /* analytics must never break the app */ }
+}
+window.track = track;
+
+(function feedbackPopup() {
+  const fab = document.getElementById("feedback-fab");
+  const modal = document.getElementById("feedback-modal");
+  if (!fab || !modal) return;
+  const text = document.getElementById("fb-text");
+  const sendBtn = document.getElementById("fb-send");
+  const thanks = document.getElementById("fb-thanks");
+  const open = () => { modal.hidden = false; if (thanks) thanks.hidden = true; if (text) { text.value = ""; setTimeout(() => { try { text.focus(); } catch {} }, 30); } };
+  const close = () => { modal.hidden = true; };
+  fab.addEventListener("click", open);
+  const x = document.getElementById("fb-x"); if (x) x.addEventListener("click", close);
+  const cancel = document.getElementById("fb-cancel"); if (cancel) cancel.addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  if (sendBtn) sendBtn.addEventListener("click", async () => {
+    const msg = ((text && text.value) || "").trim();
+    if (!msg) { if (text) text.focus(); return; }
+    sendBtn.disabled = true;
+    try { await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ message: msg }) }); } catch { /* ignore — best effort */ }
+    sendBtn.disabled = false;
+    if (text) text.value = "";
+    if (thanks) thanks.hidden = false;
+    setTimeout(close, 1200);
+  });
 })();
