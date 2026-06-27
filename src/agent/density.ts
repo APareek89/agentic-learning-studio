@@ -11,7 +11,7 @@
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { RunnableConfig } from "@langchain/core/runnables";
-import { makeLLM } from "./llm";
+import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, invokeResilient } from "./llm";
 import { RichTextSchema } from "../render/schema";
 import type { Blueprint, Module, Block } from "../render/schema";
 import { DENSITY, type Density } from "./calibration";
@@ -84,8 +84,15 @@ export async function repairDensity(bp: Blueprint, moduleId: string, density: De
     // HAIKU: density repair is a constrained, mechanical sentence-shortening rewrite (bounded by
     // RepairSchema) — Haiku does it well, ~3x cheaper + faster than Sonnet, and it only fires when a
     // module's prose is meaningfully over the tier ceiling (deterministic measureModule gate upstream).
-    const llm = makeLLM("haiku", 0.2, { maxTokens: 4000 }).withStructuredOutput(RepairSchema, { name: "repair" });
-    const out = await llm.invoke(
+    // BATCH B — Haiku Claude node fails over to GPT-5.4-mini when wired (env-gated; no-op otherwise).
+    const runnable = structuredWithFallback(
+      makeLLM("haiku", 0.2, { maxTokens: 4000, maxRetries: gptFallbackEnabled() ? 2 : 4 }),
+      makeGptLLM("haiku", { maxTokens: 4000 }),
+      RepairSchema,
+      { name: "repair" }
+    );
+    const out = (await invokeResilient(
+      runnable,
       [
         new SystemMessage(
           `You TIGHTEN prose to a density target without losing meaning. Rewrite each block's rich-text "body" so EVERY sentence is under ${D.hardCeilingWords} words (aim for a ~${D.medianSentenceWords}-word median) by splitting long sentences into short declarative ones. Keep the SAME node structure ({t:"p"|"h"|"ul"|"ol"|"callout", spans/items}), keep every span that has a "term" field intact, keep lists as lists. Do NOT add new claims or drop information — only shorten.`
@@ -93,7 +100,7 @@ export async function repairDensity(bp: Blueprint, moduleId: string, density: De
         new HumanMessage(JSON.stringify({ blocks: payload }).slice(0, 14000)),
       ],
       config ?? {}
-    );
+    )) as z.infer<typeof RepairSchema>;
     const byId = new Map(out.blocks.map((x) => [x.id, x.body]));
     let repaired = 0;
     for (const b of m.blocks) {
