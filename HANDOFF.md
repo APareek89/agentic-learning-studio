@@ -7,7 +7,21 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
-> **2026-06-27 (latest) — BATCH-1 + BATCH B PROMOTED TO PROD (`main d354538`).** Verify-then-promote run: staging checks a–f all PASS
+> **2026-06-27 (latest) — LIBRARY finalCheck BACKFILL + DIAGRAM FIX · DATA LIVE ON STAGING + PROD · SOURCE COMMIT ON `staging` ONLY (NOT `main`).**
+> Resolves the "empty library KC panes" follow-up below. (1) **Knowledge checks (S5):** backfilled `bp.finalCheck` (id `_final_check`, 4–5 Qs,
+> mostly mcq + 1 freeText, retention flags) on **all 100** prebuilt lessons reusing `writeOverviewProse`; stripped stale per-module
+> `knowledgeCheck` blocks (1 staging / 12 prod); ensured `lessonTypes` incl `knowledge_check`. (2) **Diagrams:** migrated prod `the-agent-loop`'s
+> 4 dead 9-template (`template`/`data`) diagram blocks → valid `nodes`/`edges` (it was the ONLY invalid + render-throwing library blueprint;
+> staging/local were already clean). **Applied to BOTH the staging AND prod `prebuilt_lessons` DBs** — verified each: 100/100 finalCheck, 0
+> residual module-KC, 0 invalid, 0 render-throws, 0 `kc-pending`; live `/api/check` grades MCQ + freeText on both onrender hosts. `tsc` clean.
+> **⚠️ INTENTIONALLY STAGING-ONLY AT THE BRANCH LEVEL — TO BE CONSIDERED FOR `main` LATER:** the source commit `ebba64a` (4 reusable
+> maintenance scripts `scan-poor-diagrams.ts` / `fix-poor-diagrams.ts` / `backfill-finalcheck.ts` / `sync-prebuilt-source.ts` + the synced
+> `prebuilt/lessons/*.json`: +finalCheck ×100, −1 stale module KC) is pushed to **`origin/staging` only — NOT merged to `main`**. NOTE: the
+> library *DATA* fixes are already live on the prod DB (above); what is pending for `main` is ONLY merging the source/scripts so a future
+> `seed-library.ts`/`rebuild-library.ts` run does not regress the live fixes. Backfill regen is API-bound (one Sonnet call/lesson via
+> `writeOverviewProse`, concurrency-pooled); prod was promoted $0 via `backfill-finalcheck.ts` COPY mode (`FINALCHECK_SRC=`) — no re-gen.
+>
+> **2026-06-27 — BATCH-1 + BATCH B PROMOTED TO PROD (`main d354538`).** Verify-then-promote run: staging checks a–f all PASS
 > (Community Free pill; buy-credits popup; while-you-wait gen-suggest off the 100-lesson library; library-KC nav fix; **fractional skill
 > charge verified 19→18.5 = 0.5** + persists to My Skills; a built lesson's persisted artifact carries a real `finalCheck` — 12 kc-items, 0
 > kc-pending, 1 `_check` pane). `tsc` clean. **Migration 0019 applied to the PROD DB** (credit_lots.lessons_remaining/total + credit_ledger.delta
@@ -15,6 +29,7 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > migrations + docs). Prod verified live: `/healthz` 200, `gen-suggest` in styles.css, Community Free pill, buy popup, per-module-KC lesson
 > (the-agent-loop) has NO empty `_check`. charge-once-on-full-success unchanged (code). Staging gen still on slow GPT-5.5 (Anthropic cap → 07-01);
 > prod runs Claude.
+> **✅ RESOLVED 2026-06-27 (see the latest bullet at the top) — `scripts/backfill-finalcheck.ts` was run over the staging AND prod libraries; 0 `kc-pending` remain.**
 > **⚠️ TOP PROD FOLLOW-UP (new this run): empty library KC panes.** ~15/16 prod library lessons render `class="kc kc-pending"` ("…appears once the
 > lesson finishes building…") because their blueprints have neither a per-module KC nor a backfilled `finalCheck` (components.ts:264 +
 > showsFinalCheckPane:280). The promote IMPROVED this (suppresses the empty pane on per-module-KC lessons) but did not fix the no-KC lessons. →
