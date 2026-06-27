@@ -293,6 +293,19 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 > my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
 > charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
 
+- **🧠 PROD OOM + MEMORY FIX (2026-06-27) — FIXED & ON PROD.** The prod instance (Standard 2 GB) exceeded RAM and Render
+  auto-restarted it. Root cause = two unbounded in-memory Maps (audit P0-2/P0-3), aggravated by the Batch-A concurrency bump +
+  go-live traffic:
+  - **`src/lib/jobs.ts`** — generation progress trackers were never freed (the `activeJobs` cutoff only filtered the view).
+    Added the opportunistic sweep the `skillgen`/`handson` maps already use: drop trackers >60 min on each `createJob`. (`8fce4e4`)
+  - **`src/lib/uploads.ts`** — parsed/embedded uploads were never evicted. Added `createdAt` + a 2 h `gcUploads()` on each
+    upload. (`8fce4e4`)
+  - **Concurrency defaults lowered to bound PEAK RAM:** `MAX_MODULE_CONCURRENCY` 8→5 (`orchestrator.ts`),
+    `MAX_CONCURRENT_GENERATIONS` 4→2 (`jobs.ts`). Both still env-overridable. (this commit)
+  Jobs/uploads are RAM-only; lessons live in Postgres, so these GCs have **zero user impact** (pollJob reconstructs from the
+  persisted artifact if a tracker is ever missing). After deploy the Render **Memory graph should plateau** instead of climbing
+  to a cliff. NOTE (still open, see STAGING_AUDIT.md Scalability): all this state is single-instance in-memory — it must move to
+  Postgres/Redis before any horizontal scaling, and **Sentry + memory alerting (Phase-2 prompt) would have flagged this pre-OOM**.
 - **⚡ LATENCY / MODEL-TIERING — Batch A + S5 + S6 + grounding-log DONE & ON PROD; Batch B (GPT failover) coded + env-gated, pending the OpenAI-key validation (2026-06-27, `main e134aeb`).**
   Root cause of slow builds was **output-token generation** (latency ≈ output_tokens ÷ decode_rate), NOT input/cache/RAG/rate-limit
   (org is Scale tier). **Batch A (shipped to staging `6610833` + prod `e23fa33`):**
