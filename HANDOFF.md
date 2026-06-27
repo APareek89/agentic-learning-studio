@@ -216,10 +216,14 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 > (`f6347eb..3d3fae4`); **migrations `0017`+`0018` applied to the PROD DB**; **visuals ingested (129/129) + backfilled
 > (95/100 library lessons, 136 visuals)** on prod. Verified live on `https://agentic-learning-studio.onrender.com`: healthz
 > green; new home heading + AI-landscape box + Library FREE pill + LLM-Skills-after-My-Lessons tab order; a library lesson
-> renders the "Visualize this" CTA. ⏳ **NOT yet run on prod: an authed overview+build re-QA** — no prod Supabase anon key
-> available locally (only staging creds), so the generation pipeline wasn't driven on the prod host. It's the SAME code as the
-> staging build that completed 5/5 + charged once, on a better (Standard 2GB) instance, and prod healthz shows auth/db/rag
-> wired — but capture a clean prod overview+build (sign in on prod and generate one, or provide the prod anon key) to close it.
+> renders the "Visualize this" CTA. ✅ **Authed overview+build re-QA on prod — PASSED (2026-06-27):** a full build completed
+> **5/5 = 100%** (`stubModuleIds: []`) and the prod credit debited **1 → 0** — charge-once-on-full-success verified LIVE on
+> prod; durability held (build completed despite a slow module). NO 502/404 (B3 ship-blocker gone on prod). Auth used the
+> public `anon` key from prod `/api/config` + the prod QA account. **Latency this run was slow (overview ~429s, build ~658s)
+> purely from elevated Anthropic latency TODAY** (the same broad slowness hit staging earlier) — NOT the instance (prod is
+> Standard 2GB) and NOT rate-limiting (org is Scale tier). On a normal Anthropic day prod does the whole build in ~3.5–6 min
+> (and local same-code = 307s); re-measure latency when Anthropic latency normalizes. **All 5 items are now fully promoted +
+> verified on prod.**
 >
 > _(Original staging-ready note, 2026-06-26 — kept for the promote-mechanism reference:)_
 > Staging = `https://agentic-learning-studio-1.onrender.com` (Supabase `ydgiyst…`). Prod = `https://agentic-learning-studio.onrender.com`
