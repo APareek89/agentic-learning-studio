@@ -664,7 +664,10 @@ function renderTabBar() {
     b.innerHTML = `${spin}<span class="lt-title">${escapeHtml(t.title || "Lesson")}</span><span class="lt-x" title="Close">×</span>`;
     b.addEventListener("click", (e) => {
       if (e.target.classList && e.target.classList.contains("lt-x")) { e.stopPropagation(); closeTab(t.id); return; }
-      activateTab(t.id); closeTrainerMenu();
+      // Picking a lesson from the dropdown must also bring the Trainer panel to the front —
+      // otherwise, when opened from another top-level tab (Library, Home, …), the lesson loads
+      // into the hidden Trainer panel and the user appears to stay put. (Matches openTab's order.)
+      switchTab("trainer"); activateTab(t.id); closeTrainerMenu();
     });
     lessonTabsEl.appendChild(b);
   });
