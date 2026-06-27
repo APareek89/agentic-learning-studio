@@ -25,10 +25,19 @@ interface StoredUpload {
   title: string;
   sourceType: string;
   chunks: UploadChunk[];
+  createdAt: number;
 }
 
 // docId → parsed+embedded upload. Module-level singleton (whole process).
 const uploads = new Map<string, StoredUpload>();
+
+// Light GC (memory-leak fix): evict uploads older than 2h so this in-process Map can't grow
+// unbounded. Uploads are session-scoped (they ground a lesson during generation); 2h comfortably
+// covers an attach → overview → build flow even on a slow day. Called on each new upload.
+function gcUploads(): void {
+  const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+  for (const [id, u] of uploads) if (u.createdAt < cutoff) uploads.delete(id);
+}
 
 export interface UploadHit {
   content: string;
@@ -52,7 +61,9 @@ export async function addUpload(id: string, src: LoadedSource): Promise<{ id: st
     title: src.title,
     sourceType: src.sourceType,
     chunks: chunks.map((c, i) => ({ content: c.content, embedding: vectors[i], title: c.title })),
+    createdAt: Date.now(),
   });
+  gcUploads();
   return { id, title: src.title, chunkCount: chunks.length };
 }
 
@@ -75,9 +86,10 @@ export async function addRepoUpload(id: string, title: string, files: { path: st
     }
     if (raw.length >= maxChunks) break;
   }
-  if (!raw.length) { uploads.set(id, { id, title, sourceType: "repo", chunks: [] }); return { id, title, chunkCount: 0 }; }
+  if (!raw.length) { uploads.set(id, { id, title, sourceType: "repo", chunks: [], createdAt: Date.now() }); gcUploads(); return { id, title, chunkCount: 0 }; }
   const vectors = await localEmbeddings.embedPassages(raw.map((c) => c.content));
-  uploads.set(id, { id, title, sourceType: "repo", chunks: raw.map((c, i) => ({ content: c.content, embedding: vectors[i], title: c.title })) });
+  uploads.set(id, { id, title, sourceType: "repo", chunks: raw.map((c, i) => ({ content: c.content, embedding: vectors[i], title: c.title })), createdAt: Date.now() });
+  gcUploads();
   return { id, title, chunkCount: raw.length };
 }
 

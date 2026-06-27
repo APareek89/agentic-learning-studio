@@ -59,6 +59,13 @@ export function releaseGenSlot(): void {
 export function createJob(userId: string): Job {
   const job: Job = { id: randomUUID(), userId, status: "planning", isCourse: false, lessons: [], createdAt: Date.now() };
   jobs.set(job.id, job);
+  // Light GC (memory-leak fix): drop trackers older than 60 min so this Map can't grow unbounded
+  // (matches the skillgen/handson job maps, which already sweep). A Job is just an EPHEMERAL progress
+  // tracker — the lesson itself is persisted in Postgres (the job holds only an artifactId pointer),
+  // and pollJob reconstructs from the persisted artifact if a tracker is ever missing. 60 min
+  // comfortably exceeds any build, so an in-flight generation is never affected.
+  const cutoff = Date.now() - 60 * 60 * 1000;
+  for (const [id, j] of jobs) if (j.createdAt < cutoff) jobs.delete(id);
   return job;
 }
 
