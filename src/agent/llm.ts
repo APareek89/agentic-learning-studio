@@ -198,9 +198,20 @@ export function structuredWithFallback(
 ): Runnable<BaseLanguageModelInput, unknown> {
   const claudeR = claude.withStructuredOutput(schema, opts as never) as unknown as Runnable<BaseLanguageModelInput, unknown>;
   if (!gpt) return claudeR;
-  const gptR = stripCacheControl.pipe(
-    gpt.withStructuredOutput(schema, opts as never) as unknown as Runnable<BaseMessage[], unknown>
-  ) as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  // IMPORTANT: force OpenAI's "functionCalling" (tool-calling) structured-output method. OpenAI's
+  // default strict json_schema mode rejects any `.optional()` Zod field that isn't also `.nullable()`
+  // ("all fields must be required") — and our schemas (InferenceSchema, ModuleBlocks, OverviewProse…)
+  // use `.optional()` heavily. Tool-calling mode has no all-required constraint, so the same schemas
+  // work on GPT without a rewrite. (Claude's withStructuredOutput already uses tool-calling natively.)
+  const gptOpts = { ...(opts ?? {}), method: "functionCalling" as const };
+  const gptStructured = gpt.withStructuredOutput(schema, gptOpts as never) as unknown as Runnable<BaseMessage[], unknown>;
+  const gptLogged = new RunnableLambda<BaseMessage[], unknown>({
+    func: async (input: BaseMessage[]) => {
+      try { return await gptStructured.invoke(input); }
+      catch (e) { console.error("[gpt-fallback structured FAIL]", (e instanceof Error ? e.message : String(e)).slice(0, 300)); throw e; }
+    },
+  });
+  const gptR = stripCacheControl.pipe(gptLogged) as unknown as Runnable<BaseLanguageModelInput, unknown>;
   return claudeR.withFallbacks([gptR]);
 }
 
