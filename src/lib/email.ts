@@ -21,7 +21,7 @@ export interface SupportEmail {
 
 const RESEND_URL = "https://api.resend.com/emails";
 const DEFAULT_FROM = "Wizbit Support <onboarding@resend.dev>"; // works until a verified domain is set
-const DEFAULT_TO = "findkailash@gmail.com";
+const DEFAULT_TO = "anandp.pareek6@gmail.com";
 
 export function emailConfigured(): boolean {
   return !!(process.env.RESEND_API_KEY && (process.env.SUPPORT_TO_EMAIL || DEFAULT_TO));

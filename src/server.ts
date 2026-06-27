@@ -162,7 +162,7 @@ const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 600, standardHeade
 app.use("/api/", apiLimiter);
 // Complaint/grievance intake — tight cap so the form can't be used to spam the operator.
 const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
-  message: { error: "Too many submissions — please wait an hour before sending another, or email findkailash@gmail.com directly." } });
+  message: { error: "Too many submissions — please wait an hour before sending another, or email anandp.pareek6@gmail.com directly." } });
 
 /** Write one named SSE event with a JSON payload onto a response stream. */
 function sseSend(res: express.Response, event: string, data: unknown): void {
@@ -1184,7 +1184,7 @@ app.post("/api/support/complaint", supportLimiter, async (req, res) => {
   } catch (e) { console.error("[support] save failed:", (e as Error).message); }
   if (!saved) {
     // We could not record it — do NOT pretend success; point the user at direct email.
-    res.status(503).json({ error: "We couldn't record your request right now. Please email findkailash@gmail.com directly." });
+    res.status(503).json({ error: "We couldn't record your request right now. Please email anandp.pareek6@gmail.com directly." });
     return;
   }
   const payload = { requestId: saved.id, category: b.category, name: b.name, email: b.email, subject: b.subject,
