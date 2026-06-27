@@ -15,8 +15,7 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > reviewing Hands-On on local and may request changes.
 > **2026-06-27 UPDATE — S5 + S6 + grounding-log ON STAGING + PROD (`main e134aeb`, no DB migration):** ONE end-of-lesson knowledge
 > check (`bp.finalCheck`; `_check` pane/page BEFORE Sources), dynamic module count (profiler `scope` → 5/6/8), and `[retrieve]`
-> grounded/ungrounded telemetry. **Batch B (GPT failover) is coded + env-gated but NOT pushed** — pending the OpenAI key (validation +
-> exact model-id confirmation); `.env` now has a blank `OPENAI_API_KEY=` field. Full detail: the ⚡ LATENCY bullet in §7.
+> grounded/ungrounded telemetry. **Batch B (GPT failover) — now ON STAGING + working (see the BATCH B note below).** Full detail: §7.
 > **2026-06-27 — BATCH-1 (27-Jun doc) ON STAGING (`origin/staging edbabd7`), NOT yet prod:** signup grant 1→2; fractional credits
 > (lesson=1, skill=0.5) via migration **0019** (`credit_lots`/`credit_ledger` int→numeric) + `spend(userId, amount)` multi-lot FIFO
 > draw + a skill 402 gate/charge-on-success; out-of-credits **buy-a-plan popup**; **"while you wait"** 4 relevant free-library cards
@@ -26,6 +25,24 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > library lessons with no empty nav). PENDING: full build/skill charge re-QA (staging Anthropic cap → 07-01); item 9 (home example
 > richness — needs a pointer); 2 separate-session prompts (poor diagrams; add real KCs to library content); prod promote (incl.
 > applying 0019 to the PROD DB) on owner confirm.
+> **2026-06-27 (later) — BATCH B (GPT FAILOVER) NOW ON STAGING + FIXED (`origin/staging 1f15b34`):** OpenAI key set on the
+> staging+prod Render envs (and local `.env`). Confirmed `gpt-5.5` / `gpt-5.4-mini` exist on the account. Fixed the real failover bug —
+> OpenAI's strict structured-output rejects `.optional()` Zod fields ("all fields must be required"), so EVERY structured GPT fallback
+> failed silently (withFallbacks re-raised the Claude error); fix = force `method:"functionCalling"` (tool-calling) on the GPT branch.
+> Validated by FORCING failover (invalid Anthropic key) → a full build ran ENTIRELY on GPT, **5/5**, finalCheck/KC generated on GPT, 0
+> errors. ⚠️ gpt-5.5 is a SLOW reasoning model (~10-min build); fine as a failover, but while the staging Anthropic spend cap is active
+> (→ 2026-07-01) every staging build runs on GPT and is slow — it reverts to fast Claude when the cap resets. This ALSO fixes the
+> "KC not coming on staging" report (the cap was blocking `writeOverviewProse` → no `finalCheck`; failover now generates it).
+>
+> ### 📌 ON STAGING (`origin/staging 1f15b34`) BUT NOT ON PROD (`main e134aeb`) — as of 2026-06-27:
+> 1. **Batch-1 (27-Jun doc):** signup→2 credits; fractional credits lesson=1/skill=0.5 (**migration 0019** — applied to the STAGING DB
+>    ONLY, NOT prod); out-of-credits buy-a-plan popup; "while you wait" library popup; Community **Free** pill; skill→My-Skills refresh;
+>    library-KC nav fix (`showsFinalCheckPane`).
+> 2. **Batch B (GPT failover):** all nodes fall over to GPT-5.5 / GPT-5.4-mini after ~2 quick Claude tries (env-gated on `OPENAI_API_KEY`).
+>
+> **To promote to PROD:** cherry-pick the staging files into `main`, **apply migration 0019 to the PROD DB** (`DATABASE_URL=$PROD_DATABASE_URL`),
+> and confirm `OPENAI_API_KEY` is on the prod Render env (then Batch B is live on prod too). **Latency (local Claude, S5/S6 active):**
+> overview ~75s→**71s**, build 108s→**81.5s** (~25% faster — S5 drops per-module KC tokens; 5/5, 0 failover).
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
