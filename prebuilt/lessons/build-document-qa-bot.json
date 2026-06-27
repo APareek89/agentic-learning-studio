@@ -2013,5 +2013,144 @@
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your Document Q&A Bot returns a confident-sounding answer that isn't actually in the uploaded document. Which part of the system is most responsible for catching this failure?",
+        "options": [
+          {
+            "text": "The chunking strategy in the architecture slice",
+            "correct": false
+          },
+          {
+            "text": "The validation and tracing layer, which checks whether the answer is grounded in retrieved chunks",
+            "correct": true
+          },
+          {
+            "text": "The LLM's temperature setting in core implementation",
+            "correct": false
+          },
+          {
+            "text": "The hardening path's rate-limiting logic",
+            "correct": false
+          }
+        ],
+        "explanation": "Validation and tracing is specifically responsible for detecting hallucinations by verifying that the bot's answer is supported by the retrieved source chunks — not invented by the model.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "validation-and-tracing",
+          "target-behavior"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "When designing the architecture slice for a Document Q&A Bot, what is the core tradeoff when choosing chunk size for splitting documents?",
+        "options": [
+          {
+            "text": "Larger chunks are cheaper to embed but may bury the relevant answer inside too much surrounding text",
+            "correct": true
+          },
+          {
+            "text": "Smaller chunks always produce better answers because the LLM has less to read",
+            "correct": false
+          },
+          {
+            "text": "Chunk size only matters for PDFs, not plain-text documents",
+            "correct": false
+          },
+          {
+            "text": "Larger chunks reduce latency because fewer retrieval calls are needed",
+            "correct": false
+          }
+        ],
+        "explanation": "Larger chunks preserve more context but risk diluting the relevant passage, while smaller chunks are more precise but may lose surrounding context the model needs — this size tradeoff is the central architecture decision.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "architecture-slice"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You're at the core implementation stage and need to decide how much engineering effort to invest right now. Which approach best fits a beginner building their first Document Q&A Bot?",
+        "options": [
+          {
+            "text": "Advanced optimization — add re-ranking, hybrid search, and caching from day one so you don't have to refactor later",
+            "correct": false
+          },
+          {
+            "text": "Baseline — get a working retrieval-augmented pipeline end-to-end first, then layer in improvements",
+            "correct": true
+          },
+          {
+            "text": "Production design — implement full observability and access controls before testing any queries",
+            "correct": false
+          },
+          {
+            "text": "Skip implementation and go straight to hardening, since security matters most",
+            "correct": false
+          }
+        ],
+        "explanation": "For a first build, a baseline implementation that completes the full loop (ingest → retrieve → answer) gives you something real to test and improve, rather than over-engineering before you understand the failure modes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "core-implementation"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In one or two sentences, explain what 'target behavior' means for a Document Q&A Bot and why defining it before writing any code matters.",
+        "acceptableAnswer": "Target behavior is the specific, observable thing the bot should do — for example, answer questions using only the content of the uploaded document and say 'I don't know' when the answer isn't there. Defining it first gives you a concrete success criterion so you can tell whether your implementation is actually working correctly.",
+        "explanation": "Defining target behavior upfront turns a vague goal ('make a Q&A bot') into a testable contract, which guides every downstream decision from architecture to validation.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "target-behavior"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which of the following is the best example of a hardening-path improvement — something you add AFTER the baseline bot is already working?",
+        "options": [
+          {
+            "text": "Writing the prompt that tells the LLM to answer only from the provided context",
+            "correct": false
+          },
+          {
+            "text": "Splitting documents into chunks and storing them in a vector database",
+            "correct": false
+          },
+          {
+            "text": "Adding a fallback message when no relevant chunks are retrieved above a similarity threshold",
+            "correct": true
+          },
+          {
+            "text": "Choosing which LLM API to call",
+            "correct": false
+          }
+        ],
+        "explanation": "A similarity-threshold fallback is a robustness guard that protects users from low-confidence retrievals — it's a hardening concern that makes sense to add once the core pipeline is proven, not before.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "hardening-path",
+          "validation-and-tracing"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

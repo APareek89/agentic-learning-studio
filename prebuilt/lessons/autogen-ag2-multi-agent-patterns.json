@@ -1180,5 +1180,154 @@
       "url": "https://www.anthropic.com/engineering/multi-agent-research-system",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "In AutoGen/AG2's conversation-based orchestration model, what is the PRIMARY role of the UserProxyAgent?",
+        "options": [
+          {
+            "text": "Generate LLM responses and propose tool calls on behalf of the user",
+            "correct": false
+          },
+          {
+            "text": "Act as the human-side participant that triggers turns, enforces termination, and optionally executes code",
+            "correct": true
+          },
+          {
+            "text": "Host the vector database that grounds the assistant's replies",
+            "correct": false
+          },
+          {
+            "text": "Broadcast messages to all agents simultaneously via a pub/sub bus",
+            "correct": false
+          }
+        ],
+        "explanation": "The UserProxyAgent represents the human side of the conversation: it initiates turns, can run code, and decides when to stop — the AssistantAgent handles LLM reasoning.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "user-proxy",
+          "conversation-orchestration"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are setting up a two-agent chat and want it to stop automatically without human intervention. Which combination correctly enforces termination?",
+        "options": [
+          {
+            "text": "Set max_turns on the chat and include a recognized termination string (e.g., 'TERMINATE') in the assistant's final message",
+            "correct": true
+          },
+          {
+            "text": "Set temperature=0 on the LLM config so the model always produces the same output",
+            "correct": false
+          },
+          {
+            "text": "Assign all tools to the UserProxyAgent so it can decide when no tools remain",
+            "correct": false
+          },
+          {
+            "text": "Use a GroupChat with a single speaker_selection_method='round_robin' and no max_round",
+            "correct": false
+          }
+        ],
+        "explanation": "AutoGen/AG2 terminates a chat when max_turns is reached OR when the configured termination marker (default 'TERMINATE') appears in a message — both guards are needed for reliable auto-stop.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "termination-marker",
+          "max-turns",
+          "role-boundaries"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A colleague points you to the 'AutoGen' GitHub org maintained by Microsoft for a new greenfield project. What is the key caveat you should raise?",
+        "options": [
+          {
+            "text": "Microsoft's repo uses a different programming language and is not Python-compatible",
+            "correct": false
+          },
+          {
+            "text": "The Microsoft-maintained 'AutoGen' repo diverged from the original; the community continuation is AG2 (ag2ai), and mixing docs between the two families causes API mismatches",
+            "correct": true
+          },
+          {
+            "text": "Microsoft deprecated AutoGen entirely and replaced it with Semantic Kernel, so neither repo should be used",
+            "correct": false
+          },
+          {
+            "text": "Both repos are identical forks and either set of docs is safe to follow interchangeably",
+            "correct": false
+          }
+        ],
+        "explanation": "After the fork, Microsoft's AutoGen and the community's AG2 (ag2ai) diverged in API and roadmap — using docs from the wrong family leads to import errors and missing features.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "ag2-continuity",
+          "version-family",
+          "greenfield-confusion"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Why should code execution be routed through a sandboxed participant (e.g., a Docker-based executor) rather than run directly in the orchestrating process? Name at least TWO distinct reasons.",
+        "acceptableAnswer": "Acceptable answers should include at least two of: (1) isolation — a sandbox prevents malicious or buggy generated code from harming the host system or leaking secrets; (2) reproducibility / clean environment — each execution starts from a known state; (3) evidence capture — stdout/stderr from the sandbox is recorded as a message in the conversation trace, making it auditable; (4) role boundary enforcement — keeping execution out of the orchestrator preserves clear agent responsibilities and makes termination markers predictable.",
+        "explanation": "Sandboxing protects the host from unsafe generated code AND produces a structured execution record that becomes part of the auditable conversation trace.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "sandboxed-executor",
+          "code-execution",
+          "termination-marker",
+          "evidence-capture"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When evaluating a completed multi-agent run, which of the following is the MOST complete evaluation strategy?",
+        "options": [
+          {
+            "text": "Read only the final assistant message and check whether it answers the original question",
+            "correct": false
+          },
+          {
+            "text": "Inspect per-agent message logs, verify tool calls and sandbox outputs, count turns against budget, confirm human-approval steps fired, and check total token cost",
+            "correct": true
+          },
+          {
+            "text": "Re-run the conversation with temperature=0 and compare outputs for determinism",
+            "correct": false
+          },
+          {
+            "text": "Check that no Python exceptions were raised during the run",
+            "correct": false
+          }
+        ],
+        "explanation": "Evaluating only the final answer misses hidden failures; a full trace review covers tool correctness, cost, turn efficiency, sandbox use, and human-in-the-loop compliance.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "conversation-trace",
+          "turn-count",
+          "cost-measurement",
+          "human-approval",
+          "sandboxed-executor"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

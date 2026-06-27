@@ -931,5 +931,153 @@
       "url": "https://ai.google.dev/gemini-api/docs/structured-output",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A language model receives a user message and decides to call a `send_email` tool. Which statement best describes what happens at that moment?",
+        "options": [
+          {
+            "text": "The model sends the email directly, because it has network access.",
+            "correct": false
+          },
+          {
+            "text": "The model produces a structured proposal; your application code decides whether to actually send the email.",
+            "correct": true
+          },
+          {
+            "text": "The tool schema automatically validates and executes the call on the model's behalf.",
+            "correct": false
+          },
+          {
+            "text": "The model pauses and asks the user for permission before doing anything.",
+            "correct": false
+          }
+        ],
+        "explanation": "The model only outputs a call proposal — all real-world execution happens in your code, which is why authorization and validation must live there.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "tool-boundary",
+          "model-proposal",
+          "execution"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are writing a tool schema for a `search_orders` function. Which of the following description practices will most help the model call the tool correctly?",
+        "options": [
+          {
+            "text": "Keep the description blank so the model infers intent from the argument names alone.",
+            "correct": false
+          },
+          {
+            "text": "List every internal database field the function touches, so the model has full context.",
+            "correct": false
+          },
+          {
+            "text": "Write a concise description of what the tool does, when to use it, and what each argument means.",
+            "correct": true
+          },
+          {
+            "text": "Copy the function's source code into the description field.",
+            "correct": false
+          }
+        ],
+        "explanation": "A clear, purposeful description — covering the tool's action, trigger condition, and argument semantics — is what guides the model to call the right tool with the right inputs.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool-schema",
+          "tool-description",
+          "arguments"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "Your executor receives a tool call from the model for a tool named `delete_record`. That tool is NOT in your registered tool list. What should your executor do, and why?",
+        "acceptableAnswer": "The executor should reject the call (e.g., return an error or raise an exception) rather than attempt to run it. Accepting unknown tools is a security risk — it could allow unintended or malicious actions. Authorization and validation must happen in code, not be delegated to the model.",
+        "explanation": "Rejecting unknown tools is a core safety rule: the executor is the enforcement boundary, so any tool not explicitly registered must be refused.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "executor",
+          "unknown-tool",
+          "authorization",
+          "validation"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "After your code runs a tool and gets a result back, how should that result be returned to the model?",
+        "options": [
+          {
+            "text": "Append it to the system prompt so the model always has it in context.",
+            "correct": false
+          },
+          {
+            "text": "Add it as a tool-result message linked to the original tool call ID, so the model knows which call it answers.",
+            "correct": true
+          },
+          {
+            "text": "Summarize it in a new user message to keep the conversation natural.",
+            "correct": false
+          },
+          {
+            "text": "Skip returning it if the result is just a success confirmation — the model can infer success.",
+            "correct": false
+          }
+        ],
+        "explanation": "Tool results must be returned as properly linked tool-result messages; dropping or misrouting them breaks the model's ability to reason about what actually happened.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool-result",
+          "message-structure",
+          "context"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A model is in a tool-call loop and the tool keeps returning errors, but the model continues calling it repeatedly. Which safeguard directly prevents this from running indefinitely?",
+        "options": [
+          {
+            "text": "Using enums in the tool schema to restrict argument values.",
+            "correct": false
+          },
+          {
+            "text": "Enforcing a maximum number of tool-call iterations (a turn limit) in your loop logic.",
+            "correct": true
+          },
+          {
+            "text": "Writing a longer tool description so the model understands the error better.",
+            "correct": false
+          },
+          {
+            "text": "Returning the tool result as a user message instead of a tool-result message.",
+            "correct": false
+          }
+        ],
+        "explanation": "A hard iteration cap in your loop is the direct safeguard against infinite retry cycles — schema improvements and better descriptions help quality, but only a turn limit stops runaway loops.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "failure-modes",
+          "safe-tool-loop",
+          "safeguards"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

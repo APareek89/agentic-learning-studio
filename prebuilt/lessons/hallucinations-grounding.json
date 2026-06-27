@@ -1917,5 +1917,150 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A doctor uses an AI assistant to look up a drug dosage. The AI confidently states a dose that sounds right but is actually wrong — there is no warning, no hedge, and no source cited. What is the best label for what just happened?",
+        "options": [
+          {
+            "text": "A retrieval failure, because the system did not search a database",
+            "correct": false
+          },
+          {
+            "text": "A hallucination, because the model produced a confident, plausible answer that is factually wrong",
+            "correct": true
+          },
+          {
+            "text": "A grounding policy violation, because the model forgot to add a citation",
+            "correct": false
+          },
+          {
+            "text": "A calibration error, because the model should have expressed lower confidence",
+            "correct": false
+          }
+        ],
+        "explanation": "A hallucination is any confident, fluent output that is factually wrong — the absence of a citation is a symptom, but the core problem is the model asserting something untrue as if it were fact.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "hallucination",
+          "grounding"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Why can't the base language model itself reliably check whether its own answer is true?",
+        "options": [
+          {
+            "text": "It runs too slowly to verify facts in real time",
+            "correct": false
+          },
+          {
+            "text": "It was trained to predict the next most likely token, not to look up or verify facts against a source of truth",
+            "correct": true
+          },
+          {
+            "text": "It only knows facts from the last 30 days of training data",
+            "correct": false
+          },
+          {
+            "text": "It lacks enough parameters to store factual knowledge",
+            "correct": false
+          }
+        ],
+        "explanation": "Next-token prediction optimises for plausible, fluent continuations — there is no internal truth-checking step, so the model can produce wrong answers with the same confidence as correct ones.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "hallucination",
+          "next-token-prediction"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A team is building three features: (A) a fun trivia chatbot where wrong answers are harmless, (B) a legal-contract summariser where a missed clause could cost thousands, and (C) a weather small-talk widget. Which feature most urgently needs maximum grounding with enforced citations?",
+        "options": [
+          {
+            "text": "Feature A — trivia chatbot",
+            "correct": false
+          },
+          {
+            "text": "Feature B — legal-contract summariser",
+            "correct": true
+          },
+          {
+            "text": "Feature C — weather small-talk widget",
+            "correct": false
+          },
+          {
+            "text": "All three equally — maximum grounding should always be the default",
+            "correct": false
+          }
+        ],
+        "explanation": "Grounding level should match the cost of a wrong answer; the legal summariser has the highest real-world cost, so it needs the strongest grounding — applying maximum grounding everywhere wastes resources and adds friction where it isn't needed.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "grounding",
+          "grounding-level",
+          "citation"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Look at this partial grounding policy rule: \"If the answer contains a specific fact or number, it MUST be supported by a retrieved source.\" What kind of problem does this rule prevent, and what is one rule you would add to make the policy more complete?",
+        "acceptableAnswer": "The rule prevents unsupported factual claims (hallucinated numbers or statistics) from reaching the user. A good addition would be a rule that handles the case where retrieval returns weak or no evidence — for example: 'If no supporting source is found, the system must either decline to answer or escalate to a human rather than answering from memory.'",
+        "explanation": "A grounding policy needs both a rule that blocks unsupported claims AND a rule that defines what to do when retrieval fails — without the second rule, the system can still hallucinate whenever evidence is absent.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "grounding-policy",
+          "citation",
+          "retrieval"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A grounded system retrieves a document, but the document is outdated and doesn't actually support the answer the model gives. The answer goes out with a citation anyway. Which failure mode does this illustrate?",
+        "options": [
+          {
+            "text": "The model hallucinated because it had no retrieval step at all",
+            "correct": false
+          },
+          {
+            "text": "Grounding broke because the retrieved evidence was weak but the system still produced a confident, cited answer",
+            "correct": true
+          },
+          {
+            "text": "The grounding policy was missing a citation rule",
+            "correct": false
+          },
+          {
+            "text": "The model exceeded its context window and forgot the source",
+            "correct": false
+          }
+        ],
+        "explanation": "Grounding can still fail even when retrieval runs — if the retrieved document is outdated, irrelevant, or weak, and the system doesn't catch that, it will produce a wrong answer dressed up with a citation, which can be more dangerous than an obvious guess.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "grounding",
+          "retrieval",
+          "grounding-policy"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

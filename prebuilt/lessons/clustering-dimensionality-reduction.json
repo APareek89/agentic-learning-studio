@@ -994,5 +994,150 @@
       "url": "https://www.sbert.net/examples/sentence_transformer/applications/semantic-search/README.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "Before you look anything up: in your own words, what is the difference between what k-means and DBSCAN use to decide whether two points belong together?",
+        "acceptableAnswer": "k-means groups points by minimizing distance to a centroid (center of a cluster), so it assumes round, similarly-sized groups. DBSCAN groups points by local density — a point belongs to a cluster if enough neighbors are within a set radius (epsilon); points in sparse areas become noise instead of being forced into a cluster.",
+        "explanation": "k-means assigns every point to its nearest centroid, while DBSCAN requires a minimum number of neighbors within epsilon — making density, not centroid distance, the deciding factor.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "k-means",
+          "centroid",
+          "DBSCAN",
+          "epsilon",
+          "min_samples",
+          "noise"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your dataset has customer segments that are elongated streaks and irregular blobs — definitely not round. Which outcome should you expect if you apply k-means?",
+        "options": [
+          {
+            "text": "k-means will correctly trace the elongated shapes because it minimizes within-cluster variance.",
+            "correct": false
+          },
+          {
+            "text": "k-means will split or merge the irregular groups because it assumes compact, spherical clusters.",
+            "correct": true
+          },
+          {
+            "text": "k-means will mark the elongated points as noise and ignore them.",
+            "correct": false
+          },
+          {
+            "text": "k-means will automatically increase k to handle the irregular shapes.",
+            "correct": false
+          }
+        ],
+        "explanation": "k-means pulls every point toward the nearest centroid, so non-spherical or elongated shapes get sliced along centroid boundaries rather than traced faithfully.",
+        "confidence": true,
+        "conceptTags": [
+          "k-means",
+          "centroid"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A teammate runs DBSCAN on a dataset and reports that 40 % of points are labeled –1. What does that mean, and what should you investigate first?",
+        "options": [
+          {
+            "text": "40 % of points formed a single large cluster labeled –1; the algorithm worked as expected.",
+            "correct": false
+          },
+          {
+            "text": "40 % of points were classified as noise — epsilon or min_samples may be too strict for this data's density.",
+            "correct": true
+          },
+          {
+            "text": "DBSCAN always reserves label –1 for the smallest cluster, so 40 % is the minority class.",
+            "correct": false
+          },
+          {
+            "text": "The dataset has 40 % duplicate rows that DBSCAN automatically flagged.",
+            "correct": false
+          }
+        ],
+        "explanation": "In DBSCAN, label –1 means noise — points with too few neighbors within epsilon. A very high noise rate usually signals that epsilon is too small or min_samples is too large for the actual density of the data.",
+        "confidence": true,
+        "conceptTags": [
+          "DBSCAN",
+          "epsilon",
+          "min_samples",
+          "noise"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You use PCA to reduce 50 features to 2 dimensions and then plot the result. The clusters look perfectly separated. A colleague says 'Great — let's use the cluster IDs as our target labels and train a classifier.' What is the key risk they are overlooking?",
+        "options": [
+          {
+            "text": "PCA destroys all variance, so the clusters are meaningless after reduction.",
+            "correct": false
+          },
+          {
+            "text": "Cluster IDs reflect geometric structure in the chosen features, not a validated real-world distinction — treating them as ground truth can encode noise or arbitrary splits into a supervised model.",
+            "correct": true
+          },
+          {
+            "text": "A classifier cannot accept cluster IDs as input; they must be one-hot encoded first.",
+            "correct": false
+          },
+          {
+            "text": "UMAP should always be used instead of PCA before clustering, making these results invalid.",
+            "correct": false
+          }
+        ],
+        "explanation": "Cluster IDs are a hypothesis about structure, not confirmed labels — skipping human validation and jumping straight to supervised training risks teaching a model to reproduce an artifact of your feature choices or algorithm settings.",
+        "confidence": true,
+        "conceptTags": [
+          "PCA",
+          "cluster-ids-not-ground-truth",
+          "validation"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which of the following best describes the practical difference between PCA and UMAP for exploring cluster structure?",
+        "options": [
+          {
+            "text": "PCA is only for images; UMAP works on any tabular data.",
+            "correct": false
+          },
+          {
+            "text": "PCA finds linear combinations of features that preserve global variance; UMAP preserves local neighborhood relationships and can reveal non-linear structure, but its axes have no direct feature interpretation.",
+            "correct": true
+          },
+          {
+            "text": "UMAP always produces better clusters than PCA because it uses more compute.",
+            "correct": false
+          },
+          {
+            "text": "PCA and UMAP are interchangeable — the choice only affects runtime, not the shape of the output.",
+            "correct": false
+          }
+        ],
+        "explanation": "PCA is a linear method whose components are interpretable combinations of original features; UMAP is non-linear and excels at revealing local groupings, but its 2-D axes cannot be mapped back to specific features the way PCA components can.",
+        "confidence": true,
+        "conceptTags": [
+          "PCA",
+          "UMAP"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1220,5 +1220,152 @@
       "url": "https://spec.openapis.org/oas/latest.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A `create_agent` loop keeps calling tools and re-prompting the model until it decides to stop. Which role does YOUR application code play in this loop?",
+        "options": [
+          {
+            "text": "It controls which tool the model picks on each turn.",
+            "correct": false
+          },
+          {
+            "text": "It defines the tools and their descriptions, but the model decides when and whether to call them.",
+            "correct": true
+          },
+          {
+            "text": "It sets the maximum number of tokens the model may generate.",
+            "correct": false
+          },
+          {
+            "text": "It replaces the model's reasoning step with deterministic routing logic.",
+            "correct": false
+          }
+        ],
+        "explanation": "The framework owns the loop; your application owns authority — the tool contracts and descriptions that shape what the model can choose from.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "create_agent",
+          "framework_loop",
+          "application_authority"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "In your own words: why should a tool description be *narrow* rather than broad, and what risk does a vague description create?",
+        "acceptableAnswer": "A narrow description tells the model exactly when to use the tool and what it returns, so the model selects it only in the right situations. A vague description can cause the model to call the tool at the wrong time, pass bad arguments, or misinterpret the result — all of which propagate silently as untrusted context into the next prompt.",
+        "explanation": "Tight tool contracts prevent mis-selection and force you to treat every tool result as untrusted context that must be validated before use.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "tool_description",
+          "structured_output",
+          "untrusted_context"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You add a middleware layer that rewrites the system prompt based on the user's subscription tier before the agent runs. Which production concern does this middleware address?",
+        "options": [
+          {
+            "text": "Latency reduction by caching tool results.",
+            "correct": false
+          },
+          {
+            "text": "Authorization — restricting what the agent is allowed to do for a given user.",
+            "correct": true
+          },
+          {
+            "text": "Structured output validation after the model responds.",
+            "correct": false
+          },
+          {
+            "text": "Pinning the LangChain package version to avoid breaking changes.",
+            "correct": false
+          }
+        ],
+        "explanation": "Middleware that modifies the prompt (or the available tool list) based on user identity is enforcing authorization — a classic production concern that lives outside the model loop itself.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "middleware",
+          "authorization",
+          "prompt_modification"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You write a test for your agent and want to assert that the KB (knowledge-base) tool is called when the user asks a factual product question, but NOT called for a simple greeting. What is the most reliable way to make this assertion?",
+        "options": [
+          {
+            "text": "Check the final text response for keywords that suggest the KB was consulted.",
+            "correct": false
+          },
+          {
+            "text": "Inspect the recorded tool-call events in the agent's trace for the presence or absence of the KB tool invocation.",
+            "correct": true
+          },
+          {
+            "text": "Count the total number of tokens used — KB calls always use more tokens.",
+            "correct": false
+          },
+          {
+            "text": "Mock the model to always return a fixed response and verify the output string.",
+            "correct": false
+          }
+        ],
+        "explanation": "Trace-level assertions on tool-call events are the direct, reliable signal; surface-level output checks can pass even when the wrong tool (or no tool) was used.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "trace_assertions",
+          "tool_selection",
+          "testing"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After tracing several agent runs you notice the model occasionally skips a tool you expected it to use. Before blaming the model, what should you check first according to the lesson's tracing guidance?",
+        "options": [
+          {
+            "text": "Whether the LangChain package version changed between runs, which could alter default prompting behavior.",
+            "correct": true
+          },
+          {
+            "text": "Whether the user's internet connection caused a timeout.",
+            "correct": false
+          },
+          {
+            "text": "Whether the model's context window is large enough to hold the conversation.",
+            "correct": false
+          },
+          {
+            "text": "Whether the tool returned a non-200 HTTP status code.",
+            "correct": false
+          }
+        ],
+        "explanation": "Pinning provider and package versions is the first line of defense — silent upgrades to LangChain's default prompts or the provider's model can change tool-selection behavior without any code change on your part.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "pin_versions",
+          "trace_assertions",
+          "abstraction_trust"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

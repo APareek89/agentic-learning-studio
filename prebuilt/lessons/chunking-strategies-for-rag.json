@@ -1235,5 +1235,154 @@
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "In your own words: what is a chunk, and why does making chunks too small hurt retrieval quality even if the right keywords are present?",
+        "acceptableAnswer": "A chunk is the unit of text retrieved to support an answer. Tiny chunks can match keywords but strip the surrounding context that gives those keywords meaning, so the LLM receives fragments that don't actually answer the question.",
+        "explanation": "A chunk must carry enough surrounding context to support a complete answer — keyword presence alone is not sufficient if the meaning depends on adjacent sentences.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "chunk",
+          "retrieval",
+          "context-window"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A document contains a Markdown table comparing pricing tiers. You apply a standard recursive character splitter with a 512-token limit. What is the most likely failure?",
+        "options": [
+          {
+            "text": "The table will be duplicated across multiple chunks due to overlap.",
+            "correct": false
+          },
+          {
+            "text": "The splitter will cut mid-row, producing chunks with misaligned columns that lose the table's meaning.",
+            "correct": true
+          },
+          {
+            "text": "The table will be skipped entirely because the splitter ignores non-prose content.",
+            "correct": false
+          },
+          {
+            "text": "Retrieval will work fine because column headers are repeated in every row.",
+            "correct": false
+          }
+        ],
+        "explanation": "Recursive character splitters are unaware of table structure and will break rows at arbitrary character boundaries, destroying the row-column relationship that gives the data meaning.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "recursive-splitting",
+          "structured-content",
+          "tables"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which metadata field most directly improves BOTH lexical (keyword) search AND vector (semantic) search for a retrieved chunk?",
+        "options": [
+          {
+            "text": "Chunk UUID",
+            "correct": false
+          },
+          {
+            "text": "Token count",
+            "correct": false
+          },
+          {
+            "text": "Breadcrumb / section path (e.g., 'Guide > Installation > Linux')",
+            "correct": true
+          },
+          {
+            "text": "Embedding model version",
+            "correct": false
+          }
+        ],
+        "explanation": "A breadcrumb injects structured, human-readable path tokens that boost keyword matches while also anchoring the chunk's vector representation in its document hierarchy, benefiting both retrieval modes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "breadcrumbs",
+          "metadata",
+          "lexical-retrieval",
+          "vector-retrieval"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "During evaluation, a user query returns a chunk that contains the correct answer, but the LLM's final response is still wrong. What does this most likely indicate?",
+        "options": [
+          {
+            "text": "A retrieval miss — the right chunk was not ranked highly enough.",
+            "correct": false
+          },
+          {
+            "text": "A generation hallucination — retrieval succeeded but the LLM failed to use or correctly interpret the chunk.",
+            "correct": true
+          },
+          {
+            "text": "A stale chunk — the content was outdated and should have been filtered.",
+            "correct": false
+          },
+          {
+            "text": "An overlap error — the chunk boundary caused duplicate context that confused the ranker.",
+            "correct": false
+          }
+        ],
+        "explanation": "When the correct chunk IS retrieved but the answer is still wrong, the failure is in generation (the LLM), not retrieval — distinguishing these two failure modes is essential for knowing what to fix.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "retrieval-miss",
+          "generation-hallucination",
+          "evaluation"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You are writing eval queries for a document split at section boundaries. Which query type BEST targets a boundary failure specific to chunking?",
+        "options": [
+          {
+            "text": "A query whose answer is fully contained in the middle of a long section.",
+            "correct": false
+          },
+          {
+            "text": "A query whose answer spans the last sentence of one section and the first sentence of the next.",
+            "correct": true
+          },
+          {
+            "text": "A query that matches the document title exactly.",
+            "correct": false
+          },
+          {
+            "text": "A query using synonyms of words that appear in the chunk's metadata.",
+            "correct": false
+          }
+        ],
+        "explanation": "Boundary-spanning queries directly stress-test whether the splitter or overlap strategy preserves cross-section evidence — the exact failure mode unique to chunking decisions.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "eval-queries",
+          "boundary-failures",
+          "overlap",
+          "regression-surface"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

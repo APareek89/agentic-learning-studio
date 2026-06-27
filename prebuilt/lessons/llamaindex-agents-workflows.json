@@ -1220,5 +1220,153 @@
       "url": "https://docs.langchain.com/oss/python/langgraph/overview",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A teammate suggests using LlamaIndex to build a customer-support agent that answers questions from a large internal knowledge base. Which property of LlamaIndex makes it the strongest fit for this use case?",
+        "options": [
+          {
+            "text": "It ships with a built-in UI for chat interfaces.",
+            "correct": false
+          },
+          {
+            "text": "Its core pipeline — documents → nodes → indexes → query engines — is purpose-built for retrieval-heavy products.",
+            "correct": true
+          },
+          {
+            "text": "It automatically fine-tunes the underlying LLM on your documents.",
+            "correct": false
+          },
+          {
+            "text": "It eliminates the need for any vector database.",
+            "correct": false
+          }
+        ],
+        "explanation": "LlamaIndex is data-centric: its document → node → index → query engine pipeline is specifically designed to make retrieval the first-class citizen, which is exactly what retrieval-heavy products need.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "documents",
+          "nodes",
+          "indexes",
+          "query-engines"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are writing a tool description for a query engine that searches a product-returns policy document. Which description best guides the model to choose this tool correctly?",
+        "options": [
+          {
+            "text": "\"A tool for answering questions.\"",
+            "correct": false
+          },
+          {
+            "text": "\"Searches all company documents and returns relevant text.\"",
+            "correct": false
+          },
+          {
+            "text": "\"Answers questions about the product-returns policy, including eligibility windows and refund steps.\"",
+            "correct": true
+          },
+          {
+            "text": "\"Runs a semantic search query and returns top-k nodes.\"",
+            "correct": false
+          }
+        ],
+        "explanation": "Tool descriptions should be specific about the data source and the kinds of questions it can answer so the model can reliably select the right tool — vague descriptions cause mis-routing.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool-description",
+          "tool-selection"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your LlamaIndex workflow must extract structured fields from uploaded contracts and then flag any missing fields for human review. Which workflow design is safest?",
+        "options": [
+          {
+            "text": "Let the agent decide silently whether a field is missing and retry automatically without logging.",
+            "correct": false
+          },
+          {
+            "text": "Use a single agent step that both extracts and reviews, so errors are handled in one place.",
+            "correct": false
+          },
+          {
+            "text": "Define separate workflow steps for extraction and review, and surface missing-field errors explicitly rather than hiding them inside the agent.",
+            "correct": true
+          },
+          {
+            "text": "Skip the review step and rely on the LLM's confidence score to catch errors.",
+            "correct": false
+          }
+        ],
+        "explanation": "Separating extraction from review as distinct workflow steps — and surfacing data errors explicitly — keeps failures visible and debuggable instead of silently swallowed by the agent.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "workflows",
+          "data-errors",
+          "workflow-steps"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You have built a query-engine-backed agent with two tools: `search_faq` and `search_pricing`. A user asks \"What is the refund window for annual plans?\" After the agent responds, how would you inspect which tool was actually used and what source nodes it retrieved?",
+        "acceptableAnswer": "Check the agent's response object for tool call records (tool name and input used), then inspect the source nodes attached to the tool's output — each source node shows the original document chunk the query engine retrieved to form the answer.",
+        "explanation": "Inspecting the tool call log tells you which tool was selected, and examining the source nodes on the query engine's response confirms exactly which document chunks grounded the answer.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool-selection",
+          "source-nodes",
+          "query-engines"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Before wiring a query engine into an agent, you run retrieval evaluation. Which combination of checks gives you the most complete picture of retrieval quality?",
+        "options": [
+          {
+            "text": "Check only that the agent picks the right tool for each question.",
+            "correct": false
+          },
+          {
+            "text": "Measure whether the expected source node appears in results, verify answer faithfulness to those nodes, and test that the agent returns no answer when no relevant node exists.",
+            "correct": true
+          },
+          {
+            "text": "Measure latency and token count to ensure the pipeline is fast enough.",
+            "correct": false
+          },
+          {
+            "text": "Run the agent on 5 sample questions and manually read the outputs.",
+            "correct": false
+          }
+        ],
+        "explanation": "A complete retrieval evaluation covers source-node presence (did we retrieve the right chunk?), faithfulness (is the answer grounded in those chunks?), and no-answer behavior (does the agent abstain when it should?) — together these catch the most common failure modes before the agent goes live.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "retrieval-evaluation",
+          "faithfulness",
+          "source-nodes",
+          "tool-selection"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1206,5 +1206,155 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "An agent is about to send a bulk email to 10,000 customers. At which point should a human approval interrupt be placed?",
+        "options": [
+          {
+            "text": "After the emails are sent, so the reviewer can see the real outcome",
+            "correct": false
+          },
+          {
+            "text": "Before the send action executes, because sending is an irreversible side effect",
+            "correct": true
+          },
+          {
+            "text": "Only if the agent's confidence score drops below 50%",
+            "correct": false
+          },
+          {
+            "text": "Whenever the email list exceeds 1,000 recipients, but after drafting is complete",
+            "correct": false
+          }
+        ],
+        "explanation": "Approval gates must sit before irreversible side effects — once the emails are sent, the action cannot be undone, so the interrupt must fire first.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "interruption-points",
+          "side-effects",
+          "approval"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A reviewer is handed a raw agent execution trace — thousands of log lines — and asked to approve or reject the next action. What is the core problem with this approach?",
+        "options": [
+          {
+            "text": "Raw traces are too short to contain enough information for a decision",
+            "correct": false
+          },
+          {
+            "text": "It forces the reviewer to infer hidden state rather than reading a prepared summary",
+            "correct": true
+          },
+          {
+            "text": "Traces should only be shown after the action completes, not before",
+            "correct": false
+          },
+          {
+            "text": "Reviewers should never see model outputs directly",
+            "correct": false
+          }
+        ],
+        "explanation": "A review packet should surface the exact action, evidence, and model uncertainty in a readable form — asking reviewers to dig through raw traces shifts cognitive work onto them and increases error rates.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "review-packet",
+          "hidden-state",
+          "model-uncertainty"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which of the following best describes 'review theater'?",
+        "options": [
+          {
+            "text": "A structured process where reviewers watch a live demo of the agent before approving it for production",
+            "correct": false
+          },
+          {
+            "text": "Routing every agent action through a human regardless of risk, creating the appearance of oversight without real judgment",
+            "correct": true
+          },
+          {
+            "text": "A dashboard that visualizes reviewer approval latency over time",
+            "correct": false
+          },
+          {
+            "text": "Escalating low-confidence decisions to a senior reviewer instead of the primary one",
+            "correct": false
+          }
+        ],
+        "explanation": "Review theater happens when human review is performed as a ritual rather than a genuine check — volume is so high or context so thin that reviewers rubber-stamp decisions, providing no real safety benefit.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "review-theater",
+          "approval",
+          "reviewer-load"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "After a reviewer edits an agent's proposed action before approving it, what must the system do before resuming execution?",
+        "options": [
+          {
+            "text": "Restart the entire agent run from the beginning to ensure consistency",
+            "correct": false
+          },
+          {
+            "text": "Persist the reviewer's edited decision and predict the downstream state that will result from the corrected action",
+            "correct": true
+          },
+          {
+            "text": "Log the original action and proceed with it anyway to avoid branching logic",
+            "correct": false
+          },
+          {
+            "text": "Escalate automatically, because any edit signals the agent is unreliable",
+            "correct": false
+          }
+        ],
+        "explanation": "Safe resumption requires storing the reviewer's decision durably and reasoning about what world-state the corrected action will produce — skipping this step risks the agent continuing with stale or inconsistent assumptions.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "resume-safely",
+          "persist-decisions",
+          "correction",
+          "state-prediction"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "Name one metric that reveals reviewers are overburdened AND one metric that reveals the human-in-the-loop system is missing real problems. Briefly explain what each metric measures.",
+        "acceptableAnswer": "Overburdened: approval latency (time reviewers take to respond, which rises when queue depth exceeds capacity) or reviewer load (number of reviews per person per unit time). Missing real problems: false negative rate (the share of harmful or incorrect agent actions that passed through review without being caught), which can be tracked by feeding post-incident analysis back into the trigger system.",
+        "explanation": "Approval latency and reviewer load expose bottlenecks on the human side; false negatives (missed escapes) expose gaps in what the system routes for review — both dimensions must be monitored to keep the loop healthy.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "approval-latency",
+          "reviewer-load",
+          "false-negatives",
+          "false-positives",
+          "incident-feedback"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -993,5 +993,157 @@
       "url": "https://arxiv.org/abs/2305.14314",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "Before you look anything up: name the four dimensions you should measure as a baseline BEFORE applying any inference optimization. Write them from memory.",
+        "acceptableAnswer": "Memory (model/GPU memory footprint), latency (time per request or time-to-first-token), throughput (requests or tokens per second), and quality (task-specific eval score or accuracy).",
+        "explanation": "Optimizing without a baseline across all four dimensions means you cannot tell whether a change actually helped or accidentally hurt quality.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "memory",
+          "latency",
+          "throughput",
+          "quality"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You quantize a 7B model from FP16 to INT4 and notice it scores well on your benchmark but occasionally produces confident, factually wrong answers it never produced before. Which quantization failure mode best describes this?",
+        "options": [
+          {
+            "text": "Throughput collapse — the model is processing fewer tokens per second than the FP16 version.",
+            "correct": false
+          },
+          {
+            "text": "Outlier-driven weight distortion — extreme activation values are clipped, corrupting specific attention heads.",
+            "correct": true
+          },
+          {
+            "text": "Vocabulary drift — the tokenizer changes token probabilities at low bit-widths.",
+            "correct": false
+          },
+          {
+            "text": "KV cache overflow — the context window shrinks under quantization, truncating inputs.",
+            "correct": false
+          }
+        ],
+        "explanation": "Large outlier activations are disproportionately damaged by aggressive low-bit quantization, which can silently corrupt specific layers and produce confident but wrong outputs even when aggregate benchmark scores look acceptable.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "quantization",
+          "low-bit-failure-modes",
+          "quality"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A team wants a model that is 4× smaller AND retains nuanced reasoning ability on a complex legal QA task. They have 10 000 labeled examples and two weeks of GPU time. Which approach is most likely to outperform INT4 quantization of the large model?",
+        "options": [
+          {
+            "text": "Apply INT8 quantization instead — the extra bits will recover the reasoning gap.",
+            "correct": false
+          },
+          {
+            "text": "Use knowledge distillation — train a smaller student on the large teacher's soft outputs so it learns the reasoning distribution, not just hard labels.",
+            "correct": true
+          },
+          {
+            "text": "Increase the KV cache size on the large model — memory savings will match a smaller model.",
+            "correct": false
+          },
+          {
+            "text": "Enable continuous batching — higher throughput effectively makes the model behave as if it were smaller.",
+            "correct": false
+          }
+        ],
+        "explanation": "Distillation transfers the teacher's probability distribution (soft labels) to the student, which is especially valuable for nuanced tasks where hard labels alone lose reasoning signal — something quantization cannot recover.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "distillation",
+          "teacher",
+          "student",
+          "quantization"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Your inference costs spike because each request re-encodes the same 2 000-token system prompt from scratch. Which serving tactic directly eliminates this redundant computation?",
+        "options": [
+          {
+            "text": "Request routing — send prompts to a smaller model to reduce compute.",
+            "correct": false
+          },
+          {
+            "text": "Continuous batching — group concurrent requests to raise GPU utilization.",
+            "correct": false
+          },
+          {
+            "text": "KV cache prefix caching — store the key-value states for the shared prompt prefix and reuse them across requests.",
+            "correct": true
+          },
+          {
+            "text": "Concurrency capping — limit parallel requests so the GPU is never overloaded.",
+            "correct": false
+          }
+        ],
+        "explanation": "KV cache prefix caching saves the computed key-value pairs for a repeated prompt prefix so subsequent requests skip re-encoding it, directly cutting latency and compute for shared-context workloads.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "kv-cache",
+          "serving",
+          "latency",
+          "throughput"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You have a quality tolerance of ≥ 85 % on your eval suite. INT4 quantization scores 83 %, serving optimizations alone score 86 % (at higher cost), and distillation would take 6 weeks. Your launch is in 3 weeks. What is the correct ship/no-ship decision and primary rationale?",
+        "options": [
+          {
+            "text": "Ship with INT4 quantization — 83 % is close enough and cost savings justify the gap.",
+            "correct": false
+          },
+          {
+            "text": "Ship using serving optimizations — they meet the quality tolerance within the timeline, even at higher cost.",
+            "correct": true
+          },
+          {
+            "text": "No-ship — distillation is the only correct long-term solution, so delay until it is ready.",
+            "correct": false
+          },
+          {
+            "text": "Ship with INT4 and raise the quality tolerance to 80 % to match the result.",
+            "correct": false
+          }
+        ],
+        "explanation": "Quality tolerance is a hard constraint, not a suggestion — INT4 falls below it, distillation misses the deadline, so serving optimization is the only option that meets both the quality bar and the ship date.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "quality-tolerance",
+          "ship-decision",
+          "quantization",
+          "distillation",
+          "serving"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

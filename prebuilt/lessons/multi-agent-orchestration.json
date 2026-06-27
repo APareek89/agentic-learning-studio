@@ -1206,5 +1206,156 @@
       "url": "https://arxiv.org/abs/2210.03629",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A team is debating whether to use a multi-agent system for a task that requires browsing five websites and summarizing the results into one report. Which factor most strongly justifies adding multiple agents instead of using a single agent?",
+        "options": [
+          {
+            "text": "The task involves parallel, independent sub-tasks (one agent per site) that can run concurrently, cutting wall-clock latency.",
+            "correct": true
+          },
+          {
+            "text": "Multi-agent systems always produce higher-quality summaries than single agents.",
+            "correct": false
+          },
+          {
+            "text": "Using more agents reduces the total number of tokens consumed across the pipeline.",
+            "correct": false
+          },
+          {
+            "text": "A supervisor agent can correct grammar errors that a single agent would miss.",
+            "correct": false
+          }
+        ],
+        "explanation": "Multi-agent systems earn their cost when sub-tasks are genuinely parallel and independent — here, each site can be scraped simultaneously, which a single sequential agent cannot do as efficiently.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "multi-agent",
+          "coordination-cost",
+          "single-agent-baseline"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are designing a fact-checking pipeline where Agent A extracts claims, Agent B checks sources, and Agent C writes the verdict. No agent needs to see another's intermediate scratchpad — only their final outputs. Which topology and state model fits best?",
+        "options": [
+          {
+            "text": "Blackboard pattern with fully shared state, so all agents read each other's working notes.",
+            "correct": false
+          },
+          {
+            "text": "Debate pattern where agents argue competing verdicts before a judge resolves them.",
+            "correct": false
+          },
+          {
+            "text": "Pipeline topology with private per-agent state and structured handoffs between stages.",
+            "correct": true
+          },
+          {
+            "text": "Supervisor-worker topology where the supervisor re-runs every agent until consensus is reached.",
+            "correct": false
+          }
+        ],
+        "explanation": "A linear pipeline with private state is the right fit when tasks flow in a fixed sequence and agents only need each other's final outputs, not intermediate reasoning.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "topology",
+          "pipeline",
+          "private-state",
+          "shared-state"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "List THREE specific fields or constraints you should include in a delegation packet (worker brief) sent from a supervisor to a worker agent, and explain in one sentence why each matters.",
+        "acceptableAnswer": "Any three of: (1) Ownership / scope — defines exactly what the worker is responsible for so it doesn't duplicate or miss work; (2) Allowed tools — limits the worker's action space to reduce risk and token waste; (3) Context budget / relevant context only — prevents the worker from being distracted by irrelevant information; (4) Evidence / output format rules — requires structured findings so the supervisor can merge results reliably; (5) Provenance requirements — ensures the worker cites sources so conflicts can be traced later.",
+        "explanation": "A tight delegation packet constrains the worker's scope, tools, and output format — without these, workers overlap, hallucinate, or return unstructured data that is hard to merge.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "delegation-packet",
+          "worker-brief",
+          "tool-constraint",
+          "structured-findings"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Three worker agents all return findings about the same event. Agent 1 says the date was March 4; Agent 2 says March 5; Agent 3 says March 4 and cites a primary source. What is the correct merge strategy before synthesis?",
+        "options": [
+          {
+            "text": "Accept the majority vote (March 4) and discard Agent 2's finding without recording the conflict.",
+            "correct": false
+          },
+          {
+            "text": "Concatenate all three findings verbatim and let the synthesis model decide at generation time.",
+            "correct": false
+          },
+          {
+            "text": "Flag the conflict explicitly, prefer the claim with primary-source provenance (Agent 3, March 4), and record Agent 2's dissent in the provenance log.",
+            "correct": true
+          },
+          {
+            "text": "Discard all conflicting findings and ask a fourth agent to re-research the date from scratch.",
+            "correct": false
+          }
+        ],
+        "explanation": "Conflict resolution should be explicit and provenance-driven: prefer the best-evidenced claim, but preserve the dissenting finding in the log so the final answer is auditable.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "merge-evidence",
+          "conflict-resolution",
+          "provenance",
+          "deduplication"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After running a supervisor-worker topology and a single-agent baseline on the same task, you find the multi-agent system uses 4× more tokens and takes 2× longer, but produces no measurable quality improvement. What is the most appropriate conclusion?",
+        "options": [
+          {
+            "text": "The multi-agent system is still preferable because it is more robust to individual agent failures.",
+            "correct": false
+          },
+          {
+            "text": "The topology is not justified for this task; the single-agent baseline should be used until a task shape emerges that benefits from parallelism or specialization.",
+            "correct": true
+          },
+          {
+            "text": "You should add more workers to distribute the token cost across a larger team.",
+            "correct": false
+          },
+          {
+            "text": "The latency gap will close as models get faster, so the topology is fine to ship now.",
+            "correct": false
+          }
+        ],
+        "explanation": "Evaluation against a single-agent baseline is the decisive test: if the multi-agent topology costs more in tokens, latency, and complexity without a quality or speed benefit, it is theater — not engineering.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "single-agent-baseline",
+          "token-budget",
+          "latency-budget",
+          "topology-evaluation"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -931,5 +931,151 @@
       "url": "https://huggingface.co/docs/diffusers/index",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A colleague runs the same prompt twice and gets different images each time — even though nothing else changed. What is the most likely cause?",
+        "options": [
+          {
+            "text": "They are using the wrong scheduler.",
+            "correct": false
+          },
+          {
+            "text": "No random seed was fixed before generation.",
+            "correct": true
+          },
+          {
+            "text": "The pipeline is missing an adapter.",
+            "correct": false
+          },
+          {
+            "text": "The model is loaded in float32 instead of float16.",
+            "correct": false
+          }
+        ],
+        "explanation": "Without a fixed seed, the random noise sampled at the start of diffusion changes every run, producing different outputs even with an identical prompt and settings.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "seed",
+          "reproducibility"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You want faster inference on a GPU without sacrificing too much image quality. Which single change is the best first move?",
+        "options": [
+          {
+            "text": "Switch the pipeline's dtype from float32 to float16.",
+            "correct": true
+          },
+          {
+            "text": "Add a LoRA adapter to the base model.",
+            "correct": false
+          },
+          {
+            "text": "Increase the number of inference steps.",
+            "correct": false
+          },
+          {
+            "text": "Replace the scheduler with one that uses more steps.",
+            "correct": false
+          }
+        ],
+        "explanation": "Loading the model in float16 halves memory bandwidth and compute cost on modern GPUs, giving a significant speed boost with minimal quality loss — and it is a single, isolated change.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "dtype",
+          "device",
+          "speed-quality-tradeoff"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which statement best describes what an adapter (e.g., a LoRA) does inside a Diffusers pipeline?",
+        "options": [
+          {
+            "text": "It replaces the base model's weights entirely with new ones.",
+            "correct": false
+          },
+          {
+            "text": "It adds a new scheduler on top of the existing one.",
+            "correct": false
+          },
+          {
+            "text": "It applies a targeted, modular modification to the base model without replacing it.",
+            "correct": true
+          },
+          {
+            "text": "It converts the pipeline output from images to text.",
+            "correct": false
+          }
+        ],
+        "explanation": "Adapters like LoRA inject small, trainable weight deltas into specific layers of the base model, extending its behaviour without discarding the original weights.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "adapter",
+          "lora",
+          "modular-modification"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Name TWO pieces of metadata you should record alongside every generated image to keep the run traceable.",
+        "acceptableAnswer": "Any two of: the model/checkpoint name, the prompt (and negative prompt), the scheduler used, the number of inference steps, the guidance scale, the random seed, the adapter stack (e.g., LoRA names and weights), and the dtype/device settings.",
+        "explanation": "A traceable run captures enough settings that anyone — including future you — can reproduce or audit exactly what produced a given image.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "run-card",
+          "traceability",
+          "metadata"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "In a production image-generation workflow, an output fails a content-acceptance check. Which sequence of paths is the correct order to attempt?",
+        "options": [
+          {
+            "text": "Edit → Regenerate → Reject",
+            "correct": false
+          },
+          {
+            "text": "Reject → Regenerate → Edit",
+            "correct": false
+          },
+          {
+            "text": "Regenerate → Edit → Reject",
+            "correct": false
+          },
+          {
+            "text": "Reject or Regenerate first; escalate to Edit only if repeated attempts still fail the check.",
+            "correct": true
+          }
+        ],
+        "explanation": "Best practice is to reject outright or regenerate with adjusted settings before committing to manual editing; editing is a costlier fallback reserved for outputs that are close but not quite acceptable.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "acceptance-check",
+          "reject-regenerate-edit",
+          "production-failure-modes"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

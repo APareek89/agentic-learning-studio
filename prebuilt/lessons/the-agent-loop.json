@@ -1729,5 +1729,146 @@
       "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "An AI agent finishes one action and then decides what to do next based on the result. Which mental model best describes this behavior?",
+        "options": [
+          {
+            "text": "A pipeline that runs once from start to finish, then stops",
+            "correct": false
+          },
+          {
+            "text": "A loop where the agent observes, thinks, and acts repeatedly until the goal is reached",
+            "correct": true
+          },
+          {
+            "text": "A lookup table that maps every possible input to a fixed output",
+            "correct": false
+          },
+          {
+            "text": "A random walk that explores options without any feedback",
+            "correct": false
+          }
+        ],
+        "explanation": "The agent loop is defined by its cyclic observe-think-act structure — the agent keeps iterating, using each result as the input to the next cycle, rather than running straight through once.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "agent-loop",
+          "mental-model"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "What is the core mechanism that keeps an agent loop running — and what is the main tradeoff it introduces?",
+        "options": [
+          {
+            "text": "Parallel threads speed things up, but they make debugging harder",
+            "correct": false
+          },
+          {
+            "text": "Feedback from each action feeds the next decision, but this means errors can compound across cycles",
+            "correct": true
+          },
+          {
+            "text": "A fixed script guarantees reliability, but it can't handle new inputs",
+            "correct": false
+          },
+          {
+            "text": "A large language model generates every step, but it is slow to start",
+            "correct": false
+          }
+        ],
+        "explanation": "The feedback mechanism is what makes the loop adaptive, but because each cycle builds on the last, a mistake early on can snowball — that's the central tradeoff of the mechanism.",
+        "confidence": true,
+        "conceptTags": [
+          "agent-loop",
+          "mechanism",
+          "feedback"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You're designing an agent loop for a personal side project with low stakes. Which level of rigor is the most appropriate starting point?",
+        "options": [
+          {
+            "text": "Advanced optimization — always build for scale from day one",
+            "correct": false
+          },
+          {
+            "text": "Production design — add retries, logging, and guardrails immediately",
+            "correct": false
+          },
+          {
+            "text": "Baseline — get the loop working end-to-end before adding complexity",
+            "correct": true
+          },
+          {
+            "text": "Skip design entirely — agent loops are self-organizing",
+            "correct": false
+          }
+        ],
+        "explanation": "For a low-stakes project, a baseline implementation lets you validate the loop works before investing in production-grade complexity — matching rigor to actual need is the key design decision.",
+        "confidence": true,
+        "conceptTags": [
+          "design-choices",
+          "rigor"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In a tiny implementation sketch of an agent loop, what is the ONE validation check you would add first to catch the most realistic failure — and why?",
+        "acceptableAnswer": "Check whether the agent is making progress (or detect if it's stuck in a repeated action / infinite loop), because the most common real failure is the agent cycling without ever reaching the goal. Acceptable alternatives: checking that the action output is valid before feeding it back in, or adding a maximum iteration count as a safety stop.",
+        "explanation": "A loop-termination or progress check catches the most dangerous real-world failure mode — an agent that spins forever — before any other sophistication is needed.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "implementation-sketch",
+          "validation"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After running your agent loop on a real task, it completes but gives a wrong final answer. Which 'check and apply' step is most likely to surface the root cause?",
+        "options": [
+          {
+            "text": "Re-read the original goal statement to make sure it was worded correctly",
+            "correct": false
+          },
+          {
+            "text": "Trace back through the cycle history to find which observation or decision first went wrong",
+            "correct": true
+          },
+          {
+            "text": "Increase the model's temperature so it explores more options next time",
+            "correct": false
+          },
+          {
+            "text": "Add more tools to the agent so it has more ways to act",
+            "correct": false
+          }
+        ],
+        "explanation": "Because errors compound across cycles, tracing the history cycle-by-cycle is the most direct way to pinpoint where the loop first diverged from the correct path.",
+        "confidence": true,
+        "conceptTags": [
+          "check-and-apply",
+          "validation",
+          "agent-loop"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

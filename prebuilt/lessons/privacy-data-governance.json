@@ -1011,5 +1011,151 @@
       "url": "https://doi.org/10.6028/NIST.AI.600-1",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your AI workflow sends user queries to a third-party LLM API and stores the raw responses in a logging database. Which TWO surfaces does this create that require governance treatment? (Pick the answer that names both correctly.)",
+        "options": [
+          {
+            "text": "The vendor transfer to the LLM API and the stored log records",
+            "correct": true
+          },
+          {
+            "text": "The model weights and the user's browser cache",
+            "correct": false
+          },
+          {
+            "text": "The API rate-limit headers and the inference latency metrics",
+            "correct": false
+          },
+          {
+            "text": "The system prompt template and the DNS resolver",
+            "correct": false
+          }
+        ],
+        "explanation": "Any data sent to a third-party vendor is a transfer surface, and any data written to storage is a persistence surface — both require classification, retention rules, and access controls.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "data-surface",
+          "vendor-transfer",
+          "storage"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Before persisting a user's support-chat transcript to a database, which sequence of controls best reflects the 'classify and minimize before persistence' principle?",
+        "options": [
+          {
+            "text": "Store the raw transcript first, then run PII detection as a background job",
+            "correct": false
+          },
+          {
+            "text": "Classify the transcript's sensitivity, redact or tokenize PII, then write only the minimized record",
+            "correct": true
+          },
+          {
+            "text": "Run content moderation for harmful text, then store the full transcript with an encryption flag",
+            "correct": false
+          },
+          {
+            "text": "Hash the entire transcript and store the hash alongside the plaintext",
+            "correct": false
+          }
+        ],
+        "explanation": "Minimization and redaction must happen before persistence so that sensitive data never enters the store in raw form — classifying first tells you which controls to apply.",
+        "confidence": true,
+        "conceptTags": [
+          "classification",
+          "minimization",
+          "redaction",
+          "PII"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "In one or two sentences, explain why raw LLM traces are a privacy risk even when the original user-facing feature seems low-sensitivity.",
+        "acceptableAnswer": "Raw traces capture the full input-output context of every request, which can include incidentally disclosed PII, confidential business logic, or sensitive inferences that were never intended to be stored — making them a high-sensitivity artifact regardless of the feature's apparent risk level.",
+        "explanation": "Traces record everything passed to and from the model, so sensitive data that 'slips in' through user inputs or system prompts is preserved verbatim, creating exposure that the feature's surface-level design doesn't signal.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "traces",
+          "data-surface",
+          "minimization"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Your team updates its data-retention policy to shorten the log retention window from 180 days to 30 days. What must happen in the audit log to make this change governable?",
+        "options": [
+          {
+            "text": "The old logs must be deleted immediately and the audit log cleared to reflect the new baseline",
+            "correct": false
+          },
+          {
+            "text": "The policy version change must be recorded in the audit log with a timestamp, so future reviewers can tie data decisions to the policy in effect at the time",
+            "correct": true
+          },
+          {
+            "text": "A new vendor contract must be signed before the audit log entry is written",
+            "correct": false
+          },
+          {
+            "text": "Access permissions must be revoked for all users before the retention change is logged",
+            "correct": false
+          }
+        ],
+        "explanation": "Tying policy versions to audit log entries lets reviewers reconstruct which rules governed data at any point in time — without that link, a retention change is unverifiable.",
+        "confidence": true,
+        "conceptTags": [
+          "audit-log",
+          "retention",
+          "policy-version"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "An AI tool auto-generates a privacy plan for your new feature. You review it and notice it specifies how data is collected but says nothing about deletion schedules or derived data (e.g., embeddings created from user inputs). What is the correct next step?",
+        "options": [
+          {
+            "text": "Accept the plan — collection coverage is the hardest part; deletion and derived data are handled automatically by the infrastructure",
+            "correct": false
+          },
+          {
+            "text": "Reject or revise the plan: explicitly add deletion triggers for each data class and governance rules for any derived artifacts like embeddings",
+            "correct": true
+          },
+          {
+            "text": "Forward the plan to the vendor for approval before adding deletion rules yourself",
+            "correct": false
+          },
+          {
+            "text": "Run the plan through a second AI tool to fill in the gaps, then accept its output without further review",
+            "correct": false
+          }
+        ],
+        "explanation": "AI-generated privacy plans routinely omit deletion schedules and derived-data lineage — a human reviewer must verify and add these explicitly, because embeddings and other derivatives carry the same sensitivity as the source data.",
+        "confidence": true,
+        "conceptTags": [
+          "deletion",
+          "derived-data",
+          "embeddings",
+          "privacy-plan"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

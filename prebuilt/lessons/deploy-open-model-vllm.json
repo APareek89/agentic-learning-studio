@@ -926,5 +926,149 @@
       "url": "https://blog.vllm.ai/2023/06/20/vllm.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "PagedAttention is the core memory innovation inside vLLM. What problem does it directly solve?",
+        "options": [
+          {
+            "text": "It compresses model weights so they fit on smaller GPUs.",
+            "correct": false
+          },
+          {
+            "text": "It eliminates GPU memory fragmentation caused by variable-length KV caches, letting more requests share GPU memory at once.",
+            "correct": true
+          },
+          {
+            "text": "It batches tokenization on the CPU so the GPU is never idle.",
+            "correct": false
+          },
+          {
+            "text": "It caches the full model output so repeated prompts skip inference entirely.",
+            "correct": false
+          }
+        ],
+        "explanation": "PagedAttention maps KV cache blocks non-contiguously (like OS virtual memory), eliminating the wasted reserved-but-unused memory that variable sequence lengths cause.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "pagedattention",
+          "kv-cache"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are planning a deployment where 50 users send requests with a 16 k-token context window. Compared with a 4 k-token context window at the same concurrency, what happens to KV cache memory pressure?",
+        "options": [
+          {
+            "text": "It stays the same, because KV cache size depends only on model depth, not context length.",
+            "correct": false
+          },
+          {
+            "text": "It decreases, because longer contexts allow more prefix sharing.",
+            "correct": false
+          },
+          {
+            "text": "It increases roughly 4× per slot, leaving far less room for concurrent requests.",
+            "correct": true
+          },
+          {
+            "text": "It increases, but only for the prefill phase; decode memory is unaffected.",
+            "correct": false
+          }
+        ],
+        "explanation": "KV cache memory scales linearly with context length, so quadrupling the context window quadruples the per-slot footprint and sharply reduces how many requests can run in parallel.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "kv-cache",
+          "context-length",
+          "concurrency"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "You start a vLLM server and send a request using the OpenAI Python client. The call succeeds, but you included the parameter `best_of=4`. Describe what vLLM is likely to do with that parameter and why.",
+        "acceptableAnswer": "vLLM silently ignores (or raises an error for) unsupported OpenAI parameters like `best_of` because vLLM's OpenAI-compatible layer only implements a subset of the OpenAI API. The parameter is not forwarded to the model; the response is generated as if it were not present.",
+        "explanation": "vLLM's OpenAI-compatible endpoint does not implement every OpenAI parameter — unsupported ones are typically ignored or rejected, so callers must verify which parameters are actually supported.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "openai-compatible",
+          "unsupported-params"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "During a smoke test you run `vllm serve meta-llama/Llama-3-8B` and immediately get a chat-template error when you POST to `/v1/chat/completions`. What is the most likely cause?",
+        "options": [
+          {
+            "text": "The model weights have not finished downloading from the Hub.",
+            "correct": false
+          },
+          {
+            "text": "The model's tokenizer config does not include a built-in chat template, so vLLM cannot format the messages array.",
+            "correct": true
+          },
+          {
+            "text": "The `/v1/chat/completions` route is disabled by default and must be enabled with a flag.",
+            "correct": false
+          },
+          {
+            "text": "Continuous batching is incompatible with chat-style requests.",
+            "correct": false
+          }
+        ],
+        "explanation": "vLLM relies on the tokenizer's `chat_template` field to convert the messages list into a prompt string; if that field is absent, the server cannot process chat-format requests without a manually supplied template.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "chat-template",
+          "vllm-serve"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Your vLLM endpoint is live and under real traffic. Which combination of signals best indicates you need to put an API gateway in front of the server?",
+        "options": [
+          {
+            "text": "GPU utilization is above 80% and model weights exceed 10 GB.",
+            "correct": false
+          },
+          {
+            "text": "You need per-user rate limiting, auth token validation, and request routing across multiple model replicas — none of which vLLM handles natively.",
+            "correct": true
+          },
+          {
+            "text": "Prefix caching hit rate is below 50%, causing slow time-to-first-token.",
+            "correct": false
+          },
+          {
+            "text": "The model's context window is shorter than the average user request.",
+            "correct": false
+          }
+        ],
+        "explanation": "vLLM is a pure inference server with no built-in auth, rate limiting, or multi-replica routing; a gateway (e.g., Nginx, Envoy, or a purpose-built LLM gateway) is the right layer to add those production concerns.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "gateway",
+          "production",
+          "monitoring"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

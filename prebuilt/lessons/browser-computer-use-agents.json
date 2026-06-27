@@ -1206,5 +1206,157 @@
       "url": "https://arxiv.org/abs/2210.03629",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A SaaS vendor exposes a REST API for all the data your agent needs. Under what condition does it still make sense to use a browser agent instead?",
+        "options": [
+          {
+            "text": "The API rate limit is lower than the UI's click rate.",
+            "correct": false
+          },
+          {
+            "text": "The workflow requires a multi-step UI wizard that the API cannot trigger — for example, a legacy approval flow locked behind a web form.",
+            "correct": true
+          },
+          {
+            "text": "Screenshots are cheaper to store than API JSON responses.",
+            "correct": false
+          },
+          {
+            "text": "Browser agents always outperform APIs in latency.",
+            "correct": false
+          }
+        ],
+        "explanation": "Browser agents are a last-mile fallback for surfaces that have no API equivalent; if an API covers the task, it is always the safer, more stable choice.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "browser-agent",
+          "api-fallback",
+          "ui-control"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your agent must click a 'Submit Order' button, but the page sometimes renders a cookie-consent modal that covers it. Which observation + fallback strategy best handles this?",
+        "options": [
+          {
+            "text": "Switch entirely to OCR so the modal text is always visible.",
+            "correct": false
+          },
+          {
+            "text": "Use the accessibility tree as the primary locator, and add a pre-action check that dismisses any detected modal overlay before proceeding.",
+            "correct": true
+          },
+          {
+            "text": "Increase screenshot resolution so the button is easier to find visually.",
+            "correct": false
+          },
+          {
+            "text": "Hard-code the button's pixel coordinates as a fallback.",
+            "correct": false
+          }
+        ],
+        "explanation": "The accessibility tree gives stable, semantic locators, and a modal-dismissal pre-check is the correct fallback for overlay drift — pixel coordinates break whenever layout changes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "accessibility-tree",
+          "locators",
+          "modal-fallback",
+          "ui-drift"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "Name TWO categories of browser actions that should require explicit human approval before the agent executes them, and briefly explain why for each.",
+        "acceptableAnswer": "Any two of: (1) Irreversible purchases / form submissions — because they trigger real-world transactions that cannot be undone automatically; (2) Credential entry / authentication — because exposing secrets to an unreviewed action loop is a security risk; (3) File downloads or uploads — because they move data outside the controlled environment; (4) Clicking 'Delete' or destructive confirmations — because data loss is hard or impossible to reverse. The core reason in each case is that the side effect cannot be safely rolled back without human intervention.",
+        "explanation": "Irreversible or high-consequence actions (purchases, deletions, credential submission) require approval because automated rollback is impossible and errors have real-world impact.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "approvals",
+          "irreversible-actions",
+          "credentials",
+          "side-effects"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "After a deployment, your browser agent starts failing on a checkout page it handled correctly last week. Traces show it is targeting the right selector, but the assertion `expect(page).toHaveURL('/confirmation')` never fires. What is the MOST likely root cause?",
+        "options": [
+          {
+            "text": "The agent's screenshot resolution changed between runs.",
+            "correct": false
+          },
+          {
+            "text": "The site updated its DOM structure or URL routing, causing UI drift that broke the expected post-action state.",
+            "correct": true
+          },
+          {
+            "text": "The action trace file is too large to parse.",
+            "correct": false
+          },
+          {
+            "text": "The assertion library version is incompatible with the new browser version.",
+            "correct": false
+          }
+        ],
+        "explanation": "UI drift — a site changing its DOM, routing, or page structure — is the most common reason a previously passing assertion fails without any change on the agent's side.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "ui-drift",
+          "assertions",
+          "traces",
+          "verification"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which combination of practices BEST reduces the risk of an agent causing unintended harm during development and testing?",
+        "options": [
+          {
+            "text": "Use production credentials, full domain access, and skip assertions to keep the loop fast.",
+            "correct": false
+          },
+          {
+            "text": "Run dry runs against a sandboxed profile with scoped credentials, restricted allowed domains, and idempotency checks before any write action.",
+            "correct": true
+          },
+          {
+            "text": "Capture screenshots only on failure so storage costs stay low.",
+            "correct": false
+          },
+          {
+            "text": "Allow all domains but require a human to watch every run in real time.",
+            "correct": false
+          }
+        ],
+        "explanation": "Dry runs, sandboxed browser profiles, scoped credentials, domain allowlists, and idempotency checks together form the minimum safety perimeter for a browser agent under development.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "dry-run",
+          "idempotency",
+          "credentials",
+          "domain-scope",
+          "approvals"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

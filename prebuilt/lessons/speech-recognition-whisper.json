@@ -894,5 +894,151 @@
       "url": "https://huggingface.co/docs/diffusers/index",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A user records a question on their phone and Whisper returns garbled text for one word. Which ASR failure mode best explains this?",
+        "options": [
+          {
+            "text": "The model ran out of memory during inference.",
+            "correct": false
+          },
+          {
+            "text": "An out-of-vocabulary or domain-specific word was not in the model's training data.",
+            "correct": true
+          },
+          {
+            "text": "The audio file was saved in the wrong folder.",
+            "correct": false
+          },
+          {
+            "text": "The transcript was sent to the agent before approval.",
+            "correct": false
+          }
+        ],
+        "explanation": "Whisper struggles most with rare or domain-specific words that were underrepresented in its training data, producing garbled or substituted output for those tokens.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "asr",
+          "failure-modes"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You have a 45-minute lecture recording with two speakers who sometimes talk at the same time. Which audio preparation risk should you flag BEFORE transcribing?",
+        "options": [
+          {
+            "text": "The file is too short for chunking to work.",
+            "correct": false
+          },
+          {
+            "text": "Overlapping speakers can cause Whisper to merge or drop words from both voices.",
+            "correct": true
+          },
+          {
+            "text": "Timestamps will be disabled automatically for stereo files.",
+            "correct": false
+          },
+          {
+            "text": "The quality gate will reject files longer than 30 minutes.",
+            "correct": false
+          }
+        ],
+        "explanation": "When two speakers overlap, the model receives a mixed signal and often merges or omits words, making the overlapping-speaker risk the primary concern to address before transcription.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "audio-preparation",
+          "overlapping-speakers",
+          "chunking"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You want to correct a specific error in a long transcript without re-listening to the whole recording. Which Whisper feature makes this efficient?",
+        "options": [
+          {
+            "text": "The translate task, which converts speech to English text.",
+            "correct": false
+          },
+          {
+            "text": "Word- or segment-level timestamps that map each word back to its position in the audio.",
+            "correct": true
+          },
+          {
+            "text": "Chunking the audio into equal-length segments before transcription.",
+            "correct": false
+          },
+          {
+            "text": "Running the quality gate a second time on the full transcript.",
+            "correct": false
+          }
+        ],
+        "explanation": "Timestamps let you jump directly to the exact moment in the audio where an error occurred, so you can listen and correct only that segment instead of scrubbing the whole file.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "timestamps",
+          "correction",
+          "transcribe-vs-translate"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Describe what a transcript quality gate does and give ONE example of an alert it might raise.",
+        "acceptableAnswer": "A quality gate is a programmatic check that scans the transcript for potential errors before it is used downstream. An example alert is a flag for a missing domain-specific term — for instance, a medical transcript that never contains the expected drug name the speaker mentioned, suggesting Whisper substituted or dropped it.",
+        "explanation": "A quality gate automates error detection (e.g., low-confidence segments, missing domain terms) so problems are caught before the transcript reaches an agent or index.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "quality-gate",
+          "domain-terms",
+          "asr-pipeline"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A raw Whisper transcript is piped directly into an AI agent without human review. What is the PRIMARY risk of this workflow?",
+        "options": [
+          {
+            "text": "The agent will refuse to process text that came from audio.",
+            "correct": false
+          },
+          {
+            "text": "Transcription errors become facts inside the agent, leading to wrong or hallucinated responses.",
+            "correct": true
+          },
+          {
+            "text": "Timestamps are stripped out and cannot be recovered later.",
+            "correct": false
+          },
+          {
+            "text": "The indexing rules will automatically reject the transcript.",
+            "correct": false
+          }
+        ],
+        "explanation": "When a transcript skips human correction, any ASR mistakes are treated as ground truth by the agent, which can propagate errors into its answers or stored knowledge base.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "asr-to-agent-risk",
+          "human-correction",
+          "indexing-rules"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

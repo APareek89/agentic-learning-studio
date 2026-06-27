@@ -1248,5 +1248,132 @@
       "url": "https://neo4j.com/docs/neo4j-graphrag-python/current/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A user asks: 'Which executives at Acme Corp have worked with suppliers flagged for compliance issues?' Why does classic RAG struggle with this question?",
+        "options": [
+          {
+            "text": "The question contains too many words for a vector search to handle.",
+            "correct": false
+          },
+          {
+            "text": "Answering requires traversing relationships across multiple entities, not just retrieving similar text passages.",
+            "correct": true
+          },
+          {
+            "text": "Classic RAG cannot retrieve documents about corporations.",
+            "correct": false
+          },
+          {
+            "text": "Vector embeddings cannot represent proper nouns like company names.",
+            "correct": false
+          }
+        ],
+        "explanation": "Classic RAG retrieves chunks similar to the query but cannot follow multi-hop entity relationships (executive → company → supplier → compliance flag) that span separate documents.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "During graph construction, two documents mention 'J. Smith, CTO' and 'Jane Smith, Chief Technology Officer' separately. What problem does this illustrate, and what must the pipeline do?",
+        "options": [
+          {
+            "text": "A vector similarity failure — the embeddings for both strings are too different to cluster.",
+            "correct": false
+          },
+          {
+            "text": "An entity resolution problem — the pipeline must decide whether both strings refer to the same real-world entity before merging or keeping them separate.",
+            "correct": true
+          },
+          {
+            "text": "A provenance problem — the pipeline must delete one mention to avoid duplicate edges.",
+            "correct": false
+          },
+          {
+            "text": "A hop-count problem — the traversal depth must be reduced to avoid merging unrelated nodes.",
+            "correct": false
+          }
+        ],
+        "explanation": "Entity resolution is the task of determining whether different surface forms refer to the same entity; failing to resolve them correctly creates duplicate or split nodes that corrupt graph traversal.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "You are planning a Graph RAG query for: 'What regulations affect the subsidiaries of GlobalBank?' Describe, in 2–3 sentences, how you would seed the graph traversal and what constraints you would apply to keep the retrieved context focused.",
+        "acceptableAnswer": "Identify 'GlobalBank' and 'subsidiaries' as seed entities from the query (or from an initial vector retrieval step that surfaces relevant chunks). Traverse edges typed as 'owns' or 'is_subsidiary_of' from the GlobalBank node, then follow 'regulated_by' or 'subject_to' edges to regulation nodes. Cap traversal at 2–3 hops and restrict to relationship types relevant to ownership and regulation to prevent context explosion.",
+        "explanation": "Effective query planning seeds traversal from query entities, restricts hop count, and filters by relevant relationship types so the retrieved subgraph stays focused and fits in context.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "In a bounded graph expansion, you start from a seed node and allow a maximum of 2 hops. Which set of nodes is guaranteed to be included in the expanded subgraph?",
+        "options": [
+          {
+            "text": "All nodes in the entire graph that share any edge type with the seed.",
+            "correct": false
+          },
+          {
+            "text": "The seed node, every node directly connected to it (1 hop), and every node connected to those neighbors (2 hops), filtered by allowed edge types.",
+            "correct": true
+          },
+          {
+            "text": "Only the seed node and its direct neighbors, because 2-hop expansion is always pruned for cost.",
+            "correct": false
+          },
+          {
+            "text": "All nodes whose source document was retrieved by the initial vector search.",
+            "correct": false
+          }
+        ],
+        "explanation": "A bounded expansion with max_hops=2 includes the seed, its 1-hop neighbors, and their 1-hop neighbors (2 hops total), subject to any relationship-type filters — no more, no less.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A Graph RAG system confidently states that Person A reported to Person B, but the only supporting edge was extracted from a document that actually described a different organizational period. Which failure mode does this represent, and what is the appropriate mitigation?",
+        "options": [
+          {
+            "text": "Hallucinated retrieval — mitigated by increasing the number of retrieved chunks.",
+            "correct": false
+          },
+          {
+            "text": "A false edge from incorrect extraction or stale provenance — mitigated by verifying the answer claim against source-backed paths and, if stakes are high, routing to a human review gate.",
+            "correct": true
+          },
+          {
+            "text": "An entity resolution error — mitigated by reducing the hop count to 1.",
+            "correct": false
+          },
+          {
+            "text": "A vector similarity failure — mitigated by re-embedding the graph nodes.",
+            "correct": false
+          }
+        ],
+        "explanation": "False edges — edges that exist in the graph but are unsupported or contradicted by current source documents — are a Graph RAG-specific failure mode; tracing claims back to source-backed paths and adding a human review gate for high-stakes answers are the correct mitigations.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

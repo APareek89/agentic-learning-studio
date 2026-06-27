@@ -1260,5 +1260,151 @@
       "url": "https://docs.langchain.com/oss/python/langchain/rag",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You pin an \"answer contract\" at the start of a RAG project. What is the PRIMARY reason for doing this before writing any code?",
+        "options": [
+          {
+            "text": "It lets you choose the fastest embedding model available.",
+            "correct": false
+          },
+          {
+            "text": "It locks down what a correct answer and a correct refusal look like, so every later decision can be tested against a fixed target.",
+            "correct": true
+          },
+          {
+            "text": "It automatically generates the prompt template for the chain.",
+            "correct": false
+          },
+          {
+            "text": "It determines how many documents to load into the vector store.",
+            "correct": false
+          }
+        ],
+        "explanation": "The contract defines expected answer and refusal behavior up front, giving you a concrete pass/fail target that guides every subsequent build and test decision.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "answer-contract",
+          "refusal-behavior"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "When splitting documents into chunks for a RAG retriever, which outcome best indicates your chunk size is well-calibrated?",
+        "options": [
+          {
+            "text": "Each chunk is as large as possible so the model sees maximum context.",
+            "correct": false
+          },
+          {
+            "text": "Each chunk contains exactly one sentence, regardless of topic.",
+            "correct": false
+          },
+          {
+            "text": "Each chunk is a self-contained unit of evidence that answers at least one representative question on its own.",
+            "correct": true
+          },
+          {
+            "text": "Chunks are sized to minimize the total number of embeddings stored.",
+            "correct": false
+          }
+        ],
+        "explanation": "A well-calibrated chunk is \"evidence-sized\" — coherent enough to stand alone as support for a specific question, which is what the retriever will surface at query time.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "splitter",
+          "retrievable-evidence",
+          "chunk"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "In a LangChain RAG chain, the retriever, prompt template, and model are kept as SEPARATE runnables rather than merged into one function. Which of the following is the strongest reason for this separation?",
+        "options": [
+          {
+            "text": "LangChain's API requires them to be separate and will throw an error otherwise.",
+            "correct": false
+          },
+          {
+            "text": "Each component can be swapped, tested, or traced independently without breaking the others.",
+            "correct": true
+          },
+          {
+            "text": "Separate runnables always produce faster inference times.",
+            "correct": false
+          },
+          {
+            "text": "It avoids the need to write a system prompt.",
+            "correct": false
+          }
+        ],
+        "explanation": "Keeping runnables separate means you can replace the retriever, tweak the prompt, or swap the model in isolation — and validate each piece independently — without rewriting the whole chain.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "runnable",
+          "retriever",
+          "prompt-template"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "When you add evidence logging to your RAG chain, what specific information should each log entry expose, and why does that matter for validation?",
+        "acceptableAnswer": "Each log entry should expose which source document(s) / chunks were retrieved for a given query (citations or source metadata) and ideally the retrieval scores. This lets you verify that the model's generated answer is actually supported by the retrieved evidence — catching hallucinations or misattributions before they reach production.",
+        "explanation": "Evidence logging surfaces the retrieved sources alongside the answer, making it possible to confirm that every claim is grounded in a specific chunk rather than fabricated by the model.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "evidence-logging",
+          "citation",
+          "trace"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You've promoted your RAG chain into a regression test suite. A new test fails because the chain now cites a different chunk than the one recorded in the original passing test, even though the answer text is still correct. What is the BEST next step?",
+        "options": [
+          {
+            "text": "Delete the test — citation differences don't matter as long as the answer is right.",
+            "correct": false
+          },
+          {
+            "text": "Inspect both chunks to confirm the new citation genuinely supports the claim; update the expected citation only if it does.",
+            "correct": true
+          },
+          {
+            "text": "Roll back the embedding model to restore the original citation.",
+            "correct": false
+          },
+          {
+            "text": "Increase chunk size so only one chunk can ever match the query.",
+            "correct": false
+          }
+        ],
+        "explanation": "A citation change is a signal worth investigating — the new chunk may be equally valid (update the test) or may be a weaker source (fix the retriever); blindly deleting or ignoring the failure defeats the purpose of regression testing.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "regression-test",
+          "citation",
+          "retrievable-evidence"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

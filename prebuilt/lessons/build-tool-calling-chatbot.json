@@ -1964,5 +1964,116 @@
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "From memory, name the four steps in one tool-calling exchange, from the user's request to the final reply.",
+        "acceptableAnswer": "The user asks for something; the model emits a tool call with a tool name and arguments; the app dispatches that call to the real function and returns the result/error; the model uses that result to produce the final answer.",
+        "explanation": "A tool-calling bot works because the model requests a tool, your code runs it, and the model then answers using the returned result.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your bot is asked, “What is the current status of order #1842?” Why should it use a tool instead of answering from training data?",
+        "options": [
+          {
+            "text": "Because training data may not include live private order data, but a real order-status tool can retrieve it.",
+            "correct": true
+          },
+          {
+            "text": "Because tool calls make the model more creative when guessing missing details."
+          },
+          {
+            "text": "Because tool calls remove the need to define a target task."
+          },
+          {
+            "text": "Because the model cannot write text unless a tool is called first."
+          }
+        ],
+        "explanation": "Tools are for real, current, private, or action-based information that the model should not invent from training data.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which tool schema is best for a function that looks up weather by city and number of forecast days?",
+        "options": [
+          {
+            "text": "name: get_weather; description: Get a weather forecast; parameters: city:string, days:integer",
+            "correct": true
+          },
+          {
+            "text": "name: weather thing; description: useful; parameters: input:any"
+          },
+          {
+            "text": "name: get_weather; description: Maybe answer weather; parameters: city, days"
+          },
+          {
+            "text": "name: call_api; description: Does API stuff; parameters: text:string"
+          }
+        ],
+        "explanation": "A useful schema has a clear name, a specific description, and typed parameters the model can fill correctly.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You are building dispatch for a tool that permanently deletes a customer record. Which dispatch rigor is the best fit?",
+        "options": [
+          {
+            "text": "A bare dictionary mapping tool names to functions is enough because the model chose the function."
+          },
+          {
+            "text": "Validated dispatch only; if the arguments match the schema, deletion is always safe."
+          },
+          {
+            "text": "Gated dispatch with validation, authorization, confirmation, and careful review before execution.",
+            "correct": true
+          },
+          {
+            "text": "No dispatch table; let the model write and run the deletion code directly."
+          }
+        ],
+        "explanation": "Irreversible or high-impact writes need gated dispatch because the worst side effect is too serious to trust a simple mapping alone.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A model emits a tool call with an unknown tool name and an argument type that does not match the schema. What should your app do first?",
+        "options": [
+          {
+            "text": "Run the closest matching function and let the model fix the answer later."
+          },
+          {
+            "text": "Validate and reject the call, log the attempted name, arguments, result/error, then retry or fall back according to policy.",
+            "correct": true
+          },
+          {
+            "text": "Silently drop the bad argument and call the tool with defaults."
+          },
+          {
+            "text": "Increase the turn budget until the model eventually emits a valid call."
+          }
+        ],
+        "explanation": "Validation and tracing make bad calls visible and safe, while retry/fallback policies prevent endless or unsafe loops.",
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

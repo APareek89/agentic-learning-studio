@@ -995,5 +995,132 @@
       "url": "https://langfuse.com/docs/tracing",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You are setting up a parent trace for a support-agent request. Which of the following should you use as the trace name?",
+        "options": [
+          {
+            "text": "The user's email address, so traces are easy to search by customer",
+            "correct": false
+          },
+          {
+            "text": "A stable, role-based label such as \"support-agent-request\"",
+            "correct": true
+          },
+          {
+            "text": "The full text of the user's message, for maximum context",
+            "correct": false
+          },
+          {
+            "text": "A randomly generated UUID on every call, to avoid collisions",
+            "correct": false
+          }
+        ],
+        "explanation": "Trace names must be stable and role-based; embedding user-specific values (email, message text) leaks PII and makes aggregation across requests impossible.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "Without looking at your notes: name THREE fields that belong on a retrieval span (not the parent trace, not the model span — the retrieval span specifically).",
+        "acceptableAnswer": "Any three of: source/document IDs, ranking or relevance scores, number of results returned, retrieval latency, query used for retrieval, retrieval status (hit/miss).",
+        "explanation": "Retrieval spans need source IDs, ranking information, and result counts so you can later diagnose whether a bad answer came from a retrieval failure or a model failure.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A trace completeness verifier flags a span as incomplete. Which of the following is the BEST next action before shipping the instrumentation to production?",
+        "options": [
+          {
+            "text": "Delete the flagged span so the verifier passes",
+            "correct": false
+          },
+          {
+            "text": "Use the verifier's output as a checklist and add the missing fields, then re-run the verifier",
+            "correct": true
+          },
+          {
+            "text": "Disable the verifier for that span type to unblock the release",
+            "correct": false
+          },
+          {
+            "text": "Promote the incomplete trace to the dataset so the team can review it later",
+            "correct": false
+          }
+        ],
+        "explanation": "The verifier is a predict-then-reveal tool: its output is a concrete checklist of gaps to fix, not a reason to skip or suppress the check.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Your support agent fails on a specific user query. You want to turn that failure into a regression test. What must you do to the raw trace BEFORE adding it to a Langfuse dataset?",
+        "options": [
+          {
+            "text": "Attach a score of 1.0 so the dataset item is marked as a passing example",
+            "correct": false
+          },
+          {
+            "text": "Redact any user-specific or private values from the trace data",
+            "correct": true
+          },
+          {
+            "text": "Delete all child spans so only the parent trace is stored",
+            "correct": false
+          },
+          {
+            "text": "Rename the trace to include the user's ID for traceability",
+            "correct": false
+          }
+        ],
+        "explanation": "Privacy and retention rules require redacting PII before a trace enters a dataset; storing raw user data in a dataset violates the privacy rules that must be in place before broader rollout.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You want to prevent a new model release from going to all users if retrieval quality has dropped. Which Langfuse mechanism is designed for exactly this purpose?",
+        "options": [
+          {
+            "text": "A tool span with a validated-arguments field set to the model version",
+            "correct": false
+          },
+          {
+            "text": "A release gate defined using trace-derived scores",
+            "correct": true
+          },
+          {
+            "text": "A dataset item tagged with the release version",
+            "correct": false
+          },
+          {
+            "text": "A parent trace whose name includes the release version string",
+            "correct": false
+          }
+        ],
+        "explanation": "A release gate uses aggregated scores computed from live traces to block or allow a release — it is the bridge between observability data and deployment decisions.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

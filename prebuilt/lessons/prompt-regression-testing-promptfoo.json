@@ -977,5 +977,155 @@
       "url": "https://www.promptfoo.dev/docs/intro/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A teammate proposes saving the exact text of every LLM response as a snapshot test. What is the most likely problem with this approach?",
+        "options": [
+          {
+            "text": "Snapshot files are too large to store in version control.",
+            "correct": false
+          },
+          {
+            "text": "Any harmless rephrasing of a correct answer will cause a false failure.",
+            "correct": true
+          },
+          {
+            "text": "LLMs always produce identical outputs, so snapshots add no value.",
+            "correct": false
+          },
+          {
+            "text": "Snapshot tests cannot be run in CI pipelines.",
+            "correct": false
+          }
+        ],
+        "explanation": "LLMs are non-deterministic and naturally rephrase correct answers, so exact-text snapshots fail on wording changes that don't affect behavior — producing noisy, low-signal test suites.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "snapshot-brittleness",
+          "behavior-level-checks"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are writing a promptfoo test case for a customer-support prompt. Which combination of fields makes a case complete and slice-aware?",
+        "options": [
+          {
+            "text": "`vars` with input values, `assert` with expected properties, and a metadata tag like `critical: true`.",
+            "correct": true
+          },
+          {
+            "text": "`vars` with input values and a raw expected string to match exactly.",
+            "correct": false
+          },
+          {
+            "text": "Only an `assert` block — inputs can be inferred from the assertion.",
+            "correct": false
+          },
+          {
+            "text": "`vars` with input values and a provider name — assertions are optional.",
+            "correct": false
+          }
+        ],
+        "explanation": "A well-formed case needs vars (inputs), assertions (expected behavioral properties), and slice metadata so you can separate critical from exploratory coverage and filter results meaningfully.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "test-cases",
+          "slices",
+          "vars",
+          "assertions"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your prompt must always return valid JSON with a `price` field. Which assertion strategy best enforces this hard contract?",
+        "options": [
+          {
+            "text": "An LLM rubric judge that scores whether the response 'looks like JSON'.",
+            "correct": false
+          },
+          {
+            "text": "A `contains` check for the string `price`.",
+            "correct": false
+          },
+          {
+            "text": "A JSON schema assertion that validates the structure and field types.",
+            "correct": true
+          },
+          {
+            "text": "A regex that matches any curly-brace character in the output.",
+            "correct": false
+          }
+        ],
+        "explanation": "A JSON schema assertion is a deterministic hard-contract check — it verifies structure and types precisely, unlike a rubric judge or loose string check that can pass malformed output.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "assertions",
+          "json-schema",
+          "deterministic-checks",
+          "llm-judge"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In a promptfoo provider-and-prompt matrix, you remove the assertion that checks whether a citation is included in the response. What specific failure mode does this create, and why would it be hidden from your results?",
+        "acceptableAnswer": "Removing the citation assertion means responses that omit citations will no longer be flagged as failures. The matrix will still show passing scores because no check enforces that contract, hiding the regression — results look green even though a required behavior is broken.",
+        "explanation": "Without the citation assertion, the matrix has no signal for that behavior; all provider/prompt combos can pass while silently dropping citations, making the gap invisible in your results.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "provider-matrix",
+          "prompt-matrix",
+          "assertions",
+          "release-tradeoffs"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Your CI gate uses an LLM-as-judge assertion that occasionally flips between pass and fail on the same input. What is the correct way to handle this without masking real failures?",
+        "options": [
+          {
+            "text": "Delete the flaky assertion so it stops blocking the pipeline.",
+            "correct": false
+          },
+          {
+            "text": "Raise the pass threshold so the flaky check has less influence on the gate.",
+            "correct": false
+          },
+          {
+            "text": "Re-run the flaky check a fixed number of times and require a majority pass, while keeping hard-contract checks as strict gates.",
+            "correct": true
+          },
+          {
+            "text": "Move all LLM-judge checks to a separate repo so they don't affect CI.",
+            "correct": false
+          }
+        ],
+        "explanation": "Retrying and requiring a majority result smooths out judge non-determinism without discarding the signal entirely, while deterministic hard-contract checks remain strict — so real failures still block the build.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "ci-gates",
+          "flaky-checks",
+          "llm-judge",
+          "pass-thresholds"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

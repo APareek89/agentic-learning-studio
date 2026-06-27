@@ -1104,5 +1104,146 @@
       "url": "https://doi.org/10.6028/NIST.AI.600-1",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "Without looking back at the lesson: describe the difference between a group-level, a language-level, and a context-level fairness question. Give a one-sentence example of each.",
+        "acceptableAnswer": "A group-level question asks whether the system performs differently across demographic groups (e.g., 'Does the model approve loans at different rates for men vs. women?'). A language-level question asks whether the system behaves differently based on how something is phrased or what dialect/language is used (e.g., 'Does the model flag AAVE more often than Standard American English?'). A context-level question asks whether the deployment context changes who is harmed (e.g., 'Does a lower-accuracy prediction matter more when used in a high-stakes hiring decision than in a low-stakes recommendation?').",
+        "explanation": "These three levels capture where bias can enter: in who is affected, in how language is processed, and in the real-world stakes of the deployment context — and conflating them leads to the wrong mitigation.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "group-level fairness",
+          "language-level fairness",
+          "context-level fairness"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You build a slice metric table and find that your model's false-negative rate is 12 percentage points higher for one demographic group. Before choosing a mitigation, what is the most important next step?",
+        "options": [
+          {
+            "text": "Immediately retrain the model with oversampled data from that group.",
+            "correct": false
+          },
+          {
+            "text": "Investigate the cause — e.g., sample imbalance, proxy features, or label noise — before deciding on a fix.",
+            "correct": true
+          },
+          {
+            "text": "Add a generic safety disclaimer to the system's outputs for that group.",
+            "correct": false
+          },
+          {
+            "text": "Switch to a fairness metric that shows a smaller gap.",
+            "correct": false
+          }
+        ],
+        "explanation": "A metric gap is a symptom, not a diagnosis — jumping to a fix without mapping the cause can mask the problem or introduce new harms, and hiding failures behind safety language is exactly the anti-pattern the lesson warns against.",
+        "confidence": true,
+        "conceptTags": [
+          "slice metric",
+          "mitigation",
+          "proxy risk"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A colleague says: 'Our slice metrics look fine — accuracy is above 90% for every group.' Why is this claim potentially misleading?",
+        "options": [
+          {
+            "text": "Accuracy above 90% is always sufficient for fairness purposes.",
+            "correct": false
+          },
+          {
+            "text": "Overall accuracy can hide serious gaps in error types (e.g., false-positive vs. false-negative rates) that matter differently depending on the harm at stake.",
+            "correct": true
+          },
+          {
+            "text": "Slice metrics are only valid when sample sizes are perfectly balanced across groups.",
+            "correct": false
+          },
+          {
+            "text": "Fairness only applies to models with accuracy below 80%.",
+            "correct": false
+          }
+        ],
+        "explanation": "Accuracy is an aggregate that can mask unequal error distributions; a group with 90% accuracy but a high false-positive rate may face a very different — and more harmful — experience than the headline number suggests.",
+        "confidence": true,
+        "conceptTags": [
+          "slice metric",
+          "fairness metric"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "When writing a small slice-gap calculation, sample imbalance is a key threat. Which outcome does severe sample imbalance most directly cause?",
+        "options": [
+          {
+            "text": "It makes the model's overall accuracy artificially low.",
+            "correct": false
+          },
+          {
+            "text": "It causes the slice metric for a small group to appear stable when it is actually unreliable, hiding real gaps.",
+            "correct": true
+          },
+          {
+            "text": "It automatically introduces proxy features into the model.",
+            "correct": false
+          },
+          {
+            "text": "It forces the fairness loop to restart from the measurement phase.",
+            "correct": false
+          }
+        ],
+        "explanation": "With too few examples in a slice, the measured metric has high variance — a gap can look small or nonexistent simply because there isn't enough data to detect it, not because the gap isn't real.",
+        "confidence": true,
+        "conceptTags": [
+          "slice metric",
+          "sample imbalance"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "The fairness loop described in the final module is meant to govern residual risk over time. What does treating fairness as a loop — rather than a one-time audit — primarily protect against?",
+        "options": [
+          {
+            "text": "The risk that the model's training data will be deleted.",
+            "correct": false
+          },
+          {
+            "text": "Fairness gaps that emerge or worsen after deployment due to data drift, new user populations, or changing contexts.",
+            "correct": true
+          },
+          {
+            "text": "The need to ever retrain the model again.",
+            "correct": false
+          },
+          {
+            "text": "Regulatory requirements that mandate a single annual fairness report.",
+            "correct": false
+          }
+        ],
+        "explanation": "Systems change, populations shift, and new harms emerge — a loop with scheduled reviews and retrieval prompts ensures fairness is re-evaluated as conditions evolve, not just certified once at launch.",
+        "confidence": true,
+        "conceptTags": [
+          "fairness loop",
+          "residual risk",
+          "governance"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

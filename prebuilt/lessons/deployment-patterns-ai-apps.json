@@ -2179,5 +2179,132 @@
       "url": "https://docs.vllm.ai/en/v0.19.0/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A data scientist runs a model in a Jupyter notebook with no issues, then deploys it to production — and latency spikes, errors appear under load, and costs balloon. Which of the following best explains why deployment is its own problem, separate from running the model?",
+        "options": [
+          {
+            "text": "The model weights are too large to fit in a production server's memory.",
+            "correct": false
+          },
+          {
+            "text": "Production traffic adds concurrency, variable load, and uptime requirements that a notebook never exercises.",
+            "correct": true
+          },
+          {
+            "text": "Cloud GPUs use different floating-point precision than local machines.",
+            "correct": false
+          },
+          {
+            "text": "Notebooks cache predictions, so they always appear faster than real serving.",
+            "correct": false
+          }
+        ],
+        "explanation": "Production traffic introduces concurrent requests, unpredictable load spikes, and uptime pressure — none of which a single-user notebook ever tests.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "An inference request arrives at your deployed AI app. Tracing it through the stack: which layer is responsible for batching multiple requests together before they hit the GPU?",
+        "options": [
+          {
+            "text": "The API gateway, because it sees all incoming traffic first.",
+            "correct": false
+          },
+          {
+            "text": "The GPU driver, because it schedules compute kernels.",
+            "correct": false
+          },
+          {
+            "text": "The serving engine, because batching is an inference-optimization concern it owns.",
+            "correct": true
+          },
+          {
+            "text": "The load balancer, because it distributes requests across replicas.",
+            "correct": false
+          }
+        ],
+        "explanation": "The serving engine sits between the gateway and the GPU and owns inference-level optimizations like request batching to maximize GPU utilization.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your app scores millions of customer records overnight and results are needed by 6 AM — but no user is waiting in real time. Your GPU budget is tight. Which deployment pattern is the best fit?",
+        "options": [
+          {
+            "text": "Real-time serving with multiple always-on replicas.",
+            "correct": false
+          },
+          {
+            "text": "Serverless scale-to-zero, triggered per request.",
+            "correct": false
+          },
+          {
+            "text": "Batch / offline processing, scheduled to run during off-peak hours.",
+            "correct": true
+          },
+          {
+            "text": "Self-hosted real-time endpoint with aggressive autoscaling.",
+            "correct": false
+          }
+        ],
+        "explanation": "Batch/offline serving is purpose-built for high-volume, latency-tolerant workloads — it processes records in bulk on a schedule and avoids the cost of always-on infrastructure.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Look at a minimal real-time serving config that defines a container image, a replica count, and an autoscaling rule (e.g., scale up when CPU/GPU utilization exceeds 70%, scale down when it drops below 30%). In one or two sentences, explain what the autoscaling rule is actually deciding and why both the scale-up AND scale-down thresholds matter.",
+        "acceptableAnswer": "The autoscaling rule decides when to add a new replica (to handle rising load without degrading latency) and when to remove one (to cut idle cost). Both thresholds matter because setting scale-up too high causes latency spikes under load, while setting scale-down too aggressively causes replicas to churn — spinning up and down repeatedly — which itself adds latency and cost.",
+        "explanation": "Autoscaling balances two opposing risks: under-provisioning (too few replicas → slow responses) and over-provisioning (too many idle replicas → wasted cost), so both thresholds need deliberate tuning.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "The three failure modes that cause most AI deployment outages are: GPU/memory exhaustion, a cascade of slow requests overwhelming the queue (request pile-up), and cold-start latency spikes. You're building an internal analytics tool used by ~10 people, with no SLA and results needed within a few minutes. What is the RIGHT level of deployment rigor?",
+        "options": [
+          {
+            "text": "Optimized — add quantization, multi-replica failover, and full observability to guard against all three failure modes.",
+            "correct": false
+          },
+          {
+            "text": "Prototype — a single replica, no autoscaling, basic logging; the failure impact is low and the overhead of full hardening isn't justified.",
+            "correct": true
+          },
+          {
+            "text": "Production — you still need request timeouts and at least two replicas to avoid any single point of failure.",
+            "correct": false
+          },
+          {
+            "text": "Serverless only — cold starts are acceptable because users expect some delay.",
+            "correct": false
+          }
+        ],
+        "explanation": "Deployment rigor should be sized to real uptime and latency needs — a low-traffic internal tool with no SLA warrants prototype-level setup, not the overhead of full production hardening.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

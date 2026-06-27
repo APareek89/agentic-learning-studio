@@ -1952,5 +1952,150 @@
       "url": "https://langchain-ai.github.io/langgraph/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A single-prompt LLM solution struggles when a task requires both deep domain expertise and strict output formatting enforced independently. Which problem do role-based agents most directly solve here?",
+        "options": [
+          {
+            "text": "They reduce the total number of LLM API calls needed.",
+            "correct": false
+          },
+          {
+            "text": "They let you assign a specialist persona and a focused goal to each agent, so each sub-problem gets dedicated context instead of one prompt juggling everything.",
+            "correct": true
+          },
+          {
+            "text": "They eliminate the need for a system prompt entirely.",
+            "correct": false
+          },
+          {
+            "text": "They automatically parallelize all tasks across multiple threads.",
+            "correct": false
+          }
+        ],
+        "explanation": "Role-based agents solve the 'one prompt, too many jobs' problem by giving each agent a narrow role, goal, and backstory so it can focus on one concern at a time.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "role",
+          "goal",
+          "backstory"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "In CrewAI, which of the three core pieces — Agent, Task, or Crew — owns the actual description of the work to be done (i.e., the instructions for what to produce)?",
+        "options": [
+          {
+            "text": "Agent — because the role and goal define what it does.",
+            "correct": false
+          },
+          {
+            "text": "Crew — because it orchestrates the whole pipeline.",
+            "correct": false
+          },
+          {
+            "text": "Task — because it holds the description, expected output, and the agent assigned to execute it.",
+            "correct": true
+          },
+          {
+            "text": "Both Agent and Task share the work description equally.",
+            "correct": false
+          }
+        ],
+        "explanation": "Tasks carry the work description and expected output; agents supply the persona and tools, but the 'what to do' lives on the Task.",
+        "confidence": true,
+        "conceptTags": [
+          "task",
+          "agent",
+          "crew"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your crew needs a manager that can dynamically decide which specialist agent to call next based on intermediate results. Cost is a secondary concern. Which CrewAI process should you choose, and why does it cost more?",
+        "options": [
+          {
+            "text": "Sequential — it is cheaper because agents run in a fixed order with no extra calls.",
+            "correct": false
+          },
+          {
+            "text": "Hierarchical — a manager LLM decides delegation at runtime, adding at least one extra LLM call per delegation step.",
+            "correct": true
+          },
+          {
+            "text": "Hierarchical — it batches all agent calls into one request, which costs more per token.",
+            "correct": false
+          },
+          {
+            "text": "Sequential — a router agent adds extra calls to decide the next step.",
+            "correct": false
+          }
+        ],
+        "explanation": "Hierarchical process uses a manager LLM to decide which agent handles each step, and that decision itself is an additional LLM call — hence higher cost per delegation.",
+        "confidence": true,
+        "conceptTags": [
+          "sequential_process",
+          "hierarchical_process",
+          "manager_agent"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You are reviewing AI-generated CrewAI code for a two-agent sequential crew. List TWO specific things you would check to verify the wiring is correct before running it.",
+        "acceptableAnswer": "Any two of: (1) Each Task has an 'agent' parameter pointing to the correct Agent instance. (2) The Crew's 'agents' list includes all agents and the 'tasks' list includes all tasks in the intended order. (3) The second task's context or input is connected to the first task's output (context chaining). (4) The process is set to Process.sequential. (5) All required Agent fields (role, goal, backstory, llm) are populated.",
+        "explanation": "Correct wiring means every Task is assigned an agent, tasks are ordered in the Crew, and output-to-input context is explicitly connected — missing any one of these causes silent failures.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "task",
+          "agent",
+          "crew",
+          "sequential_process"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A production crew occasionally returns outputs that ignore the formatting rules defined in the task description. Which guardrail most directly addresses this failure mode?",
+        "options": [
+          {
+            "text": "Switch from sequential to hierarchical process so the manager can retry.",
+            "correct": false
+          },
+          {
+            "text": "Add more agents to the crew to distribute the formatting responsibility.",
+            "correct": false
+          },
+          {
+            "text": "Define a structured expected_output schema on the Task and add an output validation step (e.g., a validator agent or Pydantic model) that rejects non-conforming results.",
+            "correct": true
+          },
+          {
+            "text": "Increase the LLM temperature so the model explores more output formats.",
+            "correct": false
+          }
+        ],
+        "explanation": "Output-format failures are caught by enforcing a schema at the Task level and validating the result before it propagates — not by adding agents or changing the process type.",
+        "confidence": true,
+        "conceptTags": [
+          "task",
+          "output_validation",
+          "failure_modes"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

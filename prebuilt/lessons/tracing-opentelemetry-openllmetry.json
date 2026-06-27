@@ -954,5 +954,153 @@
       "url": "https://www.traceloop.com/docs/openllmetry/introduction",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "An LLM agent makes three sequential tool calls, but in your trace backend each tool call appears as a top-level root span with no parent. What is the most likely cause?",
+        "options": [
+          {
+            "text": "The model name attribute is missing from the GenAI span.",
+            "correct": false
+          },
+          {
+            "text": "Context propagation was not threaded through the async tool workers, so each call started a fresh trace.",
+            "correct": true
+          },
+          {
+            "text": "The sampling rate was set too low, dropping the parent span.",
+            "correct": false
+          },
+          {
+            "text": "OpenLLMetry auto-instrumentation does not support tool calls.",
+            "correct": false
+          }
+        ],
+        "explanation": "When the trace context (trace ID + parent span ID) is not forwarded into async workers or tool handlers, each one opens a brand-new root span, producing orphan spans that break root-cause analysis.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "context-propagation",
+          "orphan-span",
+          "parent-span"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are writing a contract check that runs in CI to guard your release pipeline. Which single missing GenAI span attribute would most directly break latency-by-model analysis in your dashboard?",
+        "options": [
+          {
+            "text": "gen_ai.system (the LLM provider name)",
+            "correct": false
+          },
+          {
+            "text": "gen_ai.request.model (the model identifier)",
+            "correct": true
+          },
+          {
+            "text": "gen_ai.usage.prompt_tokens (input token count)",
+            "correct": false
+          },
+          {
+            "text": "http.status_code (the HTTP response code)",
+            "correct": false
+          }
+        ],
+        "explanation": "Latency-by-model queries group and filter on gen_ai.request.model; without it every span is unattributable to a specific model, making the analysis impossible.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "semantic-attributes",
+          "contract-check",
+          "gen-ai-conventions"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your team enables OpenLLMetry auto-instrumentation and sees spans for every OpenAI call. A colleague concludes the traces prove the prompts are high quality. What is wrong with that conclusion?",
+        "options": [
+          {
+            "text": "Auto-instrumentation only captures metadata like model name and token counts — it cannot measure prompt quality or output correctness.",
+            "correct": true
+          },
+          {
+            "text": "Auto-instrumentation is unreliable and frequently drops spans.",
+            "correct": false
+          },
+          {
+            "text": "OpenLLMetry does not support OpenAI, so the spans are fabricated.",
+            "correct": false
+          },
+          {
+            "text": "Span data is always redacted before export, so quality cannot be assessed.",
+            "correct": false
+          }
+        ],
+        "explanation": "Auto-instrumentation records structural telemetry (latency, token usage, model name) but has no way to evaluate whether a prompt or response is semantically correct or high quality — that requires separate evaluation logic.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "auto-instrumentation",
+          "manual-enrichment",
+          "openllmetry"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You want to add a span attribute that identifies which tool an agent called. Which naming choice best protects your dashboard from cardinality explosion?",
+        "options": [
+          {
+            "text": "tool.invocation_id — a UUID generated per call",
+            "correct": false
+          },
+          {
+            "text": "tool.input_payload — the full JSON body sent to the tool",
+            "correct": false
+          },
+          {
+            "text": "tool.name — a fixed label like 'web_search' or 'calculator'",
+            "correct": true
+          },
+          {
+            "text": "tool.timestamp_ms — the Unix millisecond timestamp of the call",
+            "correct": false
+          }
+        ],
+        "explanation": "Low-cardinality attributes like a fixed tool name group cleanly in dashboards; UUIDs, payloads, and timestamps each create a unique value per call, exploding index cardinality and making aggregation useless.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "low-cardinality",
+          "semantic-attributes",
+          "tool-span"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "Explain two distinct reasons why raw LLM prompt text should be redacted or excluded before spans are exported to a third-party observability backend.",
+        "acceptableAnswer": "Any two of: (1) Prompts may contain PII or sensitive user data, creating a privacy or compliance risk if sent to an external vendor. (2) Storing full prompt text as a span attribute creates very high-cardinality, high-volume data that inflates ingestion costs and can ruin dashboard performance. (3) Proprietary prompt templates are intellectual property that should not be exposed to third-party systems.",
+        "explanation": "Raw prompts combine privacy risk (PII exposure), budget risk (high data volume and cost), and IP risk (proprietary templates) — all of which are controlled by redacting or sampling prompt content before export.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "redaction",
+          "export-boundaries",
+          "high-cardinality",
+          "sampling"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1050,5 +1050,150 @@
       "url": "https://huggingface.co/docs/tokenizers/index",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A developer pastes a 200-line CSV table into a prompt and is surprised when the model's reply gets cut off. Which explanation best fits what happened?",
+        "options": [
+          {
+            "text": "The model refused to process structured data.",
+            "correct": false
+          },
+          {
+            "text": "Tables and code use many tokens per line, so the CSV consumed most of the context window before the instruction was even processed.",
+            "correct": true
+          },
+          {
+            "text": "The model ran out of RAM on the server.",
+            "correct": false
+          },
+          {
+            "text": "CSV files must be uploaded as attachments, not pasted as text.",
+            "correct": false
+          }
+        ],
+        "explanation": "Non-prose text like tables and code is tokenized inefficiently, using far more tokens per line than plain prose, which can exhaust the context window quickly.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "token",
+          "context-window"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You ask an LLM about a news event from last week and it gives a confident but completely wrong answer. Which is the most accurate diagnosis?",
+        "options": [
+          {
+            "text": "The model's temperature was set too high, causing hallucination.",
+            "correct": false
+          },
+          {
+            "text": "The event falls outside the model's training knowledge, and no relevant context was provided in the prompt.",
+            "correct": true
+          },
+          {
+            "text": "The embedding for the event was not stored in the context window.",
+            "correct": false
+          },
+          {
+            "text": "Attention failed to find the relevant tokens in the prompt.",
+            "correct": false
+          }
+        ],
+        "explanation": "Context window holds only what you supply at inference time; the model has no access to events after its training cutoff unless that information is included in the prompt.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "context-window",
+          "embedding",
+          "hallucination"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A user notices that placing the key instruction at the very end of a long prompt produces better results than burying it in the middle. Which concept best explains this?",
+        "options": [
+          {
+            "text": "Temperature is lower at the end of a prompt.",
+            "correct": false
+          },
+          {
+            "text": "Logits are only calculated for the last token.",
+            "correct": false
+          },
+          {
+            "text": "Attention can struggle to weight a salient fact that is surrounded by many other tokens, so position and wording affect what the model 'focuses on'.",
+            "correct": true
+          },
+          {
+            "text": "Embeddings are only computed for the final sentence.",
+            "correct": false
+          }
+        ],
+        "explanation": "Attention assigns weights across all tokens, but long contexts can dilute the influence of a buried instruction — position and surrounding text genuinely affect model behavior.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "attention",
+          "context-window"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "What does raising the temperature setting actually change during text generation?",
+        "options": [
+          {
+            "text": "It makes the model search a larger knowledge base.",
+            "correct": false
+          },
+          {
+            "text": "It widens the context window so more tokens are considered.",
+            "correct": false
+          },
+          {
+            "text": "It flattens the probability distribution over candidate next tokens, making lower-ranked tokens more likely to be chosen.",
+            "correct": true
+          },
+          {
+            "text": "It increases the number of attention heads used per layer.",
+            "correct": false
+          }
+        ],
+        "explanation": "Temperature scales the logits before the model samples a next token — higher temperature spreads probability more evenly across options, producing more varied (and sometimes less accurate) output.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "temperature",
+          "logits",
+          "sampling"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "An LLM returns a beautifully written paragraph citing a specific statistic, but when you check, the statistic doesn't exist anywhere. Name the failure mode and describe the single most reliable fix.",
+        "acceptableAnswer": "This is hallucination — the model generated a fluent but fabricated fact. The most reliable fix is retrieval-augmented generation (RAG) or grounding: supply the verified source text directly in the prompt so the model can quote real information rather than invent it.",
+        "explanation": "Hallucination happens because LLMs predict plausible text, not verified facts; grounding the model with real source material in the context is the targeted fix for missing or fabricated facts.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "hallucination",
+          "context-window",
+          "token"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

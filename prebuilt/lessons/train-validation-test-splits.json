@@ -903,5 +903,152 @@
       "url": "https://scikit-learn.org/stable/modules/compose.html#pipeline",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You build a ticket-priority classifier and want an honest estimate of how it will perform on brand-new support tickets your team has never seen. Which split gives you that honest estimate?",
+        "options": [
+          {
+            "text": "Training set — it has the most data, so the accuracy will be most reliable.",
+            "correct": false
+          },
+          {
+            "text": "Validation set — you already used it to tune the model, so you know it works.",
+            "correct": false
+          },
+          {
+            "text": "Test set — it is held out completely until after all decisions are made.",
+            "correct": true
+          },
+          {
+            "text": "Any split works as long as you shuffle the data first.",
+            "correct": false
+          }
+        ],
+        "explanation": "The test set is kept untouched until the very end, so its accuracy reflects true generalization — not memorization of data the model or developer has already seen.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "test-set",
+          "generalization",
+          "honest-estimate"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "During development you try five different decision thresholds for flagging a ticket as 'urgent' and pick the one with the best F1 score. Which dataset should you use for this comparison?",
+        "options": [
+          {
+            "text": "Test set, because F1 is a final metric.",
+            "correct": false
+          },
+          {
+            "text": "Validation set, because choosing thresholds is a tuning decision.",
+            "correct": true
+          },
+          {
+            "text": "Training set, because it has the most examples to score against.",
+            "correct": false
+          },
+          {
+            "text": "A brand-new dataset collected after deployment.",
+            "correct": false
+          }
+        ],
+        "explanation": "Threshold selection is a hyperparameter decision; using the validation set for it keeps the test set clean and unbiased.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "validation-set",
+          "hyperparameter-tuning",
+          "threshold"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "A teammate fits a TF-IDF vectorizer on the entire dataset (train + validation + test combined) before splitting. What problem does this cause, and what should they do instead?",
+        "acceptableAnswer": "This is data leakage: the vectorizer has seen vocabulary and word frequencies from the test set, so test-set evaluation is no longer honest. The fix is to fit the vectorizer only on the training data, then use transform (not fit_transform) on the validation and test sets.",
+        "explanation": "Fitting any preprocessor on data that includes the test set leaks information into the model pipeline, making test performance look better than it really is.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "data-leakage",
+          "preprocessing",
+          "train-only-fit"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Your ticket dataset has 90 % 'low-priority' tickets and only 10 % 'urgent' tickets. You do a plain random 80/20 split. What is the main risk?",
+        "options": [
+          {
+            "text": "The split will take too long to compute on large datasets.",
+            "correct": false
+          },
+          {
+            "text": "The validation or test fold may end up with very few 'urgent' examples, making evaluation unreliable.",
+            "correct": true
+          },
+          {
+            "text": "Random splits always leak data between folds.",
+            "correct": false
+          },
+          {
+            "text": "The training set will contain too many duplicate tickets.",
+            "correct": false
+          }
+        ],
+        "explanation": "With rare labels, random splits can produce folds where the minority class is severely under-represented; stratified splitting preserves the class ratio in every fold.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "stratified-split",
+          "class-imbalance",
+          "rare-labels"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After weeks of tuning you check the test set, see a lower score than expected, and adjust one more hyperparameter to improve it. Why is this a problem?",
+        "options": [
+          {
+            "text": "It isn't a problem — using the test set for one final adjustment is standard practice.",
+            "correct": false
+          },
+          {
+            "text": "It wastes compute because the model was already good enough.",
+            "correct": false
+          },
+          {
+            "text": "The test set is now effectively a second validation set, so reported accuracy is optimistic and no longer an honest estimate.",
+            "correct": true
+          },
+          {
+            "text": "Hyperparameters can only be changed before any data is collected.",
+            "correct": false
+          }
+        ],
+        "explanation": "Every time you make a decision based on test-set feedback, you overfit to that set; the reported score then flatters the model and cannot be trusted as a real-world estimate.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "test-set-overfitting",
+          "model-selection-freeze",
+          "generalization"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1206,5 +1206,152 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "An AI assistant app embeds an MCP client and connects to several MCP servers. Which label correctly describes the AI assistant app in MCP terminology?",
+        "options": [
+          {
+            "text": "MCP server, because it serves responses to the user",
+            "correct": false
+          },
+          {
+            "text": "MCP host, because it owns the client and enforces policy over what capabilities are used",
+            "correct": true
+          },
+          {
+            "text": "MCP transport, because it moves messages between the user and the model",
+            "correct": false
+          },
+          {
+            "text": "MCP resource, because it provides context to the model",
+            "correct": false
+          }
+        ],
+        "explanation": "The host is the process that embeds one or more MCP clients and is responsible for policy — the AI assistant app fits that role exactly.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "host",
+          "client",
+          "server"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "During the MCP handshake, a server advertises `tools`, `resources`, and `prompts` in its `initialize` response. What happens if the client's requested protocol version is one the server does not support?",
+        "options": [
+          {
+            "text": "The server silently downgrades and continues",
+            "correct": false
+          },
+          {
+            "text": "The server must respond with an error and the session cannot proceed",
+            "correct": true
+          },
+          {
+            "text": "The client retries with every known version until one succeeds",
+            "correct": false
+          },
+          {
+            "text": "The `initialized` notification is skipped and tools are still usable",
+            "correct": false
+          }
+        ],
+        "explanation": "Version agreement is mandatory — if the server cannot support the requested version it rejects the session; there is no silent fallback in the protocol.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "initialize",
+          "capabilities",
+          "transport"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A developer wants to give the model read access to a user's project files so it can answer questions about them — no side effects intended. Which MCP primitive is the right fit?",
+        "options": [
+          {
+            "text": "Tool, because the model needs to call something to get the data",
+            "correct": false
+          },
+          {
+            "text": "Prompt, because file content is a reusable task starter",
+            "correct": false
+          },
+          {
+            "text": "Resource, because it exposes readable context without triggering an operation",
+            "correct": true
+          },
+          {
+            "text": "Transport, because files are transferred over a channel",
+            "correct": false
+          }
+        ],
+        "explanation": "Resources are the MCP primitive for surfacing readable, addressable content — they carry no implied side effects, unlike tools.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "resource",
+          "tool",
+          "prompt"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Before a host forwards a tool call to an MCP server, what are TWO things it should do to protect the user and the system?",
+        "acceptableAnswer": "The host should (1) validate the tool arguments against the tool's declared schema to catch malformed or out-of-range inputs, and (2) apply its own policy check — for example, confirming the user has permission or prompting for explicit approval — before the call is dispatched. It should also treat any result or resource content returned by the server as untrusted.",
+        "explanation": "Argument validation catches bad inputs early; host-side policy is the last line of defence before a potentially side-effecting operation runs.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool",
+          "host-policy",
+          "validation"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You are writing a stdio-based MCP server in Python. A library you use occasionally prints debug lines to standard output. Why is this a problem, and what is the fix?",
+        "options": [
+          {
+            "text": "It is not a problem — the client ignores non-JSON lines on stdout",
+            "correct": false
+          },
+          {
+            "text": "Debug output on stdout corrupts the JSON-RPC message stream; redirect all logging to stderr instead",
+            "correct": true
+          },
+          {
+            "text": "Debug output slows the transport; fix it by switching to HTTP/SSE",
+            "correct": false
+          },
+          {
+            "text": "The client will cancel the session via a `cancellation` notification automatically",
+            "correct": false
+          }
+        ],
+        "explanation": "For stdio servers, stdout is the protocol channel — any non-JSON-RPC bytes injected there break message framing; stderr is the safe destination for all diagnostic output.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "stdio",
+          "transport",
+          "lifecycle"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

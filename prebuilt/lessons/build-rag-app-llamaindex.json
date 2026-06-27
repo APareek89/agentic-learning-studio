@@ -1253,5 +1253,151 @@
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You pin the query-engine contract at the start of a LlamaIndex build. What is the PRIMARY reason for doing this before writing any code?",
+        "options": [
+          {
+            "text": "It lets you choose the fastest embedding model for your hardware.",
+            "correct": false
+          },
+          {
+            "text": "It forces you to define what a correct answer and a correct refusal look like, so every later decision has a measurable target.",
+            "correct": true
+          },
+          {
+            "text": "It automatically generates test documents from your corpus.",
+            "correct": false
+          },
+          {
+            "text": "It locks the LlamaIndex version so dependencies don't drift.",
+            "correct": false
+          }
+        ],
+        "explanation": "Pinning the contract first means you agree on answer and refusal behavior upfront, giving every subsequent build decision a concrete pass/fail criterion.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "query-engine-contract",
+          "refusal-behavior"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A reader ingests a 40-page PDF and a node parser splits it into chunks. Which outcome best describes what these two steps produce together?",
+        "options": [
+          {
+            "text": "A single embedding vector representing the whole document.",
+            "correct": false
+          },
+          {
+            "text": "A ranked list of the most relevant sentences in the document.",
+            "correct": false
+          },
+          {
+            "text": "A set of evidence-sized units (nodes) that can each be independently retrieved and cited.",
+            "correct": true
+          },
+          {
+            "text": "A compressed summary stored in the vector index.",
+            "correct": false
+          }
+        ],
+        "explanation": "Readers load raw content and node parsers split it into retrieval-ready chunks — the granular units the retriever can fetch and the LLM can cite individually.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "reader",
+          "node-parser",
+          "evidence-unit"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "In LlamaIndex, what does the `source_nodes` field on a query response tell you, and why does inspecting it matter during development?",
+        "acceptableAnswer": "`source_nodes` lists the specific document chunks (nodes) the retriever selected to answer the query. Inspecting it lets you verify that the right evidence was retrieved, catch cases where irrelevant or missing chunks were used, and confirm that citations in the generated answer actually map to real retrieved content.",
+        "explanation": "`source_nodes` is the retriever's evidence trail — checking it is the only way to confirm the model's answer is grounded in the documents you indexed, not hallucinated.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "source-nodes",
+          "retriever",
+          "citation-validation"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You change `similarity_top_k` from 2 to 6 in your retriever settings. What is the most likely trade-off?",
+        "options": [
+          {
+            "text": "The index rebuilds faster but uses more disk space.",
+            "correct": false
+          },
+          {
+            "text": "The LLM receives more candidate evidence, which can improve recall but may dilute precision and increase token cost.",
+            "correct": true
+          },
+          {
+            "text": "Refusal behavior is disabled because the model always finds something to cite.",
+            "correct": false
+          },
+          {
+            "text": "Node parsing is re-triggered automatically to match the new value.",
+            "correct": false
+          }
+        ],
+        "explanation": "A higher `similarity_top_k` widens the evidence window — useful for complex queries, but it risks including loosely relevant nodes and raises prompt token usage.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "retriever-settings",
+          "source-nodes",
+          "similarity-top-k"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Before wrapping your query engine as a tool for an agent, you run a citation evaluation pass. A claim in the generated answer has NO matching span in any `source_node`. What should you do?",
+        "options": [
+          {
+            "text": "Accept the answer — the model's parametric knowledge is a valid fallback.",
+            "correct": false
+          },
+          {
+            "text": "Increase the chunk size so each node contains more text.",
+            "correct": false
+          },
+          {
+            "text": "Treat it as a hallucination signal: debug the retriever or prompt, and do not ship until citations are grounded.",
+            "correct": true
+          },
+          {
+            "text": "Switch to a larger LLM, which is less likely to fabricate.",
+            "correct": false
+          }
+        ],
+        "explanation": "An unsupported claim means the answer is not grounded in your documents; shipping it as a tool would propagate hallucinations downstream — fix retrieval or the prompt before wrapping.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "citation-validation",
+          "evaluation",
+          "query-engine-tool"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

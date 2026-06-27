@@ -1222,5 +1222,154 @@
       "url": "https://github.com/pgvector/pgvector",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A startup already runs Postgres for user accounts and wants to add semantic search over support articles. Which statement BEST explains why pgvector is the simplest viable choice here?",
+        "options": [
+          {
+            "text": "pgvector stores vectors in a dedicated external service, keeping Postgres uncluttered.",
+            "correct": false
+          },
+          {
+            "text": "pgvector lets vectors live in the same database as relational data, so metadata joins need no extra network hop.",
+            "correct": true
+          },
+          {
+            "text": "pgvector automatically generates embeddings from raw text, removing the need for an embedding model.",
+            "correct": false
+          },
+          {
+            "text": "pgvector replaces the need for an index entirely by scanning vectors in constant time.",
+            "correct": false
+          }
+        ],
+        "explanation": "pgvector's key advantage for teams already on Postgres is co-locating vectors with relational facts, making metadata-filtered queries a single SQL join rather than a cross-service call.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "pgvector",
+          "metadata-joins",
+          "rag"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You switch your RAG pipeline from a 1 536-dimension OpenAI embedding model to a 768-dimension open-source model. What MUST you do to your existing vector column before storing new embeddings?",
+        "options": [
+          {
+            "text": "Add a second index with a different operator class; the column can hold both sizes.",
+            "correct": false
+          },
+          {
+            "text": "Redefine the column with the new dimension count and re-embed all existing documents.",
+            "correct": true
+          },
+          {
+            "text": "Cast the 768-dimension vectors to 1 536 dimensions by zero-padding before inserting.",
+            "correct": false
+          },
+          {
+            "text": "Nothing — pgvector accepts variable-length vectors in the same column.",
+            "correct": false
+          }
+        ],
+        "explanation": "A vector column's dimension is fixed at definition time; mixing sizes is not allowed, so a model migration requires a new column (or table) with the correct dimension and a full re-embed of all stored content.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "dimensions",
+          "embedding-migration",
+          "vector-column"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your RAG app needs the fastest possible approximate nearest-neighbor queries and can tolerate slower inserts and higher memory use. Which index type fits best, and why?",
+        "options": [
+          {
+            "text": "Exact scan — it guarantees perfect recall with no overhead.",
+            "correct": false
+          },
+          {
+            "text": "IVFFlat — it clusters vectors at build time, making inserts instant.",
+            "correct": false
+          },
+          {
+            "text": "HNSW — it builds a navigable graph that delivers fast queries at the cost of more RAM and slower writes.",
+            "correct": true
+          },
+          {
+            "text": "IVFFlat — it requires no training data and scales to any dataset size immediately.",
+            "correct": false
+          }
+        ],
+        "explanation": "HNSW trades higher memory usage and slower insert throughput for very fast approximate query times, making it the right pick when query latency is the top priority.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "hnsw",
+          "ivfflat",
+          "ann-index",
+          "tradeoffs"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Write the core SQL pattern for a pgvector ANN query that (a) filters by a metadata column and (b) orders results by vector distance. You don't need exact syntax — describe the key clauses and their order.",
+        "acceptableAnswer": "SELECT the relevant columns FROM the table WHERE a metadata column matches a filter condition, ORDER BY the vector column using a distance operator (such as <=> for cosine) against the query embedding, and LIMIT the results. The WHERE clause narrows candidates first; ORDER BY + LIMIT retrieves the closest matching vectors among them.",
+        "explanation": "A filtered vector query combines a SQL WHERE predicate on metadata with an ORDER BY distance-operator expression and a LIMIT, letting Postgres prune by relational filters before (or alongside) the ANN scan.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "filtered-query",
+          "ann-index",
+          "operator-class",
+          "vector-column"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After deploying a new embedding model in production, your RAG answers suddenly degrade even though retrieval latency looks fine. Which operational practice would MOST directly help you detect and diagnose this?",
+        "options": [
+          {
+            "text": "Switch from HNSW to an exact scan index to eliminate approximation error.",
+            "correct": false
+          },
+          {
+            "text": "Verify generated answers against the returned chunks using an evaluation step, and run the old and new models side-by-side during migration.",
+            "correct": true
+          },
+          {
+            "text": "Increase the LIMIT in the vector query to return more candidates.",
+            "correct": false
+          },
+          {
+            "text": "Rebuild the IVFFlat index with more lists to improve cluster granularity.",
+            "correct": false
+          }
+        ],
+        "explanation": "Answer-vs-chunk evaluation catches semantic mismatches that latency metrics miss, and a side-by-side migration lets you compare old and new model quality before fully cutting over.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "eval",
+          "embedding-migration",
+          "production-failure-modes"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

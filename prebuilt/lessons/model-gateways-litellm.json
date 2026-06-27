@@ -1861,5 +1861,152 @@
       "url": "https://docs.litellm.ai/docs/routing",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your app calls three LLM providers directly. You add a fourth. What maintenance problem does this create that a model gateway solves?",
+        "options": [
+          {
+            "text": "Each provider has its own SDK, auth scheme, and response format — so every new provider multiplies the integration surface in your app code.",
+            "correct": true
+          },
+          {
+            "text": "Providers rate-limit apps that use more than one SDK at a time, so adding a fourth triggers throttling.",
+            "correct": false
+          },
+          {
+            "text": "Direct SDK calls are always slower than gateway calls, so latency compounds with each new provider.",
+            "correct": false
+          },
+          {
+            "text": "Most provider SDKs are incompatible with Python async, so adding a fourth breaks your event loop.",
+            "correct": false
+          }
+        ],
+        "explanation": "A gateway centralises provider-specific auth, SDKs, and response normalisation so your app code stays unchanged when you add or swap providers.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "model-gateway",
+          "provider-sdk"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Trace a LiteLLM request: your app calls `litellm.completion(model='openai/gpt-4o', ...)`. Which step is where most latency and errors actually appear?",
+        "options": [
+          {
+            "text": "LiteLLM serialising your Python kwargs into a request dict.",
+            "correct": false
+          },
+          {
+            "text": "The outbound network call to the provider's API endpoint.",
+            "correct": true
+          },
+          {
+            "text": "LiteLLM normalising the provider's response back to the OpenAI schema.",
+            "correct": false
+          },
+          {
+            "text": "Your app parsing the returned message content string.",
+            "correct": false
+          }
+        ],
+        "explanation": "The provider network hop is where timeouts, rate-limit errors, and model-side failures concentrate — everything else in the path is local and fast.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "request-flow",
+          "latency",
+          "error-modes"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A solo developer is building a weekend prototype that calls one provider. Which option is the best fit, and why?",
+        "options": [
+          {
+            "text": "Full LiteLLM proxy server — it gives the most production headroom.",
+            "correct": false
+          },
+          {
+            "text": "Direct provider SDK — lowest overhead, easiest to test, and one provider means no routing burden.",
+            "correct": true
+          },
+          {
+            "text": "LiteLLM router in-process with fallbacks — always safer than a raw SDK.",
+            "correct": false
+          },
+          {
+            "text": "A managed gateway SaaS — removes all operational risk immediately.",
+            "correct": false
+          }
+        ],
+        "explanation": "The gateway pays off when you have multiple providers, need fallbacks, or must centralise keys — a single-provider prototype has none of those pressures, so the direct SDK is the smallest option that meets the requirement.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "gateway-fit",
+          "direct-sdk",
+          "decision-gateway-vs-sdk"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Write the two LiteLLM router config fields that together map a model alias to a specific provider and authenticate the call. (Name the fields; you don't need to write full YAML.)",
+        "acceptableAnswer": "`model_name` (the alias your app uses) and `litellm_params` containing `model` (the provider-prefixed model string, e.g. `openai/gpt-4o`) and `api_key` (the credential for that provider).",
+        "explanation": "`model_name` is the alias the router matches on; `litellm_params.model` tells LiteLLM which provider+model to call, and `litellm_params.api_key` supplies the credential — together they form one complete routing entry.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "router-config",
+          "model-alias",
+          "credentials"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "In production, your gateway starts dropping requests during a traffic spike. Which pairing of failure mode → guard is correct?",
+        "options": [
+          {
+            "text": "Provider rate-limit errors → add a fallback model so traffic shifts to a backup when the primary is throttled.",
+            "correct": true
+          },
+          {
+            "text": "Provider rate-limit errors → pin the LiteLLM version to prevent the SDK from changing retry behaviour.",
+            "correct": false
+          },
+          {
+            "text": "Budget overrun → set a concurrency limit so fewer requests reach the provider.",
+            "correct": false
+          },
+          {
+            "text": "Gateway process crash → add a fallback model so the app never notices the outage.",
+            "correct": false
+          }
+        ],
+        "explanation": "Fallbacks are the direct guard against rate-limit (429) errors — when the primary model is throttled, the router retries on a backup provider instead of surfacing the error to the caller.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "failure-modes",
+          "fallback",
+          "rate-limiting",
+          "production-ops"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

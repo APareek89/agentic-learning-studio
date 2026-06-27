@@ -2121,5 +2121,150 @@
       "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A plain chatbot can only generate text. What does giving an AI agent 'tool use' fundamentally change about the stakes?",
+        "options": [
+          {
+            "text": "The model's responses become longer and more detailed.",
+            "correct": false
+          },
+          {
+            "text": "The agent can now take actions with real-world consequences — not just produce words.",
+            "correct": true
+          },
+          {
+            "text": "The agent becomes unable to refuse requests.",
+            "correct": false
+          },
+          {
+            "text": "The model requires more training data to function correctly.",
+            "correct": false
+          }
+        ],
+        "explanation": "Tool use lets an agent reach outside the conversation and affect real systems (files, APIs, databases), which is why mistakes are no longer just wrong words — they can be wrong actions.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "tool-use",
+          "action-boundary"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "In the 'model proposes, app executes' flow, exactly WHERE should a boundary check be inserted?",
+        "options": [
+          {
+            "text": "Before the model receives the user's message.",
+            "correct": false
+          },
+          {
+            "text": "After the executor has already run the tool call.",
+            "correct": false
+          },
+          {
+            "text": "Between the model's proposed tool call and the executor that runs it.",
+            "correct": true
+          },
+          {
+            "text": "Inside the model's weights, at inference time.",
+            "correct": false
+          }
+        ],
+        "explanation": "The gate must sit between proposal and execution — that is the only moment where the call can still be inspected, modified, or blocked before any real-world effect occurs.",
+        "confidence": true,
+        "conceptTags": [
+          "tool-call",
+          "gate"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "An agent can call `send_email(to, subject, body)` to any address. Using reversibility and blast radius, which boundary policy fits best?",
+        "options": [
+          {
+            "text": "Auto-run — email is a routine communication action.",
+            "correct": false
+          },
+          {
+            "text": "Deny — email should never be sent by an agent.",
+            "correct": false
+          },
+          {
+            "text": "Confirm-first — sending email is irreversible and can reach many people.",
+            "correct": true
+          },
+          {
+            "text": "Auto-run — the model already knows the correct recipient.",
+            "correct": false
+          }
+        ],
+        "explanation": "Sent emails cannot be unsent (irreversible) and a single call could spam many recipients (large blast radius), so confirm-first is the least-restrictive policy that still contains the worst case.",
+        "confidence": true,
+        "conceptTags": [
+          "reversibility",
+          "blast-radius",
+          "confirm-first",
+          "auto-run",
+          "deny"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Name the three ways an action boundary can be bypassed in practice.",
+        "acceptableAnswer": "The three bypass routes are: (1) prompt injection — malicious content in external data tricks the model into proposing a harmful call; (2) misconfigured gate — the check_action logic has gaps or wrong mappings that let dangerous calls through as 'allow'; (3) scope creep / tool over-permissioning — the agent is given more tools or broader arguments than it needs, so the boundary never even sees the risky action.",
+        "explanation": "A boundary in code is necessary but not sufficient: prompt injection attacks the model's proposal before the gate even runs, a buggy gate fails at the check itself, and over-permissioned tools mean the worst-case action was never classified as risky in the first place.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "prompt-injection",
+          "gate",
+          "boundary-bypass"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which rule best captures when an irreversible action MUST require human confirmation rather than running automatically?",
+        "options": [
+          {
+            "text": "Whenever the action involves more than one API call.",
+            "correct": false
+          },
+          {
+            "text": "Whenever the action cannot be undone AND its blast radius extends beyond the immediate session or a single, low-value record.",
+            "correct": true
+          },
+          {
+            "text": "Only when the user has explicitly asked for a confirmation step.",
+            "correct": false
+          },
+          {
+            "text": "Whenever the model's confidence score is below 90%.",
+            "correct": false
+          }
+        ],
+        "explanation": "Irreversibility combined with meaningful blast radius is the threshold: if you can't undo it and the damage could spread, a human must approve it — the model's confidence is irrelevant to this safety rule.",
+        "confidence": true,
+        "conceptTags": [
+          "reversibility",
+          "blast-radius",
+          "confirm-first",
+          "human-confirmation"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

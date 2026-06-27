@@ -1220,5 +1220,154 @@
       "url": "https://langfuse.com/docs/tracing",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A customer-support agent always returns a polite, grammatically correct reply — but it sometimes calls a deprecated billing API mid-run. Which evaluation approach catches this failure that final-answer scoring alone would miss?",
+        "options": [
+          {
+            "text": "Increasing the semantic similarity threshold for the output text",
+            "correct": false
+          },
+          {
+            "text": "Inspecting the trace for forbidden-tool calls during the run",
+            "correct": true
+          },
+          {
+            "text": "Running more diverse user prompts in the test suite",
+            "correct": false
+          },
+          {
+            "text": "Adding a human rater to score response quality",
+            "correct": false
+          }
+        ],
+        "explanation": "Final-answer scoring only sees the output text; a forbidden-tool check on the trace catches illegal mid-run actions regardless of how good the final reply looks.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "trace-inspection",
+          "forbidden-tool-check",
+          "final-answer-scoring"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your eval suite includes a safety rule: 'The agent must never return a response that contains PII.' This rule should be implemented as a hard assertion rather than a semantic score. Why?",
+        "options": [
+          {
+            "text": "Semantic scores are too slow to compute for safety checks",
+            "correct": false
+          },
+          {
+            "text": "Hard assertions produce a binary pass/fail that cannot be partially satisfied, making them suitable for non-negotiable contracts",
+            "correct": true
+          },
+          {
+            "text": "Hard assertions are easier to write than semantic rubrics",
+            "correct": false
+          },
+          {
+            "text": "Semantic scores cannot evaluate text that contains PII",
+            "correct": false
+          }
+        ],
+        "explanation": "Hard assertions enforce a strict contract — a single violation is an outright failure — whereas a semantic score could award partial credit to a response that leaks PII, which is never acceptable.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "hard-assertions",
+          "semantic-scores",
+          "safety-gates"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "Describe the three fixture types used to make agent runs repeatable, and explain the key trade-off between them.",
+        "acceptableAnswer": "Mock tools return hardcoded responses and are fully deterministic but least realistic. Recorded tools replay captured real responses, balancing realism and repeatability. Live tools call real external services, giving the highest realism but introducing non-determinism and cost. The core trade-off is determinism and speed vs. real-world fidelity.",
+        "explanation": "Choosing a fixture type is always a trade-off: mocks give total control, recorded fixtures capture real behavior without live calls, and live tools maximize realism at the cost of stability and expense.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "fixtures",
+          "mock-tools",
+          "recorded-tools",
+          "live-tools"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You write a required-span check asserting that the span 'retrieve_policy_doc' must appear in every trace for a policy-lookup workflow. On the next run, the check fails. What does this tell you?",
+        "options": [
+          {
+            "text": "The agent's final answer was incorrect",
+            "correct": false
+          },
+          {
+            "text": "The agent skipped or renamed a step that is mandatory for the workflow's correctness",
+            "correct": true
+          },
+          {
+            "text": "A tool returned an unexpected data type",
+            "correct": false
+          },
+          {
+            "text": "The latency of the run exceeded the baseline threshold",
+            "correct": false
+          }
+        ],
+        "explanation": "A required-span check fails when an expected step is absent from the trace, signaling a path regression — the agent changed its execution route in a way that violates the workflow contract.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "required-span-check",
+          "trace-assertions",
+          "path-regression"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A production incident reveals that the agent occasionally loops through a web-search tool six times before answering, doubling average latency. What is the BEST next step according to the 'promote failures into regression cases' practice?",
+        "options": [
+          {
+            "text": "Delete the web-search tool and replace it with a static knowledge base",
+            "correct": false
+          },
+          {
+            "text": "Capture the incident trace as a fixture, add a latency-drift assertion and a max-tool-call check, assign it to an owner, and add it to the regression suite",
+            "correct": true
+          },
+          {
+            "text": "Increase the latency budget in the SLA so the incident no longer counts as a failure",
+            "correct": false
+          },
+          {
+            "text": "Re-run the same prompt 10 times and report the average latency as the new baseline",
+            "correct": false
+          }
+        ],
+        "explanation": "Promoting an incident means turning it into a permanent regression case — preserving the trace as a fixture, adding drift and path assertions, and assigning ownership — so the same failure can never silently recur.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "regression-cases",
+          "latency-drift",
+          "failure-buckets",
+          "fixtures"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

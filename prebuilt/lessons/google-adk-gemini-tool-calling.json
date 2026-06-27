@@ -1274,5 +1274,152 @@
       "url": "https://spec.openapis.org/oas/latest.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "When Gemini decides to call a tool, what does it actually return to your code?",
+        "options": [
+          {
+            "text": "The final answer string, with the tool result already embedded",
+            "correct": false
+          },
+          {
+            "text": "A structured action request — the tool name and arguments — but it does NOT execute the function itself",
+            "correct": true
+          },
+          {
+            "text": "A Python callable that your code must import and run",
+            "correct": false
+          },
+          {
+            "text": "A JSON schema describing the tool's parameters",
+            "correct": false
+          }
+        ],
+        "explanation": "Gemini only produces a structured call request (name + args); your application code is responsible for actually running the function and returning the result.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "function-calling",
+          "function-declaration",
+          "executor"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You want to give an LlmAgent a Python function called `check_inventory`. Which of the following correctly makes it available to the agent?",
+        "options": [
+          {
+            "text": "Pass the raw function directly: `tools=[check_inventory]` — ADK wraps it automatically",
+            "correct": true
+          },
+          {
+            "text": "Subclass LlmAgent and override its `run()` method with `check_inventory`",
+            "correct": false
+          },
+          {
+            "text": "Add `check_inventory` to the agent's `instruction` string as a code block",
+            "correct": false
+          },
+          {
+            "text": "Register `check_inventory` in `session.state` before the agent runs",
+            "correct": false
+          }
+        ],
+        "explanation": "ADK's FunctionTool wrapping happens automatically when you pass a plain Python function in the `tools` list — you don't need to subclass or manually wrap it.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "llm-agent",
+          "function-tool",
+          "tools-field"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "An agent's instruction string contains the placeholder `{user_budget}`. Where does the value for `user_budget` come from at runtime?",
+        "options": [
+          {
+            "text": "It is hard-coded into the LlmAgent constructor at build time",
+            "correct": false
+          },
+          {
+            "text": "Gemini infers it from the conversation history automatically",
+            "correct": false
+          },
+          {
+            "text": "It is injected from `session.state` when the instruction is rendered for each turn",
+            "correct": true
+          },
+          {
+            "text": "It must be appended to every user message manually by the developer",
+            "correct": false
+          }
+        ],
+        "explanation": "ADK reads matching keys from `session.state` and substitutes them into the instruction template at runtime, letting context change turn-by-turn without rebuilding the agent.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "session-state",
+          "instruction-injection"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Name ONE key difference between a SequentialAgent and a LoopAgent in ADK, and give a one-sentence example of when you would choose a LoopAgent over a SequentialAgent.",
+        "acceptableAnswer": "A SequentialAgent runs its sub-agents once in a fixed order and stops, while a LoopAgent repeats its sub-agents until a termination condition is met. You would choose a LoopAgent when the number of iterations is not known in advance — for example, retrying a data-fetch agent until the result passes a validation check.",
+        "explanation": "SequentialAgent is for a fixed pipeline; LoopAgent is for repeated execution with a dynamic exit condition — a critical design choice when building multi-step workflows.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "sequential-agent",
+          "loop-agent",
+          "termination-condition"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When writing tests for a FunctionTool-style agent, which of the following is the MOST important thing to assert — beyond checking the agent's final text reply?",
+        "options": [
+          {
+            "text": "That the agent's instruction string is longer than 50 characters",
+            "correct": false
+          },
+          {
+            "text": "That the correct tool was selected (or deliberately NOT called) for a given input, and that validation/approval logic behaved as expected",
+            "correct": true
+          },
+          {
+            "text": "That the Gemini model version matches the one specified in the LlmAgent constructor",
+            "correct": false
+          },
+          {
+            "text": "That `session.state` is empty after the agent finishes",
+            "correct": false
+          }
+        ],
+        "explanation": "Tool-call evaluation means asserting which tool was invoked (or skipped), what arguments were passed, and whether downstream validation and approval logic fired correctly — the final reply alone can mask bugs in all of these.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tool-call-evaluation",
+          "validation",
+          "approval",
+          "no-call-case"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

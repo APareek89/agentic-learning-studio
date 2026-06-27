@@ -1172,5 +1172,153 @@
       "url": "https://huggingface.co/docs/transformers/en/kv_cache",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A teammate says, 'The model is ready — I've pushed the weights to the Hub.' What critical release artifacts are still missing from a production-ready Transformer package?",
+        "options": [
+          {
+            "text": "The optimizer state and training logs",
+            "correct": false
+          },
+          {
+            "text": "The tokenizer files and chat template",
+            "correct": true
+          },
+          {
+            "text": "The evaluation dataset and benchmark scores",
+            "correct": false
+          },
+          {
+            "text": "The GPU driver version and CUDA toolkit",
+            "correct": false
+          }
+        ],
+        "explanation": "The tokenizer and chat template are release artifacts that define the model's inference contract — without them, inputs can be encoded differently across environments, silently breaking behavior.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "tokenizer",
+          "chat-template",
+          "inference-contract"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your requirements.txt pins `transformers>=4.38` instead of `transformers==4.38.2`. Why is this a reproducibility risk in production?",
+        "options": [
+          {
+            "text": "Floating lower bounds allow any future minor or patch release to be installed, which can silently change tokenizer behavior or model outputs.",
+            "correct": true
+          },
+          {
+            "text": "The `>=` operator is not supported by pip and will cause an install error at deploy time.",
+            "correct": false
+          },
+          {
+            "text": "It forces all developers to use the same version, reducing flexibility without any real risk.",
+            "correct": false
+          },
+          {
+            "text": "Floating dependencies only matter for GPU libraries, not for pure-Python packages like Transformers.",
+            "correct": false
+          }
+        ],
+        "explanation": "A floating lower bound means a newer, potentially behavior-changing version can be installed at any time; pinning the exact version is the only way to guarantee the same inference path across every environment.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "pinned-dependencies",
+          "reproducibility"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your API serves a chat model with bursty, high-concurrency traffic and you need built-in continuous batching and GPU memory management. Which serving choice fits best?",
+        "options": [
+          {
+            "text": "Embedded Transformers called directly inside a FastAPI route handler",
+            "correct": false
+          },
+          {
+            "text": "A runtime like TGI or vLLM that handles batching, streaming, and memory as first-class concerns",
+            "correct": true
+          },
+          {
+            "text": "BentoML-style packaging with no external runtime, relying on the model's own generate() loop",
+            "correct": false
+          },
+          {
+            "text": "Exporting the model to ONNX and serving it with a CPU-only REST server",
+            "correct": false
+          }
+        ],
+        "explanation": "TGI and vLLM are purpose-built serving runtimes that provide continuous batching, token streaming, and GPU memory scheduling — capabilities that embedded Transformers or simple packaging solutions do not provide out of the box.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "tgi",
+          "vllm",
+          "batching",
+          "serving-runtime"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You inherit an AI-generated FastAPI endpoint that loads a Transformer model and calls `model.generate()`. Name TWO runtime limits you should verify are explicitly set before deploying it to production.",
+        "acceptableAnswer": "Any two of: max_new_tokens (or max_length) to cap output length; a request timeout to prevent hung connections; a concurrency or queue limit to prevent OOM under load; a memory/batch size guard to avoid GPU out-of-memory errors.",
+        "explanation": "AI-generated code commonly omits hard limits on output length, concurrency, and timeouts — each of which can cause runaway resource consumption or silent failures under real traffic.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "runtime-limits",
+          "contract-test",
+          "production-readiness"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Before releasing a new version of your Transformer service, you want rollback evidence. Which combination gives you the strongest safety net?",
+        "options": [
+          {
+            "text": "A pinned dependency snapshot, a golden-input/output test that must pass before promotion, and a record of the previous artifact versions to redeploy if needed",
+            "correct": true
+          },
+          {
+            "text": "A README changelog entry and a manual smoke test run by the releasing engineer",
+            "correct": false
+          },
+          {
+            "text": "A new model card on the Hub and a passing unit test on the training loss curve",
+            "correct": false
+          },
+          {
+            "text": "A Docker image tag and an open pull request describing the changes",
+            "correct": false
+          }
+        ],
+        "explanation": "Rollback evidence requires three things together: a reproducible environment (pinned deps), a behavioral contract (golden-input test), and a known-good artifact reference — so you can detect regressions and revert deterministically.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "rollback",
+          "golden-input-test",
+          "pinned-dependencies",
+          "release-artifact"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

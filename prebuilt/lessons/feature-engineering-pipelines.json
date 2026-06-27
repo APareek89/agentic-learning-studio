@@ -925,5 +925,153 @@
       "url": "https://scikit-learn.org/stable/model_selection.html",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A support ticket dataset has a field called `resolution_time_hours` — the number of hours it took to close the ticket. You want to predict whether a ticket will be escalated. Why should this field be excluded from your feature set?",
+        "options": [
+          {
+            "text": "It is a categorical variable and cannot be scaled.",
+            "correct": false
+          },
+          {
+            "text": "It is only known after the ticket is resolved, so it won't be available at prediction time.",
+            "correct": true
+          },
+          {
+            "text": "It has too many unique values to be useful as a feature.",
+            "correct": false
+          },
+          {
+            "text": "It would cause schema drift in the monitoring layer.",
+            "correct": false
+          }
+        ],
+        "explanation": "Fields that are only populated after the outcome occurs are 'future fields' — using them leaks information from the future into training and makes the model useless in production.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "future-fields",
+          "leakage",
+          "feature-lineage"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You fit a StandardScaler on your entire dataset (train + test combined), then split into train and test sets. What problem does this cause?",
+        "options": [
+          {
+            "text": "The scaler will refuse to transform the test set because it was not fit on it.",
+            "correct": false
+          },
+          {
+            "text": "Test-set statistics (mean, std) leak into the scaler, making test performance look better than it really is.",
+            "correct": true
+          },
+          {
+            "text": "The pipeline will throw a schema drift error at evaluation time.",
+            "correct": false
+          },
+          {
+            "text": "Categorical columns will be silently dropped by the scaler.",
+            "correct": false
+          }
+        ],
+        "explanation": "Fitting on the full dataset lets test-set distribution influence the scaler's parameters — a classic preprocessing leakage path that inflates evaluation metrics.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "fit-vs-transform",
+          "preprocessing-leakage",
+          "train-only-fitting"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "In a scikit-learn Pipeline with a ColumnTransformer, what is the main production benefit of keeping the preprocessor and the model bundled together as a single pipeline object?",
+        "options": [
+          {
+            "text": "It automatically removes correlated features before training.",
+            "correct": false
+          },
+          {
+            "text": "It guarantees the same transformations are applied to new data in exactly the same order, with no manual re-coding.",
+            "correct": true
+          },
+          {
+            "text": "It lets you skip cross-validation because the pipeline handles overfitting.",
+            "correct": false
+          },
+          {
+            "text": "It converts all features to categorical so the model is more interpretable.",
+            "correct": false
+          }
+        ],
+        "explanation": "A bundled pipeline serialises the fitted transformers alongside the model, so scoring new data always goes through the identical preprocessing steps — making it a reliable production artifact.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "column-pipeline",
+          "repeatable-preprocessing",
+          "production-artifact"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You add a feature called `pct_tickets_escalated_by_agent` — the percentage of that agent's tickets that were escalated — computed over the full training dataset. Your cross-validation AUC jumps from 0.72 to 0.91. Give ONE reason why this metric jump is likely misleading.",
+        "acceptableAnswer": "The aggregate is computed using the target label (escalation) across all rows, including the validation fold, so information about the outcome leaks into the feature. This is target leakage — the feature encodes the answer the model is supposed to predict, inflating metrics during evaluation but failing in production where future escalations are unknown.",
+        "explanation": "Aggregates derived from the target variable across the full dataset are a form of target leakage — the feature already 'knows' the outcome, so the model appears far more accurate than it will ever be on real unseen data.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "target-leakage",
+          "aggregate-leakage",
+          "inflated-metrics"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Three months after deployment, your model's precision drops noticeably. Your monitoring system flags that the `ticket_category` column now contains a new value, `'billing_v2'`, that never appeared in training. What type of drift is this, and which monitoring check would have caught it earliest?",
+        "options": [
+          {
+            "text": "Feature drift — caught by tracking the column's mean value over time.",
+            "correct": false
+          },
+          {
+            "text": "Schema drift — caught by a category-set check that alerts when unseen category values appear.",
+            "correct": true
+          },
+          {
+            "text": "Feature drift — caught by tracking the missingness rate of the column.",
+            "correct": false
+          },
+          {
+            "text": "Schema drift — caught by monitoring the model's output score distribution.",
+            "correct": false
+          }
+        ],
+        "explanation": "A new, unseen category value is a schema drift event (the contract for allowed values has changed); a category-set monitor that compares live values against the training vocabulary would flag it immediately.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "schema-drift",
+          "feature-drift",
+          "monitoring-categories",
+          "feature-contracts"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

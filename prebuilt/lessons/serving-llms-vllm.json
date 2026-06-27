@@ -933,5 +933,151 @@
       "url": "https://blog.vllm.ai/2023/06/20/vllm.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A team needs to serve a single LLM to hundreds of concurrent users with high throughput. Which two vLLM mechanisms work together to make this possible?",
+        "options": [
+          {
+            "text": "Tensor parallelism and model quantization",
+            "correct": false
+          },
+          {
+            "text": "PagedAttention and continuous batching",
+            "correct": true
+          },
+          {
+            "text": "Prefix caching and pipeline parallelism",
+            "correct": false
+          },
+          {
+            "text": "Flash attention and speculative decoding",
+            "correct": false
+          }
+        ],
+        "explanation": "PagedAttention manages GPU memory for the KV cache in fixed-size pages, while continuous batching keeps the GPU busy by adding new requests mid-flight — together they are vLLM's core throughput engines.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "pagedattention",
+          "continuous-batching",
+          "throughput"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You increase the allowed context length from 4 K to 16 K tokens on a fixed GPU. What is the most direct consequence for concurrency?",
+        "options": [
+          {
+            "text": "Concurrency increases because longer contexts produce more tokens per request",
+            "correct": false
+          },
+          {
+            "text": "Concurrency is unaffected — vLLM dynamically allocates memory per token",
+            "correct": false
+          },
+          {
+            "text": "Concurrency drops because each request now consumes up to 4× more KV-cache memory",
+            "correct": true
+          },
+          {
+            "text": "Concurrency drops only if prefix caching is disabled",
+            "correct": false
+          }
+        ],
+        "explanation": "KV-cache memory is the concurrency budget: a 4× larger context window means each active request can occupy up to 4× more pages, leaving fewer pages for other requests.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "kv-cache",
+          "context-length",
+          "concurrency"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your application already uses the OpenAI Python client pointed at api.openai.com. What is the minimal change needed to redirect it to a local vLLM server?",
+        "options": [
+          {
+            "text": "Rewrite all API calls to use the vLLM Python SDK instead",
+            "correct": false
+          },
+          {
+            "text": "Set base_url to the vLLM server address and update the model name; the client code stays the same",
+            "correct": true
+          },
+          {
+            "text": "Disable streaming, because vLLM does not support it",
+            "correct": false
+          },
+          {
+            "text": "Switch from chat completions to legacy completions endpoints only",
+            "correct": false
+          }
+        ],
+        "explanation": "vLLM exposes an OpenAI-compatible REST API, so only the base_url (and model name) need to change — the rest of the client code is drop-in compatible.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "openai-compatible-api",
+          "integration"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "When running a vLLM smoke test, what are TWO common failure modes you should predict and check for before declaring the server healthy?",
+        "acceptableAnswer": "A missing or mismatched chat template (the model's tokenizer chat template not being applied correctly, causing malformed prompts) and an incorrect or unrecognized model name (the server rejecting requests because the model identifier in the API call does not match what was loaded).",
+        "explanation": "Chat-template mismatches silently corrupt prompt formatting, and model-name mismatches cause immediate 404/validation errors — both must be caught in a smoke test before routing real traffic.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "smoke-test",
+          "chat-template",
+          "model-name"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which scenario is the clearest signal that you should place an API gateway in front of vLLM rather than exposing it directly?",
+        "options": [
+          {
+            "text": "You want to enable prefix caching for repeated system prompts",
+            "correct": false
+          },
+          {
+            "text": "You need per-user rate limiting, auth enforcement, and request logging across multiple model versions",
+            "correct": true
+          },
+          {
+            "text": "Your model requires tensor parallelism across multiple GPUs",
+            "correct": false
+          },
+          {
+            "text": "You are running a local demo and want to test the OpenAI client",
+            "correct": false
+          }
+        ],
+        "explanation": "A gateway handles cross-cutting production concerns — auth, rate limiting, routing, and audit logging — that vLLM itself is not designed to enforce.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "gateway",
+          "production-hardening",
+          "monitoring"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

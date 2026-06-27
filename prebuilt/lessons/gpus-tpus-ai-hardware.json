@@ -1164,5 +1164,152 @@
       "url": "https://cloud.google.com/tpu/docs",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You're launching a chatbot that must respond to each user within 2 seconds. Which workload type best describes this, and why does it matter for hardware selection?",
+        "options": [
+          {
+            "text": "Batch inference — you can queue requests and process them together overnight, so raw throughput is the priority.",
+            "correct": false
+          },
+          {
+            "text": "Interactive serving — low latency per request is the priority, so memory bandwidth and fast token generation matter more than peak throughput.",
+            "correct": true
+          },
+          {
+            "text": "Training — you need the most FLOPS possible to update model weights in real time.",
+            "correct": false
+          },
+          {
+            "text": "Batch inference — grouping user requests into large batches minimizes cost and meets the 2-second target easily.",
+            "correct": false
+          }
+        ],
+        "explanation": "Interactive serving is defined by strict per-request latency requirements; memory bandwidth (how fast the chip feeds data to compute) often limits token generation speed more than raw FLOPS.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "interactive-serving",
+          "memory-bandwidth",
+          "latency"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A 70-billion-parameter model stored in 16-bit precision needs roughly 140 GB of GPU memory just for weights. A team wants to serve it on a single GPU with 80 GB of VRAM. Which technique is the most direct lever to make the weights fit?",
+        "options": [
+          {
+            "text": "Use a faster interconnect between GPUs.",
+            "correct": false
+          },
+          {
+            "text": "Switch to a larger batch size to amortize memory cost.",
+            "correct": false
+          },
+          {
+            "text": "Quantize the model to 8-bit or 4-bit precision to shrink weight size.",
+            "correct": true
+          },
+          {
+            "text": "Enable Multi-Instance GPU (MIG) partitioning on the single GPU.",
+            "correct": false
+          }
+        ],
+        "explanation": "Quantization reduces the number of bits used to store each weight, directly shrinking total memory footprint — halving precision roughly halves the memory required for weights.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "quantization",
+          "vram",
+          "model-weights"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A startup runs occasional, unpredictable spikes of AI inference — sometimes zero traffic, sometimes a burst of thousands of requests. Which hardware approach is most likely to give the best cost per useful result?",
+        "options": [
+          {
+            "text": "Buy and co-locate dedicated H100 GPUs to guarantee capacity at all times.",
+            "correct": false
+          },
+          {
+            "text": "Use a managed API (e.g., a cloud model endpoint) so you pay per request and avoid idle hardware costs.",
+            "correct": true
+          },
+          {
+            "text": "Deploy a TPU pod reserved for 3 years to lock in the lowest per-hour rate.",
+            "correct": false
+          },
+          {
+            "text": "Use MIG partitioning on a single on-premise GPU to serve all traffic.",
+            "correct": false
+          }
+        ],
+        "explanation": "Managed APIs charge per token or per request, so idle time costs nothing — this beats owning accelerators when traffic is unpredictable and utilization would otherwise be low.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "managed-api",
+          "cost-per-result",
+          "utilization"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Explain in plain language why a system can run out of capacity during a sudden traffic spike even when its *average* load looks fine on a dashboard.",
+        "acceptableAnswer": "Average load hides peaks. If requests arrive in bursts, the queue of concurrent requests can exceed the maximum the hardware can hold in memory or process simultaneously — even if the hourly or daily average looks low. Max concurrency (the worst-case simultaneous demand) is what causes failures, not the average.",
+        "explanation": "Averages smooth over spikes; hardware fails at peak concurrency, not average load, so planning only to average demand leaves a system vulnerable to burst failures.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "concurrency",
+          "capacity-planning",
+          "peak-load"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "An AI assistant recommends a specific GPU configuration for your workload but doesn't mention the model's sequence length, batch size, or whether you need training or inference. What is the most important reason to flag this advice as incomplete?",
+        "options": [
+          {
+            "text": "GPU recommendations are always wrong unless they come from the chip manufacturer.",
+            "correct": false
+          },
+          {
+            "text": "Hardware fit depends on workload assumptions; missing those means the recommendation could be wildly over- or under-provisioned for your actual needs.",
+            "correct": true
+          },
+          {
+            "text": "The advice is fine — GPU choice only depends on budget, not workload details.",
+            "correct": false
+          },
+          {
+            "text": "Sequence length and batch size only matter for TPUs, not GPUs.",
+            "correct": false
+          }
+        ],
+        "explanation": "Hardware sizing is always conditional on workload specifics (model size, precision, sequence length, concurrency targets); a recommendation without those assumptions cannot be verified or trusted.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "capacity-planning",
+          "hardware-fit",
+          "assumptions"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

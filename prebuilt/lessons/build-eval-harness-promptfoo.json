@@ -958,5 +958,132 @@
       "url": "https://www.promptfoo.dev/docs/intro/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Before writing a single assertion, the harness contract requires you to define ___.",
+        "options": [
+          {
+            "text": "The exact wording of every prompt variant",
+            "correct": false
+          },
+          {
+            "text": "What the harness must prove and what counts as pass or fail",
+            "correct": true
+          },
+          {
+            "text": "The CI pipeline runner and deployment target",
+            "correct": false
+          },
+          {
+            "text": "The number of golden cases you plan to write",
+            "correct": false
+          }
+        ],
+        "explanation": "The contract locks in the harness's purpose and pass/fail criteria first — before any assertions or prompts are written — so every later decision has a clear standard to meet.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your app retrieves documents from a vector store before calling the LLM. Which promptfoo setup best avoids testing a prompt path that production never uses?",
+        "options": [
+          {
+            "text": "Use a direct provider prompt that inlines sample documents as plain text",
+            "correct": false
+          },
+          {
+            "text": "Point promptfoo at a custom app target that runs the real retrieval + LLM call, and supply retrieval state via fixtures",
+            "correct": true
+          },
+          {
+            "text": "Mock the LLM response entirely so retrieval doesn't matter",
+            "correct": false
+          },
+          {
+            "text": "Duplicate the retrieval logic inside the promptfoo config file",
+            "correct": false
+          }
+        ],
+        "explanation": "A custom app target exercises the same code path production uses; fixtures supply controlled retrieval state so the test is both realistic and repeatable.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "In a well-structured golden case, which ordering of assertion types is correct?",
+        "options": [
+          {
+            "text": "Rubric (quality) checks first, then deterministic hard checks",
+            "correct": false
+          },
+          {
+            "text": "Hard deterministic checks first, then one rubric for quality",
+            "correct": true
+          },
+          {
+            "text": "Only rubric checks — deterministic checks are too brittle for LLM output",
+            "correct": false
+          },
+          {
+            "text": "Deterministic checks only — rubrics introduce subjectivity and should be avoided",
+            "correct": false
+          }
+        ],
+        "explanation": "Hard checks (exact match, contains, regex) catch clear failures cheaply; the rubric is added last to evaluate quality only after the output has already passed the objective gates.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "A CI run shows one case failing with the message: 'expected citation [src-42] not found in output.' What is the most likely root cause, and what is the correct next action?",
+        "acceptableAnswer": "The model's response is missing a required citation (src-42). The correct next action is to treat this as a real regression — investigate whether the prompt, retrieval, or model change caused the omission — and do NOT simply relax the assertion to make the test pass.",
+        "explanation": "A missing citation assertion flags that the output no longer meets a hard requirement; the fix is to address the underlying cause, not to weaken the check.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A production incident reveals that the model occasionally drops a required disclaimer. You fix the prompt. What should you do with the failing production case?",
+        "options": [
+          {
+            "text": "Delete it after the fix is confirmed — it was a one-off edge case",
+            "correct": false
+          },
+          {
+            "text": "Promote it into the golden test pack with a dated rationale, so it guards against regression",
+            "correct": true
+          },
+          {
+            "text": "Raise the pass-rate threshold to mask the failure until the next release",
+            "correct": false
+          },
+          {
+            "text": "Add it only to staging fixtures, not to the main harness",
+            "correct": false
+          }
+        ],
+        "explanation": "Promoting real failures into goldens is how the test pack grows to reflect actual risk; the dated rationale records why the threshold or case exists, preventing silent removal later.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

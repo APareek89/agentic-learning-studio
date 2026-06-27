@@ -1220,5 +1220,132 @@
       "url": "https://spec.openapis.org/oas/latest.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You need a one-off answer from GPT-4o — no looping, no tools, no memory. Which approach is most appropriate?",
+        "options": [
+          {
+            "text": "Wrap the call in an Agent and Runner so you get tracing for free.",
+            "correct": false
+          },
+          {
+            "text": "Call the OpenAI Chat Completions API directly — the SDK overhead isn't justified.",
+            "correct": true
+          },
+          {
+            "text": "Use a handoff so a specialist agent handles the single turn.",
+            "correct": false
+          },
+          {
+            "text": "Register a function tool that returns the answer, then run the agent.",
+            "correct": false
+          }
+        ],
+        "explanation": "The Agents SDK earns its keep when you need looping, tools, or multi-agent coordination; a single, stateless completion is simpler and cheaper with a direct API call.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your agent calls an external payment API. Before every call you want to log the arguments and require a human 'approve' signal for amounts over $500. Where does this logic live?",
+        "options": [
+          {
+            "text": "Inside the model's system prompt, as a rule the model must follow.",
+            "correct": false
+          },
+          {
+            "text": "In a guardrail on the agent's output, after the tool returns.",
+            "correct": false
+          },
+          {
+            "text": "In a validation and approval layer that wraps the function tool — application authority, not model authority.",
+            "correct": true
+          },
+          {
+            "text": "In a handoff to a second agent that specialises in payments.",
+            "correct": false
+          }
+        ],
+        "explanation": "Validation, logging, and approval gates are application-layer responsibilities that wrap the tool call; they must not be delegated to the model, which can be prompted around.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "In your own words: what is the key difference between using another agent as a *tool* versus using a *handoff* to that agent? Who owns the conversation after each?",
+        "acceptableAnswer": "Agent-as-tool: the calling agent invokes the specialist, gets a result back, and retains ownership of the conversation — it decides what to do next. Handoff: control (and conversation ownership) is transferred to the specialist for subsequent turns; the original agent is no longer driving.",
+        "explanation": "With agent-as-tool the caller stays in charge; with a handoff the specialist takes over ownership for the remainder of that conversational thread.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You are coding a small agent. In the OpenAI Agents SDK, what is the correct order of steps to wire up a function tool?",
+        "options": [
+          {
+            "text": "Define the Python function → decorate or register it as a tool → pass it to Agent() → call Runner.run().",
+            "correct": true
+          },
+          {
+            "text": "Call Runner.run() → pass the function to Agent() → decorate the function as a tool.",
+            "correct": false
+          },
+          {
+            "text": "Pass the function directly to Runner.run() without attaching it to an Agent.",
+            "correct": false
+          },
+          {
+            "text": "Define the Agent() first → write the function → register it globally so all agents share it.",
+            "correct": false
+          }
+        ],
+        "explanation": "The function must exist and be registered as a tool before it is attached to an Agent; the Runner then executes the agent loop that can invoke that tool.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A teammate suggests storing full conversation traces in the same database table as user profile records to keep queries simple. What is the strongest objection from a production-data perspective?",
+        "options": [
+          {
+            "text": "Traces are too large to fit in a relational database.",
+            "correct": false
+          },
+          {
+            "text": "Traces contain sensitive model inputs/outputs and tool arguments that need separate access controls and retention policies.",
+            "correct": true
+          },
+          {
+            "text": "The Agents SDK does not support exporting traces to external databases.",
+            "correct": false
+          },
+          {
+            "text": "Mixing them will break the Runner's session-state lookup.",
+            "correct": false
+          }
+        ],
+        "explanation": "Trace data can contain PII, secrets passed to tools, and model reasoning — it requires its own access controls, audit logging, and retention rules, separate from general application data.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

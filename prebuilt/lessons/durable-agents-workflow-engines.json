@@ -1206,5 +1206,153 @@
       "url": "https://docs.langchain.com/oss/python/langgraph/overview",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A queue-based agent kicks off a multi-step research task. The worker crashes mid-run and the message is redelivered. What critical problem does a plain queue NOT solve that a workflow engine does?",
+        "options": [
+          {
+            "text": "The queue cannot route messages to the correct worker type.",
+            "correct": false
+          },
+          {
+            "text": "The queue cannot persist exactly which steps already completed, so the agent restarts from scratch instead of resuming.",
+            "correct": true
+          },
+          {
+            "text": "The queue cannot handle more than one message at a time.",
+            "correct": false
+          },
+          {
+            "text": "The queue cannot call an LLM API directly.",
+            "correct": false
+          }
+        ],
+        "explanation": "Queues guarantee delivery but carry no durable record of partial progress; a workflow engine's event history lets the agent resume from the last completed step rather than restarting entirely.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "durable-progress",
+          "event-history",
+          "queue"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "During a workflow replay, the engine re-executes your workflow code from the top. Which of the following would BREAK determinism and cause the replay to diverge from the original run?",
+        "options": [
+          {
+            "text": "Calling a side-effecting activity (e.g., sending an email) through the workflow engine's activity API.",
+            "correct": false
+          },
+          {
+            "text": "Reading the result of a completed activity from the event history.",
+            "correct": false
+          },
+          {
+            "text": "Calling time.now() directly inside workflow code to timestamp a decision.",
+            "correct": true
+          },
+          {
+            "text": "Awaiting a timer that was already recorded in the event history.",
+            "correct": false
+          }
+        ],
+        "explanation": "time.now() returns a different value on each replay; workflow code must use the engine's deterministic time API so the replayed value matches what was recorded in the event history.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "deterministic-replay",
+          "workflow",
+          "event-history"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "An approval step in your agent workflow can take up to 72 hours. A human reviewer may never respond. Which combination of primitives best handles this situation?",
+        "options": [
+          {
+            "text": "A short activity timeout with aggressive retries until the reviewer responds.",
+            "correct": false
+          },
+          {
+            "text": "A durable timer for the deadline plus a signal/event that unblocks the workflow when approval arrives — with a timeout policy that escalates if the timer fires first.",
+            "correct": true
+          },
+          {
+            "text": "Polling the approval status every 30 seconds inside workflow code using a while loop with time.sleep().",
+            "correct": false
+          },
+          {
+            "text": "Storing the approval state in a queue message and redelivering it every hour.",
+            "correct": false
+          }
+        ],
+        "explanation": "A durable timer costs no compute while waiting, and a signal delivers the approval event exactly when it arrives; combining them with an escalation path covers both the happy path and the timeout case.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "timer",
+          "signal",
+          "approval",
+          "retry-timeout"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Your workflow sends a payment confirmation email as an activity. The activity succeeds but the engine crashes before recording the result, so the activity reruns on recovery. Describe ONE concrete technique to make this activity idempotent so the email is never sent twice.",
+        "acceptableAnswer": "Attach a stable idempotency key (e.g., derived from the workflow ID and activity attempt number) to the email request, and check on the email provider's side (or in a deduplication store) whether a request with that key was already processed — if so, skip sending and return the prior result.",
+        "explanation": "An idempotency key lets the downstream system (or a deduplication layer) recognise a duplicate call and return the original outcome without repeating the side effect.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "idempotency-key",
+          "activity",
+          "idempotent-replay"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You need to deploy a breaking change to a workflow that has instances still running in production (some started weeks ago). What is the correct operational approach?",
+        "options": [
+          {
+            "text": "Delete all running instances and redeploy — old histories are no longer valid anyway.",
+            "correct": false
+          },
+          {
+            "text": "Use the engine's workflow versioning API to branch old and new logic, so in-flight instances follow the original path while new instances follow the updated path.",
+            "correct": true
+          },
+          {
+            "text": "Store the new logic in an activity so the workflow code itself never needs to change.",
+            "correct": false
+          },
+          {
+            "text": "Pause all workers, migrate all histories manually, then redeploy.",
+            "correct": false
+          }
+        ],
+        "explanation": "Workflow versioning (patching/versioning APIs) lets the engine route each workflow execution to the code branch that matches its recorded history, keeping long-lived runs safe while new runs use the updated logic.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "workflow-versioning",
+          "event-history",
+          "operate-history"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

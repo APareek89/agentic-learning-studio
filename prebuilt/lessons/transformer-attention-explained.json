@@ -948,5 +948,152 @@
       "url": "https://huggingface.co/docs/tokenizers/index",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A token's state enters an attention layer as a vector. What does that vector represent at that point in the network?",
+        "options": [
+          {
+            "text": "The raw one-hot encoding of the token's position in the vocabulary",
+            "correct": false
+          },
+          {
+            "text": "A summary of everything the model knows about that token so far, shaped by all previous layers",
+            "correct": true
+          },
+          {
+            "text": "The exact word embedding from the embedding table, unchanged",
+            "correct": false
+          },
+          {
+            "text": "A probability distribution over the next possible tokens",
+            "correct": false
+          }
+        ],
+        "explanation": "Each layer refines the token's vector, so by the time it reaches a given attention layer it encodes contextual information built up across all prior layers — not just the original embedding.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "token-state",
+          "contextual-meaning",
+          "layers"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "During attention scoring, a query vector is compared against key vectors to produce raw scores. What role does softmax play immediately after?",
+        "options": [
+          {
+            "text": "It scales the query and key vectors to unit length before scoring",
+            "correct": false
+          },
+          {
+            "text": "It converts raw scores into weights that sum to 1, so they can be used as a mixing recipe",
+            "correct": true
+          },
+          {
+            "text": "It removes the lowest-scoring tokens from the sequence entirely",
+            "correct": false
+          },
+          {
+            "text": "It adds positional information to the scores before value mixing",
+            "correct": false
+          }
+        ],
+        "explanation": "Softmax turns the raw dot-product scores into a proper probability distribution (summing to 1), which then acts as a weighted recipe for blending the value vectors.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "query-key-scoring",
+          "softmax",
+          "attention-weights"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "In multi-head attention, the model runs several attention operations in parallel rather than just one. In one or two sentences, explain the practical benefit of doing this.",
+        "acceptableAnswer": "Each head can learn to attend to different kinds of relationships simultaneously — for example, one head might track syntactic dependencies while another tracks coreference. Running them in parallel lets the model capture multiple types of context at once, with the results combined afterward.",
+        "explanation": "Multiple heads let the model jointly attend to information from different representation subspaces, capturing richer and more varied relationships than a single attention operation could.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "multi-head-attention",
+          "value-mixing"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "A decoder-only language model uses a causal mask during training. Which of the following best describes what the causal mask enforces?",
+        "options": [
+          {
+            "text": "Each token can only attend to itself, preventing any information flow between tokens",
+            "correct": false
+          },
+          {
+            "text": "Tokens in the padding region are ignored so they don't distort the scores",
+            "correct": false
+          },
+          {
+            "text": "Each token can attend to all earlier tokens but not to any future tokens in the sequence",
+            "correct": true
+          },
+          {
+            "text": "The first token in the sequence receives the highest attention weight automatically",
+            "correct": false
+          }
+        ],
+        "explanation": "The causal mask sets future-token scores to negative infinity before softmax, so they become zero weight — ensuring the model only uses past context when predicting the next token.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "causal-mask",
+          "next-token-prediction",
+          "masking"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When serving a language model, the KV cache stores key and value vectors from the prompt so they don't need to be recomputed at every decode step. What is the primary memory cost this introduces?",
+        "options": [
+          {
+            "text": "The cache forces the model to rerun the full forward pass for every new token generated",
+            "correct": false
+          },
+          {
+            "text": "Storing K and V tensors for every layer and every token in the context consumes large amounts of GPU memory, which grows with sequence length and batch size",
+            "correct": true
+          },
+          {
+            "text": "The cache replaces the attention weights, so the model loses accuracy on long sequences",
+            "correct": false
+          },
+          {
+            "text": "Only one sequence can use the cache at a time, so batching becomes impossible",
+            "correct": false
+          }
+        ],
+        "explanation": "The KV cache trades compute for memory: it avoids redundant recomputation but requires storing large K and V matrices for every layer across the full context, which becomes a significant bottleneck at long sequences or large batch sizes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "kv-cache",
+          "prefill",
+          "decode",
+          "memory-tradeoffs"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

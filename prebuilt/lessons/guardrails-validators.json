@@ -2030,5 +2030,150 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "An LLM returns a confident-sounding answer that contains a made-up fact. Which guardrail layer is the RIGHT place to catch this before it reaches the user?",
+        "options": [
+          {
+            "text": "Input layer — screen the user's prompt before it reaches the model",
+            "correct": false
+          },
+          {
+            "text": "Output layer — validate what the model returns before showing it",
+            "correct": true
+          },
+          {
+            "text": "Action layer — intercept the tool call the model tries to make",
+            "correct": false
+          },
+          {
+            "text": "No guardrail can catch hallucinations; only retraining helps",
+            "correct": false
+          }
+        ],
+        "explanation": "Hallucinations are a risk in what the model produces, so the output layer — which sits between the model and the user — is where that check belongs.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "guardrail",
+          "output-layer",
+          "hallucination"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A user embeds hidden instructions in a document they upload, trying to hijack the model's behavior. Which layer and risk does this map to?",
+        "options": [
+          {
+            "text": "Output layer / hallucination",
+            "correct": false
+          },
+          {
+            "text": "Action layer / unsafe action",
+            "correct": false
+          },
+          {
+            "text": "Input layer / prompt injection",
+            "correct": true
+          },
+          {
+            "text": "Output layer / unsafe action",
+            "correct": false
+          }
+        ],
+        "explanation": "Prompt injection is an attack that arrives in the model's input, so the input layer is where it must be detected and blocked.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "input-layer",
+          "prompt-injection"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your team is debating guardrail strictness for a low-stakes feature that auto-suggests email subject lines. Which approach best matches the stakes?",
+        "options": [
+          {
+            "text": "Model-judge plus human gate — subject lines can be harmful if unchecked",
+            "correct": false
+          },
+          {
+            "text": "No guardrail at all — the risk is too low to justify any overhead",
+            "correct": false
+          },
+          {
+            "text": "Log-only or a lightweight deterministic check — the cost of false rejections outweighs the low risk",
+            "correct": true
+          },
+          {
+            "text": "Maximum strictness by default — it is always safer to over-block",
+            "correct": false
+          }
+        ],
+        "explanation": "Maximum strictness adds latency, cost, and false rejections; for low-stakes actions a log-only or simple deterministic check is proportionate and avoids those costs.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "strictness-tradeoff",
+          "log-only",
+          "deterministic-check"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You write a validator that checks whether the model's output is valid JSON. What is one specific failure the validator might silently miss — i.e., the output passes the check but is still wrong for your system?",
+        "acceptableAnswer": "The validator confirms the output is valid JSON but does not check that required fields (e.g., a specific key or value type) are present and correct, so a structurally valid but semantically wrong object passes through.",
+        "explanation": "A validator that only checks format (is it JSON?) will pass output that is well-formed but missing required keys or containing wrong value types — the rule it must catch but might miss.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "validator",
+          "failure-modes"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A guardrail trips on 30% of real user requests — far more than expected. After investigation, the rule is too broad. This is an example of which of the three main ways guardrails fail in practice?",
+        "options": [
+          {
+            "text": "The guardrail is bypassed — attackers found a way around it",
+            "correct": false
+          },
+          {
+            "text": "The guardrail is miscalibrated — it fires on too many legitimate inputs (false positives)",
+            "correct": true
+          },
+          {
+            "text": "The guardrail has a gap — it misses the risk it was designed to catch",
+            "correct": false
+          },
+          {
+            "text": "The guardrail escalates correctly but the human reviewer is too slow",
+            "correct": false
+          }
+        ],
+        "explanation": "A guardrail that blocks too many legitimate requests is miscalibrated toward over-strictness — one of the three core failure modes alongside gaps (under-catching) and bypass (circumvention).",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "guardrail-failure",
+          "strictness-tradeoff",
+          "false-rejections"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

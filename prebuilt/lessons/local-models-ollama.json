@@ -908,5 +908,153 @@
       "url": "https://docs.ollama.com/modelfile",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Ollama is designed to run models on a single local machine. Which of the following is a direct consequence of that design?",
+        "options": [
+          {
+            "text": "It can automatically scale to handle hundreds of simultaneous users.",
+            "correct": false
+          },
+          {
+            "text": "It cannot serve multiple heavy requests at once without degrading performance.",
+            "correct": true
+          },
+          {
+            "text": "It requires a cloud account to download model weights.",
+            "correct": false
+          },
+          {
+            "text": "It replaces the need for a GPU in all cases.",
+            "correct": false
+          }
+        ],
+        "explanation": "Because Ollama runs on one machine, it shares that machine's memory and compute across all requests — there's no horizontal scaling, so concurrent heavy load quickly becomes a bottleneck.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "ollama",
+          "local-model",
+          "production-limits"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You run `ollama run mistral` and then send a request to the local API. The response comes back as a stream of JSON lines. Your code reads only the very first line and stops. What is the most likely symptom?",
+        "options": [
+          {
+            "text": "The model crashes and must be restarted with `ollama stop`.",
+            "correct": false
+          },
+          {
+            "text": "You get a complete response because the first line always contains the full answer.",
+            "correct": false
+          },
+          {
+            "text": "You receive only a fragment of the generated text and miss the rest of the reply.",
+            "correct": true
+          },
+          {
+            "text": "The API returns an HTTP 500 error for incomplete reads.",
+            "correct": false
+          }
+        ],
+        "explanation": "The local API streams one JSON chunk per line; reading only the first line captures just the opening fragment of the response — you must loop over all lines until the `done` flag is true.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "local-api",
+          "streaming",
+          "cli-lifecycle"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A Modelfile lets you package defaults for a local model. Which pair of things can you set directly inside a Modelfile?",
+        "options": [
+          {
+            "text": "A system prompt and the context window size.",
+            "correct": true
+          },
+          {
+            "text": "A cloud API key and a billing tier.",
+            "correct": false
+          },
+          {
+            "text": "The number of GPU nodes and a load-balancing strategy.",
+            "correct": false
+          },
+          {
+            "text": "A Docker registry address and a container restart policy.",
+            "correct": false
+          }
+        ],
+        "explanation": "A Modelfile's SYSTEM instruction sets the system prompt and PARAMETER options like `num_ctx` control context length — both are baked in at build time so every run starts with those defaults.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "modelfile",
+          "system-prompt",
+          "context-window"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Name TWO specific gaps that make Ollama a poor fit for a production deployment serving real end-users, and for each gap name one alternative tool or approach that addresses it.",
+        "acceptableAnswer": "Any two of: (1) No horizontal scaling / single-machine limit → vLLM or a hosted API (e.g., OpenAI, Anthropic) can serve many users concurrently. (2) No built-in auth or rate limiting → a hosted API or an API gateway adds those controls. (3) Model memory risk / large VRAM requirement → hosted APIs abstract hardware; vLLM handles multi-GPU sharding. (4) No SLA or uptime guarantee → hosted providers offer SLAs Ollama cannot match.",
+        "explanation": "Ollama lacks horizontal scaling, access controls, and uptime guarantees — gaps that vLLM (multi-GPU serving) and hosted APIs (managed infrastructure) are specifically built to fill.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "production-limits",
+          "vllm",
+          "hosted-api",
+          "release-gates"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You ask an AI assistant to generate Ollama integration code for you. What is the most important thing to verify before trusting that code in your project?",
+        "options": [
+          {
+            "text": "That the code uses the latest trendy framework, since AI always picks the best one.",
+            "correct": false
+          },
+          {
+            "text": "That the streaming loop correctly reads all JSON lines until `done` is true and handles errors.",
+            "correct": true
+          },
+          {
+            "text": "That the code is fewer than 50 lines, because shorter code is always more correct.",
+            "correct": false
+          },
+          {
+            "text": "That the model name in the code matches the AI assistant's own model name.",
+            "correct": false
+          }
+        ],
+        "explanation": "AI-generated Ollama code most commonly fails by mishandling the streaming response — a correct smoke test checks that every chunk is consumed and that network or parse errors are caught.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "smoke-test",
+          "streaming",
+          "ai-generated-code"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

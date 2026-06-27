@@ -1215,5 +1215,151 @@
       "url": "https://developers.llamaindex.ai/python/framework/understanding/rag/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "In LlamaIndex's data hierarchy, which object is the smallest unit that actually gets embedded and stored in a vector index?",
+        "options": [
+          {
+            "text": "Document",
+            "correct": false
+          },
+          {
+            "text": "Node",
+            "correct": true
+          },
+          {
+            "text": "Query engine",
+            "correct": false
+          },
+          {
+            "text": "Retriever",
+            "correct": false
+          }
+        ],
+        "explanation": "A Document is the raw loaded file; LlamaIndex splits it into Nodes, and it is the Node that gets an embedding and lives in the index.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "document",
+          "node",
+          "index"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are loading a set of legal contracts. Each contract has a different effective date and jurisdiction. Where is the RIGHT place to store those attributes so a retriever can filter on them later?",
+        "options": [
+          {
+            "text": "In the query string the user sends at runtime",
+            "correct": false
+          },
+          {
+            "text": "As node metadata attached during loading",
+            "correct": true
+          },
+          {
+            "text": "In the LLM system prompt",
+            "correct": false
+          },
+          {
+            "text": "In a separate SQL table outside LlamaIndex",
+            "correct": false
+          }
+        ],
+        "explanation": "Metadata attached to nodes during loading travels with every chunk, so a metadata filter on the retriever can use it to restrict results by date or jurisdiction without touching the query text.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "node",
+          "metadata-filter",
+          "reader"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your RAG pipeline returns the right documents but the LLM's answer ranks a weakly relevant chunk first, burying the best evidence. Which postprocessing step is the most targeted fix?",
+        "options": [
+          {
+            "text": "Increase similarity_top_k to retrieve more candidates",
+            "correct": false
+          },
+          {
+            "text": "Add a reranker postprocessor to reorder the retrieved nodes",
+            "correct": true
+          },
+          {
+            "text": "Switch from a vector index to a keyword index",
+            "correct": false
+          },
+          {
+            "text": "Reduce chunk size in the node parser",
+            "correct": false
+          }
+        ],
+        "explanation": "A reranker postprocessor re-scores already-retrieved candidates and reorders them, which is exactly the right tool when the right nodes are present but misordered.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "reranker",
+          "postprocessor",
+          "similarity-top-k"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "After calling `query_engine.query(\"What is the refund policy?\")`, what should you inspect BEFORE trusting the answer the LLM returns — and why?",
+        "acceptableAnswer": "You should inspect the source nodes (response.source_nodes) returned with the answer to verify that the evidence the LLM used actually comes from relevant chunks in your data, not from hallucination or an unrelated node.",
+        "explanation": "Checking source nodes lets you confirm the answer is grounded in your documents rather than fabricated by the LLM.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "query-engine",
+          "source-nodes"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You want to know whether your retriever is actually surfacing the chunk that contains the ground-truth answer. Which evaluation approach directly measures this?",
+        "options": [
+          {
+            "text": "Answer faithfulness — checking if the LLM's answer contradicts the retrieved nodes",
+            "correct": false
+          },
+          {
+            "text": "Hit-rate / recall — checking whether the expected node appears in the retrieved context",
+            "correct": true
+          },
+          {
+            "text": "Chunk size ablation — comparing answers with different node sizes",
+            "correct": false
+          },
+          {
+            "text": "Latency benchmarking — measuring how fast the query engine responds",
+            "correct": false
+          }
+        ],
+        "explanation": "Hit-rate (retrieval recall) directly measures whether the node that contains the correct answer is present in the packed context, which is the retrieval-level check before you even involve the LLM.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "retrieval-eval",
+          "faithfulness",
+          "hit-rate"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

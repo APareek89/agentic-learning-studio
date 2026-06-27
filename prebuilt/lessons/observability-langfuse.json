@@ -1131,5 +1131,149 @@
       "url": "https://langfuse.com/docs/tracing",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "freeText",
+        "prompt": "Without looking back: a user reports that your support bot gave a wrong answer. You have only the final response logged. Name TWO specific failure modes you cannot diagnose from that log alone, and explain why a trace would help.",
+        "acceptableAnswer": "Any two of: retrieval returned the wrong chunks (you can't see what was fetched), the model was passed a malformed prompt (you can't see the input), a tool call silently failed or returned bad data, latency spiked in one step but not others. A trace records each intermediate span — retrieval, model call, tool — with its own inputs/outputs, so you can pinpoint exactly which step broke rather than only seeing the final answer.",
+        "explanation": "Final-answer logs hide every intermediate step; a trace exposes each span's inputs and outputs so you can isolate whether retrieval, the model, or a tool was the root cause.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "trace",
+          "span"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your pipeline has three steps: a vector-DB lookup, a GPT-4 call, and a send-email tool. A teammate suggests wrapping all three in a single span to keep the code simple. What is the main risk of that approach?",
+        "options": [
+          {
+            "text": "It increases token costs because Langfuse re-sends the payload.",
+            "correct": false
+          },
+          {
+            "text": "Distinct failure modes in retrieval, model, and tool execution become invisible — a slow retrieval looks the same as a slow model call.",
+            "correct": true
+          },
+          {
+            "text": "Langfuse does not support more than one span per trace, so the data would be lost.",
+            "correct": false
+          },
+          {
+            "text": "Single spans cannot store metadata, so version fields are dropped.",
+            "correct": false
+          }
+        ],
+        "explanation": "One large span merges latency and errors from all three steps, so you can't tell which component failed or was slow — exactly what span boundaries are designed to prevent.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "span"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A failed production run surfaces a bug you want to prevent from regressing. Which Langfuse workflow lets you turn that run into a repeatable test case?",
+        "options": [
+          {
+            "text": "Copy the raw user message into a spreadsheet and re-run it manually each release.",
+            "correct": false
+          },
+          {
+            "text": "Promote the trace (stripping sensitive fields) into a dataset, then run offline evals against it in CI.",
+            "correct": true
+          },
+          {
+            "text": "Increase the sampling rate to 100% so the run appears in more traces.",
+            "correct": false
+          },
+          {
+            "text": "Attach a human score to the trace and archive it; datasets are only for synthetic data.",
+            "correct": false
+          }
+        ],
+        "explanation": "Langfuse lets you promote a real failed trace into a dataset item (after removing PII), creating a regression test you can replay in offline evaluation without re-hitting production.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "dataset",
+          "score",
+          "trace"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You're writing a trace payload for a new LLM feature. Which of the following is the MOST likely problem with a trace named `gpt-call-2024-06-12T14:32:01.887Z-user_8472`?",
+        "options": [
+          {
+            "text": "The name is too short to be meaningful in the Langfuse UI.",
+            "correct": false
+          },
+          {
+            "text": "The name embeds a timestamp and user ID, making it high-cardinality — grouping and filtering across runs becomes impossible.",
+            "correct": true
+          },
+          {
+            "text": "Langfuse requires trace names to start with a lowercase letter.",
+            "correct": false
+          },
+          {
+            "text": "Including the model name in the trace name causes version fields to be ignored.",
+            "correct": false
+          }
+        ],
+        "explanation": "High-cardinality names (unique per run due to timestamps or IDs) prevent you from aggregating or filtering traces by feature or version — stable, low-cardinality names like `support-answer-v2` are needed instead.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "trace",
+          "metadata"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Your app handles medical support tickets. You want to trace LLM calls for debugging but must protect patient data. Which combination of controls best balances observability with privacy?",
+        "options": [
+          {
+            "text": "Log all prompts and responses in full; restrict Langfuse dashboard access to engineers only.",
+            "correct": false
+          },
+          {
+            "text": "Disable tracing entirely for any session that mentions health terms.",
+            "correct": false
+          },
+          {
+            "text": "Apply sampling (e.g., 10–20% of sessions), redact or mask PII in prompt/response fields before logging, set a short retention window, and assign a named owner for dataset and incident review.",
+            "correct": true
+          },
+          {
+            "text": "Store full traces locally and sync only scores to Langfuse, with no retention policy needed.",
+            "correct": false
+          }
+        ],
+        "explanation": "Sampling reduces exposure volume, PII masking prevents sensitive data from reaching the trace store, a retention policy limits how long it persists, and named ownership ensures accountability — together they make traces safe and auditable in sensitive domains.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "sampling",
+          "retention",
+          "ownership",
+          "metadata"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

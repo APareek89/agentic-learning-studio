@@ -1894,5 +1894,116 @@
       "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "From memory first: what is the correct order of one complete Claude tool-use round trip?",
+        "options": [
+          {
+            "text": "User asks → Claude returns tool_use → your code runs the tool and sends tool_result → Claude uses that result to answer or request another tool",
+            "correct": true
+          },
+          {
+            "text": "User asks → your code runs every available tool → Claude chooses the best tool_result → Claude answers"
+          },
+          {
+            "text": "Claude returns tool_result → your code sends tool_use → user approves → Claude answers"
+          },
+          {
+            "text": "User asks → Claude answers directly → your code checks whether a tool would have helped → Claude retries"
+          }
+        ],
+        "explanation": "In a tool loop, Claude requests an action with tool_use, your application performs it and returns tool_result, then Claude continues from that result.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A user asks Claude, “What is the current inventory count for SKU-481, and reorder it if it is below 20.” Why can’t a plain one-shot Claude call reliably complete this task by itself?",
+        "options": [
+          {
+            "text": "Because Claude needs live inventory data and may need your system to take an action, both of which require tools or application code.",
+            "correct": true
+          },
+          {
+            "text": "Because Claude cannot read user instructions that contain numbers."
+          },
+          {
+            "text": "Because tool use is only needed for summarizing long documents."
+          },
+          {
+            "text": "Because Claude must always use multiple agents for business workflows."
+          }
+        ],
+        "explanation": "A one-shot model call cannot directly fetch live system state or perform external actions unless your application exposes tools and executes them.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which set contains the essential parts Claude needs in a tool definition in order to decide when and how to call it?",
+        "options": [
+          {
+            "text": "Tool name, description, and input schema",
+            "correct": true
+          },
+          {
+            "text": "Tool name, final answer, and user password"
+          },
+          {
+            "text": "Database URL, API key, and retry budget"
+          },
+          {
+            "text": "Model temperature, system prompt, and billing account"
+          }
+        ],
+        "explanation": "Claude needs a clear tool name, description, and input schema so it can choose the tool and provide valid arguments.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You need to answer a question that may require looking up one customer record, then possibly sending one follow-up email based on the result. What is the smallest suitable agent pattern?",
+        "options": [
+          {
+            "text": "A multi-turn tool loop, because the second action depends on the first tool_result.",
+            "correct": true
+          },
+          {
+            "text": "An orchestrator-workers design, because any task with two possible actions needs multiple agents."
+          },
+          {
+            "text": "A single direct Claude call with no tools, because Claude can infer the current record."
+          },
+          {
+            "text": "A separate worker agent for every field in the customer record."
+          }
+        ],
+        "explanation": "When later actions depend on earlier tool results, a simple tool loop is usually enough without jumping to multi-agent orchestration.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "Name two production failure modes for Claude tool loops and one guard you would add for each.",
+        "acceptableAnswer": "Any two valid pairs, such as: malformed tool arguments → validate against the input schema; unknown tool name → dispatch-table allowlist/error handling; missing or wrong tool_result linkage/content → check that tool_result is sent back in the required format for the matching tool_use; infinite or runaway loops → max-iteration/stop-condition guard; tool/API failure → retries, timeouts, and clear error tool_result; unsafe action → confirmation/authorization checks.",
+        "explanation": "Production hardening means matching likely loop failures to concrete guards such as validation, allowlists, stop limits, retries, and authorization checks.",
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

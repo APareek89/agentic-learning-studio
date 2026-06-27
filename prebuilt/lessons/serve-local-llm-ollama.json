@@ -901,5 +901,152 @@
       "url": "https://docs.ollama.com/modelfile",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Ollama acts as a local model server. Which of the following best describes what Ollama is responsible for — and what it is NOT responsible for?",
+        "options": [
+          {
+            "text": "Ollama downloads, caches, and serves the model locally; it does NOT handle authentication, rate-limiting, or production scaling.",
+            "correct": true
+          },
+          {
+            "text": "Ollama manages user authentication and scales automatically to handle thousands of concurrent requests.",
+            "correct": false
+          },
+          {
+            "text": "Ollama fine-tunes the model on your local data and pushes updates to a cloud registry.",
+            "correct": false
+          },
+          {
+            "text": "Ollama replaces the need for a GPU by compressing models to run on any CPU without memory constraints.",
+            "correct": false
+          }
+        ],
+        "explanation": "Ollama owns the local lifecycle — pulling, caching, and serving the model — but production concerns like auth, scaling, and rate-limiting are outside its scope.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "ollama",
+          "local-server",
+          "production-gaps"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You run `ollama pull llama3` and then `ollama run llama3`. Later you restart your machine. What happens to the model, and why?",
+        "options": [
+          {
+            "text": "The model is deleted; you must re-pull it every session because Ollama stores nothing permanently.",
+            "correct": false
+          },
+          {
+            "text": "The model stays in the local cache on disk; Ollama does not need to re-download it.",
+            "correct": true
+          },
+          {
+            "text": "The model is stored in RAM only, so it survives sleep but not a full reboot.",
+            "correct": false
+          },
+          {
+            "text": "The model is uploaded to Ollama's cloud so it can be restored on any machine automatically.",
+            "correct": false
+          }
+        ],
+        "explanation": "Pulled models are written to a local disk cache (e.g., ~/.ollama/models), so they persist across reboots without re-downloading.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "local-cache",
+          "cli-lifecycle"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "In a Modelfile, what are the two most important things you should set deliberately, and what risk does ignoring memory limits in a Modelfile introduce?",
+        "acceptableAnswer": "The two key settings are the SYSTEM prompt (which defines the model's persistent behavior/persona) and the context window size (NUM_CTX or similar parameter). Ignoring memory limits risks loading a model that exceeds available RAM/VRAM, causing crashes, severe slowdowns, or the system swapping to disk.",
+        "explanation": "A Modelfile's SYSTEM prompt locks in stable behavior, while an oversized context window or model can exhaust RAM and crash the server.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "modelfile",
+          "system-prompt",
+          "memory-risk"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Your Python app calls Ollama's `/api/generate` endpoint with `\"stream\": true` but you read only the first line of the response and close the connection. What will happen?",
+        "options": [
+          {
+            "text": "The app receives the full response because Ollama buffers everything server-side.",
+            "correct": false
+          },
+          {
+            "text": "The app gets a truncated or empty result because it stops reading before the stream is complete.",
+            "correct": true
+          },
+          {
+            "text": "Ollama automatically switches to non-streaming mode when the client disconnects early.",
+            "correct": false
+          },
+          {
+            "text": "The app raises an authentication error because streaming requires an API key.",
+            "correct": false
+          }
+        ],
+        "explanation": "Streaming responses arrive as a sequence of JSON chunks; reading only the first line and closing means you miss most or all of the generated text.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "streaming-api",
+          "stream-handling",
+          "api-call-shape"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A teammate wants to move your Ollama demo to production to serve real users. Which comparison best explains why Ollama alone is NOT the right choice for that step?",
+        "options": [
+          {
+            "text": "Ollama cannot run open-source models, so you must switch to a hosted API like OpenAI.",
+            "correct": false
+          },
+          {
+            "text": "Ollama lacks built-in multi-user auth, horizontal scaling, and SLA guarantees that tools like vLLM or hosted APIs provide.",
+            "correct": true
+          },
+          {
+            "text": "Ollama is production-ready as long as you add a Modelfile and a system prompt.",
+            "correct": false
+          },
+          {
+            "text": "Ollama is only a fine-tuning tool and was never designed to serve inference requests.",
+            "correct": false
+          }
+        ],
+        "explanation": "Ollama is optimized for local development; production gaps — multi-user auth, load balancing, uptime SLAs — are addressed by vLLM (self-hosted at scale) or managed hosted APIs.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "production-gaps",
+          "vllm",
+          "hosted-apis",
+          "release-gates"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

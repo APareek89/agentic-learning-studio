@@ -922,5 +922,153 @@
       "url": "https://huggingface.co/docs/diffusers/index",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A student sends a screenshot of a math problem to your VLM-powered tutor. The model replies confidently: 'The answer is 42.' What is the MOST important reason NOT to pass this answer directly to the student without any further check?",
+        "options": [
+          {
+            "text": "VLMs are too slow to be used in real-time tutoring applications.",
+            "correct": false
+          },
+          {
+            "text": "VLMs can produce fluent, confident-sounding answers that are factually wrong — a grounding failure hidden inside a polished response.",
+            "correct": true
+          },
+          {
+            "text": "VLMs cannot process screenshots; they only accept camera photos.",
+            "correct": false
+          },
+          {
+            "text": "The model's answer will always be in the wrong output format for downstream use.",
+            "correct": false
+          }
+        ],
+        "explanation": "Grounding failures mean a VLM can hallucinate a plausible-sounding answer even when it misreads or ignores key visual details — fluency is not a reliability signal.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "grounding-failure",
+          "vlm",
+          "hallucination"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Which prompt strategy best forces a VLM to stay anchored to what is actually visible in an image, rather than guessing?",
+        "options": [
+          {
+            "text": "Ask the model to answer as briefly as possible to reduce errors.",
+            "correct": false
+          },
+          {
+            "text": "Ask the model to quote or describe the specific visual evidence it used before giving its answer.",
+            "correct": true
+          },
+          {
+            "text": "Provide a very detailed system prompt describing what the image probably contains.",
+            "correct": false
+          },
+          {
+            "text": "Request the answer in JSON so the model is forced to be precise.",
+            "correct": false
+          }
+        ],
+        "explanation": "Asking for evidence first makes the model surface what it actually 'saw', exposing gaps or misreadings before the final answer is accepted.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "evidence-prompt",
+          "visual-prompt",
+          "grounding-failure"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "Name TWO distinct tasks that a Vision-Language Model can perform when given an image and a text prompt together.",
+        "acceptableAnswer": "Any two of: visual question answering (VQA), image captioning, OCR / text extraction from images, document understanding, screenshot-based tutoring / step explanation, object or error identification in a UI screenshot.",
+        "explanation": "VLMs are multi-task: the same image-text-to-text architecture supports captioning, QA, OCR-style reading, and more — the prompt defines which task is performed.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "vlm",
+          "image-text-to-text",
+          "visual-prompt"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You are reviewing auto-generated VLM code for an inference call. The code sends an image URL and a prompt to the model API and prints the response text. What is the FIRST thing you should verify before trusting the output in a tutoring pipeline?",
+        "options": [
+          {
+            "text": "That the image URL uses HTTPS rather than HTTP.",
+            "correct": false
+          },
+          {
+            "text": "That the prompt explicitly requests evidence or reasoning, not just a bare answer, so failures are detectable.",
+            "correct": true
+          },
+          {
+            "text": "That the model's response is longer than 50 tokens, indicating it thought carefully.",
+            "correct": false
+          },
+          {
+            "text": "That the API call uses streaming mode for faster responses.",
+            "correct": false
+          }
+        ],
+        "explanation": "An evidence-requesting prompt is the single most impactful code-level change: it makes grounding failures visible in the output rather than silently buried in a confident answer.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "evidence-prompt",
+          "vlm-inference",
+          "grounding-failure"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Your screenshot-tutoring tool uses a VLM to read a student's handwritten working. In which situation is it SAFEST to rely on the VLM answer alone, without adding OCR or human review?",
+        "options": [
+          {
+            "text": "When the VLM will decide whether the student passes or fails a graded assignment.",
+            "correct": false
+          },
+          {
+            "text": "When the answer will be used to give a low-stakes hint or suggest a next step, and a wrong hint has little consequence.",
+            "correct": true
+          },
+          {
+            "text": "When the handwriting is messy, because VLMs handle ambiguity better than OCR engines.",
+            "correct": false
+          },
+          {
+            "text": "When the model's confidence score is above 0.9.",
+            "correct": false
+          }
+        ],
+        "explanation": "VLM output alone is appropriate only for low-stakes, easily-corrected actions; high-impact decisions (grades, official records) require OCR verification or human review to catch grounding failures.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "provenance",
+          "ocr-backup",
+          "safe-automation",
+          "grounding-failure"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1226,5 +1226,151 @@
       "url": "https://www.promptfoo.dev/docs/intro/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your agent remembers that a user prefers metric units. After three turns, the user says 'never mind, just use whatever.' Which memory action is most appropriate?",
+        "options": [
+          {
+            "text": "Promote the original preference to a higher-confidence status, since it was stated explicitly.",
+            "correct": false
+          },
+          {
+            "text": "Delete or mark the preference inactive, because the user has revoked it.",
+            "correct": true
+          },
+          {
+            "text": "Keep the preference but lower its confidence score so it is retrieved less often.",
+            "correct": false
+          },
+          {
+            "text": "Archive the preference to a RAG index so it can be retrieved if needed later.",
+            "correct": false
+          }
+        ],
+        "explanation": "A user revocation is a correction event — the memory should be deleted or marked inactive so it no longer influences future answers.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "correction",
+          "deletion",
+          "memory-status"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "In one or two sentences, explain the difference between a thread checkpoint and a long-term memory store, and give one example of information that belongs in each.",
+        "acceptableAnswer": "A thread checkpoint saves the short-term conversational state for a single session (e.g., the last few messages exchanged), while a long-term memory store persists facts across sessions (e.g., a user's dietary preference). Thread checkpoints are scoped to one conversation; long-term memories survive across many conversations.",
+        "explanation": "Thread checkpoints are session-scoped and transient; long-term memory is cross-session and intentionally persisted — conflating them leads to either data loss or privacy leaks.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "thread-checkpoint",
+          "long-term-memory"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "When injecting a retrieved memory into an agent's prompt, which practice best supports traceability?",
+        "options": [
+          {
+            "text": "Append the memory silently to the system prompt so the model treats it as background knowledge.",
+            "correct": false
+          },
+          {
+            "text": "Label the injected memory with a clear tag (e.g., [MEMORY]) and log which memory ID was used.",
+            "correct": true
+          },
+          {
+            "text": "Summarize all memories into a single paragraph to keep the context window small.",
+            "correct": false
+          },
+          {
+            "text": "Retrieve every memory for the user and let the model decide which ones are relevant.",
+            "correct": false
+          }
+        ],
+        "explanation": "Labeling injected memories and logging their IDs lets you trace exactly which stored fact shaped a given answer — essential for debugging and correction.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "memory-injection",
+          "provenance",
+          "traceability"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "A user mentions 'I'm stressed about my exam tomorrow.' Should the agent store this as a long-term memory? Why or why not?",
+        "options": [
+          {
+            "text": "Yes — emotional context helps the agent personalize future responses.",
+            "correct": false
+          },
+          {
+            "text": "Yes — all user statements are candidates for long-term memory.",
+            "correct": false
+          },
+          {
+            "text": "No — it is transient and time-bound, so it should be rejected as a memory candidate.",
+            "correct": true
+          },
+          {
+            "text": "No — the agent should never store anything the user says about themselves.",
+            "correct": false
+          }
+        ],
+        "explanation": "Transient or time-bound statements (like stress about tomorrow's exam) are rejection candidates — they won't be accurate or useful after the moment passes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "memory-candidate",
+          "rejection",
+          "transient"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You are writing tests for your memory system. Which pair of tests together gives you the strongest confidence that memory extraction is working correctly?",
+        "options": [
+          {
+            "text": "A test that checks the agent's response length and a test that measures latency.",
+            "correct": false
+          },
+          {
+            "text": "A test that confirms a clear preference IS stored (acceptance) and a test that confirms a vague remark is NOT stored (rejection).",
+            "correct": true
+          },
+          {
+            "text": "A test that stores a memory and a test that retrieves the same memory without any modification.",
+            "correct": false
+          },
+          {
+            "text": "A test for the happy path only, run against production traffic.",
+            "correct": false
+          }
+        ],
+        "explanation": "Pairing an acceptance test (valid preference gets stored) with a rejection test (transient or vague input is not stored) covers both sides of the extraction decision boundary.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "acceptance-test",
+          "rejection-test",
+          "memory-extraction"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

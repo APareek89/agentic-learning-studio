@@ -1772,5 +1772,132 @@
       "url": "https://langfuse.com/docs",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Why does LLM-as-Judge exist as a technique in the first place?",
+        "options": [
+          {
+            "text": "LLMs are always more accurate than humans at scoring text.",
+            "correct": false
+          },
+          {
+            "text": "It lets you score open-ended outputs at scale without requiring a human to review every response.",
+            "correct": true
+          },
+          {
+            "text": "It eliminates the need for any rubric or evaluation criteria.",
+            "correct": false
+          },
+          {
+            "text": "It is only useful when you have a reference answer to compare against.",
+            "correct": false
+          }
+        ],
+        "explanation": "LLM-as-Judge exists specifically to handle the scale problem: human review of every open-ended output is too slow and expensive, so a judge model automates scoring.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "Without looking back at the lesson: name the four parts that make up a single LLM judge call, in order.",
+        "acceptableAnswer": "Rubric (the criteria to score against), inputs (the prompt and/or response being judged), the judge prompt (which packages rubric + inputs into an instruction), and the parsed verdict (the structured score extracted from the model's output).",
+        "explanation": "Every judge call has these four parts: rubric → inputs → judge prompt → parsed verdict. Missing or blurring any one of them is where scoring drift typically enters.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You are evaluating customer-support replies and need to compare two model variants to decide which one to ship. Which scoring approach fits best, and why?",
+        "options": [
+          {
+            "text": "Pointwise 1–5 scale, because it gives an absolute quality score for each reply independently.",
+            "correct": false
+          },
+          {
+            "text": "Pairwise comparison, because directly ranking two replies against each other is more reliable for a head-to-head decision.",
+            "correct": true
+          },
+          {
+            "text": "Binary pass/fail, because it is the simplest scale and easiest to parse.",
+            "correct": false
+          },
+          {
+            "text": "No rubric is needed — just ask the judge which reply it prefers in free prose.",
+            "correct": false
+          }
+        ],
+        "explanation": "Pairwise scoring is the right tool when the goal is a head-to-head decision between two variants; it sidesteps the calibration problems of absolute scales for relative comparisons.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You ship a judge to production and notice it gives high scores to confidently-worded but factually wrong answers. Which failure mode best describes this?",
+        "options": [
+          {
+            "text": "Score parsing error — the verdict is not being extracted correctly from the model output.",
+            "correct": false
+          },
+          {
+            "text": "Rubric ambiguity — the scoring criteria are too vague to distinguish good from bad answers.",
+            "correct": false
+          },
+          {
+            "text": "Sycophancy / style bias — the judge rewards confident tone rather than actual correctness.",
+            "correct": true
+          },
+          {
+            "text": "Reference answer drift — the judge is comparing against an outdated gold answer.",
+            "correct": false
+          }
+        ],
+        "explanation": "Rewarding confident-sounding but wrong answers is a classic sycophancy/style-bias failure: the judge latches onto surface features (tone, fluency) instead of the rubric criterion of factual accuracy.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Before relying on your judge in a real pipeline, what is the minimum validation step you should complete?",
+        "options": [
+          {
+            "text": "Run the judge on 1 million examples to average out any noise.",
+            "correct": false
+          },
+          {
+            "text": "Measure the judge's agreement with human labels on a representative sample, and test it against at least one known-bad case.",
+            "correct": true
+          },
+          {
+            "text": "Ask a second LLM to review the first judge's scores.",
+            "correct": false
+          },
+          {
+            "text": "Confirm the judge returns structured output — that alone is sufficient for production readiness.",
+            "correct": false
+          }
+        ],
+        "explanation": "Validation requires checking agreement with human labels (so you know the judge tracks what humans care about) and probing it with a known-bad case (so you know it can actually catch failures).",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

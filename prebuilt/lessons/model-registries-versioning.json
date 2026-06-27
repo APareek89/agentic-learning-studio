@@ -1119,5 +1119,157 @@
       "url": "https://dvc.org/doc",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A team registers a new model version but only saves the model weights and a version number. During an incident, they cannot reproduce the exact predictions from last Tuesday. What is the most likely root cause?",
+        "options": [
+          {
+            "text": "The model weights file was too large to store correctly.",
+            "correct": false
+          },
+          {
+            "text": "The release bundle was incomplete — preprocessing code, the data snapshot reference, and environment spec were not included.",
+            "correct": true
+          },
+          {
+            "text": "The version number was not incremented properly.",
+            "correct": false
+          },
+          {
+            "text": "The registry did not support rollback for that model type.",
+            "correct": false
+          }
+        ],
+        "explanation": "A model-only registration omits the preprocessing code, data reference, and environment spec that together determine predictions — without them, exact reproduction is impossible.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "release-bundle",
+          "model-versioning",
+          "rollback"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your team uses a mutable path (e.g., `models/champion/latest`) as the production pointer. An incident occurs and you need to know exactly which model version was serving traffic 48 hours ago. Why does the mutable path make this hard?",
+        "options": [
+          {
+            "text": "Mutable paths compress model files, making them harder to load.",
+            "correct": false
+          },
+          {
+            "text": "Mutable paths do not record which version they pointed to at any past moment, so the historical link is lost.",
+            "correct": true
+          },
+          {
+            "text": "Mutable paths require admin permissions that slow down incident response.",
+            "correct": false
+          },
+          {
+            "text": "Mutable paths only work in development environments, not production.",
+            "correct": false
+          }
+        ],
+        "explanation": "When a path is overwritten rather than versioned, there is no audit trail of what it pointed to at a given time — aliases over immutable version IDs preserve that history.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "immutable-reference",
+          "alias",
+          "incident-response",
+          "mutable-path"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Which of the following best describes a promotion gate for moving a model from 'staging' to 'production' status in a registry?",
+        "options": [
+          {
+            "text": "A senior engineer manually approves the model because it looks reasonable.",
+            "correct": false
+          },
+          {
+            "text": "The model achieves a higher overall accuracy than the previous champion.",
+            "correct": false
+          },
+          {
+            "text": "The model passes slice-level metric thresholds, a data contract test, and any required LLM-specific checks before the production alias is updated.",
+            "correct": true
+          },
+          {
+            "text": "The model is registered with a new version number and automatically promoted after 24 hours.",
+            "correct": false
+          }
+        ],
+        "explanation": "Promotion gates require evidence — slice metrics, contract tests, and model-type-specific checks — not just overall accuracy or human intuition, before the alias is moved.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "promotion-gate",
+          "registry-status",
+          "slice-metrics",
+          "contract-test"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Name TWO fields that a prediction log entry should capture in order to tie a live prediction back to a specific registered model version during an incident review.",
+        "acceptableAnswer": "Any two of: the model version ID (or registry URI), the alias that was active at prediction time, the input data reference or hash, the timestamp, and the prediction output. The key requirement is that at least one field uniquely identifies the registered model version.",
+        "explanation": "Logging the model version ID and the active alias (or equivalent registry pointer) lets investigators replay or audit exactly which model produced a given prediction.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "prediction-log",
+          "alias",
+          "immutable-reference",
+          "incident-response"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "You are reviewing an AI-generated registry plan for a new LLM release. The plan includes model weights, a version number, overall benchmark scores, and a 'production' alias update step. What critical gap should you flag before approving it?",
+        "options": [
+          {
+            "text": "The plan should use a different file format for the model weights.",
+            "correct": false
+          },
+          {
+            "text": "The plan is missing slice-level evaluations, a rollback pointer to the previous production version, and a data/prompt contract test.",
+            "correct": true
+          },
+          {
+            "text": "LLM releases do not need a registry — they should be deployed directly.",
+            "correct": false
+          },
+          {
+            "text": "The alias should be updated before benchmarking, not after.",
+            "correct": false
+          }
+        ],
+        "explanation": "A rollback-ready LLM release plan must include slice metrics, contract tests, and an explicit rollback reference — overall benchmarks alone are not sufficient promotion evidence.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "promotion-gate",
+          "rollback",
+          "release-bundle",
+          "contract-test",
+          "alias"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1762,5 +1762,146 @@
       "url": "https://huggingface.co/docs/diffusers/en/index",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "When you send both an image and a text instruction to a multimodal model, what is the model actually doing to combine them?",
+        "options": [
+          {
+            "text": "It runs two separate models — one for vision, one for language — and averages their outputs.",
+            "correct": false
+          },
+          {
+            "text": "It encodes both inputs into a shared representation space so the text and image information can influence each other during generation.",
+            "correct": true
+          },
+          {
+            "text": "It converts the image to a text caption first, then processes only the caption.",
+            "correct": false
+          },
+          {
+            "text": "It ignores the image unless the text prompt explicitly references every object in it.",
+            "correct": false
+          }
+        ],
+        "explanation": "Multimodal models project image and text into a shared embedding space, allowing cross-modal attention so each modality can inform the other during generation.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "mental-model",
+          "mechanism"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A teammate argues: 'Just throw the image in — the model will figure out what's relevant.' What is the core tradeoff this attitude ignores in multimodal prompting?",
+        "options": [
+          {
+            "text": "More image detail always improves accuracy, so there is no real tradeoff.",
+            "correct": false
+          },
+          {
+            "text": "Richer visual context can improve relevance but also introduces noise and increases cost/latency, so unguided inputs can hurt precision.",
+            "correct": true
+          },
+          {
+            "text": "Models refuse to process images without explicit alt-text, so the prompt will simply fail.",
+            "correct": false
+          },
+          {
+            "text": "Text instructions are always ignored when an image is present.",
+            "correct": false
+          }
+        ],
+        "explanation": "The central tradeoff is signal vs. noise: adding visual context helps the model, but unguided or overly complex images can dilute the relevant signal and raise cost and latency.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "mental-model",
+          "design-choices"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You are designing a multimodal prompt for a production feature that extracts structured data from scanned receipts. Which design choice best fits this use case?",
+        "options": [
+          {
+            "text": "Baseline — a single image with no extra instructions, relying on the model's defaults.",
+            "correct": false
+          },
+          {
+            "text": "Production design — a clear text instruction specifying the output schema, plus image preprocessing to normalize resolution and contrast.",
+            "correct": true
+          },
+          {
+            "text": "Advanced optimization — full fine-tuning on receipt data before writing any prompt.",
+            "correct": false
+          },
+          {
+            "text": "Skip the image entirely and ask the user to retype the receipt contents.",
+            "correct": false
+          }
+        ],
+        "explanation": "Production design adds structured instructions and light preprocessing to make outputs reliable and consistent without the overhead of full fine-tuning.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "design-choices"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Describe ONE concrete validation check you would run after deploying a multimodal prompt in production to catch realistic failures early.",
+        "acceptableAnswer": "Any of: (1) Run a fixed set of labeled image+prompt pairs and compare model outputs to expected answers to catch regressions. (2) Log cases where the model's response contradicts visible information in the image (e.g., wrong counts, wrong text). (3) Monitor output confidence or refusal rates on a held-out image test set. (4) A/B test prompt variants on real traffic and measure task-success rate. The key is a repeatable, grounded check tied to actual model outputs on real or representative images.",
+        "explanation": "A grounded validation check — such as a labeled eval set or output-vs-image consistency audit — catches the most common failure mode: the model ignoring or misreading the visual input.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "design-choices",
+          "check-and-apply"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "During a quick implementation sketch of a multimodal prompt, you notice the model correctly describes the image in isolation but gives wrong answers when the image and text instruction are combined. What is the most likely cause?",
+        "options": [
+          {
+            "text": "The model has a hard token limit that silently drops the image.",
+            "correct": false
+          },
+          {
+            "text": "The text instruction is competing with or overriding the visual signal — the prompt framing is misaligned with the task.",
+            "correct": true
+          },
+          {
+            "text": "Multimodal models cannot handle questions about images they have already described.",
+            "correct": false
+          },
+          {
+            "text": "The image file format is unsupported, so the model hallucinates a description.",
+            "correct": false
+          }
+        ],
+        "explanation": "When image-only and text-only work but the combined prompt fails, the usual culprit is prompt framing: the instruction inadvertently anchors the model away from the visual evidence.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "mechanism",
+          "tiny-implementation-sketch"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

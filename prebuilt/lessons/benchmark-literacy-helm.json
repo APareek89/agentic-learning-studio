@@ -1220,5 +1220,132 @@
       "url": "https://platform.openai.com/docs/guides/evals",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A vendor shares a leaderboard screenshot showing their model ranks #1 on HELM. Which piece of metadata is MOST critical before you treat this as evidence for your use case?",
+        "options": [
+          {
+            "text": "The date the benchmark was run and whether the model was trained after the benchmark's data cutoff",
+            "correct": true
+          },
+          {
+            "text": "The number of parameters in the model",
+            "correct": false
+          },
+          {
+            "text": "The vendor's overall market share",
+            "correct": false
+          },
+          {
+            "text": "Whether the leaderboard uses a dark or light color theme",
+            "correct": false
+          }
+        ],
+        "explanation": "A model trained after the benchmark's data was collected can inflate scores through contamination, making the date and cutoff the first metadata check for any benchmark claim.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "HELM reports a single aggregate score across many scenarios. A team uses it to pick a model for a high-stakes medical triage task. What is the core risk of relying on the aggregate alone?",
+        "options": [
+          {
+            "text": "Aggregate scores average over unrelated scenarios, so strong performance on, say, coding tasks can mask poor performance on the safety-critical medical scenario.",
+            "correct": true
+          },
+          {
+            "text": "Aggregate scores are always computed incorrectly by benchmark authors.",
+            "correct": false
+          },
+          {
+            "text": "Medical tasks are never included in any public benchmark, so the score is zero.",
+            "correct": false
+          },
+          {
+            "text": "Higher aggregate scores always mean higher latency, which is the real problem.",
+            "correct": false
+          }
+        ],
+        "explanation": "Aggregate scores hide per-scenario tradeoffs; a model can excel in many low-stakes areas while underperforming exactly where your product needs it most.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "You notice that HELM does not include a scenario covering your product's core use case (multilingual customer support). Describe in 1–2 sentences what you should do to address this gap before making a model selection decision.",
+        "acceptableAnswer": "Design a local eval (test slice) that covers the missing dimension — multilingual customer support inputs — and run both the candidate model and your current baseline against it, so the decision is grounded in evidence relevant to your actual use case rather than the public benchmark alone.",
+        "explanation": "When a benchmark doesn't cover a critical dimension, the right move is to build a targeted local test slice that mirrors your real scenario and compare models on that slice directly.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You are filling out a decision sheet that weights 'robustness to adversarial inputs' very heavily because your product faces prompt-injection attacks. A model scores slightly lower on HELM's aggregate but much better on your local adversarial slice. What does good decision-sheet practice say you should do?",
+        "options": [
+          {
+            "text": "Let the weighted local signal dominate: the model that excels on your highest-priority dimension should be favored, and the public aggregate is a secondary input.",
+            "correct": true
+          },
+          {
+            "text": "Always defer to the public benchmark aggregate because it is more rigorous than any local eval.",
+            "correct": false
+          },
+          {
+            "text": "Discard the local eval results because sample sizes are too small to matter.",
+            "correct": false
+          },
+          {
+            "text": "Average the public and local scores with equal weights regardless of business priorities.",
+            "correct": false
+          }
+        ],
+        "explanation": "A decision sheet makes tradeoffs explicit by letting you weight dimensions according to real product risk; when a local signal directly measures your top priority, it should carry more weight than an unrelated aggregate.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which of the following is the most responsibly scoped way to report a benchmark finding to a stakeholder?",
+        "options": [
+          {
+            "text": "'Model A outperformed Model B on HELM's summarization scenario (as of March 2024); our local eval on customer-support transcripts is still needed before we finalize the choice.'",
+            "correct": true
+          },
+          {
+            "text": "'Model A is the best model available — HELM proves it.'",
+            "correct": false
+          },
+          {
+            "text": "'We don't need to test further; the benchmark already covers everything.'",
+            "correct": false
+          },
+          {
+            "text": "'Benchmark results are unreliable, so we should ignore them entirely and only use gut feel.'",
+            "correct": false
+          }
+        ],
+        "explanation": "A scoped claim names the specific scenario, the date, and explicitly flags what the benchmark does not yet prove — keeping stakeholders informed without overstating the evidence.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

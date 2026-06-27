@@ -1221,5 +1221,116 @@
       "url": "https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Before looking back at the lesson: where does reranking fit in a retrieval pipeline, and what problem can it NOT solve?",
+        "options": [
+          {
+            "text": "It runs before retrieval and can discover documents the retriever missed."
+          },
+          {
+            "text": "It runs after first-stage retrieval and cannot fix cases where the needed evidence was never recalled.",
+            "correct": true
+          },
+          {
+            "text": "It replaces retrieval entirely by scoring every document in the corpus."
+          },
+          {
+            "text": "It runs only after answer generation to grade the final response."
+          }
+        ],
+        "explanation": "Reranking is a second-stage step over already-recalled candidates, so missing evidence from the first stage is still missing.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You have 5 million passages, a query, and a cross-encoder reranker. What is the most realistic way to use it in production?",
+        "options": [
+          {
+            "text": "Run the cross-encoder over all 5 million passages for maximum accuracy."
+          },
+          {
+            "text": "Use first-stage retrieval to get a few dozen or hundred candidates, then cross-encode those query-passage pairs.",
+            "correct": true
+          },
+          {
+            "text": "Use the cross-encoder only to create embeddings offline, then never score query-passage pairs."
+          },
+          {
+            "text": "Skip latency planning because rerankers are usually cheaper than vector search."
+          }
+        ],
+        "explanation": "Cross-encoders are stronger but slower because they read each query and passage together, so they are usually applied only to a limited candidate set.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A candidate passage is clearly about the query topic but does not contain facts that would support the answer. How should an evidence-focused reranker/evaluation treat it?",
+        "options": [
+          {
+            "text": "Rank it highest because topical match is enough."
+          },
+          {
+            "text": "Treat it as weaker than a passage that directly supports the answer, possibly using a graded judgment if it is partially useful.",
+            "correct": true
+          },
+          {
+            "text": "Always discard it before reranking, even if it might provide context."
+          },
+          {
+            "text": "Give it the same score as any passage that shares keywords with the query."
+          }
+        ],
+        "explanation": "For answer quality, the best evidence is not just topically related; it must support the answer the system needs to produce.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In one or two sentences, describe two implementation details that make reranking easier to debug or replace later.",
+        "acceptableAnswer": "Sort candidates by the reranker score while preserving original retrieval rank/score and source metadata; keep the reranker as a separate pipeline stage with a clear input/output contract so it can be swapped, disabled, or compared against another scorer.",
+        "explanation": "A replaceable stage plus preserved original ranks lets you understand what changed and safely test or swap rerankers.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After launching reranking, overall MRR improves but support tickets rise for one query type, and the reranker service occasionally times out. What is the best release practice?",
+        "options": [
+          {
+            "text": "Keep the reranker on for everyone because the aggregate metric improved."
+          },
+          {
+            "text": "Inspect regressions by query bucket and add a fallback such as using the original retrieval order when reranking fails.",
+            "correct": true
+          },
+          {
+            "text": "Ignore packed-context hit rate because MRR already covers all answer-support issues."
+          },
+          {
+            "text": "Increase candidate count indefinitely so the reranker has more choices."
+          }
+        ],
+        "explanation": "Reranking should be evaluated by bucket and shipped with failure behavior so improvements do not hide regressions or outages.",
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

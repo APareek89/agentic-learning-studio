@@ -1186,5 +1186,116 @@
       "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "From memory: which change most clearly turns a low-risk chat assistant into a higher-risk agent that needs safety controls?",
+        "options": [
+          {
+            "text": "It uses a friendlier tone and shorter answers."
+          },
+          {
+            "text": "It can call tools that send messages, modify files, spend money, or access private data.",
+            "correct": true
+          },
+          {
+            "text": "It explains its reasoning in more detail."
+          },
+          {
+            "text": "It supports more natural-language input styles."
+          }
+        ],
+        "explanation": "Risk rises when model text can trigger real side effects or expose sensitive data through tools.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are designing a customer-support agent that can look up orders and issue refunds; which tool design best applies capability tiers and schemas?",
+        "options": [
+          {
+            "text": "Give the agent one broad admin API token so it can decide which operations are needed."
+          },
+          {
+            "text": "Expose separate tools such as order_lookup and refund_request, with per-user credential scope, enum actions, amount limits, and allowlisted account IDs.",
+            "correct": true
+          },
+          {
+            "text": "Let the model write raw SQL for both reads and writes so it can be flexible."
+          },
+          {
+            "text": "Hide all tool details from the model and rely on the system prompt to prevent misuse."
+          }
+        ],
+        "explanation": "Narrow tools, strict schemas, allowlists, limits, and scoped credentials reduce what the agent can do even if prompted badly.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A coding agent needs to inspect a repository and run tests; which sandbox plan best matches the lesson’s isolation goals?",
+        "options": [
+          {
+            "text": "Run it on the developer’s normal laptop profile so it can reuse cached logins and SSH keys."
+          },
+          {
+            "text": "Give it read-only access to the whole home directory but block writes."
+          },
+          {
+            "text": "Run it in a disposable environment with limited filesystem mounts, process limits, an isolated browser profile if needed, blocked-by-default network, and temporary credentials.",
+            "correct": true
+          },
+          {
+            "text": "Allow full network access but log the final answer."
+          }
+        ],
+        "explanation": "A sandbox should isolate files, processes, browser state, and network, because even read access and existing profiles can leak secrets.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "An agent submits a payment request, times out, and retries automatically; what safety issue should the design prevent?",
+        "options": [
+          {
+            "text": "The model may produce a less polished explanation after the retry."
+          },
+          {
+            "text": "The payment may be charged twice unless the action is idempotent or guarded by approval and deduplication.",
+            "correct": true
+          },
+          {
+            "text": "The audit log may contain too many fields."
+          },
+          {
+            "text": "The schema enum may be too restrictive for the model."
+          }
+        ],
+        "explanation": "Unsafe retries around external or irreversible actions can duplicate side effects, so approval gates, idempotency keys, and audit records matter.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "Before release, name two abuse-path tests you would run for an agent with file, browser, and customer-support tools.",
+        "acceptableAnswer": "Any two of: prompt-injection test that tries to make the agent ignore policy or reveal secrets; unauthorized-tool test that attempts a blocked action; assertion that tool traces show only allowed calls; approval-gate test for irreversible/external actions; network/file sandbox escape attempt; escalation test verifying the agent reports or routes policy-blocked actions instead of bypassing them.",
+        "explanation": "Pre-release testing should actively try injection, unauthorized tools, missing approvals, sandbox escapes, and correct escalation for blocked actions.",
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

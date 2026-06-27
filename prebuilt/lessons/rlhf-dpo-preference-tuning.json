@@ -913,5 +913,153 @@
       "url": "https://arxiv.org/abs/2005.11401",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A team wants to improve their model's ability to cite accurate historical dates it currently gets wrong. Should they use preference tuning for this? Why or why not?",
+        "options": [
+          {
+            "text": "Yes — annotators can rank responses by how confident they sound, which teaches the model the correct dates.",
+            "correct": false
+          },
+          {
+            "text": "No — preference tuning shapes style and behavior, but cannot inject missing factual knowledge the model never learned.",
+            "correct": true
+          },
+          {
+            "text": "Yes — a reward model trained on human preferences will naturally learn to prefer factually correct outputs.",
+            "correct": false
+          },
+          {
+            "text": "No — preference tuning only works on open-ended creative tasks, not on factual ones.",
+            "correct": false
+          }
+        ],
+        "explanation": "Preference tuning re-ranks behaviors the model can already produce; it cannot supply facts that were never in the model's weights in the first place.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "preference-tuning",
+          "reward-model"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "An annotator is shown two model responses and picks the winner, but the chosen response is also twice as long as the rejected one. What is the core problem with this preference pair?",
+        "options": [
+          {
+            "text": "The pair is invalid because both responses must come from the same prompt.",
+            "correct": false
+          },
+          {
+            "text": "The pair is confounded — length and quality co-vary, so the signal may be teaching the model to be verbose rather than better.",
+            "correct": true
+          },
+          {
+            "text": "The pair is fine as long as the annotator is a domain expert.",
+            "correct": false
+          },
+          {
+            "text": "The pair should be discarded only if the length difference exceeds 50 tokens.",
+            "correct": false
+          }
+        ],
+        "explanation": "When a surface feature like length is perfectly correlated with the chosen label, the model can win the reward by exploiting that feature instead of genuinely improving quality.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "preference-pair",
+          "confounded-pair",
+          "data-provenance"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "In RLHF, what is the primary purpose of the KL-divergence penalty (or reference model constraint) during policy optimization?",
+        "options": [
+          {
+            "text": "It speeds up training by reducing the number of reward model queries needed.",
+            "correct": false
+          },
+          {
+            "text": "It ensures the reward model's scores stay calibrated over time.",
+            "correct": false
+          },
+          {
+            "text": "It prevents the policy from drifting so far from the reference model that it exploits reward model blind spots.",
+            "correct": true
+          },
+          {
+            "text": "It replaces the need for a separate supervised fine-tuning stage before RLHF.",
+            "correct": false
+          }
+        ],
+        "explanation": "Without a KL or reference constraint, the policy can find inputs that score highly on the reward model through degenerate outputs — a phenomenon called reward hacking.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "rlhf",
+          "kl-divergence",
+          "reward-hacking",
+          "reference-model"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "Which of the following best describes why DPO is often preferred over full RLHF in resource-constrained settings?",
+        "options": [
+          {
+            "text": "DPO requires a larger preference dataset than RLHF, but converges faster.",
+            "correct": false
+          },
+          {
+            "text": "DPO eliminates the need to train a separate reward model and run a reinforcement-learning loop, optimizing the policy directly from preference pairs.",
+            "correct": true
+          },
+          {
+            "text": "DPO uses a reference model to generate new preference pairs on the fly, reducing annotation cost.",
+            "correct": false
+          },
+          {
+            "text": "DPO is preferred because it is immune to reward hacking by design.",
+            "correct": false
+          }
+        ],
+        "explanation": "DPO re-frames the preference objective so the policy itself is optimized directly against the paired data, removing the reward-model training and RL loop that make RLHF expensive.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "dpo",
+          "rlhf",
+          "reward-model"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "freeText",
+        "prompt": "After deploying a preference-tuned model, your win-rate on the preference benchmark has jumped 12 points, but users are reporting that the model now occasionally refuses straightforward factual questions it used to answer correctly. Name TWO specific things you should monitor or test to catch this kind of regression before it reaches users.",
+        "acceptableAnswer": "Any two of: (1) a held-out regression suite of factual / task-completion prompts scored for correctness (not just preference), (2) refusal-rate or abstention-rate metrics on a representative prompt sample, (3) side-by-side comparison against the pre-tuning reference model on capability benchmarks (e.g., MMLU, HumanEval), (4) separate human evaluation rubrics for helpfulness and accuracy distinct from the preference win-rate signal.",
+        "explanation": "Win-rate on preference data can mask capability regressions; dedicated held-out checks and capability benchmarks are needed to surface them.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "preference-tuning",
+          "regression-check",
+          "failure-modes",
+          "monitoring"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

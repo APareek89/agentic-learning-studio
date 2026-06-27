@@ -1817,5 +1817,132 @@
       "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
       "asOfDate": "2026-06-20"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A purely reactive agent loop has two core failure modes that planning and reflection are designed to fix. Which pair correctly names them?",
+        "options": [
+          {
+            "text": "Token overflow and slow inference",
+            "correct": false
+          },
+          {
+            "text": "Drift across steps and undetected errors in outputs",
+            "correct": true
+          },
+          {
+            "text": "Hallucination and tool unavailability",
+            "correct": false
+          },
+          {
+            "text": "Context loss and excessive latency",
+            "correct": false
+          }
+        ],
+        "explanation": "Planning addresses drift — the agent losing sight of the goal across steps — while reflection addresses correctness — catching errors in what was produced.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "Without looking back at the lesson: describe, in your own words, the generate-critique-revise loop. What makes a critique signal actually useful rather than noise?",
+        "acceptableAnswer": "The agent generates an output, a critique step evaluates it against specific criteria or tool-grounded evidence (not vague impressions), and then the agent revises based on that feedback. A useful critique is specific, actionable, and grounded — either in explicit criteria or in verifiable tool output — so the revision has a clear target to improve toward.",
+        "explanation": "A critique is only useful if it is specific and grounded; generic feedback like 'improve this' gives the agent nothing concrete to act on.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You are building an agent that writes a long research report in multiple sections. Halfway through execution, new information invalidates the original outline. Which planning strategy handles this best, and why?",
+        "options": [
+          {
+            "text": "Plan-once, because committing to a fixed plan prevents scope creep",
+            "correct": false
+          },
+          {
+            "text": "No planning, because the task is too dynamic for any upfront structure",
+            "correct": false
+          },
+          {
+            "text": "Interleaved replanning, because the agent can revise the stored plan in state when new information changes the goal",
+            "correct": true
+          },
+          {
+            "text": "Plan-once with a longer context window, so the full plan fits in the prompt",
+            "correct": false
+          }
+        ],
+        "explanation": "Interleaved replanning lets the agent update the plan held in state mid-execution; plan-once locks in assumptions that may no longer hold, and keeping the plan only in the prompt means it can be lost or ignored.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "In a combined plan-execute-reflect loop, where must the revision budget guard be placed, and what failure does it prevent?",
+        "options": [
+          {
+            "text": "Before the plan is generated, to limit plan length",
+            "correct": false
+          },
+          {
+            "text": "Inside the critique step, to filter weak critiques",
+            "correct": false
+          },
+          {
+            "text": "Around the reflect loop, to cap the number of critique-revise cycles and prevent runaway cost",
+            "correct": true
+          },
+          {
+            "text": "After the final output, to truncate overly long responses",
+            "correct": false
+          }
+        ],
+        "explanation": "Without a revision budget guard wrapping the reflection loop, a stubborn critique signal can trigger endless revise cycles, blowing cost and latency with no guaranteed improvement.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A task involves sending automated emails to customers — mistakes are embarrassing but easily corrected in a follow-up. A second task involves generating a legal contract clause — errors could cause real harm. How should reflection strategy differ between them?",
+        "options": [
+          {
+            "text": "Apply tool-grounded reflection to both; correctness always matters equally",
+            "correct": false
+          },
+          {
+            "text": "Apply no reflection to either; the latency cost outweighs the benefit at advanced agent maturity",
+            "correct": false
+          },
+          {
+            "text": "Apply criteria self-critique or no reflection to the emails; apply tool-grounded reflection with a higher revision budget to the legal clause",
+            "correct": true
+          },
+          {
+            "text": "Apply heavy reflection to the emails because volume makes aggregate errors costly; skip reflection on the one-off legal clause",
+            "correct": false
+          }
+        ],
+        "explanation": "Reflection depth should be proportional to the cost of an error: low-stakes, easily corrected tasks warrant light or no reflection, while high-stakes, hard-to-reverse tasks justify the extra cost of tool-grounded, multi-cycle reflection.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

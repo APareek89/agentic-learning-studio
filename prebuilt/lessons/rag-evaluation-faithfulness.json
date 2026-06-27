@@ -1141,5 +1141,152 @@
       "url": "https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A RAG system returns an answer that sounds highly confident and matches what a user expects — but none of the retrieved chunks actually state that fact. Is this answer faithful?",
+        "options": [
+          {
+            "text": "Yes, because the answer is relevant to the user's question.",
+            "correct": false
+          },
+          {
+            "text": "No, because faithfulness requires the answer to be supported by the retrieved context, not just plausible.",
+            "correct": true
+          },
+          {
+            "text": "Yes, because the model's confidence indicates it learned this from training data.",
+            "correct": false
+          },
+          {
+            "text": "No, but only if the user explicitly flags it as wrong.",
+            "correct": false
+          }
+        ],
+        "explanation": "Faithfulness is about grounding in the retrieved context — a confident or relevant-sounding answer that isn't backed by the retrieved chunks is still unfaithful.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "faithfulness",
+          "relevance",
+          "unsupported-claims"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You run retrieval for 50 test queries. For 35 of them, the correct source document appears somewhere in the top-5 results. What is the Hit Rate @ 5?",
+        "options": [
+          {
+            "text": "35%",
+            "correct": false
+          },
+          {
+            "text": "70%",
+            "correct": true
+          },
+          {
+            "text": "50%",
+            "correct": false
+          },
+          {
+            "text": "It cannot be computed without knowing the rank of each correct document.",
+            "correct": false
+          }
+        ],
+        "explanation": "Hit Rate @ k (hit@k) is simply the fraction of queries where the correct document appears anywhere in the top-k results: 35 ÷ 50 = 0.70, or 70%.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "hit-rate",
+          "recall-at-k",
+          "retrieval-eval"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Context Precision and Context Recall measure different things. Which statement correctly distinguishes them?",
+        "options": [
+          {
+            "text": "Context Precision measures how many relevant chunks were retrieved; Context Recall measures how short the context window is.",
+            "correct": false
+          },
+          {
+            "text": "Context Precision measures what fraction of retrieved chunks are actually relevant; Context Recall measures what fraction of all relevant chunks were retrieved.",
+            "correct": true
+          },
+          {
+            "text": "Context Precision and Context Recall are two names for the same metric, just reported differently.",
+            "correct": false
+          },
+          {
+            "text": "Context Recall measures how faithfully the model used the retrieved chunks; Context Precision measures answer length.",
+            "correct": false
+          }
+        ],
+        "explanation": "Precision asks 'of what I retrieved, how much was useful?' while Recall asks 'of everything useful that existed, how much did I retrieve?' — they capture opposite failure modes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "context-precision",
+          "context-recall",
+          "retrieval-eval"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You use an LLM-as-judge to score faithfulness across 200 responses. A colleague notices that rephrasing the same response slightly changes the judge's score. What is this problem called, and name one practical safeguard against it?",
+        "acceptableAnswer": "This is judge inconsistency (or judge variance / sensitivity). Practical safeguards include: keeping raw traces for manual review, running multiple judge passes and averaging, using a fixed scoring rubric/prompt, or spot-checking a sample of scores by hand.",
+        "explanation": "LLM judges can be sensitive to surface-level wording changes, so retaining raw evidence and spot-checking manually are essential safeguards against acting on unreliable scores.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "judge-inconsistency",
+          "faithfulness",
+          "manual-review"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Your team ships a document update that adds 500 new product pages. According to a regression-threshold approach, what should happen next?",
+        "options": [
+          {
+            "text": "Wait for user complaints before re-running evals, to avoid wasting compute.",
+            "correct": false
+          },
+          {
+            "text": "Re-run the retrieval and faithfulness eval suite and compare results against your established thresholds to catch regressions.",
+            "correct": true
+          },
+          {
+            "text": "Only re-run faithfulness evals, because document changes cannot affect retrieval metrics.",
+            "correct": false
+          },
+          {
+            "text": "Raise all thresholds by 10% to account for the larger document set.",
+            "correct": false
+          }
+        ],
+        "explanation": "Document changes can shift both retrieval quality and faithfulness, so the eval loop should be triggered after any document or model change and results compared against fixed thresholds to detect regressions early.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "regression-thresholds",
+          "retrieval-eval",
+          "faithfulness"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

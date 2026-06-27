@@ -1146,5 +1146,132 @@
       "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your team cuts token usage by 40% but customer complaints about wrong answers double. According to the budgeting-first principle, what went wrong?",
+        "options": [
+          {
+            "text": "The team didn't measure p95 latency before optimizing.",
+            "correct": false
+          },
+          {
+            "text": "Cost savings crossed the quality floor that should have been set before any optimization.",
+            "correct": true
+          },
+          {
+            "text": "The cache keys were not scoped to individual tenants.",
+            "correct": false
+          },
+          {
+            "text": "The routing gateway introduced too much overhead.",
+            "correct": false
+          }
+        ],
+        "explanation": "The quality floor is a hard constraint — cost savings are only valid if answer quality stays above the pre-defined minimum.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "A trace shows your workflow's p95 latency is 4 s. Decode time is 0.4 s. Where should you look first to find the biggest savings?",
+        "options": [
+          {
+            "text": "Reduce the model's output token limit to speed up decode.",
+            "correct": false
+          },
+          {
+            "text": "Investigate queue wait time and cache-miss paths, since they likely dominate the remaining 3.6 s.",
+            "correct": true
+          },
+          {
+            "text": "Switch to a self-hosted model to eliminate network hops.",
+            "correct": false
+          },
+          {
+            "text": "Add a semantic cache in front of the decoder.",
+            "correct": false
+          }
+        ],
+        "explanation": "Decode is only 10% of total latency here; queue time and cache misses are the dominant contributors and should be traced and addressed first.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "freeText",
+        "prompt": "Give ONE concrete example of how a poorly designed cache key can violate tenant or policy boundaries — and what the consequence would be.",
+        "acceptableAnswer": "A cache key that omits the tenant ID (or user permission level) can return a cached response meant for Tenant A to Tenant B, leaking data or applying the wrong policy — for example, serving a cached answer that includes confidential pricing to a user who shouldn't see it.",
+        "explanation": "Cache keys must encode every dimension that affects correctness and access rights; omitting tenant or policy context turns a performance win into a security or compliance failure.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You add an automatic fallback from a fast, cheap model to a slower, expensive model on any error. After a week, your cost savings have nearly vanished. What is the most likely cause?",
+        "options": [
+          {
+            "text": "The expensive model's token prices increased.",
+            "correct": false
+          },
+          {
+            "text": "The semantic cache hit rate dropped below 10%.",
+            "correct": false
+          },
+          {
+            "text": "Retries and fallbacks are firing far more often than expected, erasing the savings from the cheaper model.",
+            "correct": true
+          },
+          {
+            "text": "The routing gateway is adding latency that triggers client-side timeouts.",
+            "correct": false
+          }
+        ],
+        "explanation": "Retries and fallbacks can silently consume the entire cost budget if their frequency isn't instrumented and capped — a key insight from the instrumentation module.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When rolling out a new route-cost policy, why is a controlled release (e.g., a canary or shadow deployment) preferred over a full cutover?",
+        "options": [
+          {
+            "text": "It avoids the need to write trace fields in the routing simulation.",
+            "correct": false
+          },
+          {
+            "text": "It lets you measure real cost, latency, and quality impact on a small slice of traffic before committing the change everywhere.",
+            "correct": true
+          },
+          {
+            "text": "It eliminates the need to define a quality floor in advance.",
+            "correct": false
+          },
+          {
+            "text": "It automatically tunes cache keys to match tenant boundaries.",
+            "correct": false
+          }
+        ],
+        "explanation": "A controlled release surfaces unexpected interactions between the new policy and real traffic patterns without exposing all users to potential regressions.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

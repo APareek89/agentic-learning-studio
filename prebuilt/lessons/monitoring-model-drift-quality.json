@@ -1114,5 +1114,153 @@
       "url": "https://nannyml.readthedocs.io/",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your API's p99 latency is normal and error rates are flat, but a downstream team reports that your model's recommendations have felt 'off' for two weeks. What does this scenario best illustrate?",
+        "options": [
+          {
+            "text": "A deployment pipeline failure that standard APM tools would catch.",
+            "correct": false
+          },
+          {
+            "text": "The gap between system health metrics and model quality — infrastructure can look fine while the model degrades.",
+            "correct": true
+          },
+          {
+            "text": "Concept drift caused by a sudden change in user behavior overnight.",
+            "correct": false
+          },
+          {
+            "text": "Prediction drift that is always detectable through endpoint monitoring alone.",
+            "correct": false
+          }
+        ],
+        "explanation": "System health metrics (latency, error rate) measure infrastructure, not whether the model's outputs are still meaningful — model quality requires its own monitoring layer.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "system-health",
+          "model-quality",
+          "prediction-drift"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You are setting up drift monitoring for a credit-scoring model. Your aggregate PSI score looks stable, but complaints are spiking from one demographic cohort. What monitoring design mistake does this reveal?",
+        "options": [
+          {
+            "text": "You chose too short a reference window, so the baseline is noisy.",
+            "correct": false
+          },
+          {
+            "text": "Aggregate metrics can mask failures in specific slices — you need per-cohort monitoring.",
+            "correct": true
+          },
+          {
+            "text": "PSI is the wrong statistic; you should use KL divergence instead.",
+            "correct": false
+          },
+          {
+            "text": "Delayed labels are causing the aggregate score to lag by several weeks.",
+            "correct": false
+          }
+        ],
+        "explanation": "Aggregate drift scores average across all users, hiding cohort-level failures; sliced monitoring is required to surface problems that affect subgroups disproportionately.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "data-drift",
+          "reference-window",
+          "cohort-slicing"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "When monitoring an LLM-powered feature, you notice that 40 % of requests are being served from a cache. Why does cache status matter for quality monitoring?",
+        "options": [
+          {
+            "text": "Cached responses are always higher quality because they were human-reviewed.",
+            "correct": false
+          },
+          {
+            "text": "Cache hits bypass the model entirely, so quality signals from those requests reflect stored outputs, not live model behavior — mixing them distorts your metrics.",
+            "correct": true
+          },
+          {
+            "text": "Cache status only matters for latency SLAs, not for output quality.",
+            "correct": false
+          },
+          {
+            "text": "High cache rates indicate concept drift in the underlying model.",
+            "correct": false
+          }
+        ],
+        "explanation": "Cache hits return pre-stored outputs, so including them in quality metrics conflates old model behavior with current model behavior and inflates or deflates your quality signal.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "llm-quality-signals",
+          "cache-status",
+          "route-status"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You are writing a monitoring alert for a fraud-detection model. Describe ONE specific privacy risk introduced by logging raw request payloads, and name ONE design choice that mitigates it.",
+        "acceptableAnswer": "Raw payloads may contain PII (e.g., names, account numbers, transaction details) that creates regulatory and breach risk if stored in logs. A mitigation is to log only derived features or hashed/tokenized identifiers rather than the raw input, or to apply field-level redaction before writing to the log store.",
+        "explanation": "Raw payload logging captures whatever the caller sends — often PII — which creates compliance exposure; structured feature logging or redaction keeps monitoring useful without storing sensitive data.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "payload-logging",
+          "privacy-risk",
+          "alert-design"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After an alert fires indicating prediction drift, your team investigates, retrains the model, and deploys a fix. What is the MOST important step to close the monitoring loop and prevent the same drift from going undetected next time?",
+        "options": [
+          {
+            "text": "Increase the alert threshold so the same signal doesn't fire again.",
+            "correct": false
+          },
+          {
+            "text": "Update the reference window and document what caused the drift so the investigation becomes a learning artifact that improves future detection.",
+            "correct": true
+          },
+          {
+            "text": "Switch from scheduled batch checks to real-time streaming to reduce detection lag.",
+            "correct": false
+          },
+          {
+            "text": "Archive the drifted model version for compliance and take no further action.",
+            "correct": false
+          }
+        ],
+        "explanation": "Closing the loop means feeding the investigation's findings back into the monitoring system — refreshing the reference baseline and capturing the root cause — so each incident makes future monitoring smarter.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "monitoring-loop",
+          "concept-drift",
+          "performance-decay",
+          "alert-actionability"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

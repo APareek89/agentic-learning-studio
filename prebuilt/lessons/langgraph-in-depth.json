@@ -1220,5 +1220,149 @@
       "url": "https://developers.llamaindex.ai/python/framework/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A StateGraph node receives the current state and returns `{\"status\": \"approved\"}`. The state also has a `count` field that the node never touches. What happens to `count` after this node runs?",
+        "options": [
+          {
+            "text": "It is deleted, because the node didn't include it in the return value.",
+            "correct": false
+          },
+          {
+            "text": "It is preserved unchanged, because LangGraph merges partial updates into the existing state.",
+            "correct": true
+          },
+          {
+            "text": "It is reset to its default value defined in the schema.",
+            "correct": false
+          },
+          {
+            "text": "The graph raises an error for the missing field.",
+            "correct": false
+          }
+        ],
+        "explanation": "LangGraph applies partial state updates — a node only needs to return the fields it changed, and all other fields carry over untouched.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "StateGraph",
+          "partial-state-update"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "You want every tool call result to be appended to a `tool_outputs` list rather than overwriting it. Which approach is correct?",
+        "options": [
+          {
+            "text": "Store tool outputs in a separate global variable outside the graph.",
+            "correct": false
+          },
+          {
+            "text": "Attach a reducer (e.g., `operator.add`) to the `tool_outputs` field so each update appends instead of replaces.",
+            "correct": true
+          },
+          {
+            "text": "Return the full accumulated list from every node manually.",
+            "correct": false
+          },
+          {
+            "text": "Use a larger context window so the prompt holds all previous outputs.",
+            "correct": false
+          }
+        ],
+        "explanation": "Reducers tell LangGraph how to combine a new value with the existing field value — `operator.add` on a list means append, not overwrite.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "reducer",
+          "state-shape"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "A human-approval step uses `interrupt()` before sending an email. The graph is replayed after approval. Why is it important that the email-sending side effect happens AFTER the interrupt, not before?",
+        "options": [
+          {
+            "text": "Emails sent before the interrupt will be encrypted by the checkpointer.",
+            "correct": false
+          },
+          {
+            "text": "Side effects before an interrupt may re-execute on replay, causing duplicate emails.",
+            "correct": true
+          },
+          {
+            "text": "The interrupt automatically rolls back any side effects that preceded it.",
+            "correct": false
+          },
+          {
+            "text": "LangGraph blocks network calls before an interrupt is resolved.",
+            "correct": false
+          }
+        ],
+        "explanation": "When a graph resumes from a checkpoint, nodes before the interrupt can be re-run, so non-idempotent actions like sending an email must come after the interrupt to avoid duplicates.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "interrupt",
+          "checkpointer",
+          "idempotent"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "Write the Python return value a conditional routing function should produce to direct the graph to a node called `\"escalate\"` instead of `\"auto_approve\"`.",
+        "acceptableAnswer": "The function should return the string \"escalate\" (e.g., `return \"escalate\"`). LangGraph uses this returned string to look up the matching edge and move execution to the `escalate` node.",
+        "explanation": "A conditional edge routing function returns a string that matches one of the edge targets registered with `add_conditional_edges`.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "conditional-edge",
+          "route-logic"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When writing tests for a LangGraph workflow, which of the following best validates that a human-approval interrupt works correctly?",
+        "options": [
+          {
+            "text": "Mock the LLM and assert the final output string matches expected text.",
+            "correct": false
+          },
+          {
+            "text": "Run the graph, confirm it pauses at the interrupt, supply a resume value, then assert the post-approval node executed.",
+            "correct": true
+          },
+          {
+            "text": "Check that the graph compiles without errors using `graph.compile()`.",
+            "correct": false
+          },
+          {
+            "text": "Verify the system prompt contains the word 'approve'.",
+            "correct": false
+          }
+        ],
+        "explanation": "Testing interrupts requires actually running the graph to the pause point, then resuming with a value and asserting that downstream nodes ran — compile-time checks alone can't catch runtime flow errors.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "interrupt",
+          "test-resume",
+          "workflow-testing"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

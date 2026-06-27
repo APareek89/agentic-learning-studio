@@ -1261,5 +1261,116 @@
       "url": "https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "From memory: which query is the strongest signal that hybrid retrieval is needed rather than dense-only or BM25-only?",
+        "options": [
+          {
+            "text": "“How do I reset my password?”"
+          },
+          {
+            "text": "“timeout in createInvoiceV2 when user_id is null”",
+            "correct": true
+          },
+          {
+            "text": "“What are the benefits of caching?”"
+          },
+          {
+            "text": "“Explain retrieval augmented generation in simple terms.”"
+          }
+        ],
+        "explanation": "The query mixes paraphrasable intent with exact identifiers like createInvoiceV2 and user_id, so dense and sparse retrieval can each catch different evidence.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Why is Reciprocal Rank Fusion a safer default than directly adding BM25 scores to dense similarity scores?",
+        "options": [
+          {
+            "text": "RRF uses each retriever’s rank positions, avoiding assumptions that their raw scores mean the same thing.",
+            "correct": true
+          },
+          {
+            "text": "RRF converts every document into a vector before ranking."
+          },
+          {
+            "text": "RRF always removes the need for metadata filters."
+          },
+          {
+            "text": "RRF guarantees the dense retriever and BM25 return identical top-k lists."
+          }
+        ],
+        "explanation": "Dense and sparse scores are on different scales, while RRF only needs each system’s ordering of results.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You have tenant_id and product_version metadata, plus a query containing code symbols like `foo_bar()`; what setup best controls what can rank in the hybrid pipeline?",
+        "options": [
+          {
+            "text": "Run dense retrieval over all chunks, then filter tenant_id only after reranking."
+          },
+          {
+            "text": "Apply metadata filters before ranking and tune the sparse analyzer so symbols/casing/code tokens are preserved as needed.",
+            "correct": true
+          },
+          {
+            "text": "Disable BM25 because analyzers cannot affect exact matching."
+          },
+          {
+            "text": "Remove filters to maximize recall, then trust RRF to ignore wrong-tenant chunks."
+          }
+        ],
+        "explanation": "Pre-ranking filters keep ineligible chunks out of the race, and analyzer choices determine whether exact symbolic terms can be matched.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In a small RRF test harness, if chunk A ranks 2nd in dense and 3rd in sparse while chunk B ranks 1st in dense but is absent from sparse, which chunk would you generally expect to rise more after fusion, and why?",
+        "acceptableAnswer": "Chunk A, because RRF rewards agreement across lists; appearing reasonably high in both dense and sparse can beat a chunk that appears in only one list, depending on the RRF constant and other ranks.",
+        "explanation": "RRF gives points from each ranked list, so cross-retriever agreement is often boosted above one-list-only strength.",
+        "confidence": true,
+        "conceptTags": []
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "When evaluating whether reranking is worth adding after hybrid retrieval, which measurement plan best matches the lesson?",
+        "options": [
+          {
+            "text": "Use only one aggregate accuracy number over all queries and tune until it improves."
+          },
+          {
+            "text": "Track exactness and paraphrase failure buckets, measure the packed top-k shown to the model, and add reranking only if it fixes remaining high-value failures enough to justify cost.",
+            "correct": true
+          },
+          {
+            "text": "Measure candidate top-k before deduplication because that is the largest list."
+          },
+          {
+            "text": "Skip evaluation buckets if RRF is implemented correctly."
+          }
+        ],
+        "explanation": "Hybrid retrieval should be judged by the failure modes it is meant to fix and by the final packed context, not just raw candidates.",
+        "confidence": true,
+        "conceptTags": []
+      }
+    ],
+    "cumulative": true
   }
 }

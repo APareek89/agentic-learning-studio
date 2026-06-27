@@ -1221,5 +1221,150 @@
       "url": "https://www.promptfoo.dev/docs/intro/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A golden case for a customer-support bot includes the input 'How do I reset my password?', the expected output, and a failure label of 'wrong_steps'. What is the PRIMARY purpose of that failure label?",
+        "options": [
+          {
+            "text": "To tell the runner which model version produced the output",
+            "correct": false
+          },
+          {
+            "text": "To categorize what kind of problem occurred so failures can be grouped and acted on",
+            "correct": true
+          },
+          {
+            "text": "To set the severity score for the slice automatically",
+            "correct": false
+          },
+          {
+            "text": "To trigger a judge rubric instead of a deterministic check",
+            "correct": false
+          }
+        ],
+        "explanation": "A failure label names the type of failure (e.g., 'wrong_steps'), which lets you group and triage failures systematically rather than reading every output by hand.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "golden-case",
+          "failure-label"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your golden dataset has a 'region' metadata field. After a run, the overall pass rate is 91 %, but the pass rate for region = 'APAC' is 61 %. What does this slice-level view let you do that the overall number hides?",
+        "options": [
+          {
+            "text": "Detect that a specific subgroup is underperforming so you can investigate or block the release for that slice",
+            "correct": true
+          },
+          {
+            "text": "Automatically retrain the model on APAC examples",
+            "correct": false
+          },
+          {
+            "text": "Replace deterministic checks with judge rubrics for APAC cases",
+            "correct": false
+          },
+          {
+            "text": "Increase the severity score of all APAC cases to 'critical'",
+            "correct": false
+          }
+        ],
+        "explanation": "Slice-level pass rates surface hidden regressions in subgroups; a healthy aggregate can mask a badly failing segment that would harm real users.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "slice-metadata",
+          "pass-rate",
+          "subgroup"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "You are checking whether a refund-policy response contains the exact phrase 'within 30 days'. Which approach is most appropriate for this check, and why?",
+        "options": [
+          {
+            "text": "A judge rubric, because exact phrasing requires nuanced semantic understanding",
+            "correct": false
+          },
+          {
+            "text": "A deterministic check (e.g., substring match), because the criterion is precise and unambiguous",
+            "correct": true
+          },
+          {
+            "text": "A human review queue, because no automated check can handle policy text",
+            "correct": false
+          },
+          {
+            "text": "A semantic similarity score, because string matching is too brittle for production",
+            "correct": false
+          }
+        ],
+        "explanation": "Deterministic checks are ideal when the pass/fail criterion is exact and objective — a substring match is fast, free, and perfectly reliable for a known required phrase.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "deterministic-check",
+          "judge-rubric"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "When the runner executes your golden dataset, it stores a trace ID alongside each result. In one or two sentences, explain what a trace ID is for and how it helps after a failure is detected.",
+        "acceptableAnswer": "A trace ID is a unique identifier linked to a specific run of a case that lets you look up the full execution log or trace for that case. When a failure is detected, you use the trace ID to retrieve the exact inputs, outputs, and intermediate steps that produced the failure, making debugging faster and more precise.",
+        "explanation": "Trace IDs connect a summary failure report back to the full execution record, so engineers can inspect exactly what happened instead of re-running the case blind.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "trace-id",
+          "runner",
+          "debugging"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After a production incident, your team adds a new golden case that reproduces the bug. Six months later, the product behavior intentionally changes and that case now fails correctly. What should you do — and what should you NOT do?",
+        "options": [
+          {
+            "text": "Delete the case silently so the suite stays green; old incidents are no longer relevant",
+            "correct": false
+          },
+          {
+            "text": "Update the expected output with a rationale note explaining why behavior changed; do not remove the case without documentation",
+            "correct": true
+          },
+          {
+            "text": "Keep the case failing permanently as a reminder of the incident",
+            "correct": false
+          },
+          {
+            "text": "Duplicate the case and tune the expected output until the overall pass rate exceeds 95 %",
+            "correct": false
+          }
+        ],
+        "explanation": "Updating a stale case with a written rationale preserves institutional memory of the incident while keeping the suite accurate — silently deleting or ignoring it risks overfitting the suite to current behavior without understanding why it changed.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "stale-case",
+          "incident-derived",
+          "overfitting"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1174,5 +1174,138 @@
       "url": "https://qdrant.tech/documentation/",
       "asOfDate": "2026-06-23"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "You are designing a new embedding pipeline. Before you write a single line of ingestion code, which of the following must be locked into the vector contract?",
+        "options": [
+          {
+            "text": "The embedding model name, vector dimensions, and distance metric",
+            "correct": true
+          },
+          {
+            "text": "The chunking strategy, queue depth, and retry backoff policy"
+          },
+          {
+            "text": "The target vector store vendor and its hardware tier"
+          },
+          {
+            "text": "The recall threshold and latency SLA for retrieval"
+          }
+        ],
+        "explanation": "Dimensions and distance metric are structural — a mismatch between contract and store causes silent corruption or query failures, so they must be fixed before any data flows.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "vector-contract",
+          "dimensions",
+          "distance-metric"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "An ingestion worker receives a document chunk it has already embedded last week. The content has not changed. What is the correct behavior in an idempotent state machine pipeline?",
+        "options": [
+          {
+            "text": "Re-embed the chunk anyway to keep timestamps current"
+          },
+          {
+            "text": "Skip embedding and upsert — the existing vector is valid because the content hash matches",
+            "correct": true
+          },
+          {
+            "text": "Delete the old vector and re-embed to avoid stale metadata"
+          },
+          {
+            "text": "Route the chunk to the backfill collection for deferred processing"
+          }
+        ],
+        "explanation": "A matching content hash proves the chunk's semantics are unchanged, so re-embedding wastes compute and quota — the idempotent contract says 'same hash → same vector, skip.'",
+        "confidence": true,
+        "conceptTags": [
+          "content-hash",
+          "dedupe",
+          "idempotent-state-machine"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "Your RAG system retrieves support tickets, but results keep including tickets from deprecated product lines that users never ask about. Which architectural decision most directly fixes this?",
+        "options": [
+          {
+            "text": "Switch from cosine similarity to dot-product distance"
+          },
+          {
+            "text": "Increase the chunk size to dilute irrelevant content"
+          },
+          {
+            "text": "Add metadata filters on product line to every retrieval query",
+            "correct": true
+          },
+          {
+            "text": "Move from pgvector to a distributed store like Weaviate"
+          }
+        ],
+        "explanation": "Metadata filters are not optional in RAG — without them, ANN search has no way to scope results to the relevant subset, so deprecated content pollutes every retrieval.",
+        "confidence": true,
+        "conceptTags": [
+          "metadata-filters",
+          "rag",
+          "vector-store"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "You run a migration smoke test and discover that the new collection was built with 1536-dimensional vectors but your query encoder outputs 768-dimensional vectors. Describe what breaks and at what stage.",
+        "acceptableAnswer": "The query vector and stored vectors have incompatible shapes, so the vector store will reject the query outright (a dimension-mismatch error) or — in stores that don't validate — return meaningless similarity scores. No valid nearest-neighbor results can be returned. The break surfaces at query time, not at ingestion time, which is why a smoke test that issues a real query against the new collection must be part of every migration checklist.",
+        "explanation": "Dimension mismatches are silent at write time in some stores but always fatal at query time — the smoke test exists precisely to catch this before the collection goes live.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "dimensions",
+          "migration-smoke-test",
+          "vector-contract"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "After a bad model upgrade, recall drops 30% in production. Your rollback plan requires switching retrieval back to the previous collection. Which pipeline practice makes this rollback safe and fast?",
+        "options": [
+          {
+            "text": "Keeping the backfill collection in a separate namespace until recall is verified, then doing a hard cutover with an alias swap",
+            "correct": true
+          },
+          {
+            "text": "Re-ingesting all documents into the old collection from the source queue"
+          },
+          {
+            "text": "Reverting the embedding model weights in place and re-querying the same collection"
+          },
+          {
+            "text": "Lowering the similarity threshold temporarily to recover more results"
+          }
+        ],
+        "explanation": "Separating the backfill collection from the active retrieval path and using an alias (or pointer) swap means rollback is a single atomic redirect — no re-ingestion, no downtime.",
+        "confidence": true,
+        "conceptTags": [
+          "backfill-collection",
+          "rollback",
+          "freshness",
+          "idempotent-state-machine"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

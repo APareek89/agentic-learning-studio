@@ -979,5 +979,150 @@
       "url": "https://www.promptfoo.dev/docs/intro/",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "A docs assistant is tested on a question whose answer does not exist in any indexed document. Which retrieval outcome is correct?",
+        "options": [
+          {
+            "text": "The system should retrieve the closest partial match and flag low confidence.",
+            "correct": false
+          },
+          {
+            "text": "No chunks should be retrieved, because a true negative is the right result here.",
+            "correct": true
+          },
+          {
+            "text": "Recall should be maximized by retrieving all available chunks.",
+            "correct": false
+          },
+          {
+            "text": "Faithfulness is the only metric that matters when no answer exists.",
+            "correct": false
+          }
+        ],
+        "explanation": "When no relevant evidence exists, the correct retrieval behavior is to return nothing — retrieving irrelevant chunks would inflate noise and mislead generation.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "retrieval-metrics",
+          "negative-cases"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "mcq",
+        "prompt": "Your RAG pipeline retrieves 8 chunks for every query, but only 2 are ever cited or used by the generator. Which problem does this most directly indicate?",
+        "options": [
+          {
+            "text": "Low faithfulness — the model is hallucinating answers.",
+            "correct": false
+          },
+          {
+            "text": "Low context precision — too many irrelevant chunks are crowding the prompt.",
+            "correct": true
+          },
+          {
+            "text": "Low answer relevance — the response does not address the question.",
+            "correct": false
+          },
+          {
+            "text": "A citation-quality failure — sources are not being linked to claims.",
+            "correct": false
+          }
+        ],
+        "explanation": "Context precision measures how much of the retrieved text is actually useful; retrieving many chunks while only a few contribute signals a noisy retrieval or reranking failure.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "context-precision",
+          "chunking",
+          "reranking"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "An LLM-as-judge scores a generated answer as highly faithful, but a spot check reveals the answer contradicts one of the retrieved chunks. What is the most likely root cause of this discrepancy?",
+        "options": [
+          {
+            "text": "The retrieval recall was too low, so the right chunk was never fetched.",
+            "correct": false
+          },
+          {
+            "text": "The judge rubric was not versioned, so it drifted from the intended faithfulness definition.",
+            "correct": true
+          },
+          {
+            "text": "Context precision was too high, leaving no room for the correct chunk.",
+            "correct": false
+          },
+          {
+            "text": "The citation-support metric was not computed alongside faithfulness.",
+            "correct": false
+          }
+        ],
+        "explanation": "Without versioned rubrics and regular spot checks, judge prompts drift — the judge may reward fluency or confidence rather than strict grounding in the retrieved context.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "faithfulness",
+          "judge-metrics",
+          "versioned-rubrics"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "freeText",
+        "prompt": "In a RAG system that generates a financial report, explain in 1–2 sentences why missing citations on specific claims are a problem — and which metric you would use to catch this.",
+        "acceptableAnswer": "Missing citations mean readers cannot verify which source supports a claim, making the report untrustworthy and potentially wrong without anyone noticing. Citation-support rate (the share of claims that link back to a specific retrieved source) is the metric used to catch this.",
+        "explanation": "Citation quality ties each generated claim to a retrievable source; without it, errors in generation are invisible and the report cannot be audited.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "citation-quality",
+          "citation-support"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "A RAG system shows 85% faithfulness overall, but policy-related queries score only 52%. What is the correct action, and why do aggregate metrics hide this?",
+        "options": [
+          {
+            "text": "Retrain the retriever on all query types equally, because aggregate metrics are already reliable.",
+            "correct": false
+          },
+          {
+            "text": "Raise the top-k for all queries to improve recall across the board.",
+            "correct": false
+          },
+          {
+            "text": "Create a policy slice dashboard and route the fix to the team responsible for generation on policy content, since the aggregate masks the slice-level failure.",
+            "correct": true
+          },
+          {
+            "text": "Lower the faithfulness threshold so the policy slice passes, balancing the overall score.",
+            "correct": false
+          }
+        ],
+        "explanation": "Aggregate metrics average over all slices and can hide severe failures in specific categories; slice dashboards expose these gaps and route fixes to the right owner — retrieval or generation.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "slice-dashboards",
+          "aggregate-deception",
+          "thresholds"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }

@@ -1018,5 +1018,152 @@
       "url": "https://docs.langchain.com/oss/python/langgraph/overview",
       "asOfDate": "2026-06-22"
     }
+  },
+  "finalCheck": {
+    "id": "_final_check",
+    "kind": "knowledgeCheck",
+    "title": "Knowledge check",
+    "intro": "A quick check across the whole lesson — pick or type your answers.",
+    "questions": [
+      {
+        "id": "fc1",
+        "kind": "mcq",
+        "prompt": "Your support agent's state schema includes a `messages` list (the full conversation) and a `draft_response` string. A teammate suggests also storing the LLM's chain-of-thought scratchpad in state so it's always available. What's the strongest reason to keep the scratchpad OUT of durable state?",
+        "options": [
+          {
+            "text": "LangGraph doesn't allow string fields in the state schema.",
+            "correct": false
+          },
+          {
+            "text": "Scratchpad is temporary model chatter — storing it durably bloats checkpoints and mixes ephemeral reasoning with the data other nodes actually need.",
+            "correct": true
+          },
+          {
+            "text": "Chain-of-thought text can't be serialized by LangGraph's checkpointer.",
+            "correct": false
+          },
+          {
+            "text": "Keeping it in state would prevent conditional edges from reading it.",
+            "correct": false
+          }
+        ],
+        "explanation": "Durable state should hold only what other nodes or a resumed run genuinely need; LLM scratchpad is ephemeral chatter that inflates checkpoint size and pollutes the contract between nodes.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "state-schema",
+          "durable-state",
+          "checkpoints"
+        ]
+      },
+      {
+        "id": "fc2",
+        "kind": "freeText",
+        "prompt": "A node in your graph is responsible for retrieving relevant knowledge-base articles AND deciding whether the draft needs a human review. Why is combining those two responsibilities in one node a problem, and how would you fix it?",
+        "acceptableAnswer": "A node should do one state transition. Combining retrieval and a routing decision means the node both performs work and decides control flow, making it hard to test, retry, or reuse independently. The fix is to split them: one node retrieves articles and writes results to state; a separate conditional edge (or a dedicated router node) reads that state and decides the next step.",
+        "explanation": "Nodes that both decide and perform too much violate the single-responsibility principle, making the graph harder to test and debug — retrieval and routing logic should live in separate nodes or edges.",
+        "freeRecallFirst": true,
+        "confidence": true,
+        "conceptTags": [
+          "nodes",
+          "conditional-edges",
+          "routing"
+        ]
+      },
+      {
+        "id": "fc3",
+        "kind": "mcq",
+        "prompt": "In your support graph, citation validation fails for a drafted response. Which edge pattern correctly routes the agent back for a redraft instead of terminating?",
+        "options": [
+          {
+            "text": "A direct edge from the validation node straight to END, with a fallback flag set in state.",
+            "correct": false
+          },
+          {
+            "text": "A conditional edge from the validation node that returns the name of the draft node when validation fails, and END when it passes.",
+            "correct": true
+          },
+          {
+            "text": "Removing the validation node and letting the draft node loop on itself.",
+            "correct": false
+          },
+          {
+            "text": "A direct edge from the draft node to END, bypassing validation entirely on retry.",
+            "correct": false
+          }
+        ],
+        "explanation": "A conditional edge reads the validation result from state and routes back to the drafting node on failure or forward to END on success — this is exactly how retry loops are encoded in LangGraph without skipping safeguards.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "conditional-edges",
+          "routing",
+          "retry"
+        ]
+      },
+      {
+        "id": "fc4",
+        "kind": "mcq",
+        "prompt": "You add a `interrupt_before=[\"human_review\"]` checkpoint to your graph so a human can approve responses before they're sent. A run is paused at that interrupt. What happens when the run is resumed?",
+        "options": [
+          {
+            "text": "The graph restarts from the very first node, replaying all previous steps.",
+            "correct": false
+          },
+          {
+            "text": "The graph reloads the checkpointed state and continues execution from the `human_review` node forward, without re-running earlier nodes.",
+            "correct": true
+          },
+          {
+            "text": "The graph skips the `human_review` node and jumps directly to END.",
+            "correct": false
+          },
+          {
+            "text": "The checkpointer deletes the saved state and forces a fresh run.",
+            "correct": false
+          }
+        ],
+        "explanation": "Checkpoints persist the full state at the interrupt point; resuming reloads that state and picks up execution at the interrupted node, making runs resumable without replaying completed work.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "checkpoints",
+          "interrupts"
+        ]
+      },
+      {
+        "id": "fc5",
+        "kind": "mcq",
+        "prompt": "Which combination of practices best hardens a LangGraph agent against silent failures in production?",
+        "options": [
+          {
+            "text": "Unit-test only the final output node; rely on end-to-end runs to catch routing bugs.",
+            "correct": false
+          },
+          {
+            "text": "Test route functions with all possible state inputs, test safeguard nodes in isolation, and add trace fields (e.g., node name, retry count, validation result) to state so execution is explainable.",
+            "correct": true
+          },
+          {
+            "text": "Add more nodes to the graph so each failure mode has its own dedicated path, and skip unit tests since the graph structure is self-documenting.",
+            "correct": false
+          },
+          {
+            "text": "Use only direct edges to eliminate conditional routing bugs, and log the final response only.",
+            "correct": false
+          }
+        ],
+        "explanation": "Hardening requires both targeted tests (route functions and safeguard nodes in isolation) and trace fields in state that make the execution path visible — neither alone is sufficient.",
+        "freeRecallFirst": false,
+        "confidence": true,
+        "conceptTags": [
+          "testing",
+          "tracing",
+          "nodes",
+          "routing"
+        ]
+      }
+    ],
+    "cumulative": true
   }
 }
