@@ -7,6 +7,20 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
+> **2026-06-27 (latest) — BATCH-1 + BATCH B PROMOTED TO PROD (`main d354538`).** Verify-then-promote run: staging checks a–f all PASS
+> (Community Free pill; buy-credits popup; while-you-wait gen-suggest off the 100-lesson library; library-KC nav fix; **fractional skill
+> charge verified 19→18.5 = 0.5** + persists to My Skills; a built lesson's persisted artifact carries a real `finalCheck` — 12 kc-items, 0
+> kc-pending, 1 `_check` pane). `tsc` clean. **Migration 0019 applied to the PROD DB** (credit_lots.lessons_remaining/total + credit_ledger.delta
+> int→numeric, verified + idempotent); 0017/0018 were already on prod. File-overlay promote (delta = batch-1 + Batch B + KB agent-skills +
+> migrations + docs). Prod verified live: `/healthz` 200, `gen-suggest` in styles.css, Community Free pill, buy popup, per-module-KC lesson
+> (the-agent-loop) has NO empty `_check`. charge-once-on-full-success unchanged (code). Staging gen still on slow GPT-5.5 (Anthropic cap → 07-01);
+> prod runs Claude.
+> **⚠️ TOP PROD FOLLOW-UP (new this run): empty library KC panes.** ~15/16 prod library lessons render `class="kc kc-pending"` ("…appears once the
+> lesson finishes building…") because their blueprints have neither a per-module KC nor a backfilled `finalCheck` (components.ts:264 +
+> showsFinalCheckPane:280). The promote IMPROVED this (suppresses the empty pane on per-module-KC lessons) but did not fix the no-KC lessons. →
+> run `scripts/backfill-finalcheck.ts` over the PROD library, or suppress the placeholder for library lessons without a real finalCheck. (Full QA
+> backlog: see "🐞 KNOWN ISSUES / TO-FIX" below + `~/Documents/wizbit-issues-master.md`.)
+>
 > **2026-06-26 UPDATE — NOW ON STAGING AND PROD (in sync again):** promoted to prod (`origin/main` = `83c98a5`, app content
 > byte-identical to `origin/staging`): (a) the lesson-toolbar title-removal fix, (b) **"Get Hands on" browser-run Python
 > notebooks** (Phase 1 + v2), and (c) two **trainer fixes** — don't reveal a building lesson until module 1 is ready, and
