@@ -260,8 +260,9 @@ export async function retriever(state: GraphStateType) {
     try {
       const hits = await retrieveFromUploads(query, uploadIds, 8);
       upSources = hits.map((h, i) => ({ sid: `U${i + 1}`, kbChunkId: "", title: h.title || "Your document", content: h.content, origin: "upload" as const }));
-    } catch {
-      /* ignore — fall back to KB / model knowledge */
+    } catch (err) {
+      /* fall back to KB / model knowledge — but surface it (silent failure = invisible ungrounded build). */
+      console.warn("[retriever] upload retrieval failed; falling back to KB/model:", err instanceof Error ? err.message : err);
     }
   }
 
@@ -423,7 +424,6 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
               buildGoal: p.buildGoal,
               objective: p.objective,
               levels: p.levels,
-              lessonTypes: p.lessonTypes,
               userPrompt: state.userPrompt,
               learningGoal: intent?.learningGoal,
               lessonFocus: intent?.lessonFocus,
@@ -589,8 +589,9 @@ export async function runDeepDive(
     try {
       const hits = await retrieveFromUploads(query, opts.uploadIds, 6);
       sources = hits.map((h, i) => ({ sid: `U${i + 1}`, kbChunkId: "", title: h.title || "Your document", content: h.content, origin: "upload" as const }));
-    } catch {
-      /* ignore */
+    } catch (err) {
+      /* fall back — but surface it (silent failure = invisible ungrounded module). */
+      console.warn("[runDeepDive] upload retrieval failed for module; falling back:", err instanceof Error ? err.message : err);
     }
   }
   if (!referOnly && ragEnabled()) {
