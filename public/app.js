@@ -2318,3 +2318,19 @@ function resetWorkspace() {
 }
 const acctTopup = document.getElementById("acct-topup");
 if (acctTopup) acctTopup.addEventListener("click", () => switchTab("pricing"));
+
+// Small-screen "best on desktop" notice. The builder + interactive lessons are designed for a
+// larger screen; until the mobile layout is polished, nudge phone/narrow visitors to desktop.
+// Shown once per session (dismissible), so it never nags within a visit.
+(function mobileDesktopNotice() {
+  const el = document.getElementById("mobile-notice");
+  if (!el) return;
+  let dismissed = false;
+  try { dismissed = sessionStorage.getItem("als-mobile-notice-dismissed") === "1"; } catch { /* ignore */ }
+  if (dismissed) return;
+  if (!(window.matchMedia && window.matchMedia("(max-width: 760px)").matches)) return;
+  el.hidden = false;
+  const close = () => { el.hidden = true; try { sessionStorage.setItem("als-mobile-notice-dismissed", "1"); } catch { /* ignore */ } };
+  const btn = document.getElementById("mn-dismiss");
+  if (btn) btn.addEventListener("click", close);
+})();
