@@ -222,6 +222,41 @@ export const MatrixOptionSchema = z.object({
   recommendedFor: z.string().optional(),
 });
 
+// knowledgeCheck — a graded mini-quiz (4–5 Qs). MCQ is checked against the stored Blueprint
+// server-side; freeText is graded by the LLM (POST /api/check). S5: this same shape is reused
+// as the single lesson-level `finalCheck` (one knowledge check per lesson, on bp.finalCheck).
+export const KnowledgeCheckBlockSchema = z.object({
+  ...blockBase,
+  kind: z.literal("knowledgeCheck"),
+  title: z.string().optional(),
+  intro: z.string().optional(),
+  questions: z
+    .array(
+      z.object({
+        id: z.string(),
+        kind: z.enum(["mcq", "freeText"]),
+        prompt: z.string(),
+        options: z.array(z.object({ text: z.string(), correct: z.boolean().optional() })).optional(),
+        acceptableAnswer: z.string().optional(), // freeText: the model-graded reference answer
+        explanation: z.string(),
+        /** retention (Tier A): make the learner RECALL from memory before the options/answer
+         *  appear — a textarea + "I've thought about it" gate. Recall beats recognition. */
+        freeRecallFirst: z.boolean().optional(),
+        /** retention (Tier A): require a 3-point confidence pick before grading, so the
+         *  learner calibrates (confidently-wrong is the highest-value review signal). */
+        confidence: z.boolean().optional(),
+        /** concept/term ids this question exercises — for interleaving + future spaced review.
+         *  Free-form (NOT validated against the glossary) so prebuilt lessons can't break. */
+        conceptTags: z.array(z.string()).optional(),
+        /** the module this question came from — feedback links back to "review the source". */
+        sourceModuleId: z.string().optional(),
+      })
+    )
+    .min(3),
+  /** marks the end-of-lesson interleaved retrieval set (questions mixed across modules). */
+  cumulative: z.boolean().optional(),
+});
+
 export const BlockSchema = z.discriminatedUnion("kind", [
   z.object({ ...blockBase, kind: z.literal("conceptual"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
   z.object({ ...blockBase, kind: z.literal("technical"), title: z.string().optional(), body: RichTextSchema, analogy: z.string().optional() }),
@@ -330,39 +365,10 @@ export const BlockSchema = z.discriminatedUnion("kind", [
     caption: z.string().optional(),
     steps: z.array(z.object({ label: z.string(), detail: z.string(), icon: z.string().optional() })).min(2),
   }),
-  // knowledgeCheck — a graded mini-quiz (4–5 Qs). MCQ is checked against the stored
-  // Blueprint server-side; freeText is graded by the LLM (POST /api/check). Optional block.
-  z.object({
-    ...blockBase,
-    kind: z.literal("knowledgeCheck"),
-    title: z.string().optional(),
-    intro: z.string().optional(),
-    questions: z
-      .array(
-        z.object({
-          id: z.string(),
-          kind: z.enum(["mcq", "freeText"]),
-          prompt: z.string(),
-          options: z.array(z.object({ text: z.string(), correct: z.boolean().optional() })).optional(),
-          acceptableAnswer: z.string().optional(), // freeText: the model-graded reference answer
-          explanation: z.string(),
-          /** retention (Tier A): make the learner RECALL from memory before the options/answer
-           *  appear — a textarea + "I've thought about it" gate. Recall beats recognition. */
-          freeRecallFirst: z.boolean().optional(),
-          /** retention (Tier A): require a 3-point confidence pick before grading, so the
-           *  learner calibrates (confidently-wrong is the highest-value review signal). */
-          confidence: z.boolean().optional(),
-          /** concept/term ids this question exercises — for interleaving + future spaced review.
-           *  Free-form (NOT validated against the glossary) so prebuilt lessons can't break. */
-          conceptTags: z.array(z.string()).optional(),
-          /** the module this question came from — feedback links back to "review the source". */
-          sourceModuleId: z.string().optional(),
-        })
-      )
-      .min(3),
-    /** marks the end-of-lesson interleaved retrieval set (questions mixed across modules). */
-    cumulative: z.boolean().optional(),
-  }),
+  // knowledgeCheck — the graded mini-quiz block (defined once above as KnowledgeCheckBlockSchema
+  // so the lesson-level bp.finalCheck can reuse the exact same shape). Still allowed in-module for
+  // back-compat with prebuilt lessons, though S5 generates a single lesson-level check instead.
+  KnowledgeCheckBlockSchema,
 ]);
 export type Block = z.infer<typeof BlockSchema>;
 
@@ -472,6 +478,11 @@ export const BlueprintSchema = z.object({
   synthesis: SynthesisSchema,
   whatsNew: z.array(WhatsNewItemSchema).optional(),
   citations: z.record(z.string(), CitationSchema),
+  /** S5 — the SINGLE lesson-level knowledge check (4–5 Qs covering the whole lesson), written
+   *  during the build by writeOverviewProse. Replaces the old per-module knowledge checks. The
+   *  renderer shows it as a `_check` pane BEFORE Sources (vertical) / final page (horizontal),
+   *  and POST /api/check grades it by its (stable) block id. Absent on content-only lessons. */
+  finalCheck: KnowledgeCheckBlockSchema.optional(),
 });
 export type Blueprint = z.infer<typeof BlueprintSchema>;
 

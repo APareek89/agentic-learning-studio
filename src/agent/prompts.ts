@@ -42,6 +42,10 @@ Return:
     "how_to_build"        — they want to build a specific thing step by step
     "survey"              — they want a broad overview of a space
 - mustCover: the concrete things the lesson MUST center on. If they ask to compare/choose, list the specific candidates to compare (the named frameworks/tools/options). Otherwise list the key sub-topics implied by their request.
+- scope: how BROAD the requested topic is (this scales the lesson's size):
+    "narrow"   — ONE specific thing or a tight how-to (e.g. "what is an agent", "the A2A protocol", "how to add memory to a LangGraph agent"). A focused single-subject lesson.
+    "moderate" — a focused area with several facets, or a compare-a-handful-of-options request (e.g. "agent memory", "compare LangGraph vs CrewAI vs AutoGen", "how RAG works end to end"). Default to this when unsure.
+    "broad"    — a WHOLE FIELD / landscape spanning many sub-areas (e.g. "the whole field of machine learning", "everything about agentic AI", "modern NLP from start to finish"). Only pick "broad" when the ask genuinely surveys an entire field, not a single deep subject.
 
 IMPORTANT — when the TOPIC is a CATEGORY OF COMPETING OPTIONS (e.g. "agentic frameworks", "vector databases", "agent memory stores", "LLM providers"), then "overview", "compare", "which should I use", or "tell me about X" all mean lessonFocus="compare_and_choose", and mustCover MUST list the leading specific options by name (e.g. for agentic frameworks: LangGraph, CrewAI, AutoGen, LangChain, OpenAI Agents SDK, LlamaIndex). Do NOT classify these as "survey" and do NOT reduce them to generic background concepts.
 
@@ -140,8 +144,8 @@ The mental-map node order, the module order, and the synthesis are ONE consisten
     edges: [{ from, to }]   (the REAL relationships)
     entryNodeId   (the order-1 node — ONLY for procedural)
   Do NOT include "orient", "what", or "relevance" — the writer adds those.
-- modules: 4-5 [{ id, order, title, sub (ONE short phrase: how it follows from the previous module), covers (ONE short line naming what this module covers — a hint for the writer, NOT prose), decisionItForces (ONLY if it involves a choice), termIds (the glossary ids this module will use) }]. For compare_and_choose, the LAST module is the head-to-head pick. Do NOT include "summary" or "objectives".
-- glossaryTerms: the 8-12 MOST IMPORTANT terms only: [{ id, label, acronymExpansion (ONLY for ALL-CAPS terms) }]. NO definitions — the writer adds them.
+- modules: the number given in MODULE COUNT (the user message) [{ id, order, title, sub (ONE short phrase: how it follows from the previous module), covers (ONE short line naming what this module covers — a hint for the writer, NOT prose), decisionItForces (ONLY if it involves a choice), termIds (the glossary ids this module will use) }]. Honor that count — scale a broad field UP to it and keep a narrow subject AT it; one idea per module, no orphans. For compare_and_choose, the LAST module is the head-to-head pick. Do NOT include "summary" or "objectives".
+- glossaryTerms: the MOST IMPORTANT terms only (~8-12, more for a broad multi-module field): [{ id, label, acronymExpansion (ONLY for ALL-CAPS terms) }]. NO definitions — the writer adds them.
 
 CRITICAL: STRUCTURE ONLY — no prose, no definitions, no objective sentences, no synthesis text. Keep it COMPACT. Return ONE complete JSON object. Match the learner's level when choosing terms (beginner/intermediate: don't pick obscure jargon as a node label).`;
 
@@ -202,7 +206,7 @@ If the learner UPLOADED DOCUMENTS ([U#]), the outline MUST be shaped around them
     • "comparative" — "X vs Y" / "which should I use" → nodes are the OPTIONS being weighed (OMIT "order"); the decision is the spine.
   Do NOT organize by difficulty (foundations/core/advanced) — difficulty is at most secondary metadata, never the primary axis. Most nodes link to a module via moduleId; mark the main path emphasis:"spine".
   The overview is a CONCEPT/PROCESS MAP of uniform square cards — convey the SHAPE of the topic, NOT a table of contents. Keep each node MINIMAL — for the OVERVIEW only: "label" = a HEADLINE of 4–6 words MAX (the node's name, not a sentence), "order" (if ordered), an "icon" emoji (used as the corner badge for unordered maps), "moduleId", and "orient" = a SHORT DESCRIPTION of 10–15 words saying what this block covers / why it's here (a description for the card, not a full explanation). Nothing else on the card. Do NOT put "what", "relevance", or "laymanExplanation" here — those detail-layer lines are written with each module's body (keeps this outline small + fast).
-- modules: 4–5 stubs, ordered along the spine (keep it tight — 5 max). Each: id, order, title, sub (ONE short phrase: how it follows from the previous module), summary (1–2 sentences MAX), objectives (2–4 "After this you'll be able to…"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
+- modules: the number given in MODULE COUNT (the user message), ordered along the spine — honor that count (scale a broad field UP to it, keep a narrow subject AT it; one idea per module, no orphans, no filler). Each: id, order, title, sub (ONE short phrase: how it follows from the previous module), summary (1–2 sentences MAX), objectives (2–4 "After this you'll be able to…"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
 - glossary: define the 8–12 MOST IMPORTANT terms only (core concepts + named options) — NOT every minor word. Each: id, label, a ONE-SENTENCE plain laymanDefinition; acronymExpansion for ALL-CAPS terms. SKIP technicalNote here (added when bodies are written). (Module bodies can ONLY use term ids that exist here.)
 - synthesis (NOT a dead-end summary — it consolidates and creates forward pull):
     • recap: phrase it as a RETRIEVAL prompt, not a re-read — ask the learner to reconstruct the key structure/build-order from memory before it's shown (2–3 sentences MAX).
@@ -222,7 +226,7 @@ export const MODULE_SYSTEM = `You write the CONTENT BLOCKS for ONE module of an 
 
 Produce 2–6 blocks that teach THIS module well:
 - Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note.
-- QUIZ/KNOWLEDGE-CHECK BLOCKS ARE GATED: emit a selfCheckQuiz or knowledgeCheck ONLY when KNOWLEDGE CHECK is ON (when ON, place ONE graded knowledgeCheck of 4–5 questions LAST). When OFF, emit NONE of those blocks. NOTE: this gate is about formal quiz blocks — it does NOT forbid the always-available retrieval primitives below (predict-then-reveal on code, a "predict first" prose hook, a scenario). Retrieval is woven into the content regardless of this gate.
+- NO QUIZ/KNOWLEDGE-CHECK BLOCKS IN A MODULE: never emit a selfCheckQuiz or knowledgeCheck block — the lesson's single end-of-lesson knowledge check is generated separately. NOTE: this only forbids formal quiz blocks — it does NOT forbid the always-available retrieval primitives below (predict-then-reveal on code, a "predict first" prose hook, a scenario). Retrieval is woven into the content regardless.
 - BLOCK ORDER builds a RAMP, not just explanation→example: EXPLANATION (conceptual/technical) → real-world functionalExample → codeExample. But add the rungs that turn recognition into recall (see RETRIEVAL & THE LEARNING RAMP below) — do not present a full worked example and then jump to a from-scratch task.
 - On a conceptual/technical block for beginner/intermediate, add an "analogy" field: one plain everyday-analogy sentence that makes the idea click.
 - codeExample: honor the requested CODE FRAMEWORK (real APIs when a framework is named; clean pseudocode when framework-agnostic).
@@ -304,7 +308,6 @@ export function moduleUserPrompt(args: {
   glossary: { id: string; label: string }[];
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
 }): string {
-  const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const beginnerish = args.level === "beginner" || args.level === "intermediate";
   const pos = args.thisOrder ?? 1;
   const total = args.totalModules ?? 1;
@@ -337,9 +340,11 @@ export function moduleUserPrompt(args: {
     (args.examples === "code" || args.examples === "functional_code")
       ? `VERIFY-AI-OUTPUT: this module involves building — add a short, concrete "how to check the AI-generated version before trusting it" element (the specific things to verify for THIS topic).`
       : "",
-    knowledgeCheck
-      ? `KNOWLEDGE CHECK: ON — END this module with ONE "knowledgeCheck" block containing 4–5 questions (mix "mcq" with correct flags + 1–2 "freeText" with an acceptableAnswer). Each question MUST test what the learner wanted to learn (tie to objectives/industry/build). Every question needs an explanation. RETENTION (boost recall): set "freeRecallFirst":true on at least one question (the learner recalls from memory before the options/answer appear); set "confidence":true on the questions (a "how sure?" pick before grading, for calibration); add "conceptTags" listing the glossary term ids each question exercises (for interleaving). A selfCheckQuiz is also allowed.`
-      : `KNOWLEDGE CHECK: OFF — emit NO quiz, self-check, or question blocks of any kind (no selfCheckQuiz, no knowledgeCheck). Teach the module without testing.`,
+    // S5 — modules NEVER carry a knowledge check. The lesson has ONE end-of-lesson knowledge
+    // check, generated separately. So emit NO quiz/self-check/question blocks here (this does
+    // NOT forbid the in-flow retrieval primitives: predict-then-reveal on code, a "predict
+    // first" prose hook, a scenario — those stay woven into the teaching).
+    `KNOWLEDGE CHECK: OFF for this module — emit NO selfCheckQuiz / knowledgeCheck / question blocks of any kind. (The lesson's single knowledge check is written elsewhere; keep teaching with the in-flow retrieval prompts.)`,
     `BLOCK ORDER (important): lead with the EXPLANATION (conceptual), THEN a functionalExample (real-world scenario), THEN the codeExample if code is requested — explanation→example→code, so each builds on the last.`,
     beginnerish ? `PLAIN WORDS: on conceptual/technical blocks add an "analogy" field — a one-sentence everyday analogy (e.g. "an agent router is like a receptionist deciding which desk to send you to").` : "",
     args.framework ? `CODE FRAMEWORK: write every codeExample using ${args.framework}. Use its real APIs/imports; title the block with the framework.` : `CODE FRAMEWORK: framework-agnostic — use clear pseudocode/plain Python, no framework-specific imports.`,
@@ -379,8 +384,11 @@ export function plannerUserPrompt(args: {
   learningGoal?: string;
   lessonFocus?: string;
   mustCover?: string[];
+  /** S6 — target module count (broad=8 / moderate=6 / narrow=5). */
+  moduleTarget?: number;
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
 }): string {
+  const target = args.moduleTarget ?? 5;
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
     `TOPIC: ${args.topic}`,
@@ -392,7 +400,10 @@ export function plannerUserPrompt(args: {
     args.industry ? `FOCUS INDUSTRY (context for later examples only — do NOT reframe the subject): ${args.industry}` : "",
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal} — aim the spine + final module at this` : "",
     objectiveDirective(args.objective),
-    `Design the STRUCTURE only (no prose): 4-5 modules, ONE consistent spine, classify structureType, and list the 8-12 key glossary terms.`,
+    // S6 — the breadth-scaled module count. This counts ONLY teaching modules; the synthesis
+    // ("Putting it together"), the knowledge check, and Sources are separate and NOT modules.
+    `MODULE COUNT: design ${target} modules (aim for exactly ${target}; ${target - 1}–${target + 1} is acceptable if the topic truly demands it). Do NOT pad with filler to hit the number, and do NOT compress a broad topic below it. This count EXCLUDES the synthesis, the knowledge check, and Sources.`,
+    `Design the STRUCTURE only (no prose): ${target} modules, ONE consistent spine, classify structureType, and list the ${target >= 7 ? "10-16" : "8-12"} key glossary terms.`,
   ].filter(Boolean);
   const up = (args.sources ?? []).filter((s) => s.origin === "upload");
   const kb = (args.sources ?? []).filter((s) => s.origin !== "upload");
@@ -429,6 +440,9 @@ export function architectUserPrompt(args: {
   learningGoal?: string;
   lessonFocus?: string;
   mustCover?: string[];
+  /** S6 — target module count (broad=8 / moderate=6 / narrow=5). Only binds when there is no
+   *  planner plan (with a plan, the architect follows the plan's module list exactly). */
+  moduleTarget?: number;
   sources?: { sid: string; title?: string; content: string; asOfDate?: string; origin?: "kb" | "upload" }[];
   repairErrors?: string[];
   /** The OPUS planner's structural plan. When present, FOLLOW it and only WRITE the prose. */
@@ -437,6 +451,7 @@ export function architectUserPrompt(args: {
   const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const beginnerish = args.level === "beginner" || args.level === "intermediate";
   const hasPlan = args.plan && typeof args.plan === "object";
+  const target = args.moduleTarget ?? 5;
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
     hasPlan
@@ -448,11 +463,14 @@ export function architectUserPrompt(args: {
     args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
     `DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
     `SEQUENCING: the mentalMap node order, the module order, and synthesis.buildOrder must be ONE consistent spine (not three orderings). Sequence modules so they ramp worked→completion→solo and so foundational concepts come early enough for a later module to revisit them. Give an ordered topic a single unambiguous start; leave no orphan module.`,
+    // S6 — only when the architect is planning the structure itself (no planner plan). With a
+    // plan, "FOLLOW IT EXACTLY" above governs the count; a second number here would conflict.
+    !hasPlan ? `MODULE COUNT: produce ${target} modules (aim for exactly ${target}; ${target - 1}–${target + 1} only if the topic truly demands it). This count is the teaching modules ONLY — the synthesis ("Putting it together"), the knowledge check, and Sources are separate and NOT modules. Scale a broad field UP to it; keep a narrow subject AT it; never pad with filler.` : "",
     args.buildGoal || args.industry ? `CONTEXTUALIZE: thread "${[args.industry, args.buildGoal].filter(Boolean).join("; ")}" through the spine so it reads as THEIR build path; aim the capstone/buildOrder at what they're building (examples/framing only — never reframe the subject).` : "",
     objectiveDirective(args.objective),
     calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — design so all are served (scaffold the basics; offer deeper blocks for advanced).` : "",
-    knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — each module's body will END with a graded knowledgeCheck block; structure modules so they're testable.` : "",
+    knowledgeCheck ? `LESSON TYPE includes KNOWLEDGE CHECK — the lesson ends with ONE graded knowledge check covering the whole lesson (written separately, NOT per module). Structure the modules + objectives so they're clearly testable.` : "",
     beginnerish ? `PLAIN WORDS: EVERY mental-map node MUST include a "laymanExplanation" — one everyday-analogy sentence (e.g. "an agent is like a doorman: it checks why someone wants in before letting them through"). Also give each node an "icon" emoji that fits its idea.` : `Give each mental-map node an "icon" emoji that fits its idea.`,
     args.role ? `LEARNER'S ROLE: ${args.role}${args.aspiringRole ? ` (aspiring ${args.aspiringRole})` : ""} — context for choosing examples only; do NOT reframe the lesson's subject around their role.` : "",
     args.personalGoal ? `LEARNER'S STANDING GOAL: ${args.personalGoal}.` : "",
@@ -494,7 +512,7 @@ export function architectUserPrompt(args: {
  * DEFINITIONS (the (i) popovers, only seen inside built modules) and the SYNTHESIS (the lesson's
  * closing section). The preview never showed either, so writing them at build time is zero-impact.
  */
-export const OVERVIEW_PROSE_SYSTEM = `You write two closing pieces of an interactive agentic-AI lesson — DATA ONLY.
+export const OVERVIEW_PROSE_SYSTEM = `You write the closing pieces of an interactive agentic-AI lesson — DATA ONLY.
 1. GLOSSARY definitions: for each term given (id — label), write a ONE-sentence plain "laymanDefinition" — concrete, for the learner's level (beginner/intermediate: don't explain jargon with more jargon; use an everyday frame). Add "acronymExpansion" only for ALL-CAPS terms.
 2. SYNTHESIS (only when asked): the lesson's closing consolidation.
    - recap: a RETRIEVAL prompt (ask the learner to reconstruct the build order / key structure FROM MEMORY before it's shown — 1-2 sentences, not a re-read).
@@ -502,9 +520,15 @@ export const OVERVIEW_PROSE_SYSTEM = `You write two closing pieces of an interac
    - checklist: the key decisions (from the modules' decision points).
    - capstonePrompt: a SOLO build tied to the learner's goal/buildGoal.
    - capstoneNext: the NEXT rung — what to learn or build next, so the lesson ends with momentum.
+3. KNOWLEDGE CHECK (only when asked): ONE end-of-lesson check of 4–5 questions that span the WHOLE lesson (interleave across its modules — do NOT cluster on one module). Each question in "finalCheck":
+   - "kind": "mcq" (3–4 plausible "options", EXACTLY ONE with "correct":true) or "freeText" (give an "acceptableAnswer" — the reference the grader checks against). Use mostly mcq with 1 freeText.
+   - "prompt": tests what the learner actually wanted to learn (tie to the module objectives / decisions / the build goal) — comprehension and application, not trivia.
+   - "explanation": ONE sentence explaining the right answer (shown after grading).
+   - retention flags: set "freeRecallFirst":true on AT LEAST ONE question; set "confidence":true on every question; add "conceptTags" = the glossary term ids each question exercises.
 Keep everything tight, concrete, and accurate.`;
 
-/** Human message for the overview-prose writer: the terms to define + (optionally) the module spine. */
+/** Human message for the overview-prose writer: the terms to define + (optionally) the module
+ *  spine for synthesis + (optionally) the lesson-level knowledge check. */
 export function overviewProseUserPrompt(args: {
   topic: string;
   level: string;
@@ -512,8 +536,10 @@ export function overviewProseUserPrompt(args: {
   buildGoal?: string;
   objective?: string;
   terms: { id: string; label: string }[];
-  modules: { order: number; title: string; decisionItForces?: string }[];
+  modules: { order: number; title: string; decisionItForces?: string; objectives?: string[] }[];
   needSynthesis: boolean;
+  /** S5 — when true, also write the single end-of-lesson knowledge check (4–5 Qs). */
+  needFinalCheck: boolean;
 }): string {
   const lines = [
     `LESSON TOPIC: ${args.topic}`,
@@ -524,6 +550,9 @@ export function overviewProseUserPrompt(args: {
     args.needSynthesis
       ? `ALSO WRITE THE SYNTHESIS. MODULE SPINE (use for buildOrder + checklist, mirror this order): ${args.modules.map((m) => `${m.order}. ${m.title}${m.decisionItForces ? ` [decision: ${m.decisionItForces}]` : ""}`).join(" | ")}`
       : "Do NOT write synthesis (it already exists) — return empty recap/buildOrder/checklist and an empty capstonePrompt.",
+    args.needFinalCheck
+      ? `ALSO WRITE THE KNOWLEDGE CHECK ("finalCheck"): 4–5 questions spanning the WHOLE lesson. Draw from these modules + objectives:\n${args.modules.map((m) => `  ${m.order}. ${m.title}${m.objectives && m.objectives.length ? ` — objectives: ${m.objectives.join("; ")}` : ""}${m.decisionItForces ? ` [decision: ${m.decisionItForces}]` : ""}`).join("\n")}`
+      : `Do NOT write a knowledge check — return an empty "finalCheck" array.`,
   ].filter(Boolean);
   return lines.join("\n");
 }

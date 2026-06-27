@@ -873,9 +873,14 @@ app.post("/api/check", async (req, res) => {
     bp = raw ? ((typeof raw === "string" ? JSON.parse(raw) : raw) as Blueprint) : undefined;
   }
   if (!bp || !blockId || !questionId) { res.status(404).json({ error: "Unknown lesson/question." }); return; }
-  // Find the knowledgeCheck block + question across all modules.
+  // Find the knowledgeCheck block + question.
   let q: Extract<Block, { kind: "knowledgeCheck" }>["questions"][number] | undefined;
-  for (const m of bp.modules) {
+  // S5 — the single lesson-level knowledge check lives on bp.finalCheck (stable id "_final_check").
+  if (bp.finalCheck && bp.finalCheck.id === blockId) {
+    q = bp.finalCheck.questions.find((x) => x.id === questionId);
+  }
+  // Back-compat: older/prebuilt lessons may still carry per-module knowledgeCheck blocks.
+  if (!q) for (const m of bp.modules) {
     const blk = m.blocks.find((b) => b.kind === "knowledgeCheck" && b.id === blockId) as Extract<Block, { kind: "knowledgeCheck" }> | undefined;
     if (blk) { q = blk.questions.find((x) => x.id === questionId); break; }
   }
