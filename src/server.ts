@@ -371,6 +371,9 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
   if (prompt.length > 5000) { res.status(400).json({ error: "That request is too long (max 5000 characters)." }); return; }
   const cards = (body.cards as Record<string, string>) ?? {};
   const user = await getUser(req.headers.authorization);
+  // NOTE: any `userProfile` in the request body is intentionally IGNORED — for signed-in users the
+  // profile is always sourced from saved preferences (single source of truth), so the body field
+  // cannot override it. Anonymous users get an empty profile.
   let userProfile: Record<string, unknown> = {};
   if (user) {
     const prefs = await getPreferences(user.id);

@@ -424,7 +424,6 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
               buildGoal: p.buildGoal,
               objective: p.objective,
               levels: p.levels,
-              lessonTypes: p.lessonTypes,
               userPrompt: state.userPrompt,
               learningGoal: intent?.learningGoal,
               lessonFocus: intent?.lessonFocus,

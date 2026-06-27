@@ -381,6 +381,24 @@ function buildPayload(promptText, threadId) {
   };
 }
 
+// Group-3 fix: the build runs entirely off the artifact frozen at overview time — it never re-reads
+// the card/option controls. So if a learner tweaks options AFTER generating an overview and then
+// clicks "Generate Lesson", those tweaks are silently ignored. Compare the current lesson-shaping
+// selections against the ones the active draft was built from (the option chips don't emit `change`
+// events, so we compare at click time) and warn instead of silently dropping them.
+function shapingSignature(pl) {
+  return JSON.stringify({
+    cards: pl.cards || {}, levels: pl.levels || [], lessonTypes: pl.lessonTypes || [],
+    framework: pl.framework || "", readingMode: pl.readingMode || "vertical", objective: pl.objective || "",
+    industry: pl.industry || "", buildGoal: pl.buildGoal || "", referOnly: !!pl.referOnly, uploadIds: pl.uploadIds || [],
+  });
+}
+function overviewOptionsChanged() {
+  if (!lastOverviewPayload) return false;
+  try { return shapingSignature(buildPayload(basePrompt || lastOverviewPayload.prompt || "", null)) !== shapingSignature(lastOverviewPayload); }
+  catch { return false; }
+}
+
 // ---- Submit ----
 generateBtn.addEventListener("click", () => {
   if (pendingUploads > 0) return; // button is disabled while uploads finish; belt-and-suspenders
@@ -1544,7 +1562,18 @@ async function autoPublishContributor(lessonId) {
 }
 
 // CTA wiring for the overview gate.
-if (genLessonBtn) genLessonBtn.addEventListener("click", () => { if (overviewArtifactId) startBuild(overviewArtifactId); });
+if (genLessonBtn) genLessonBtn.addEventListener("click", () => {
+  if (!overviewArtifactId) return;
+  // If the learner changed lesson options after this overview was generated, those changes only
+  // apply by regenerating the overview — warn rather than silently building the old selections.
+  if (overviewOptionsChanged() && !confirm(
+    "You changed lesson options since this overview was generated.\n\n" +
+    "Those changes won't apply to this build — the lesson is built from the overview you reviewed. " +
+    "To apply them, go to the Builder and Generate Overview again.\n\n" +
+    "Build the reviewed overview as-is?"
+  )) return;
+  startBuild(overviewArtifactId);
+});
 if (editOverviewBtn) editOverviewBtn.addEventListener("click", openEditOverview);
 if (editCloseBtn) editCloseBtn.addEventListener("click", () => { editOverlay.hidden = true; });
 if (editRegenBtn) editRegenBtn.addEventListener("click", () => {

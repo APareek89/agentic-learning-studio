@@ -379,7 +379,6 @@ export function plannerUserPrompt(args: {
   buildGoal?: string;
   objective?: string;
   levels?: string[];
-  lessonTypes?: string[];
   userPrompt: string;
   learningGoal?: string;
   lessonFocus?: string;
