@@ -263,6 +263,29 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 > my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
 > charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
 
+- **⚡ LATENCY / MODEL-TIERING — Batch A DONE + ON PROD (2026-06-27, `main e23fa33`); S5/S6/Batch-B handed off to the next session.**
+  Root cause of slow builds was **output-token generation** (latency ≈ output_tokens ÷ decode_rate), NOT input/cache/RAG/rate-limit
+  (org is Scale tier). **Batch A (shipped to staging `6610833` + prod `e23fa33`):**
+  - **All modules build in ONE parallel wave** — removed the B3 serial "module-1 cache-warm-up" (it traded wall-clock for cents
+    of input cost). `orchestrator.ts` `runBuildJob`. Measured **build 307s → 108s (2.8×)** locally (5/5, 0 failed; wall-clock ≈
+    slowest module, not the sum). `MAX_MODULE_CONCURRENCY` 5→8 (env).
+  - **Model tiering:** `profiler` → Haiku (`nodes.ts`), `repairDensity` → Haiku (`density.ts`) — both env-overridable; verified
+    clean (profiler 6s→2.5s). No gate/credit/schema change.
+  - **Overview still ~74s** (planner 23s + **architect 49s = the long pole**, one 16k Sonnet skeleton call) — NOT addressed by
+    Batch A; the planner leg is targeted by Batch B (planner→a cheaper model), the architect stays Sonnet (quality-critical).
+  - **Cost reality (flag for finance):** a full 5-module lesson ≈ **$0.95–1.70** Anthropic spend vs **$0.99/credit** — thin/negative
+    margin. S5 (single end-KC) + Haiku tiering improve it; fewer/lighter modules help.
+  - **REMAINING (next session, staging-first) — see the handoff prompt the user has:** **S5** consolidate per-module
+    knowledgeCheck → ONE end-of-lesson KC before Sources (renderer already has `cumulativeCheckItems` in `components.ts`; turn
+    KC OFF per module in `prompts.ts`/`nodes.ts`, generate one, render a vertical `_check` pane + keep horizontal's final page;
+    QA grading). **S6** dynamic module count 5/6/8 by topic breadth (profiler classifies scope → planner/architect respect;
+    affordable now modules are parallel). **grounded/ungrounded log** in `rag/retrieve.ts` (chunk count per gen — broadening to
+    the whole AI landscape will generate ungrounded a lot since the KB is agentic-AI-heavy). **Batch B = GPT failover (DECIDED):**
+    all nodes fall back to **OpenAI GPT after 2–3 failed Claude attempts** — **Claude Sonnet nodes → GPT-5.5**, **Claude Haiku
+    nodes → GPT-5.4-mini** (confirm exact OpenAI model IDs against the account). `@langchain/openai` already installed; add
+    `OPENAI_API_KEY` to `.env` (staging) + Render prod env. Use LangChain `.withFallbacks([...])` on the structured-output
+    runnable; cut Claude to ~2–3 quick attempts before falling over (don't wait out the full ~84s overload backoff). Validate on
+    staging (force the fallback, check structured-output parse + lesson quality on GPT) before any prod promote.
 - **🔎 FULL STAGING AUDIT — see [`STAGING_AUDIT.md`](STAGING_AUDIT.md) (2026-06-27, `8f1c8e2`).** A read-only code /
   security / scalability / resilience audit + the full generation-pipeline data-flow map (input → agents → output → user
   context). Owner to review tomorrow. **Headline P0s** (full detail + P1/P2/P3 + ops runbook in the doc):
