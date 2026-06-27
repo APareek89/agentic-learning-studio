@@ -44,7 +44,7 @@ import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSign
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
-import { makeLLM } from "./agent/llm";
+import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, invokeResilient } from "./agent/llm";
 import { renderArtifact } from "./render/index";
 import { handsOnEligible, resolveBlueprint, peekCache, createHandsOnJob, getHandsOnJob, runHandsOnJob } from "./lib/handson";
 import { renderModuleFragment } from "./render/components";
@@ -900,15 +900,19 @@ app.post("/api/check", async (req, res) => {
     res.json({ correct, correctIndex, explanation: q.explanation });
     return;
   }
-  // freeText → LLM grade against the reference answer.
+  // freeText → LLM grade against the reference answer. (Batch B — Haiku grader fails over to
+  // GPT-5.4-mini when wired; env-gated no-op otherwise.)
   try {
-    const grader = makeLLM("haiku", 0).withStructuredOutput(
-      z.object({ correct: z.boolean(), feedback: z.string() }), { name: "grade" }
+    const GradeSchema = z.object({ correct: z.boolean(), feedback: z.string() });
+    const grader = structuredWithFallback(
+      makeLLM("haiku", 0, { maxRetries: gptFallbackEnabled() ? 2 : 4 }),
+      makeGptLLM("haiku"),
+      GradeSchema, { name: "grade" }
     );
-    const out = await grader.invoke([
+    const out = (await invokeResilient(grader, [
       new SystemMessage("You grade a learner's free-text answer. Mark correct=true if it captures the key idea (be encouraging, not pedantic). feedback = ONE short sentence of specific feedback."),
       new HumanMessage(`QUESTION: ${q.prompt}\nREFERENCE ANSWER: ${q.acceptableAnswer ?? q.explanation}\nLEARNER ANSWER: ${text ?? ""}`),
-    ]);
+    ])) as z.infer<typeof GradeSchema>;
     res.json({ correct: out.correct, feedback: out.feedback, explanation: q.explanation });
   } catch (err) {
     console.error("[/api/check]", err);

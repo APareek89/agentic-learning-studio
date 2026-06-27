@@ -19,6 +19,11 @@
  */
 
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatOpenAI } from "@langchain/openai";
+import { RunnableLambda } from "@langchain/core/runnables";
+import type { Runnable, RunnableConfig } from "@langchain/core/runnables";
+import { SystemMessage, type BaseMessage } from "@langchain/core/messages";
+import type { BaseLanguageModelInput } from "@langchain/core/language_models/base";
 
 /** The three quality/cost tiers. A plain union type pins the allowed values. */
 export type ModelTier = "sonnet" | "opus" | "haiku";
@@ -117,4 +122,107 @@ export async function withOverloadRetry<T>(fn: () => Promise<T>): Promise<T> {
     }
   }
   throw lastErr;
+}
+
+// ============================================================================
+// BATCH B — OpenAI GPT failover (additive + env-gated)
+//
+// After a Claude tier call fails (529 overload / 429 rate / 400 usage-limit / timeout / error),
+// LangChain `.withFallbacks([...])` retries the SAME request on OpenAI GPT: Claude SONNET nodes →
+// GPT-5.5, Claude HAIKU nodes → GPT-5.4-mini. The Claude attempt budget is cut to ~2 quick SDK
+// retries (see `makeLLM`'s maxRetries at the call sites) so a bad Anthropic day fails over to GPT
+// FAST instead of riding the ~84s overload backoff. When OPENAI_API_KEY is unset, every helper is
+// a no-op: the runnable is Claude-only and the caller keeps `withOverloadRetry` — i.e. ZERO change
+// to current prod behavior until the key is added.
+// ============================================================================
+
+/** True when an OpenAI key is configured → GPT failover is wired. Else: Claude-only (current behavior). */
+export function gptFallbackEnabled(): boolean {
+  return !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim());
+}
+
+/** GPT failover model id per Claude tier. Claude Sonnet/Opus nodes → GPT-5.5; Haiku nodes →
+ *  GPT-5.4-mini. Env-overridable (confirm the EXACT ids against the account before shipping). */
+function gptModelIdFor(tier: ModelTier): string {
+  if (tier === "haiku") return process.env.OPENAI_MODEL_HAIKU ?? "gpt-5.4-mini";
+  return process.env.OPENAI_MODEL_SONNET ?? "gpt-5.5"; // sonnet + opus tiers
+}
+
+/**
+ * Build the GPT failover client for a tier, or `null` when no OPENAI_API_KEY (failover disabled).
+ * IMPORTANT: we deliberately do NOT apply the Anthropic-only workarounds here — `topP=-1` and the
+ * Opus temperature-drop are Claude bugs, not OpenAI's. We also OMIT `temperature` (GPT-5.x reasoning
+ * models reject a non-default temperature with a 400), letting the model use its own default.
+ */
+export function makeGptLLM(
+  tier: ModelTier = "sonnet",
+  opts: { maxTokens?: number; streaming?: boolean; maxRetries?: number } = {}
+): ChatOpenAI | null {
+  if (!gptFallbackEnabled()) return null;
+  return new ChatOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    model: gptModelIdFor(tier),
+    maxTokens: opts.maxTokens,
+    streaming: opts.streaming ?? false,
+    maxRetries: opts.maxRetries ?? 2,
+  });
+}
+
+/** Strip Anthropic-only `cache_control` blocks before a GPT fallback runs. A SystemMessage whose
+ *  content is a `[{type:"text", text, cache_control}]` array becomes a plain-string SystemMessage;
+ *  every other message passes through unchanged. (Only the module-body call uses cache_control.) */
+export const stripCacheControl = new RunnableLambda<BaseMessage[], BaseMessage[]>({
+  func: (msgs: BaseMessage[]) =>
+    msgs.map((m: BaseMessage) => {
+      const content = (m as { content: unknown }).content;
+      if (m instanceof SystemMessage && Array.isArray(content)) {
+        const text = content
+          .map((b) => (b && typeof b === "object" && "text" in b ? String((b as { text: unknown }).text ?? "") : ""))
+          .join("");
+        return new SystemMessage(text);
+      }
+      return m;
+    }),
+});
+
+/**
+ * Wrap a Claude STRUCTURED-OUTPUT runnable with a GPT structured-output fallback. The GPT branch
+ * strips cache_control first. When `gpt` is null (no key), returns the Claude runnable unchanged.
+ * Output shape (parsed object, or `{raw, parsed}` when `includeRaw`) matches across both providers.
+ */
+export function structuredWithFallback(
+  claude: ChatAnthropic,
+  gpt: ChatOpenAI | null,
+  schema: Parameters<ChatAnthropic["withStructuredOutput"]>[0],
+  opts?: Parameters<ChatAnthropic["withStructuredOutput"]>[1]
+): Runnable<BaseLanguageModelInput, unknown> {
+  const claudeR = claude.withStructuredOutput(schema, opts as never) as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  if (!gpt) return claudeR;
+  const gptR = stripCacheControl.pipe(
+    gpt.withStructuredOutput(schema, opts as never) as unknown as Runnable<BaseMessage[], unknown>
+  ) as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  return claudeR.withFallbacks([gptR]);
+}
+
+/** Wrap a Claude RAW chat runnable (planner/skeleton — text out, parsed by extractJsonObject) with a
+ *  GPT raw fallback. No cache_control on these calls, so no strip needed. No key → Claude unchanged. */
+export function rawWithFallback(claude: ChatAnthropic, gpt: ChatOpenAI | null): Runnable<BaseLanguageModelInput, unknown> {
+  const claudeR = claude as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  if (!gpt) return claudeR;
+  return claudeR.withFallbacks([gpt as unknown as Runnable<BaseLanguageModelInput, unknown>]);
+}
+
+/**
+ * Invoke a runnable with the right resilience for the configured mode:
+ *  - GPT failover wired → invoke directly; `.withFallbacks` already switches to GPT after the
+ *    Claude client's short (≈2) SDK retries, so we do NOT also ride the long overload backoff.
+ *  - No failover → wrap in `withOverloadRetry` exactly as before (ride out a transient 529).
+ */
+export async function invokeResilient<T>(
+  runnable: Runnable<BaseLanguageModelInput, T>,
+  input: BaseLanguageModelInput,
+  config?: RunnableConfig
+): Promise<T> {
+  if (gptFallbackEnabled()) return runnable.invoke(input, config);
+  return withOverloadRetry(() => runnable.invoke(input, config));
 }
