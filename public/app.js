@@ -1077,9 +1077,13 @@ function hideWhileYouWait() { if (genSuggest) genSuggest.hidden = true; }
 // ---- Item 3: out-of-credits "buy a plan" popup (reused by the lesson + skill 402s) ----
 const buyModal = document.getElementById("buy-modal");
 function openBuyCredits(msg) {
-  if (!buyModal) { switchTab("pricing"); return; }
+  if (!buyModal) return; // pricing is hidden during the free beta — nowhere to send them
+  // Free beta: we don't charge. Reframe the out-of-credits popup as a friendly beta-limit notice;
+  // the "buy" CTA is hidden via CSS, and the caller's `msg` is charging-oriented, so we override it.
+  const t = document.getElementById("buy-modal-title");
   const m = document.getElementById("buy-modal-msg");
-  if (m && msg) m.textContent = msg;
+  if (t) t.textContent = "You've used your free beta lessons";
+  if (m) m.textContent = "Thanks for trying the beta! You've used your 2 free lessons — your lessons are saved in My Lessons, and more is coming soon.";
   buyModal.hidden = false;
 }
 function closeBuyCredits() { if (buyModal) buyModal.hidden = true; }

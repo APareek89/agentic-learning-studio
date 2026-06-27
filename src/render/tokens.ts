@@ -13,7 +13,7 @@
  */
 
 export const ARTIFACT_CSS = String.raw`
-/* ---- Wizbit theme: SAME blue palette as the host app (styles.css) + Plus Jakarta
+/* ---- Agentic Learning Studio theme: SAME blue palette as the host app (styles.css) + Plus Jakarta
    Sans, so lessons match the rest of the app. Only token VALUES + font families
    change vs the original theme; every component rule, the 27-combo gates,
    horizontal mode and diagrams are untouched. Fonts have system fallbacks so an

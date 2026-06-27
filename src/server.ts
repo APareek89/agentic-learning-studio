@@ -139,7 +139,12 @@ app.get("/account", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")))
 // Hands-On notebook page (browser-run Pyodide practice). Opened in a new tab from a lesson.
 app.get("/hands-on", (_req, res) => res.sendFile(join(PUBLIC_DIR, "hands-on.html")));
 
+// Single swappable contact address — change here (or via the CONTACT_EMAIL env var) and it updates
+// across all policy pages (they use a {{CONTACT_EMAIL}} token, injected when served below).
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "findkailash@gmail.com";
+
 // Legal / compliance pages at pretty URLs (NOT nav tabs — linked only from the home footer).
+// Served with {{CONTACT_EMAIL}} replaced so the address lives in one place.
 const PAGE_ROUTES: Record<string, string> = {
   "/security": "security.html",
   "/privacy": "privacy.html",
@@ -149,7 +154,12 @@ const PAGE_ROUTES: Record<string, string> = {
   "/grievance": "report-issue.html",
 };
 for (const [route, file] of Object.entries(PAGE_ROUTES)) {
-  app.get(route, (_req, res) => res.sendFile(join(PUBLIC_DIR, file)));
+  app.get(route, async (_req, res) => {
+    try {
+      const html = await readFile(join(PUBLIC_DIR, file), "utf8");
+      res.type("html").send(html.split("{{CONTACT_EMAIL}}").join(CONTACT_EMAIL));
+    } catch { res.sendFile(join(PUBLIC_DIR, file)); }
+  });
 }
 
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
@@ -162,7 +172,7 @@ const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 600, standardHeade
 app.use("/api/", apiLimiter);
 // Complaint/grievance intake — tight cap so the form can't be used to spam the operator.
 const supportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
-  message: { error: "Too many submissions — please wait an hour before sending another, or email anandp.pareek6@gmail.com directly." } });
+  message: { error: `Too many submissions — please wait an hour before sending another, or email ${CONTACT_EMAIL} directly.` } });
 
 /** Write one named SSE event with a JSON payload onto a response stream. */
 function sseSend(res: express.Response, event: string, data: unknown): void {
@@ -1207,7 +1217,7 @@ app.post("/api/support/complaint", supportLimiter, async (req, res) => {
     return;
   }
   const b = parsed.data;
-  const consentText = "I consent to Wizbit / PrathibhaX processing this information to respond to my request.";
+  const consentText = "I consent to Agentic Learning Studio processing this information to respond to my request.";
   const userAgent = String(req.headers["user-agent"] || "").slice(0, 400);
   let saved;
   try {
@@ -1218,7 +1228,7 @@ app.post("/api/support/complaint", supportLimiter, async (req, res) => {
   } catch (e) { console.error("[support] save failed:", (e as Error).message); }
   if (!saved) {
     // We could not record it — do NOT pretend success; point the user at direct email.
-    res.status(503).json({ error: "We couldn't record your request right now. Please email anandp.pareek6@gmail.com directly." });
+    res.status(503).json({ error: `We couldn't record your request right now. Please email ${CONTACT_EMAIL} directly.` });
     return;
   }
   const payload = { requestId: saved.id, category: b.category, name: b.name, email: b.email, subject: b.subject,

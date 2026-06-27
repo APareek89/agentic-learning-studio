@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Security — Wizbit / PrathibhaX</title>
-  <meta name="description" content="How Wizbit / PrathibhaX protects data: HTTPS, security headers, locked-down CORS, authentication, row-level security, rate limits, iframe-rendered lessons, and incident response." />
+  <title>Security — Agentic Learning Studio</title>
+  <meta name="description" content="Security practices for Agentic Learning Studio — an early free beta. What's in place today, in accurate and general terms." />
   <link rel="icon" type="image/png" href="/wizbit-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,66 +13,38 @@
 </head>
 <body>
   <header class="policy-top"><div class="in">
-    <a class="policy-brand" href="/"><img src="/wizbit-logo.png" alt="Wizbit" /> Wizbit / PrathibhaX</a>
-    <a class="policy-back" href="/">← Back to Wizbit</a>
+    <a class="policy-brand" href="/"><img src="/wizbit-logo.png" alt="Agentic Learning Studio" /> Agentic Learning Studio</a>
+    <a class="policy-back" href="/">← Back</a>
   </div></header>
 
   <main class="policy-wrap">
     <h1>Security</h1>
     <p class="policy-meta">Last updated: 27 June 2026</p>
 
-    <p>Wizbit / PrathibhaX is operated by <strong>Anand Pareek, an individual resident in India</strong>. This page describes the safeguards in place today and the improvements planned. Report a vulnerability or security concern to <a href="mailto:anandp.pareek6@gmail.com">anandp.pareek6@gmail.com</a> or via <a href="/report-issue">Report issue / complaint</a> (category: “Security vulnerability”).</p>
+    <p>Agentic Learning Studio is an <strong>early free beta</strong>, so our security practices are evolving. This page describes, in general terms, what is in place today. If you find a security issue, please email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> (or use <a href="/report-issue">Report issue / complaint</a>).</p>
 
-    <h2>In place today</h2>
+    <h2>What's in place today</h2>
     <ul>
-      <li><strong>HTTPS everywhere</strong> — the app is served over TLS by our host (Render).</li>
-      <li><strong>Security headers</strong> — applied via Helmet (e.g. frame, content-type, and referrer protections).</li>
-      <li><strong>CORS lockdown</strong> — the API only accepts requests from our own origins; cross-origin access is restricted.</li>
-      <li><strong>Authentication</strong> — handled by Supabase Auth; we never see your raw password.</li>
-      <li><strong>Row-Level Security (RLS)</strong> — enabled on public database tables; client roles are denied direct access.</li>
-      <li><strong>Server-side database access only</strong> — all data access flows through our server API, not directly from the browser.</li>
-      <li><strong>Rate limits</strong> — per-IP limits protect the API and the complaint form from abuse.</li>
-      <li><strong>Upload &amp; repository caps</strong> — bounded file counts, sizes, and timeouts on uploads and repo imports.</li>
-      <li><strong>Lessons render in a dedicated iframe</strong> — generated lessons load in a separate iframe element; stronger script isolation via a nonce-based Content-Security-Policy is planned (see “Content Security Policy” below).</li>
-      <li><strong>Local embeddings</strong> — uploaded content is embedded locally to ground lessons, minimising what leaves the server.</li>
+      <li><strong>Encrypted in transit</strong> — the app is served over HTTPS.</li>
+      <li><strong>Standard security headers</strong> are applied to responses.</li>
+      <li><strong>Restricted API access</strong> — the API only accepts requests from our own site.</li>
+      <li><strong>Sign-in via an authentication provider</strong> — we never see your password.</li>
+      <li><strong>Server-mediated data access</strong> — your data is reached through our server, not directly from the browser.</li>
+      <li><strong>Rate limits</strong> on requests to reduce abuse.</li>
+      <li><strong>Caps on uploads and repository imports</strong> — bounded file counts, sizes, and time.</li>
+      <li><strong>Generated lessons run in a sandboxed iframe</strong>, separated from the main app.</li>
+      <li><strong>Uploaded content is processed on our server</strong> to ground your lesson, and is not stored as files.</li>
+      <li><strong>No third-party advertising or analytics trackers.</strong></li>
     </ul>
 
-    <h2>Commitments / in progress</h2>
-    <ul>
-      <li><span class="todo">TODO</span> — periodic dependency and configuration review.</li>
-    </ul>
+    <h2>An honest limitation</h2>
+    <p>A strict Content-Security-Policy is <strong>intentionally off today</strong>, because generated lessons include inline scripts and styles that a strict policy would break. A stricter, nonce-based policy is planned.</p>
 
-    <h2>Known limitation: Content Security Policy</h2>
-    <p>A strict Content-Security-Policy (CSP) is <strong>intentionally off today</strong> because generated lessons and the host page include inline JavaScript and CSS that a strict CSP would break. A <strong>stricter CSP using nonces</strong> is planned so inline scripts can be allow-listed individually.</p>
-
-    <h2>Incident response</h2>
-    <p>If a security incident occurs, we follow this flow:</p>
-    <ol>
-      <li><strong>Detect</strong> the issue and confirm it’s real.</li>
-      <li><strong>Contain</strong> it to limit impact.</li>
-      <li><strong>Assess</strong> scope, data affected, and root cause.</li>
-      <li><strong>Notify</strong> affected users and authorities as legally required.</li>
-      <li><strong>Recover</strong> services to a known-good state.</li>
-      <li><strong>Preserve evidence</strong> for investigation and learning.</li>
-    </ol>
-
-    <h2>CERT-In posture</h2>
-    <ul>
-      <li><strong>Clock synchronisation</strong> — systems sync to a reliable NTP source.</li>
-      <li><strong>Secure logs</strong> — we are putting in place secure collection and retention of relevant logs consistent with applicable requirements.</li>
-      <li><strong>Incident reporting</strong> — covered cyber incidents are reported to CERT-In <strong>within 6 hours</strong> of detection where required.</li>
-      <li><strong>Named security contact</strong> — <a href="mailto:anandp.pareek6@gmail.com">anandp.pareek6@gmail.com</a>.</li>
-    </ul>
-
-    <h2>Reference</h2>
-    <ul>
-      <li><a href="https://www.cert-in.org.in/PDF/CERT-In_Directions_70B_28.04.2022.pdf" target="_blank" rel="noopener">CERT-In Directions (70B), 2022 (PDF)</a></li>
-      <li><a href="https://www.meity.gov.in/static/uploads/2024/06/2bf1f0e9f04e6fb4f8fef35e82c42aa5.pdf" target="_blank" rel="noopener">Digital Personal Data Protection Act, 2023 (PDF)</a></li>
-    </ul>
+    <p>If we become aware of a security incident, we act to contain it and will notify affected users and the relevant authorities where the law requires.</p>
 
     <footer class="policy-foot">
       <div class="links"><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/report-issue">Report issue / complaint</a></div>
-      <p>Wizbit / PrathibhaX is operated by Anand Pareek, an individual resident in India. Security contact: <a href="mailto:anandp.pareek6@gmail.com">anandp.pareek6@gmail.com</a>.</p>
+      <p>Agentic Learning Studio is operated by Anand Pareek, an individual resident in India. Security contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
     </footer>
   </main>
 </body>

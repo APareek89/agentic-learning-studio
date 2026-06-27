@@ -20,8 +20,8 @@ export interface SupportEmail {
 }
 
 const RESEND_URL = "https://api.resend.com/emails";
-const DEFAULT_FROM = "Wizbit Support <onboarding@resend.dev>"; // works until a verified domain is set
-const DEFAULT_TO = "anandp.pareek6@gmail.com";
+const DEFAULT_FROM = "Agentic Learning Studio Support <onboarding@resend.dev>"; // works until a verified domain is set
+const DEFAULT_TO = process.env.CONTACT_EMAIL || "findkailash@gmail.com";
 
 export function emailConfigured(): boolean {
   return !!(process.env.RESEND_API_KEY && (process.env.SUPPORT_TO_EMAIL || DEFAULT_TO));
@@ -73,7 +73,7 @@ export async function sendSupportEmail(e: SupportEmail): Promise<{ sent: boolean
   }
   const r = await resendSend({
     from, to, reply_to: e.email,
-    subject: `[Wizbit ${e.category}] ${e.subject} (#${e.requestId.slice(0, 8)})`,
+    subject: `[Agentic Learning Studio ${e.category}] ${e.subject} (#${e.requestId.slice(0, 8)})`,
     text,
   });
   return { sent: r.ok };
@@ -86,7 +86,7 @@ export async function sendAckEmail(e: SupportEmail): Promise<void> {
   const text = [
     `Hi${e.name ? " " + e.name : ""},`,
     "",
-    `Thanks for contacting Wizbit / PrathibhaX. Your request is logged as #${e.requestId.slice(0, 8)}.`,
+    `Thanks for contacting Agentic Learning Studio. Your request is logged as #${e.requestId.slice(0, 8)}.`,
     "",
     `Category: ${e.category}`,
     `Subject:  ${e.subject}`,
@@ -95,7 +95,7 @@ export async function sendAckEmail(e: SupportEmail): Promise<void> {
     "",
     "Please don't reply with passwords, payment card data, Aadhaar, or other sensitive details.",
     "",
-    "— Anand Pareek, operating Wizbit / PrathibhaX",
+    "— Anand Pareek, operating Agentic Learning Studio",
   ].join("\n");
   await resendSend({ from, to: e.email, subject: `We received your request (#${e.requestId.slice(0, 8)})`, text });
 }
