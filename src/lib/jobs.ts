@@ -11,6 +11,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { dbEnabled, query } from "./db";
 
 export type LessonPhase = "pending" | "designing" | "ready" | "building" | "done" | "error";
 
@@ -60,6 +61,7 @@ export function releaseGenSlot(): void {
 export function createJob(userId: string): Job {
   const job: Job = { id: randomUUID(), userId, status: "planning", isCourse: false, lessons: [], createdAt: Date.now() };
   jobs.set(job.id, job);
+  void persistJob(job); // write-through so another instance can serve the first poll (multi-instance)
   // Light GC (memory-leak fix): drop trackers older than 60 min so this Map can't grow unbounded
   // (matches the skillgen/handson job maps, which already sweep). A Job is just an EPHEMERAL progress
   // tracker — the lesson itself is persisted in Postgres (the job holds only an artifactId pointer),
@@ -100,3 +102,51 @@ export function lessonPercent(l: JobLesson): number {
   if (!l.totalModules) return 30;
   return Math.min(99, 30 + Math.round((70 * l.builtModules) / l.totalModules));
 }
+
+// ---- Cross-instance persistence (additive) ---------------------------------------------------
+// The in-memory Map above is the fast path and the single-instance source of truth. To allow
+// horizontal scaling (multiple Render instances behind the LB), the generating instance also
+// write-throughs its job trackers to `gen_jobs`, and GET /api/job/:id falls back to that table
+// when the job isn't in local memory. All best-effort: a DB hiccup never affects generation.
+
+/** Upsert one job tracker to Postgres (best-effort). */
+export async function persistJob(job: Job): Promise<void> {
+  if (!dbEnabled()) return;
+  try {
+    await query(
+      `insert into gen_jobs (id, user_id, status, stage, error, data, updated_at)
+         values ($1,$2,$3,$4,$5,$6, now())
+       on conflict (id) do update set
+         status = excluded.status, stage = excluded.stage, error = excluded.error,
+         data = excluded.data, updated_at = now()`,
+      [job.id, job.userId, job.status, job.stage ?? null, job.error ?? null, JSON.stringify(job)],
+    );
+  } catch { /* best-effort — in-memory is authoritative on this instance */ }
+}
+
+/** Read a job tracker persisted by ANOTHER instance (or before a restart). Null if absent/off. */
+export async function getPersistedJob(id: string): Promise<Job | null> {
+  if (!dbEnabled()) return null;
+  try {
+    const rows = await query<{ data: unknown }>(`select data from gen_jobs where id = $1 limit 1`, [id]);
+    if (!rows.length) return null;
+    const d = rows[0].data;
+    return (typeof d === "string" ? JSON.parse(d) : d) as Job;
+  } catch { return null; }
+}
+
+// Flush active trackers to the DB every 2s (terminal jobs are written once). Cheap: the Map is
+// GC'd to <60 min, and only non-terminal jobs re-flush. unref() so it never holds the process open.
+const flushedDone = new Set<string>();
+function flushJobs(): void {
+  if (!dbEnabled()) return;
+  for (const j of jobs.values()) {
+    const terminal = j.status === "done" || j.status === "error";
+    if (terminal && flushedDone.has(j.id)) continue;
+    if (terminal) flushedDone.add(j.id);
+    void persistJob(j);
+  }
+  for (const id of [...flushedDone]) if (!jobs.has(id)) flushedDone.delete(id);
+}
+const _jobFlushTimer = setInterval(flushJobs, 2000);
+if (typeof _jobFlushTimer.unref === "function") _jobFlushTimer.unref();

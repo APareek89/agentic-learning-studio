@@ -31,11 +31,11 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
-import { addUpload, addRepoUpload, hasUploads } from "./lib/uploads";
+import { addUpload, addRepoUpload, hasUploads, hydrateUploads } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
-import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
+import { createJob, getJob, getPersistedJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
@@ -399,6 +399,9 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
       readingMode: (body.readingMode as string) ?? "",
     }).catch(() => {});
   }
+  // Multi-instance: if the uploads were created on another instance, pull them into this one's Map
+  // so retrieval (sync) works during this generation. No-op single-instance / no uploads.
+  await hydrateUploads((body.uploadIds as string[]) ?? []);
   // Take a generation slot LAST (so a failure above can't leak it); the job releases it in its finally.
   if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
   const job = createJob(user?.id ?? "anon");
@@ -423,6 +426,9 @@ app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
   if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
   const art = await getArtifact(artifactId);
   if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
+  // Multi-instance: hydrate this artifact's uploads from the DB if they were created elsewhere, so
+  // the (sync) hasUploads()/retrieval below sees them. No-op single-instance / no uploads.
+  await hydrateUploads(art.uploadIds);
   // P1 stale-upload integrity: uploads live in an in-memory store that's lost on restart. If the
   // learner asked to build STRICTLY from their documents (referOnly) but those uploads are gone,
   // fail loudly and DON'T charge — never silently ship an ungrounded lesson they believe is grounded
@@ -449,8 +455,10 @@ app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
 });
 
 // GET /api/job/:id — live progress for the dashboard / Trainer.
-app.get("/api/job/:id", requireAuth, (req, res) => {
-  const job = getJob(req.params.id);
+app.get("/api/job/:id", requireAuth, async (req, res) => {
+  // Local memory first; fall back to the DB tracker (a poll may land on a different instance than
+  // the one generating, or after a restart). The lesson content itself is always durable.
+  const job = getJob(req.params.id) ?? await getPersistedJob(req.params.id);
   if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
   res.json({
     id: job.id, status: job.status, stage: job.stage, error: job.error, isCourse: job.isCourse, courseId: job.courseId,

@@ -17,7 +17,6 @@ import { renderArtifact } from "../render/index";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { makeLLM } from "../agent/llm";
-import { addCredits } from "./credits";
 
 export interface CommunityCard {
   slug: string;
@@ -80,9 +79,6 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "lesson";
 }
 
-/** Most free lesson credits a single account can ever earn from community shares. */
-const SHARE_REWARD_CAP = 20;
-
 /** All community lessons (newest first). The front-end derives "featured" = top 10 by likes. */
 export async function listCommunity(): Promise<CommunityCard[]> {
   if (!dbEnabled()) return [];
@@ -137,10 +133,8 @@ export async function likeCommunity(slug: string): Promise<number | null> {
 export interface ShareResult { ok: boolean; slug?: string; rewarded?: boolean; error?: string; already?: boolean }
 
 /**
- * Snapshot a learner's lesson into the community pool.
- * - Regular share (default): rewards the sharer with 1 free lesson credit.
- * - Contributor publish (`opts.contributor`): credits the contributor's registered
- *   name and does NOT grant a reward (they publish as their role, not for the incentive).
+ * Snapshot a learner's lesson into the community pool. Sharing grants NO credit reward — it's
+ * simply "Share with Community". (`opts.contributor` only changes the displayed submitter name.)
  */
 export async function shareLesson(
   lessonId: string, user: { id: string; email: string }, displayName?: string, opts: { contributor?: boolean } = {}
@@ -188,28 +182,9 @@ export async function shareLesson(
     return { ok: false, error: "Couldn't share this lesson. " + ((e as Error).message?.slice(0, 80) ?? "") };
   }
 
-  // Contributor publishes don't carry the reward incentive.
-  if (opts.contributor) return { ok: true, slug };
-
-  // Reward: 1 free lesson credit. Idempotent per shared lesson (ls_order_id =
-  // 'share:<lessonId>'), so re-sharing the same lesson can't farm credits; plus a
-  // per-user cap on how many shares can ever be rewarded (defense-in-depth — sharing
-  // a lesson you already paid a credit to build is roughly break-even, but cap anyway).
-  const earned = await query<{ n: string }>(
-    `select count(*)::text as n from credit_lots where user_id = $1 and plan_id = 'community-share'`,
-    [user.id]
-  ).catch(() => []);
-  let rewarded = false;
-  if (Number(earned[0]?.n ?? 0) < SHARE_REWARD_CAP) {
-    const { credited } = await addCredits(user.id, 1, {
-      reason: "grant",
-      planId: "community-share",
-      lsOrderId: `share:${lessonId}`,
-    }).catch(() => ({ credited: false, balance: 0 }));
-    rewarded = credited;
-  }
-
-  return { ok: true, slug, rewarded };
+  // Sharing to the Community is now its own reward — no free-lesson credit is granted (the beta
+  // doesn't charge anyway). Both regular and contributor shares simply publish the snapshot.
+  return { ok: true, slug };
 }
 
 // ============================================================================

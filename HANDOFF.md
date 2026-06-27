@@ -6,6 +6,47 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
+## ⚠️ PROD‑ONLY DELTA (2026‑06‑27) — these shipped to `main`/PROD but are NOT on `staging`
+> The "IN SYNC" note below is now STALE. A run of beta‑launch work went to **prod only** (owner's
+> explicit "prod only" instruction), so `origin/main` is AHEAD of `origin/staging` in app content,
+> and the **PROD Supabase DB has migrations `0020` + `0021` that the STAGING DB does NOT.**
+> To re‑sync staging later: overlay these files from `main`, run `npm run migrate` against the
+> **staging** DB, and re‑test. Prod tip at time of writing: see `git log origin/main`.
+>
+> **Prod‑only app changes (not on staging):**
+> 1. **Rebrand** "Wizbit" → **"Agentic Learning Studio"** everywhere user‑facing (title/meta/OG/JSON‑LD,
+>    headers/footers/auth brand, `hands-on.html`, policy pages, `email.ts` templates, consent text,
+>    `robots.txt` + code comments). **Logo file `wizbit-logo.png` kept** (alt text updated); `prathibhax.com`
+>    domain unchanged. ⚠️ Supabase Auth emails (magic‑link/confirmation) still say "Wizbit" — change in the
+>    Supabase dashboard (not in repo).
+> 2. **Free‑beta pricing**: pricing tab, credit pill, buy cards, account top‑up, and the buy‑modal CTA are
+>    **hidden via CSS** (logic untouched — re‑enable by removing the rules in `styles.css`). Hero banner
+>    "Beta launch · Free for one week · 2 free lessons." Out‑of‑credits popup → "Thanks for learning with
+>    us! We'll be back soon."
+> 3. **Privacy/Security rewritten** minimal + de‑vendored (no vendor names, no unverifiable claims). **Terms**
+>    has a free‑beta "as is" clause. Single **`CONTACT_EMAIL`** (env `CONTACT_EMAIL`, default
+>    `findkailash@gmail.com`) injected into policy pages via a `{{CONTACT_EMAIL}}` token (server route
+>    replace) + used in `email.ts` and error messages. Footer disclaimer: "Lessons are inspired by
+>    information available on the web, but curated using AI for you."
+> 4. **Beta traction** — feedback button/popup → `POST /api/feedback` → **`feedback`** table; `POST /api/event`
+>    + client `track()` for `signup` / `lesson_generated` / `library_lesson_opened` / `lesson_completed` /
+>    `skill_generated` → **`events`** table. **Migration `0020_beta_feedback_events.sql` applied to PROD DB.**
+> 5. **SEO** — title/meta/OG/Twitter/JSON‑LD now lead with **"Learn Artificial Intelligence (AI)"** (broadened
+>    from agentic‑only), keeping "agentic AI" in scope.
+> 6. **Community sharing** — the **1‑free‑lesson reward removed**; it's now just **"Share with Community"**
+>    (popup + My Lessons button + success copy). `community.ts shareLesson` no longer grants credit.
+> 7. **Multi‑instance groundwork (additive)** — persist generation jobs + uploaded‑doc grounding so polls/builds
+>    can run on any instance: new **`gen_jobs`** + **`upload_docs`** tables; `jobs.ts` write‑through flush
+>    (2 s) + `GET /api/job/:id` DB fallback; `uploads.ts` write‑through + `hydrateUploads()` called at
+>    `/api/overview` & `/api/build`. **Migration `0021_persist_jobs_uploads.sql` applied to PROD DB.**
+>    In‑memory stays the fast path → **single‑instance behaviour unchanged**. To actually scale to ~50
+>    concurrent: provision multiple Render instances + set `MAX_CONCURRENT_GENERATIONS` per instance (the
+>    box is 1 CPU/2 GB → ~2 concurrent today; Claude Scale tier is NOT the bottleneck). Known gap:
+>    `/api/jobs/active` (dashboard reattach) is still local‑memory only — fine for direct poll‑by‑id.
+>
+> **Migrations on PROD DB but not STAGING DB:** `0020`, `0021`. **New prod env vars:** `CONTACT_EMAIL`
+> (optional, has default), `MAX_CONCURRENT_GENERATIONS` (optional, for scaling).
+
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
 > **2026-06-26 UPDATE — NOW ON STAGING AND PROD (in sync again):** promoted to prod (`origin/main` = `83c98a5`, app content
 > byte-identical to `origin/staging`): (a) the lesson-toolbar title-removal fix, (b) **"Get Hands on" browser-run Python

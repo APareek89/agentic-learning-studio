@@ -14,6 +14,7 @@
 import { localEmbeddings } from "../rag/embed";
 import { chunkSource } from "../rag/chunkers";
 import type { LoadedSource } from "../rag/loaders";
+import { dbEnabled, query } from "./db";
 
 interface UploadChunk {
   content: string;
@@ -64,6 +65,7 @@ export async function addUpload(id: string, src: LoadedSource): Promise<{ id: st
     createdAt: Date.now(),
   });
   gcUploads();
+  void persistUploadDoc(id); // write-through so a build on another instance can hydrate it
   return { id, title: src.title, chunkCount: chunks.length };
 }
 
@@ -90,7 +92,44 @@ export async function addRepoUpload(id: string, title: string, files: { path: st
   const vectors = await localEmbeddings.embedPassages(raw.map((c) => c.content));
   uploads.set(id, { id, title, sourceType: "repo", chunks: raw.map((c, i) => ({ content: c.content, embedding: vectors[i], title: c.title })), createdAt: Date.now() });
   gcUploads();
+  void persistUploadDoc(id); // write-through (cross-instance hydration)
   return { id, title, chunkCount: raw.length };
+}
+
+// ---- Cross-instance persistence (additive) ---------------------------------------------------
+// In-memory Map above is the fast path. We also write-through each upload's chunks+embeddings to
+// `upload_docs` so a generation that lands on ANOTHER instance can hydrate them into its own Map
+// (see hydrateUploads, called at the /api/overview and /api/build entry points). Best-effort.
+
+/** Persist the in-memory upload doc `id` to Postgres (best-effort). */
+async function persistUploadDoc(id: string): Promise<void> {
+  if (!dbEnabled()) return;
+  const u = uploads.get(id);
+  if (!u || !u.chunks.length) return;
+  try {
+    await query(
+      `insert into upload_docs (id, title, source_type, chunks) values ($1,$2,$3,$4)
+       on conflict (id) do nothing`,
+      [u.id, u.title, u.sourceType, JSON.stringify(u.chunks)],
+    );
+  } catch { /* best-effort — in-memory is authoritative on this instance */ }
+}
+
+/** Load any of `ids` not already in local memory from Postgres into the Map. Call before retrieval
+ *  so the sync hasUploads()/retrieveFromUploads() path works after a cross-instance hop. */
+export async function hydrateUploads(ids: string[] | undefined): Promise<void> {
+  if (!Array.isArray(ids) || !ids.length || !dbEnabled()) return;
+  const missing = ids.filter((id) => id && !uploads.has(id));
+  if (!missing.length) return;
+  try {
+    const rows = await query<{ id: string; title: string; source_type: string; chunks: unknown }>(
+      `select id, title, source_type, chunks from upload_docs where id = any($1)`, [missing],
+    );
+    for (const r of rows) {
+      const chunks = (typeof r.chunks === "string" ? JSON.parse(r.chunks) : r.chunks) as UploadChunk[];
+      uploads.set(r.id, { id: r.id, title: r.title, sourceType: r.source_type, chunks: Array.isArray(chunks) ? chunks : [], createdAt: Date.now() });
+    }
+  } catch { /* best-effort */ }
 }
 
 /** Titles for the given ids (used for the provenance banner). Defensive: older lessons

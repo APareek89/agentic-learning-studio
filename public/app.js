@@ -889,7 +889,7 @@ function lessonCard(l, buildingPct) {
     <div class="lr-actions">
       <button class="ghost lr-open" type="button">${isCourse ? "Open course" : "Open"}</button>
       ${isCourse ? "" : `<a class="ghost lr-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
-      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Community Share — 1 Free Lesson"}</button>
+      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Share with Community"}</button>
     </div>`;
   el.querySelector(".lr-open").addEventListener("click", () => {
     if (isCourse) { openCourseById(l.courseId, l.title); return; }
@@ -1098,7 +1098,7 @@ window.openBuyCredits = openBuyCredits; // skills.js (a separate script) reuses 
 
 // ============================================================================
 // Community courses — learner-shared lessons (public browse), likes, and the
-// "Community Share — 1 Free Lesson" flow (My Lessons + the Trainer 2-module popup).
+// "Share with Community" flow (My Lessons + the Trainer 2-module popup). No credit reward.
 // ============================================================================
 const commSearch = document.getElementById("comm-search");
 const commFeatured = document.getElementById("comm-featured");
@@ -1235,17 +1235,13 @@ shareGo.addEventListener("click", async () => {
     if (!res.ok) throw new Error(data.error || "Couldn't share this lesson.");
     markShared(shareLessonId);
     shareOverlay.hidden = true;
-    // Tailor the success copy: a fresh reward vs. an already-shared / cap-reached share.
-    if (codeSub) codeSub.innerHTML = data.rewarded
-      ? "Your lesson is now in <strong>Community courses</strong>, and we've added <strong>1 free lesson</strong> to your account 🎉"
-      : "Your lesson is now live in <strong>Community courses</strong>. Thanks for contributing!";
+    if (codeSub) codeSub.innerHTML = "Your lesson is now live in <strong>Community courses</strong>. Thanks for contributing! 🙌";
     codeOverlay.hidden = false;
-    if (data.rewarded) loadCredits(); // a free lesson landed — refresh the nav pill
     if (!document.getElementById("tab-dashboard").hidden) loadDashboard(); // refresh the row → "✓ Shared"
   } catch (e) {
     shareMsg.hidden = false; shareMsg.textContent = "⚠️ " + e.message;
   } finally {
-    shareGo.disabled = false; shareGo.textContent = "Share & get my free lesson →";
+    shareGo.disabled = false; shareGo.textContent = "Share with Community →";
   }
 });
 document.getElementById("code-view").addEventListener("click", () => { codeOverlay.hidden = true; switchTab("community"); commLoaded = false; loadCommunity(); });
