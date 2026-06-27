@@ -176,14 +176,13 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     };
     await Promise.all(bp.modules.filter((m) => m.loadState === "full" && m.blocks.length > 0).map(attachVisual));
 
-    // A1/B3 — build module bodies in PARALLEL with a concurrency cap. Raised 3→5 (one wave for a
-    // 5-module lesson) now that prompt caching cuts per-call load: module 1 is built FIRST (below)
-    // so it WRITES the cached MODULE_SYSTEM prefix, then the rest fan out and READ it — so the wave
-    // is both cheaper and lighter on the rate/overload limit (the per-call jittered 429/529 backoff
-    // in withOverloadRetry still covers a burst). Sharing `bp` is safe: each module writes only its
-    // own slot, and the bp-wide repairBlueprint() is synchronous (atomic in Node) and skips stub
-    // modules, so concurrent builds can't corrupt each other. Env-overridable.
-    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 8);
+    // Build module bodies in ONE parallel wave with a concurrency cap. Default 5 (covers a typical
+    // 5-module lesson in one wave); lowered from 8 to bound PEAK memory — each concurrent build holds
+    // a streamed ~16k-token response + the shared blueprint, and several generations can run at once,
+    // so a high cap spikes RAM (the 2 GB instance OOM'd with 8 × up-to-4 generations). Sharing `bp`
+    // is safe: each module writes only its own slot, and the bp-wide repairBlueprint() is synchronous
+    // (atomic in Node) and skips stub modules. Env-overridable (MAX_MODULE_CONCURRENCY).
+    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 5);
 
     // Persist serially in completion order (A4 — incremental render) so the stored lesson grows
     // monotonically and the front-end shows each module as soon as it's ready. renderArtifact is

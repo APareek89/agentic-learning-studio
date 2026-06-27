@@ -40,10 +40,11 @@ export interface Job {
 const jobs = new Map<string, Job>();
 
 // ---- Global concurrency cap on generation (protects RAM + the Anthropic bill) ----
-// Each lesson generation = 1 Opus + ~5 Sonnet calls. We allow at most this many to run
-// at once across ALL users; over the cap, the route returns 429 "busy, try shortly".
-// In-memory = correct for the single Render instance (see CHECKLIST scaling note).
-export const MAX_CONCURRENT_GENERATIONS = Number(process.env.MAX_CONCURRENT_GENERATIONS) || 4;
+// Each lesson generation runs several Sonnet calls + holds a large blueprint in memory. We allow at
+// most this many at once across ALL users; over the cap, the route returns 429 "busy, try shortly".
+// Default 2 (lowered from 4) to bound PEAK RAM on the 2 GB instance. In-memory = correct for the
+// single Render instance (see CHECKLIST scaling note). Env-overridable (MAX_CONCURRENT_GENERATIONS).
+export const MAX_CONCURRENT_GENERATIONS = Number(process.env.MAX_CONCURRENT_GENERATIONS) || 2;
 let activeGenerations = 0;
 /** Try to take a generation slot. Returns false if we're at the cap. */
 export function acquireGenSlot(): boolean {
