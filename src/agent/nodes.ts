@@ -104,7 +104,18 @@ const InferenceSchema = z.object({
   learningGoal: z.string(),
   lessonFocus: z.string(),
   mustCover: z.array(z.string()).default([]),
+  // S6 — topic BREADTH, so the lesson scales its module count to how much ground it covers.
+  scope: z.enum(["narrow", "moderate", "broad"]).optional(),
 });
+
+/** S6 — map the profiler's topic-breadth classification to a target module count
+ *  (EXCLUDING the synthesis "Putting it together", the knowledge check, and Sources).
+ *  broad field/landscape → 8, moderate focused area → 6, narrow single subject → 5. */
+function moduleTargetFor(scope?: "narrow" | "moderate" | "broad"): number {
+  if (scope === "broad") return 8;
+  if (scope === "moderate") return 6;
+  return 5; // narrow / unset — the existing default
+}
 
 // ============================================================================
 // NODE 1 — profiler
@@ -196,6 +207,9 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     learningGoal: inf.learningGoal,
     lessonFocus: inf.lessonFocus,
     mustCover: inf.mustCover ?? [],
+    // S6 — breadth → target module count (broad=8 / moderate=6 / narrow=5).
+    scope: inf.scope,
+    moduleTarget: moduleTargetFor(inf.scope),
   };
 
   const focus = profile.industry ? ` for **${profile.industry}**` : "";
@@ -405,6 +419,7 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
               learningGoal: intent?.learningGoal,
               lessonFocus: intent?.lessonFocus,
               mustCover: intent?.mustCover,
+              moduleTarget: intent?.moduleTarget,
               sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
             })
           ),
@@ -468,6 +483,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             learningGoal: intent?.learningGoal,
             lessonFocus: intent?.lessonFocus,
             mustCover: intent?.mustCover,
+            moduleTarget: intent?.moduleTarget,
             sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, asOfDate: s.asOfDate, origin: s.origin })),
             plan: state.plan,
             repairErrors,
@@ -481,7 +497,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   } catch (err) {
     console.warn("[architect] skeleton generation failed:", (err as Error).message?.slice(0, 200));
     return {
-      validation: { ok: false, errors: ["The previous outline was incomplete/invalid. Return a COMPLETE Blueprint OUTLINE with ALL fields, 4–5 modules, every module's blocks EMPTY ([]) and loadState \"stub\"; keep it tight."] },
+      validation: { ok: false, errors: [`The previous outline was incomplete/invalid. Return a COMPLETE Blueprint OUTLINE with ALL fields, ${intent?.moduleTarget ?? 5} modules, every module's blocks EMPTY ([]) and loadState \"stub\"; keep it tight.`] },
       reviseCount: (state.reviseCount ?? 0) + 1,
       messages: [{ role: "assistant" as const, node: "Architect", content: "Outline was incomplete — retrying…" }],
     };
@@ -660,21 +676,13 @@ export async function runDeepDive(
     return { ok: false, sources };
   }
 
-  // GATE: question/quiz blocks ONLY when the learner asked for a Knowledge check.
-  // The model sometimes emits a selfCheckQuiz "when useful" regardless; this is the
-  // hard, deterministic guarantee that no quiz appears unless lessonType includes it.
-  const wantsKnowledgeCheck = (p.lessonTypes ?? []).includes("knowledge_check");
-  if (!wantsKnowledgeCheck) {
-    const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
-    if (noQuiz.length) blocks = noQuiz; // keep at least one block if the model returned only a quiz
-  }
-
-  // Tier-A retention: deterministically stamp each knowledgeCheck question with its source
-  // module id, so the lesson's feedback can link back to where it was taught (regardless of
-  // whether the model set it). Safe no-op when there are no knowledgeCheck blocks.
-  for (const b of blocks) {
-    if (b.kind === "knowledgeCheck") for (const q of b.questions) q.sourceModuleId = q.sourceModuleId || moduleId;
-  }
+  // S5 — GATE: a module NEVER carries a quiz/knowledge-check block. The lesson has ONE
+  // end-of-lesson knowledge check (bp.finalCheck, written by writeOverviewProse). Strip any
+  // selfCheckQuiz / knowledgeCheck the model emitted regardless of the lesson's KC setting.
+  // The in-flow retrieval primitives (predictThenReveal on code, "predict first" prose hooks,
+  // scenarios) are NOT quiz blocks, so they are untouched.
+  const noQuiz = blocks.filter((b) => b.kind !== "selfCheckQuiz" && b.kind !== "knowledgeCheck");
+  if (noQuiz.length) blocks = noQuiz; // keep at least one block if the model returned only a quiz
 
   // Merge focused sources into citations so any [S#]/[U#] in the new blocks resolves,
   // tagged by origin (upload vs KB).
@@ -728,6 +736,21 @@ const OverviewProseSchema = z.object({
   checklist: z.array(z.object({ label: z.string() })).default([]),
   capstonePrompt: z.string().default(""),
   capstoneNext: z.string().optional(),
+  // S5 — the single end-of-lesson knowledge check (4–5 Qs). Empty unless the lesson wants a KC.
+  finalCheck: z
+    .array(
+      z.object({
+        kind: z.enum(["mcq", "freeText"]),
+        prompt: z.string(),
+        options: z.array(z.object({ text: z.string(), correct: z.boolean().optional() })).optional(),
+        acceptableAnswer: z.string().optional(),
+        explanation: z.string(),
+        freeRecallFirst: z.boolean().optional(),
+        confidence: z.boolean().optional(),
+        conceptTags: z.array(z.string()).optional(),
+      })
+    )
+    .default([]),
 });
 
 export async function writeOverviewProse(bp: Blueprint, opts: { config?: RunnableConfig } = {}): Promise<void> {
@@ -737,7 +760,13 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
   const needDefs = Object.entries(bp.glossary).filter(([, t]) => !((t.laymanDefinition as string) || "").trim());
   const syn = bp.synthesis as { recap?: unknown; buildOrder?: unknown[] } | undefined;
   const needSynthesis = !(syn?.buildOrder && syn.buildOrder.length) && !syn?.recap;
-  if (!needDefs.length && !needSynthesis) return; // already filled (old draft / re-run)
+  // S5 — generate the single end-of-lesson knowledge check here (during the build, in parallel
+  // with the module bodies) when the lesson wants one and it isn't already built. Gated exactly
+  // like the old per-module checks (lessonTypes includes "knowledge_check"; horizontal mode
+  // already folds that in at the profiler).
+  const wantsCheck = (p.lessonTypes ?? []).includes("knowledge_check");
+  const needFinalCheck = wantsCheck && !bp.finalCheck;
+  if (!needDefs.length && !needSynthesis && !needFinalCheck) return; // already filled (old draft / re-run)
 
   const out = await withOverloadRetry(() =>
     moduleLLM.withStructuredOutput(OverviewProseSchema, { name: "overview_prose" }).invoke(
@@ -751,8 +780,9 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
             buildGoal: p.buildGoal,
             objective: p.objective,
             terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
-            modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces })),
+            modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces, objectives: m.objectives })),
             needSynthesis,
+            needFinalCheck,
           })
         ),
       ],
@@ -782,6 +812,29 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
     if (buildOrder.length) s.buildOrder = buildOrder;
     if (checklist.length) s.checklist = checklist.map((c, i) => ({ id: `c${i + 1}`, label: c.label }));
     if (capstonePrompt) s.capstone = { prompt: capstonePrompt + (out.capstoneNext?.trim() ? ` Next: ${out.capstoneNext.trim()}` : "") };
+  }
+  // S5 — build the single lesson-level knowledge check (stable block id so /api/check can grade
+  // it). Only when wanted, not already present, and the model returned a usable set (≥3 Qs).
+  if (needFinalCheck && (out.finalCheck?.length ?? 0) >= 3) {
+    const questions = (out.finalCheck ?? []).slice(0, 5).map((q, i) => ({
+      id: `fc${i + 1}`,
+      kind: q.kind,
+      prompt: q.prompt,
+      options: q.kind === "mcq" ? (q.options ?? []) : undefined,
+      acceptableAnswer: q.acceptableAnswer,
+      explanation: q.explanation || "",
+      freeRecallFirst: q.freeRecallFirst,
+      confidence: q.confidence,
+      conceptTags: q.conceptTags,
+    }));
+    bp.finalCheck = {
+      id: "_final_check",
+      kind: "knowledgeCheck",
+      title: "Knowledge check",
+      intro: "A quick check across the whole lesson — pick or type your answers.",
+      cumulative: true,
+      questions,
+    };
   }
   repairBlueprint(bp); // re-resolve any term/citation refs the new prose touched
 }

@@ -254,36 +254,16 @@ function knowledgeCheck(b: Extract<Block, { kind: "knowledgeCheck" }>): string {
   return `<div class="kc" data-block="${escAttr(b.id)}">${b.title ? `<h3>🧠 ${esc(b.title)}</h3>` : `<h3>🧠 Knowledge check</h3>`}${b.intro ? `<p class="kc-intro">${esc(b.intro)}</p>` : ""}<div class="kc-score" hidden>Score: <b>0</b>/${b.questions.length}</div>${qs}</div>`;
 }
 
-/** Round-robin a cumulative 4–5 question set ACROSS the modules' knowledgeCheck blocks
- *  (so it spans the whole lesson — interleaving aids retention). Each item keeps its
- *  SOURCE blockId so grading via /api/check still resolves to the right question.
- *  Shared by horizontal mode's final page and (later) a vertical end-of-lesson set. */
-function cumulativeCheckItems(bp: Blueprint, max = 5): { blockId: string; q: KCQuestion }[] {
-  const groups: { blockId: string; q: KCQuestion }[][] = [];
-  for (const m of bp.modules) {
-    for (const b of m.blocks) {
-      if (b.kind === "knowledgeCheck") groups.push(b.questions.map((q) => ({ blockId: b.id, q })));
-    }
+/** S5 — render the SINGLE lesson-level knowledge check (bp.finalCheck). Shared by the vertical
+ *  `_check` pane and the horizontal final-check page. Each rendered item carries finalCheck's
+ *  stable block id, so POST /api/check grades it. While the build is still filling it in (it's
+ *  written during the build, in parallel with the bodies), show a "still building" placeholder. */
+function finalCheckInner(bp: Blueprint): string {
+  const fc = bp.finalCheck;
+  if (!fc || !fc.questions?.length) {
+    return `<div class="kc kc-pending"><h3>🧠 Knowledge check</h3><p class="kc-intro">Your knowledge check appears here once the lesson finishes building — give it a moment, then come back.</p></div>`;
   }
-  const flat: { blockId: string; q: KCQuestion }[] = [];
-  for (let i = 0; flat.length < max; i++) {
-    let advanced = false;
-    for (const g of groups) {
-      if (g[i]) { flat.push(g[i]); advanced = true; if (flat.length >= max) break; }
-    }
-    if (!advanced) break;
-  }
-  return flat;
-}
-
-/** Horizontal mode's FINAL page: the cumulative interleaved check across the lesson. */
-function horizontalCheckPage(bp: Blueprint): string {
-  const flat = cumulativeCheckItems(bp, 5);
-  if (!flat.length) {
-    return `<div class="kc kc-pending"><h3>🧠 Knowledge check</h3><p class="kc-intro">Your knowledge check appears here once the lesson finishes building — give the pages a moment, then come back.</p></div>`;
-  }
-  const items = flat.map((x, i) => kcItemHtml(x.blockId, x.q, i)).join("");
-  return `<div class="kc" data-block="_mixed"><h3>🧠 Knowledge check</h3><p class="kc-intro">A quick check across what you just learned. Pick or type your answers.</p><div class="kc-score" hidden>Score: <b>0</b>/${flat.length}</div>${items}</div>`;
+  return knowledgeCheck(fc);
 }
 
 // ---- estimated reading time for a set of blocks (rough: ~200 wpm) ----
@@ -701,7 +681,7 @@ function modulePaneH(m: Module, bp: Blueprint, activeMod: boolean): string {
 /**
  * HORIZONTAL reading mode — a fixed-viewport paged deck. The TOC nav stays on the left
  * (same place as the vertical workbench); the right side is a horizontal track of full
- * pages: overview (mental map) → modules → synthesis → [sources] → knowledge check (LAST).
+ * pages: overview (mental map) → modules → synthesis → [knowledge check] → [sources].
  * Each page has a Next button; heavy blocks open in a modal (the runtime owns that).
  * Vertical mode is completely untouched — this is a separate, additive layout.
  */
@@ -734,11 +714,14 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
   const specialPane = (id: string, label: string, eyebrow: string, html: string) =>
     `<section class="hx-mod hidden" data-hmod="${escAttr(id)}"><div class="hx-tab" data-ti="0" data-label="${escAttr(label)}" data-eyebrow="${escAttr(eyebrow)}"><div class="hx-concept">${html}</div></div></section>`;
 
+  // S5 — single end-of-lesson knowledge check page, AFTER synthesis and BEFORE Sources.
+  const wantsCheck = (bp.learnerProfile.lessonTypes ?? []).includes("knowledge_check");
   type Nav = { id: string; label: string; icon?: string; num?: number; module?: boolean };
   const nav: Nav[] = [];
   nav.push({ id: "_map", label: "Overview", icon: "🗺" });
   for (const m of bp.modules) nav.push({ id: m.id, label: m.title, num: m.order, module: true });
   nav.push({ id: "_synth", label: "Putting it together", icon: "✦" });
+  if (wantsCheck) nav.push({ id: "_check", label: "Knowledge check", icon: "🧠" });
   if (hasCitations) nav.push({ id: "_sources", label: "Sources", icon: "⌕" });
 
   // Left nav: Overview, then the LESSON MODULES, then synthesis/sources.
@@ -756,6 +739,7 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
     `<section class="hx-mod" data-hmod="_map"><div class="hx-tab" data-ti="0" data-label="Overview" data-eyebrow="Lesson overview"><div class="hx-concept">${heroInner(bp, metaBits)}${buildBanner(bp, !!opts.previewOnly)}${recapBanner(bp)}${provenanceBanner(bp)}${whatsNew(bp)}${mentalMap(bp)}</div></div></section>` +
     bp.modules.map((m) => modulePaneH(m, bp, false)).join("") +
     specialPane("_synth", "Putting it together", "Synthesis", synthesisInner(bp)) +
+    (wantsCheck ? specialPane("_check", "Knowledge check", "Test yourself", finalCheckInner(bp)) : "") +
     (hasCitations ? specialPane("_sources", "Sources", "Provenance", citationsInner(bp)) : "");
 
   const toggles = contentToggleBar(bp);
@@ -809,14 +793,20 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
     .map((m) => `<button class="navitem${isBuilt(m) ? "" : " building"}" data-goto="${escAttr(m.id)}"><span class="ni-num">${m.order}</span><span class="ni-label">${esc(m.title)}</span><span class="ni-status" aria-hidden="true"></span></button>`)
     .join("");
   const hasCitations = Object.keys(bp.citations).length > 0;
+  // S5 — the single end-of-lesson knowledge check gets its own pane, placed AFTER synthesis and
+  // BEFORE Sources. Shown whenever the lesson wants a KC (the pane shows a placeholder until the
+  // build fills bp.finalCheck in). A content-only lesson (no knowledge_check) has no check pane.
+  const wantsCheck = (p.lessonTypes ?? []).includes("knowledge_check");
   const navExtra =
     `<button class="navitem nav-special" data-goto="_synth"><span class="ni-num">✦</span><span class="ni-label">Putting it together</span></button>` +
+    (wantsCheck ? `<button class="navitem nav-special" data-goto="_check"><span class="ni-num">🧠</span><span class="ni-label">Knowledge check</span></button>` : "") +
     (hasCitations ? `<button class="navitem nav-special" data-goto="_sources"><span class="ni-num">⌕</span><span class="ni-label">Sources</span></button>` : "");
 
   // Right-pane panels.
   const panels =
     bp.modules.map((m) => modulePanel(m, bp)).join("") +
     `<section class="panel" data-panel="_synth" id="panel-_synth">${synthesisInner(bp)}</section>` +
+    (wantsCheck ? `<section class="panel" data-panel="_check" id="panel-_check">${finalCheckInner(bp)}</section>` : "") +
     (hasCitations ? `<section class="panel" data-panel="_sources" id="panel-_sources">${citationsInner(bp)}</section>` : "");
 
   // Which content types exist? Drives which in-lesson show/hide toggles we render.

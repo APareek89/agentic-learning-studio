@@ -43,7 +43,11 @@ export async function retrieve(
   k = 8,
   opts: { category?: string } = {}
 ): Promise<{ chunks: RetrievedChunk[]; coverage: number }> {
-  if (!ragEnabled() || !q.trim()) return { chunks: [], coverage: 0 };
+  if (!ragEnabled() || !q.trim()) {
+    // Grounding telemetry: a call that can't ground at all (RAG off / empty query) is ungrounded.
+    console.log(`[retrieve] ungrounded · 0 chunks · ${!ragEnabled() ? "rag-disabled" : "empty-query"}`);
+    return { chunks: [], coverage: 0 };
+  }
 
   // Optional category scope (e.g. "Agent Skills") — ADDITIVE: when omitted the
   // queries are exactly as before, so existing callers are unaffected. When set,
@@ -133,5 +137,11 @@ export async function retrieve(
   const strong = sims.filter((s) => s >= 0.45).length;
   const coverage = chunks.length ? 0.5 * topSim + 0.5 * Math.min(1, strong / Math.max(1, k * 0.4)) : 0;
 
-  return { chunks, coverage: Number(coverage.toFixed(3)) };
+  // Grounding telemetry — how often a retrieval lands KB chunks vs comes back empty. The home
+  // page now markets the whole AI landscape, but `chunks` is agentic-AI-heavy, so many broad
+  // topics will retrieve nothing (ungrounded). Log per call to measure that rate cheaply.
+  const cov = Number(coverage.toFixed(3));
+  console.log(`[retrieve] ${chunks.length ? "grounded" : "ungrounded"} · ${chunks.length} chunk(s) · coverage=${cov} · q="${q.replace(/\s+/g, " ").trim().slice(0, 70)}"`);
+
+  return { chunks, coverage: cov };
 }

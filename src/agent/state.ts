@@ -42,6 +42,14 @@ export interface Intent {
   lessonFocus: string;
   /** The specific things the lesson MUST center on (e.g. the named frameworks to compare). */
   mustCover: string[];
+  /** S6 — how BROAD the requested topic is: "narrow" (one specific thing), "moderate"
+   *  (a focused area with a few facets), "broad" (a whole field/landscape). Set by the
+   *  profiler; drives moduleTarget. */
+  scope?: "narrow" | "moderate" | "broad";
+  /** S6 — the target number of MODULES the planner/architect should produce (EXCLUDING the
+   *  "Putting it together" synthesis, the knowledge check, and Sources). Mapped from scope:
+   *  broad=8, moderate=6, narrow=5. */
+  moduleTarget?: number;
 }
 
 /** A source retrieved for this generation. `origin` distinguishes the learner's own
