@@ -16,8 +16,8 @@ import { query, rawPool, dbEnabled } from "./db";
 
 /** Lots (and the free grant) expire 12 months after they're created. */
 const CREDIT_TTL = "12 months";
-/** Every signed-in user gets this many free lesson credits, once. */
-export const FREE_GRANT_LESSONS = 1;
+/** Every signed-in user gets this many free credits, once (batch-1: 2 at sign-up). */
+export const FREE_GRANT_LESSONS = 2;
 
 export interface AddCreditsOpts {
   reason: "purchase" | "grant" | "admin";
@@ -160,46 +160,56 @@ export async function getAccountSummary(userId: string, email = ""): Promise<Acc
 }
 
 /**
- * Spend one credit off the OLDEST non-expired lot, atomically (row-locked so two
- * concurrent builds can't double-spend the same lot). Writes a −1 ledger row.
- * Returns false when the user has no spendable credit.
+ * Spend `amount` credits across the user's non-expired lots OLDEST-first (FIFO), atomically
+ * (row-locked so two concurrent spends can't double-draw the same lot). Fractional amounts are
+ * supported (batch-1: a lesson costs 1, a skill 0.5; the lots + ledger are numeric(10,2)). A
+ * lesson can now span lots — a prior 0.5 skill spend leaves a 0.5 remainder, so a single-lot
+ * decrement would either strand it or violate the `lessons_remaining >= 0` check. Writes ONE
+ * `-amount` ledger row. Returns ok:false (no spend) when the spendable balance can't cover `amount`.
  */
-export async function spendOne(userId: string): Promise<{ ok: boolean; balance: number }> {
-  if (!userId || !dbEnabled()) return { ok: false, balance: 0 };
+export async function spend(userId: string, amount: number, reason = "generation"): Promise<{ ok: boolean; balance: number }> {
+  if (!userId || !dbEnabled() || !(amount > 0)) return { ok: false, balance: 0 };
   const pool = rawPool();
   if (!pool) return { ok: false, balance: 0 };
+  const EPS = 1e-9;
   const client = await pool.connect();
   try {
     await client.query("begin");
-    const upd = await client.query(
-      `update credit_lots
-          set lessons_remaining = lessons_remaining - 1
-        where id = (
-          select id from credit_lots
-           where user_id = $1
-             and lessons_remaining > 0
-             and (expires_at is null or expires_at > now())
-           order by created_at asc
-           for update skip locked
-           limit 1
-        )
-       returning id`,
+    // Lock every spendable lot oldest-first; we draw across them until `amount` is covered.
+    const lots = await client.query<{ id: string; rem: string }>(
+      `select id, lessons_remaining::text as rem
+         from credit_lots
+        where user_id = $1
+          and lessons_remaining > 0
+          and (expires_at is null or expires_at > now())
+        order by created_at asc
+        for update skip locked`,
       [userId]
     );
-    const ok = (upd.rowCount ?? 0) > 0;
-    if (ok) {
-      await client.query(
-        `insert into credit_ledger (user_id, delta, reason) values ($1, -1, 'generation')`,
-        [userId]
-      );
+    const total = lots.rows.reduce((s, r) => s + Number(r.rem), 0);
+    if (total + EPS < amount) {
+      await client.query("rollback").catch(() => {});
+      return { ok: false, balance: await getBalance(userId) };
     }
+    let remaining = amount;
+    for (const lot of lots.rows) {
+      if (remaining <= EPS) break;
+      const take = Math.min(Number(lot.rem), remaining);
+      await client.query(`update credit_lots set lessons_remaining = lessons_remaining - $2 where id = $1`, [lot.id, take]);
+      remaining -= take;
+    }
+    await client.query(`insert into credit_ledger (user_id, delta, reason) values ($1, $2, $3)`, [userId, -amount, reason]);
     await client.query("commit");
-    const balance = await getBalance(userId);
-    return { ok, balance };
+    return { ok: true, balance: await getBalance(userId) };
   } catch (e) {
     await client.query("rollback").catch(() => {});
     throw e;
   } finally {
     client.release();
   }
+}
+
+/** A completed LESSON build costs ONE credit (the common case; back-compat wrapper). */
+export async function spendOne(userId: string): Promise<{ ok: boolean; balance: number }> {
+  return spend(userId, 1, "generation");
 }

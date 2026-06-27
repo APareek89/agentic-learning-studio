@@ -39,7 +39,7 @@ import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs, hasActive
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
-import { getBalance, ensureFreeGrant, addCredits, getAccountSummary } from "./lib/credits";
+import { getBalance, ensureFreeGrant, addCredits, getAccountSummary, spend } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
@@ -456,6 +456,12 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
   const user = await getUser(req.headers.authorization);
   input.userId = user?.id ?? "";
   input.userEmail = user?.email ?? "";
+  // Credit gate (batch-1): a SKILL costs 0.5 credits. Grant the free credits on first use, then
+  // block below 0.5 (the buyer gets the buy-a-plan popup). Skipped when DB/auth is off (local dev).
+  if (user && dbEnabled()) {
+    const bal = await ensureFreeGrant(user.id);
+    if (bal < 0.5) { res.status(402).json({ error: "You need 0.5 credits to generate a skill. Add more to keep going.", needCredits: true }); return; }
+  }
   // Cache hit → return a job that's already done (no gen slot needed). Still persist
   // it to THIS user's My Skills (fire-and-forget; never blocks the response).
   const cached = getCachedSkill(input);
@@ -467,6 +473,8 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
     job.status = "done";
     job.saved = true;
     void persistSkill(input.userId, input.userEmail, cached, !!job.grounded);
+    // Charge 0.5 on delivery (a cache hit still delivers a skill to this user's My Skills).
+    if (user && dbEnabled()) void spend(user.id, 0.5, "skill").catch((e) => console.error("[skill] credit deduct failed (cache)", e));
     res.json({ jobId: job.id });
     return;
   }

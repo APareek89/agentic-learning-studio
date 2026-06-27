@@ -143,6 +143,8 @@
       const res = await fetch("/api/skill/generate", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(buildPayload()) });
       if (res.status === 401) { show("form"); openAuth("signin"); return; }
       const d = await res.json();
+      // Item 2/3: a skill costs 0.5 credits — at 0 balance the server returns 402; show the buy-a-plan popup.
+      if (res.status === 402) { show("form"); if (window.openBuyCredits) window.openBuyCredits(d.error || "You need 0.5 credits to generate a skill."); else showError(d.error || "Out of credits."); return; }
       if (!res.ok) { showError(d.error || "Could not start generation."); return; }
       poll(d.jobId);
     } catch (e) { showError(e.message || "Network error — please try again."); }
@@ -157,7 +159,7 @@
         job = await r.json();
       } catch (e) { showError("Lost the generation — please try again."); return; }
       setProgress(job.percent || 0);
-      if (job.status === "done") { if (job.skill) renderResult(job.skill, job.grounded, job.saved); else showError("Generation finished but returned nothing — try again."); return; }
+      if (job.status === "done") { if (job.skill) { renderResult(job.skill, job.grounded, job.saved); if (job.saved) loadMySkills(); } else showError("Generation finished but returned nothing — try again."); return; }
       if (job.status === "error") { showError(job.error || "Generation failed — try again."); return; }
       pollTimer = setTimeout(tick, 1500);
     };

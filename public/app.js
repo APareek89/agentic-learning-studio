@@ -1001,6 +1001,68 @@ libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
 
 function openLibraryLesson(slug, title) { openTab({ type: "library", title: title, slug: slug }); }
 
+// ---- Item 4: "while you wait" — relevant free Library lessons shown during overview generation ----
+const genSuggest = document.getElementById("gen-suggest");
+const genSuggestGrid = document.getElementById("gen-suggest-grid");
+async function ensureLibForWait() {
+  if (libAll.length) return;
+  try { const r = await fetch("/api/library"); const d = await r.json(); libAll = d.lessons || []; } catch { /* ignore — just no suggestions */ }
+}
+// Rank library lessons by how many >3-char prompt words appear in title/description/category;
+// pad with other lessons so we always show up to `n` cards (relevant first, then variety).
+function relevantLibrary(promptText, n) {
+  const toks = (promptText || "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 3);
+  const scored = libAll.map((l) => {
+    const hay = (l.title + " " + (l.description || "") + " " + (l.category || "")).toLowerCase();
+    let score = 0; for (const t of toks) if (hay.includes(t)) score++;
+    return { l, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const out = [], seen = new Set();
+  for (const x of scored) { if (out.length >= n) break; if (x.score > 0) { out.push(x.l); seen.add(x.l.slug); } }
+  for (const l of libAll) { if (out.length >= n) break; if (!seen.has(l.slug)) { out.push(l); seen.add(l.slug); } }
+  return out.slice(0, n);
+}
+async function showWhileYouWait(promptText) {
+  if (!genSuggest || !genSuggestGrid) return;
+  await ensureLibForWait();
+  const picks = relevantLibrary(promptText, 4);
+  if (!picks.length) { genSuggest.hidden = true; return; }
+  genSuggestGrid.innerHTML = "";
+  for (const l of picks) {
+    const s = catStyle(l.category);
+    const card = document.createElement("button");
+    card.type = "button"; card.className = "gen-sg-card";
+    card.style.setProperty("--cov-text", s.text);
+    card.innerHTML =
+      `<span class="gen-sg-cat">${escapeHtml(l.category || "Lesson")}</span>` +
+      `<span class="gen-sg-title">${escapeHtml(l.title)}</span>` +
+      `<span class="gen-sg-meta">${escapeHtml(l.level || "")}${l.estMinutes ? " · " + l.estMinutes + " min" : ""}</span>`;
+    card.addEventListener("click", () => openLibraryLesson(l.slug, l.title)); // opens in a NEW Trainer tab
+    genSuggestGrid.appendChild(card);
+  }
+  genSuggest.hidden = false;
+}
+function hideWhileYouWait() { if (genSuggest) genSuggest.hidden = true; }
+
+// ---- Item 3: out-of-credits "buy a plan" popup (reused by the lesson + skill 402s) ----
+const buyModal = document.getElementById("buy-modal");
+function openBuyCredits(msg) {
+  if (!buyModal) { switchTab("pricing"); return; }
+  const m = document.getElementById("buy-modal-msg");
+  if (m && msg) m.textContent = msg;
+  buyModal.hidden = false;
+}
+function closeBuyCredits() { if (buyModal) buyModal.hidden = true; }
+if (buyModal) {
+  const go = document.getElementById("buy-modal-go"), x = document.getElementById("buy-modal-x"), later = document.getElementById("buy-modal-later");
+  if (go) go.addEventListener("click", () => { closeBuyCredits(); switchTab("pricing"); });
+  if (x) x.addEventListener("click", closeBuyCredits);
+  if (later) later.addEventListener("click", closeBuyCredits);
+  buyModal.addEventListener("click", (e) => { if (e.target === buyModal) closeBuyCredits(); });
+}
+window.openBuyCredits = openBuyCredits; // skills.js (a separate script) reuses this on a skill 402
+
 // ============================================================================
 // Community courses — learner-shared lessons (public browse), likes, and the
 // "Community Share — 1 Free Lesson" flow (My Lessons + the Trainer 2-module popup).
@@ -1371,6 +1433,7 @@ async function startOverview(payload) {
   const t = openTab({ type: "generating", title, percent: 0 });
   if (!t) return;
   genTabId = t.id;
+  showWhileYouWait(payload && payload.prompt); // item 4: relevant free lessons to read while it generates
   let jobId;
   try {
     const res = await fetch("/api/overview", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(payload) });
@@ -1437,11 +1500,9 @@ async function startBuild(artifactId) {
   try {
     const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
     if (res.status === 401) { openAuth("signin"); return; }
-    if (res.status === 402) { // out of lesson credits — send them to Pricing
+    if (res.status === 402) { // out of credits — show the buy-a-plan popup (item 3)
       const d = await res.json().catch(() => ({}));
-      switchTab("pricing");
-      const note = document.getElementById("pricing-balance");
-      if (note) { note.hidden = false; note.textContent = (d.error || "You're out of lesson credits.") + " Your overview is saved — buy credits and click Generate Lesson again."; note.classList.add("low"); }
+      openBuyCredits((d.error || "You're out of credits.") + " Your overview is saved — buy credits and click Generate Lesson again.");
       return;
     }
     const data = await res.json();

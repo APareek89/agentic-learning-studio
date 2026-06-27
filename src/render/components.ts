@@ -266,6 +266,20 @@ function finalCheckInner(bp: Blueprint): string {
   return knowledgeCheck(fc);
 }
 
+/** Should this lesson show the dedicated end-of-lesson knowledge-check pane/page? YES when the
+ *  lesson wants a KC AND either the lesson-level `finalCheck` exists OR it's a NEW-style lesson
+ *  (no per-module knowledgeCheck blocks — a fresh build whose finalCheck is still filling in).
+ *  SUPPRESSED for OLD/library lessons that carry per-module KCs and no `finalCheck`: those render
+ *  their checks inline, so an empty "_check" placeholder there was a visible mismatch (the left nav
+ *  showed a knowledge check with no content). */
+function showsFinalCheckPane(bp: Blueprint): boolean {
+  const wants = (bp.learnerProfile.lessonTypes ?? []).includes("knowledge_check");
+  if (!wants) return false;
+  const hasFinal = !!(bp.finalCheck && bp.finalCheck.questions && bp.finalCheck.questions.length);
+  const hasModuleKC = bp.modules.some((m) => m.blocks.some((b) => b.kind === "knowledgeCheck"));
+  return hasFinal || !hasModuleKC;
+}
+
 // ---- estimated reading time for a set of blocks (rough: ~200 wpm) ----
 function readingMinutes(m: Module): number {
   let words = (m.summary || "").split(/\s+/).length;
@@ -715,7 +729,7 @@ function renderBodyHorizontal(bp: Blueprint, opts: { previewOnly?: boolean } = {
     `<section class="hx-mod hidden" data-hmod="${escAttr(id)}"><div class="hx-tab" data-ti="0" data-label="${escAttr(label)}" data-eyebrow="${escAttr(eyebrow)}"><div class="hx-concept">${html}</div></div></section>`;
 
   // S5 — single end-of-lesson knowledge check page, AFTER synthesis and BEFORE Sources.
-  const wantsCheck = (bp.learnerProfile.lessonTypes ?? []).includes("knowledge_check");
+  const wantsCheck = showsFinalCheckPane(bp);
   type Nav = { id: string; label: string; icon?: string; num?: number; module?: boolean };
   const nav: Nav[] = [];
   nav.push({ id: "_map", label: "Overview", icon: "🗺" });
@@ -794,9 +808,10 @@ export function renderBody(bp: Blueprint, opts: { previewOnly?: boolean } = {}):
     .join("");
   const hasCitations = Object.keys(bp.citations).length > 0;
   // S5 — the single end-of-lesson knowledge check gets its own pane, placed AFTER synthesis and
-  // BEFORE Sources. Shown whenever the lesson wants a KC (the pane shows a placeholder until the
-  // build fills bp.finalCheck in). A content-only lesson (no knowledge_check) has no check pane.
-  const wantsCheck = (p.lessonTypes ?? []).includes("knowledge_check");
+  // BEFORE Sources. Shown when the lesson wants a KC and either finalCheck exists or it's a
+  // new-style lesson (see showsFinalCheckPane — suppresses the empty placeholder on old/library
+  // lessons that carry per-module KCs). A content-only lesson (no knowledge_check) has no pane.
+  const wantsCheck = showsFinalCheckPane(bp);
   const navExtra =
     `<button class="navitem nav-special" data-goto="_synth"><span class="ni-num">✦</span><span class="ni-label">Putting it together</span></button>` +
     (wantsCheck ? `<button class="navitem nav-special" data-goto="_check"><span class="ni-num">🧠</span><span class="ni-label">Knowledge check</span></button>` : "") +
