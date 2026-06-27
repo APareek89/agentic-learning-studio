@@ -6,6 +6,39 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
 
+## ⚠️ PROD‑ONLY DELTA (2026‑06‑27) — shipped to `main`/PROD, NOT on `staging`
+> A run of beta‑launch work went to **prod only** (owner's explicit "prod only" instruction), so
+> `origin/main` is AHEAD of `origin/staging` in app content, and the **PROD Supabase DB has migrations
+> `0020` + `0021` that the STAGING DB does NOT.** To re‑sync staging later: overlay the relevant files
+> from `main`, run `npm run migrate` against the **staging** DB, and re‑test.
+>
+> **Prod‑only app changes (not on staging):**
+> 1. **Rebrand** "Wizbit" → **"Agentic Learning Studio"** everywhere user‑facing (title/meta/OG/JSON‑LD,
+>    headers/footers/auth, `hands-on.html`, policy pages, `email.ts`, consent, `robots.txt` + comments).
+>    Logo file `wizbit-logo.png` kept (alt updated). ⚠️ Supabase Auth emails still say "Wizbit" (change in
+>    the Supabase dashboard — not in repo).
+> 2. **Free‑beta pricing**: pricing tab / credit pill / buy cards / account top‑up / buy‑modal CTA hidden
+>    via CSS (logic intact). Hero "Beta launch · Free for one week · 2 free lessons." Out‑of‑credits popup →
+>    "Thanks for learning with us! We'll be back soon."
+> 3. **Privacy/Security rewritten** minimal + de‑vendored; **Terms** free‑beta "as is" clause. Single
+>    **`CONTACT_EMAIL`** (env, default `findkailash@gmail.com`) injected into policy pages via a
+>    `{{CONTACT_EMAIL}}` token + used in `email.ts`/error messages. Footer disclaimer added.
+> 4. **Beta traction**: feedback popup → `POST /api/feedback` → **`feedback`** table; `POST /api/event` +
+>    client `track()` (signup / lesson_generated / library_lesson_opened / lesson_completed / skill_generated)
+>    → **`events`** table. Migration **`0020`** on PROD DB.
+> 5. **SEO**: title/meta/OG/JSON‑LD lead with **"Learn Artificial Intelligence (AI)"** (broadened from
+>    agentic‑only).
+> 6. **Community sharing**: the **1‑free‑lesson reward removed** — now just **"Share with Community"**
+>    (popup + My Lessons button + success copy); `community.ts shareLesson` grants no credit.
+> 7. **Multi‑instance groundwork (additive)**: persist jobs + uploaded‑doc grounding — **`gen_jobs`** +
+>    **`upload_docs`** tables (migration **`0021`** on PROD DB); `jobs.ts` write‑through flush + `/api/job/:id`
+>    DB fallback; `uploads.ts` write‑through + `hydrateUploads()` at `/api/overview` & `/api/build`. In‑memory
+>    stays the fast path → single‑instance behaviour unchanged. Known gap: `/api/jobs/active` still
+>    local‑memory only.
+>
+> **Migrations on PROD DB but not STAGING DB:** `0020`, `0021`. **Prod Render env:** `CONTACT_EMAIL` (set),
+> **`MAX_CONCURRENT_GENERATIONS=5`** (set 2026‑06‑27 — watch RAM on 1 CPU/2 GB; size per‑instance once scaled).
+
 ## ✅ DEPLOY STATUS (2026-06-24) — `staging` AND `main`/prod are IN SYNC, full feature set
 > **2026-06-27 (latest) — LIBRARY finalCheck BACKFILL + DIAGRAM FIX · DATA LIVE ON STAGING + PROD · SOURCE COMMIT ON `staging` ONLY (NOT `main`).**
 > Resolves the "empty library KC panes" follow-up below. (1) **Knowledge checks (S5):** backfilled `bp.finalCheck` (id `_final_check`, 4–5 Qs,
