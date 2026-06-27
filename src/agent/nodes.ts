@@ -35,7 +35,9 @@ import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
 import type { Intent, RetrievedSource } from "./state";
 
-const profilerLLM = makeLLM("sonnet", 0);
+// Profiler runs on HAIKU: it's a small prompt→structured-inference task (who/what extraction),
+// not content generation — Haiku is ~3x cheaper + faster and accurate enough here. Env-overridable.
+const profilerLLM = makeLLM("haiku", 0);
 // OVERVIEW = a TWO-STAGE split (planner / writer) so each model does the job it's best at:
 //   planner (OPUS) → the STRUCTURE only: spine, module plan, mental-map shape, glossary term
 //     list, structureType. The reasoning-heavy step — kept LEAN (NO prose), so Opus is fast +

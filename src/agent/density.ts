@@ -81,7 +81,10 @@ export async function repairDensity(bp: Blueprint, moduleId: string, density: De
 
   const payload = offenders.map((b) => ({ id: b.id, body: (b as { body?: unknown }).body }));
   try {
-    const llm = makeLLM("sonnet", 0.2, { maxTokens: 4000 }).withStructuredOutput(RepairSchema, { name: "repair" });
+    // HAIKU: density repair is a constrained, mechanical sentence-shortening rewrite (bounded by
+    // RepairSchema) — Haiku does it well, ~3x cheaper + faster than Sonnet, and it only fires when a
+    // module's prose is meaningfully over the tier ceiling (deterministic measureModule gate upstream).
+    const llm = makeLLM("haiku", 0.2, { maxTokens: 4000 }).withStructuredOutput(RepairSchema, { name: "repair" });
     const out = await llm.invoke(
       [
         new SystemMessage(
