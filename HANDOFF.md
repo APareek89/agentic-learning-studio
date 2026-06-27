@@ -13,6 +13,10 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > force-fresh lesson switch during a build. Migration `0015` (`hands_on_notebooks`) applied to **BOTH** the staging AND prod
 > Supabase projects. Live-verified: `/hands-on` 200 + the `Beta` button present on both onrender hosts. Owner is still
 > reviewing Hands-On on local and may request changes.
+> **2026-06-27 UPDATE — S5 + S6 + grounding-log ON STAGING + PROD (`main e134aeb`, no DB migration):** ONE end-of-lesson knowledge
+> check (`bp.finalCheck`; `_check` pane/page BEFORE Sources), dynamic module count (profiler `scope` → 5/6/8), and `[retrieve]`
+> grounded/ungrounded telemetry. **Batch B (GPT failover) is coded + env-gated but NOT pushed** — pending the OpenAI key (validation +
+> exact model-id confirmation); `.env` now has a blank `OPENAI_API_KEY=` field. Full detail: the ⚡ LATENCY bullet in §7.
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
@@ -263,7 +267,7 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 > my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
 > charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
 
-- **⚡ LATENCY / MODEL-TIERING — Batch A DONE + ON PROD (2026-06-27, `main e23fa33`); S5/S6/Batch-B handed off to the next session.**
+- **⚡ LATENCY / MODEL-TIERING — Batch A + S5 + S6 + grounding-log DONE & ON PROD; Batch B (GPT failover) coded + env-gated, pending the OpenAI-key validation (2026-06-27, `main e134aeb`).**
   Root cause of slow builds was **output-token generation** (latency ≈ output_tokens ÷ decode_rate), NOT input/cache/RAG/rate-limit
   (org is Scale tier). **Batch A (shipped to staging `6610833` + prod `e23fa33`):**
   - **All modules build in ONE parallel wave** — removed the B3 serial "module-1 cache-warm-up" (it traded wall-clock for cents
@@ -275,17 +279,37 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
     Batch A; the planner leg is targeted by Batch B (planner→a cheaper model), the architect stays Sonnet (quality-critical).
   - **Cost reality (flag for finance):** a full 5-module lesson ≈ **$0.95–1.70** Anthropic spend vs **$0.99/credit** — thin/negative
     margin. S5 (single end-KC) + Haiku tiering improve it; fewer/lighter modules help.
-  - **REMAINING (next session, staging-first) — see the handoff prompt the user has:** **S5** consolidate per-module
-    knowledgeCheck → ONE end-of-lesson KC before Sources (renderer already has `cumulativeCheckItems` in `components.ts`; turn
-    KC OFF per module in `prompts.ts`/`nodes.ts`, generate one, render a vertical `_check` pane + keep horizontal's final page;
-    QA grading). **S6** dynamic module count 5/6/8 by topic breadth (profiler classifies scope → planner/architect respect;
-    affordable now modules are parallel). **grounded/ungrounded log** in `rag/retrieve.ts` (chunk count per gen — broadening to
-    the whole AI landscape will generate ungrounded a lot since the KB is agentic-AI-heavy). **Batch B = GPT failover (DECIDED):**
-    all nodes fall back to **OpenAI GPT after 2–3 failed Claude attempts** — **Claude Sonnet nodes → GPT-5.5**, **Claude Haiku
-    nodes → GPT-5.4-mini** (confirm exact OpenAI model IDs against the account). `@langchain/openai` already installed; add
-    `OPENAI_API_KEY` to `.env` (staging) + Render prod env. Use LangChain `.withFallbacks([...])` on the structured-output
-    runnable; cut Claude to ~2–3 quick attempts before falling over (don't wait out the full ~84s overload backoff). Validate on
-    staging (force the fallback, check structured-output parse + lesson quality on GPT) before any prod promote.
+  - **✅ S5 / S6 / grounding-log — DONE, ON STAGING (`origin/staging 1f3b899`) AND PROD (`main e134aeb`, 2026-06-27; NO DB migration).**
+    Verified locally (staging Supabase + working key) + tsc-clean on the prod base; a full build runs 5/5=100% and
+    charge-once-on-full-success holds. Promoted 7 files: `src/agent/{nodes,prompts,state}.ts`, `src/rag/retrieve.ts`,
+    `src/render/{components,schema}.ts`, `src/server.ts`.
+    - **S5 — single end-of-lesson KC:** modules NEVER emit knowledgeCheck/selfCheckQuiz (`moduleUserPrompt` directive forced OFF +
+      `runDeepDive` strips both; the in-flow retrieval primitives — predictThenReveal, recall hooks, scenarios — are KEPT). ONE
+      lesson-level KC is generated in `writeOverviewProse` → **`bp.finalCheck`** (stable id `_final_check`; schema: extracted
+      `KnowledgeCheckBlockSchema`, optional Blueprint field). Rendered in a **`_check` pane (vertical) / page (horizontal) BEFORE
+      Sources** (`finalCheckInner` in `components.ts`; the old DEAD `cumulativeCheckItems`/`horizontalCheckPage` were removed).
+      `/api/check` resolves `bp.finalCheck` by block id (per-module KC fallback kept for old/library lessons). Gated on `lessonTypes`
+      incl `knowledge_check` (horizontal implies it). Verified: broad vertical → 1 KC (5 Qs) before Sources, narrow horizontal → 1 KC
+      page, grading works, ZERO per-module quizzes, both modes.
+      ⚠️ **Transitional (cosmetic, prod):** an OLD KC lesson re-rendered with this code shows its old per-module KCs AND an empty
+      `_check` placeholder (it has no `finalCheck`). Only affects pre-existing KC lessons; new builds are clean. Candidate follow-up:
+      suppress the `_check` placeholder when a lesson already has per-module KC blocks and no `finalCheck`.
+    - **S6 — dynamic module count:** profiler classifies `scope` (narrow|moderate|broad) → `moduleTarget` **5/6/8** (on `Intent`),
+      threaded into the planner + architect (skeleton) prompts (was hardcoded 4-5). `MAX_MODULE_CONCURRENCY` already defaults to 8.
+      Verified: "the whole field of machine learning" → 8 modules; "what is an AI agent" → 5.
+    - **grounding telemetry:** `src/rag/retrieve.ts` logs `[retrieve] grounded|ungrounded · N chunk(s) · coverage=… · q="…"` per call
+      (the early `!ragEnabled()`/empty-query return logs ungrounded with a reason). Cheap; gives data on how often broad topics ground.
+  - **🟡 Batch B — GPT failover: CODED + COMMITTED LOCALLY (`feat/credits-billing 192aabf`), NOT pushed; env-gated NO-OP without `OPENAI_API_KEY`.**
+    `src/agent/llm.ts` adds `gptFallbackEnabled()` / `makeGptLLM(tier)` (Sonnet→`gpt-5.5`, Haiku→`gpt-5.4-mini`; env-overridable via
+    `OPENAI_MODEL_SONNET`/`OPENAI_MODEL_HAIKU`) / `stripCacheControl` (drops the Anthropic-only cache_control on the GPT branch) /
+    `structuredWithFallback` / `rawWithFallback` / `invokeResilient`. Wired into profiler, planner, architect, runDeepDive,
+    writeOverviewProse, density-repair, and `/api/check`. With a key: Claude SDK retries cut to 2 (`CLAUDE_RETRIES`) + LangChain
+    `.withFallbacks([gpt…])` → fails over to GPT FAST (not the ~84s backoff); without a key: unchanged (Claude-only + `withOverloadRetry`).
+    Verified: tsc clean + a full no-key build is 5/5=100% with ZERO GPT refs (no regression). `.env` + `.env.example` now carry a blank
+    `OPENAI_API_KEY=` field (+ the two `OPENAI_MODEL_*` defaults). **PENDING (needs the user's key):** (1) confirm the exact OpenAI
+    model-id strings vs the account (`gpt-5.5`/`gpt-5.4-mini` are best-guess defaults), (2) FORCE the fallback + run full GPT-only
+    builds (structured-output parse + lesson quality; watch for GPT-5.x temperature/max_tokens 400s), (3) push to `origin/staging` +
+    add `OPENAI_API_KEY` to BOTH the staging AND prod Render envs before any prod promote.
 - **🔎 FULL STAGING AUDIT — see [`STAGING_AUDIT.md`](STAGING_AUDIT.md) (2026-06-27, `8f1c8e2`).** A read-only code /
   security / scalability / resilience audit + the full generation-pipeline data-flow map (input → agents → output → user
   context). Owner to review tomorrow. **Headline P0s** (full detail + P1/P2/P3 + ops runbook in the doc):
