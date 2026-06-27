@@ -1492,11 +1492,25 @@ function showGenError(msg, retryFn) {
 // another tab meanwhile. On done the tab becomes an overview draft with the gate CTAs.
 function pollOverview(jobId, tabId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);
+  let lost = 0; // consecutive job-fetch misses (transient network, or a 404 after a restart)
   const tick = async () => {
     if (activeJobId !== jobId) return;
     let job;
     try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) throw new Error("lost"); job = await r.json(); }
-    catch { activeJobTimer = setTimeout(tick, 3000); return; }
+    catch {
+      // Transient blips recover on retry, but a server restart drops the in-memory overview job
+      // permanently (the draft id is never sent to us, so we can't recover it). Cap the retries and
+      // surface a clean, retryable error instead of spinning the spinner forever. Overviews are free.
+      if (++lost > 10) {
+        activeJobId = null; genTabId = null;
+        const tt = tabById(tabId);
+        if (tt && tt.id === activeTabId) showGenError("The server may have restarted while preparing your overview — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
+        else if (tt) closeTab(tt.id);
+        return;
+      }
+      activeJobTimer = setTimeout(tick, 3000); return;
+    }
+    lost = 0;
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId); // may be null if the user closed the tab
     if (job.status === "error") {
@@ -1532,6 +1546,11 @@ async function startBuild(artifactId) {
     if (res.status === 402) { // out of credits — show the buy-a-plan popup (item 3)
       const d = await res.json().catch(() => ({}));
       openBuyCredits((d.error || "You're out of credits.") + " Your overview is saved — buy credits and click Generate Lesson again.");
+      return;
+    }
+    if (res.status === 409) { // referOnly build but the uploads expired (restart) — fail loud, no charge
+      const d = await res.json().catch(() => ({}));
+      showGenError(d.error || "Your uploaded documents are no longer available — please re-upload them in the Builder and generate the overview again.", null);
       return;
     }
     const data = await res.json();

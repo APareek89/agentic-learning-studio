@@ -31,7 +31,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
 import { loadSource } from "./rag/loaders";
-import { addUpload, addRepoUpload } from "./lib/uploads";
+import { addUpload, addRepoUpload, hasUploads } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
@@ -410,6 +410,17 @@ app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
   if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
   const art = await getArtifact(artifactId);
   if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
+  // P1 stale-upload integrity: uploads live in an in-memory store that's lost on restart. If the
+  // learner asked to build STRICTLY from their documents (referOnly) but those uploads are gone,
+  // fail loudly and DON'T charge — never silently ship an ungrounded lesson they believe is grounded
+  // in their docs. (For non-referOnly, we proceed on the KB but log it so the fallback is visible.)
+  if (art.referOnly && !hasUploads(art.uploadIds)) {
+    res.status(409).json({ error: "Your uploaded documents are no longer available — uploads expire when the server restarts. Please re-upload them and generate the overview again.", uploadsExpired: true });
+    return;
+  }
+  if ((art.uploadIds?.length ?? 0) > 0 && !hasUploads(art.uploadIds)) {
+    console.warn("[/api/build] uploadIds present but none resolvable (stale after restart?) — building on KB/model for artifact", artifactId);
+  }
   const user = await getUser(req.headers.authorization);
   // Credit gate: a completed build costs 1 lesson credit. Grant the one free credit
   // on the first attempt, then block at zero (the buyer is sent to Pricing). Skipped
@@ -1116,12 +1127,20 @@ app.get("/api/community/driver/:userId", async (req, res) => {
 // POST /api/upload-repo — clone a PUBLIC git repo, extract its text/code, embed it
 // LOCALLY into the session upload store (same grounding path as documents).
 // PUBLIC (no requireAuth): same reason as /api/upload — learners attach a repo in the open
-// Configurator before signing in; generation stays gated. Abuse bounds below (≤400 files /
-// ≤4MB / 90s timeout, public https github/gitlab/bitbucket only) are unchanged.
+// Configurator before signing in; generation stays gated. Abuse / OOM bounds (≤150 files / ≤2MB /
+// ≤128KB-per-file / ≤140 chunks / 45s clone, public https github/gitlab/bitbucket only) — see the
+// REPO_MAX_* constants. Tightened from 400/4MB/90s because clone+embed runs on the request path.
 // ----------------------------------------------------------------------------
 const execFileP = promisify(execFile);
 const REPO_EXT = new Set([".md", ".mdx", ".txt", ".rst", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".py", ".java", ".go", ".rb", ".rs", ".c", ".cpp", ".h", ".cs", ".php", ".kt", ".swift", ".scala", ".sql", ".sh", ".yaml", ".yml", ".json", ".toml", ".html", ".css", ".scss"]);
 const REPO_SKIP_DIRS = new Set([".git", "node_modules", "dist", "build", "vendor", "__pycache__", ".next", "target", "out", ".venv", "venv", "coverage", ".turbo"]);
+// Abuse / OOM bounds for the SYNCHRONOUS repo ingest (clone + local embed happen on the request
+// path, so a large repo can OOM the 512MB box and take out the next generation). Kept conservative.
+const REPO_MAX_FILES = 150;                  // was 400
+const REPO_MAX_TOTAL_BYTES = 2 * 1024 * 1024; // was 4MB
+const REPO_MAX_FILE_BYTES = 128 * 1024;      // was 200KB
+const REPO_MAX_CHUNKS = 140;                 // was 220 (caps the local-embed workload)
+const REPO_CLONE_TIMEOUT_MS = 45000;         // was 90000
 
 app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
   const repoUrl = typeof req.body?.repoUrl === "string" ? req.body.repoUrl.trim() : "";
@@ -1132,19 +1151,19 @@ app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
   const clean = repoUrl.replace(/\.git$/i, "").replace(/\/$/, "");
   const dir = `${tmpdir()}/als-repo-${randomUUID()}`;
   try {
-    await execFileP("git", ["clone", "--depth", "1", "--single-branch", clean + ".git", dir], { timeout: 90000, maxBuffer: 32 * 1024 * 1024 });
+    await execFileP("git", ["clone", "--depth", "1", "--single-branch", clean + ".git", dir], { timeout: REPO_CLONE_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 });
     const files: { path: string; content: string }[] = [];
     let totalBytes = 0;
     async function walk(d: string, rel: string): Promise<void> {
-      if (files.length >= 400 || totalBytes > 4 * 1024 * 1024) return;
+      if (files.length >= REPO_MAX_FILES || totalBytes > REPO_MAX_TOTAL_BYTES) return;
       const entries = await readdir(d, { withFileTypes: true }).catch(() => []);
       for (const e of entries) {
-        if (files.length >= 400 || totalBytes > 4 * 1024 * 1024) break;
+        if (files.length >= REPO_MAX_FILES || totalBytes > REPO_MAX_TOTAL_BYTES) break;
         const r = rel ? `${rel}/${e.name}` : e.name;
         if (e.isDirectory()) { if (!REPO_SKIP_DIRS.has(e.name) && !e.name.startsWith(".")) await walk(join(d, e.name), r); continue; }
         if (!REPO_EXT.has(extname(e.name).toLowerCase())) continue;
         const st = await stat(join(d, e.name)).catch(() => null);
-        if (!st || st.size > 200 * 1024) continue; // skip files > 200KB
+        if (!st || st.size > REPO_MAX_FILE_BYTES) continue; // skip oversized files
         const content = await readFile(join(d, e.name), "utf8").catch(() => null);
         if (!content) continue;
         totalBytes += st.size;
@@ -1155,7 +1174,7 @@ app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
     if (!files.length) { res.status(422).json({ error: "No readable text/code files found in that repo." }); return; }
     const title = clean.split("/").slice(-2).join("/");
     const id = randomUUID();
-    const info = await addRepoUpload(id, title, files);
+    const info = await addRepoUpload(id, title, files, REPO_MAX_CHUNKS);
     res.json({ docId: id, title, chunkCount: info.chunkCount, fileCount: files.length });
   } catch (err) {
     console.error("[/api/upload-repo]", err);
