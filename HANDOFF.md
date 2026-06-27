@@ -306,6 +306,15 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
   46s ← now the dominant leg**); build **307s → 5/5 = 100%** (was timing out at **3/5 after >480s** BEFORE; module 1 ~200s incl.
   a transient retry, modules 2-5 ~80-105s in one cached parallel wave). Overview is improved (~82s→~75s) but still over the
   <60s target — the bottleneck is now the **architect** skeleton call (46s), which was NOT in the approved caching scope.
+  **LIVE STAGING (2026-06-27, cap raised):** a full build COMPLETED **5/5 = 100%** and **charged exactly once (25→24)** —
+  durability + charge-once-on-full-success verified on the real Render host. BUT latency this run was slow (overview ~249s,
+  ~160s/module, build ~13 min). **Cause = the under-resourced STAGING Render instance (Starter 512 MB), NOT rate-limiting and
+  NOT a code regression** — confirmed: the org is on **Scale tier** (Sonnet 2M OTPM / 10K RPM; the build uses ~4% of OTPM), and
+  the 2026-06-25 "🐢 STAGING PERF" note already documents staging module-builds crawling (~1 module / ~7 min) vs **prod
+  (Standard 2 GB) doing the whole build in 3.5–6 min**, with "NOT a code/stack problem." The CPU-heavy local ONNX embedder +
+  concurrent 16k streams crawl on 512 MB. **Real numbers = local 307s / prod 3.5–6 min.** To get a representative staging
+  latency, bump the staging service to Standard (2 GB); longer-term, move RAG embeddings to a hosted API (the one fragile
+  CPU-heavy piece). The optimization is sound; it's masked on the small staging box.
   **NO changes to the gate/credit logic, the 7 Blueprint gates, or the overview→build HITL flow.** Changed files (all in
   `bda97ee`): `src/server.ts` · `src/agent/orchestrator.ts` · `src/agent/nodes.ts` · `src/lib/jobs.ts` · `src/render/runtime.ts`
   · `public/app.js`. **PROMOTE TO PROD (after the staging cap resets + a clean 5/5 staging re-QA):** `git checkout origin/staging
