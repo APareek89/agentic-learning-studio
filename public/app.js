@@ -1030,14 +1030,22 @@ async function showWhileYouWait(promptText) {
   if (!picks.length) { genSuggest.hidden = true; return; }
   genSuggestGrid.innerHTML = "";
   for (const l of picks) {
+    // Reuse the Library card's cover treatment: category thumbnail (--cov-img, set once
+    // setThumbBase has run) + icon watermark + title, over a level·minutes meta row. The
+    // cover height is capped in CSS (.gen-suggest-grid scope) so the overlay stack stays on-screen.
     const s = catStyle(l.category);
     const card = document.createElement("button");
-    card.type = "button"; card.className = "gen-sg-card";
+    card.type = "button"; card.className = "lib-card";
+    card.style.setProperty("--cov-bg", s.bg);
+    card.style.setProperty("--cov-icon", s.icon);
     card.style.setProperty("--cov-text", s.text);
+    if (s.img) card.style.setProperty("--cov-img", `url("${s.img}")`);
     card.innerHTML =
-      `<span class="gen-sg-cat">${escapeHtml(l.category || "Lesson")}</span>` +
-      `<span class="gen-sg-title">${escapeHtml(l.title)}</span>` +
-      `<span class="gen-sg-meta">${escapeHtml(l.level || "")}${l.estMinutes ? " · " + l.estMinutes + " min" : ""}</span>`;
+      `<div class="lib-cover">` +
+        `<span class="lib-ico" aria-hidden="true">${s.svg}</span>` +
+        `<div class="lib-cover-text"><span class="lib-title">${escapeHtml(l.title)}</span></div>` +
+      `</div>` +
+      `<div class="lib-foot"><span class="lib-pill">${escapeHtml(l.category || "Lesson")}</span><span class="lib-dot">·</span><span class="lib-lvl">${escapeHtml(l.level || "")}</span><span class="lib-dot">·</span><span>${l.estMinutes || "?"} min</span></div>`;
     card.addEventListener("click", () => openLibraryLesson(l.slug, l.title)); // opens in a NEW Trainer tab
     genSuggestGrid.appendChild(card);
   }
