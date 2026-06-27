@@ -210,11 +210,21 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 
 ## 7. Open / next
 
-> ### ✅ VERIFIED ON STAGING — READY TO PROMOTE TO PROD (as of 2026-06-26)
+> ### 🚀 PROMOTED TO PROD — 2026-06-27 (`main` `3d3fae4`)
+> All 5 items below (1 UAT Batch 1 · 2 LLM Skills · 3 Lesson visuals/v5 · 4 B3 durability+latency · 5 Home/nav UI) were
+> promoted to prod on 2026-06-27: the **19 staging files** (byte-identical to `origin/staging`, tsc clean) pushed to `main`
+> (`f6347eb..3d3fae4`); **migrations `0017`+`0018` applied to the PROD DB**; **visuals ingested (129/129) + backfilled
+> (95/100 library lessons, 136 visuals)** on prod. Verified live on `https://agentic-learning-studio.onrender.com`: healthz
+> green; new home heading + AI-landscape box + Library FREE pill + LLM-Skills-after-My-Lessons tab order; a library lesson
+> renders the "Visualize this" CTA. ⏳ **NOT yet run on prod: an authed overview+build re-QA** — no prod Supabase anon key
+> available locally (only staging creds), so the generation pipeline wasn't driven on the prod host. It's the SAME code as the
+> staging build that completed 5/5 + charged once, on a better (Standard 2GB) instance, and prod healthz shows auth/db/rag
+> wired — but capture a clean prod overview+build (sign in on prod and generate one, or provide the prod anon key) to close it.
+>
+> _(Original staging-ready note, 2026-06-26 — kept for the promote-mechanism reference:)_
 > Staging = `https://agentic-learning-studio-1.onrender.com` (Supabase `ydgiyst…`). Prod = `https://agentic-learning-studio.onrender.com`
-> (Supabase `kdgtlbnl…`). Each item below is on `origin/staging` and verified (Playwright + curl); promote to `main` with the
-> usual `git checkout origin/staging -- <paths>` pattern, then run any per-item DB step against the **PROD** DB
-> (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`).
+> (Supabase `kdgtlbnl…`). Promote to `main` with the `git checkout origin/staging -- <paths>` pattern, then run any per-item DB
+> step against the **PROD** DB (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`).
 >
 > 1. **UAT Batch 1 fixes** (`3ad0e1e`) — B2 SPA fallback · B6 401-race · B5 stale-build badge · B8 library KC grading ·
 >    B9 popover · B4 mobile header · download-mid-build. **No DB migration.** Promote: 6 files (`server.ts`,
