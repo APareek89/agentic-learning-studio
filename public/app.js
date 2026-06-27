@@ -459,6 +459,7 @@ const STAGE_TEXT = {
   start: "Getting started…",
   profiler: "Understanding your goal…",
   retriever: "Gathering grounded sources…",
+  planner: "Mapping the lesson structure…",
   architect: "Designing the lesson outline…",
   seedFirstModule: "Writing your first building block…",
   composer: "Assembling your interactive lesson…",
@@ -603,7 +604,7 @@ function activateTab(id) {
   const buildingFirst = t.type === "lesson" && t.building && !t._firstReady;
   if (t.type === "generating" || buildingFirst) {
     viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
-    genLabel.textContent = buildingFirst ? "Building your lesson — your first section is on its way…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview…");
+    genLabel.textContent = buildingFirst ? "Building your lesson — this takes a couple of minutes. Your first section opens as soon as it's ready…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview — usually about a minute…");
     downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
   } else {
     const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
@@ -808,6 +809,10 @@ const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
 let dashboardPollTimer = null;
 async function loadDashboard() {
+  // Don't fire authed fetches before the Supabase token is attached (a boot tab-restore can
+  // call this before bootAuth/applySession resolves → 401 race). applySession re-runs the
+  // dashboard load once the session is ready, so simply skipping here is safe.
+  if (authRequiredAndOut()) return;
   try {
     // /api/lessons = saved lessons; /api/jobs/active = builds still running on the SERVER (so a
     // build that's continuing after a page refresh — when the client poller is gone — still shows).
@@ -820,11 +825,14 @@ async function loadDashboard() {
     dashGrid.innerHTML = "";
     if (!lessons || !lessons.length) { dashEmpty.hidden = false; dashNote.textContent = ""; return; }
     dashEmpty.hidden = true;
-    // Building progress: merge the local building tab with the server's active-job data.
+    // Building progress. The SERVER's active-jobs list is AUTHORITATIVE when available: a
+    // completed build won't appear there, so it must NOT show a stale "Building…" from a local
+    // tab whose poller stopped (multitask/refresh — the B5 bug). Only fall back to the local
+    // building tab when the server's list is unavailable.
     const building = {}; // artifactId -> percent
-    const localBuild = tabs.find((t) => t.building);
-    if (localBuild && localBuild.art) building[localBuild.art] = localBuild.percent || 0;
-    try { if (jobsRes && jobsRes.ok) { const { jobs } = await jobsRes.json(); for (const j of (jobs || [])) if (j.artifactId) building[j.artifactId] = j.percent; } } catch { /* ignore */ }
+    let serverJobsOk = false;
+    try { if (jobsRes && jobsRes.ok) { serverJobsOk = true; const { jobs } = await jobsRes.json(); for (const j of (jobs || [])) if (j.artifactId) building[j.artifactId] = j.percent; } } catch { /* ignore */ }
+    if (!serverJobsOk) { const localBuild = tabs.find((t) => t.building); if (localBuild && localBuild.art) building[localBuild.art] = localBuild.percent || 0; }
     for (const l of lessons) dashGrid.appendChild(lessonCard(l, l.id in building ? building[l.id] : null));
     dashNote.textContent = `${lessons.length} saved · Download to keep a permanent copy`;
     // If a build is active but there's NO client-side poller (e.g. right after a refresh),
@@ -1491,7 +1499,25 @@ function pollJob(jobId, tabId) {
   const tick = async () => {
     if (activeJobId !== jobId) return;
     let job;
-    try { const r = await fetch("/api/job/" + jobId, { headers: authHeaders() }); if (!r.ok) { activeJobId = null; genTabId = null; const tt = tabById(tabId); if (tt) { tt.building = false; renderTabBar(); } loadDashboard(); return; } job = await r.json(); }
+    try {
+      const r = await fetch("/api/job/" + jobId, { headers: authHeaders() });
+      if (!r.ok) {
+        // The in-memory job is gone (a Render redeploy/restart dropped it mid-build). Modules persist
+        // to Postgres incrementally, so DON'T revert to 0%/failed — reveal the PERSISTED lesson and
+        // let the artifact's own on-demand queue (/api/module, now durable) finish any remaining
+        // modules. (404 means "poller lost — re-read persisted state," not "failed.")
+        activeJobId = null; genTabId = null; updateGenStatus(false);
+        const tt = tabById(tabId);
+        if (tt) {
+          tt.building = false; tt._firstReady = true;       // reveal persisted state, not the building overlay
+          if (tt.id === activeTabId) activateTab(tt.id);     // loads /api/artifact/:id (built modules + self-building stubs)
+          renderTabBar(); persistTabs();
+        }
+        loadDashboard();
+        return;
+      }
+      job = await r.json();
+    }
     catch { activeJobTimer = setTimeout(tick, 3000); return; }
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId);
@@ -2103,8 +2129,13 @@ function gotoAccount(push) {
 }
 function openAccount() { gotoAccount(true); }
 // If we boot (or finish signing in) on /account, show the page without a second push.
+// Map a deep-linked / refreshed URL to its tab so /pricing, /library, etc. land on the
+// right tab (the server's SPA fallback serves the shell; this routes once auth state is known).
+const URL_TAB_MAP = { "/builder": "configurator", "/library": "library", "/community": "community", "/pricing": "pricing", "/llm-skills": "llm-skills", "/build-community": "build-community", "/trainer": "trainer" };
 function routeFromUrl() {
-  if (location.pathname.replace(/\/+$/, "") === "/account") gotoAccount(false);
+  const p = location.pathname.replace(/\/+$/, "");
+  if (p === "/account") { gotoAccount(false); return; }
+  if (URL_TAB_MAP[p]) switchTab(URL_TAB_MAP[p]);
 }
 function fmtMemberSince(iso) {
   if (!iso) return "—";

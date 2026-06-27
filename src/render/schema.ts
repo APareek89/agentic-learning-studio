@@ -385,6 +385,10 @@ export const ModuleSchema = z.object({
   loadState: z.enum(["stub", "full"]),
   blocks: z.array(BlockSchema),
   citations: z.array(z.string()),
+  /** OPTIONAL curated concept diagram attached post-generation (deterministic
+   *  retrieval, NOT model output). When set, the module shows a "Visualize this"
+   *  CTA + popup. `svg` is self-contained inline SVG (curated; rendered as-is). */
+  visual: z.object({ title: z.string(), svg: z.string() }).optional(),
 });
 export type Module = z.infer<typeof ModuleSchema>;
 

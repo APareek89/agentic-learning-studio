@@ -113,6 +113,7 @@ export const RUNTIME_JS = String.raw`
     closePopover(); setProgress(); window.scrollTo(0,0);
   }
   function activatePanel(id){
+    closePopover(); // a (i) term popover must not linger across module navigation
     var found=false;
     document.querySelectorAll(".panel").forEach(function(p){ var on = p.getAttribute("data-panel")===id; p.classList.toggle("active", on); if(on) found=true; });
     document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-goto")===id); });
@@ -127,7 +128,7 @@ export const RUNTIME_JS = String.raw`
     var tech = (showTech && t.technicalNote) ? '<div class="ptech">'+esc(t.technicalNote)+'</div>' : '';
     var acr = t.acronymExpansion ? '<div class="px">'+esc(t.acronymExpansion)+'</div>' : '';
     var src = (t.sources && t.sources.length) ? '<div class="psrc">Source: '+esc(t.sources.join(", "))+'</div>' : '';
-    pop.innerHTML = '<div class="pt">'+esc(t.label)+'</div>'+acr+'<div class="pn">'+esc(t.laymanDefinition)+'</div>'+tech+src;
+    pop.innerHTML = '<button class="pclose" type="button" aria-label="Close">×</button><div class="pt">'+esc(t.label)+'</div>'+acr+'<div class="pn">'+esc(t.laymanDefinition)+'</div>'+tech+src;
     pop.classList.add("on");
     var r = btn.getBoundingClientRect();
     var top = r.bottom + 8, left = Math.min(r.left, window.innerWidth - 320);
@@ -146,8 +147,15 @@ export const RUNTIME_JS = String.raw`
   function flash(btn){ var o=btn.textContent; btn.textContent="Copied"; setTimeout(function(){btn.textContent=o;},1200); }
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+  // ---- "Visualize this" curated-diagram popup (vertical AND horizontal) ----
+  function closeViz(){ var open=document.querySelectorAll(".viz-modal"); for(var i=0;i<open.length;i++){ open[i].hidden=true; } }
   // ---- one delegated click handler ----
   document.addEventListener("click", function(ev){
+    if(ev.target.closest(".pclose")){ closePopover(); return; } // visible close on the (i) popover
+    var vizCta = ev.target.closest(".viz-cta");
+    if(vizCta){ var id=vizCta.getAttribute("data-viz"), all=document.querySelectorAll(".viz-modal"); for(var vi=0;vi<all.length;vi++){ if(all[vi].getAttribute("data-viz-for")===id){ all[vi].hidden=false; break; } } return; }
+    if(ev.target.closest(".viz-x")){ var vmx=ev.target.closest(".viz-modal"); if(vmx) vmx.hidden=true; return; }
+    if(ev.target.classList && ev.target.classList.contains("viz-modal")){ ev.target.hidden=true; return; }
     // Horizontal modal: a backdrop or close-button click dismisses it (handle before .closest).
     if(HORIZ){
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
@@ -214,7 +222,7 @@ export const RUNTIME_JS = String.raw`
     }
   });
 
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ closeViz(); if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
   window.addEventListener("resize", closePopover);
 
   // ---- knowledge check (grades via /api/check; MCQ vs the stored Blueprint, freeText by LLM) ----
@@ -261,8 +269,9 @@ export const RUNTIME_JS = String.raw`
     var conf=kcConf(item), lat=kcLatency(item);
     item.setAttribute("data-done","1");
     item.querySelectorAll(".kc-opt").forEach(function(o){ o.setAttribute("disabled","1"); });
-    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,choiceIndex:choice,confidence:conf,latencyMs:lat}).then(function(res){
+    var gid=kcGradeId();
+    if(!gid){ kcShow(item,true,"Saved (grading needs the live app)."); btn.classList.add("correct"); return; }
+    kcCheck(Object.assign({blockId:bid,questionId:qid,choiceIndex:choice,confidence:conf,latencyMs:lat},gid)).then(function(res){
       if(res.correct){ btn.classList.add("correct"); }
       else{ btn.classList.add("wrong"); if(typeof res.correctIndex==="number"){ var c=item.querySelectorAll(".kc-opt")[res.correctIndex]; if(c) c.classList.add("correct"); } }
       kcShow(item,!!res.correct);
@@ -275,8 +284,9 @@ export const RUNTIME_JS = String.raw`
     var conf=kcConf(item), lat=kcLatency(item);
     var fb=item.querySelector(".kc-feedback"); if(fb){ fb.hidden=false; fb.className="kc-feedback grading"; fb.textContent="Grading your answer…"; }
     btn.setAttribute("disabled","1");
-    if(!ARTIFACT_ID){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
-    kcCheck({artifactId:ARTIFACT_ID,blockId:bid,questionId:qid,text:inp.value.trim(),confidence:conf,latencyMs:lat}).then(function(res){
+    var gid=kcGradeId();
+    if(!gid){ kcShow(item,true,"Saved (grading needs the live app)."); return; }
+    kcCheck(Object.assign({blockId:bid,questionId:qid,text:inp.value.trim(),confidence:conf,latencyMs:lat},gid)).then(function(res){
       kcShow(item,!!res.correct,res.feedback||(res.correct?"Correct ✓":"Not quite"));
     }).catch(function(){ btn.removeAttribute("disabled"); if(fb){ fb.className="kc-feedback no"; fb.textContent="Couldn't grade — try again."; } });
   }
@@ -421,14 +431,27 @@ export const RUNTIME_JS = String.raw`
   // whichever it is back to a Blueprint.
   var _hl=(location.pathname||"").match(/\/(?:api\/artifact|api\/lesson|api\/community\/lesson)\/([^\/?#]+)/);
   var HANDSON_LESSON=_hl?_hl[1]:ARTIFACT_ID;
+  // Knowledge-check grading id: live user lessons grade by artifactId; PUBLIC Library /
+  // Community lessons grade by SLUG (the server resolves the prebuilt/community Blueprint).
+  // Only a downloaded file:// page (no match at all) can't be graded.
+  var _ls=(location.pathname||"").match(/\/api\/(community\/lesson|lesson)\/([^\/?#]+)/);
+  var LESSON_SLUG=_ls?_ls[2]:"";
+  var LESSON_SRC=_ls?(_ls[1]==="community/lesson"?"community":"library"):"";
+  function kcGradeId(){ return ARTIFACT_ID ? {artifactId:ARTIFACT_ID} : (LESSON_SLUG ? {slug:LESSON_SLUG, source:LESSON_SRC} : null); }
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
   var busy=false;
+  // 202/poll state (B3): /api/module builds OFF the request and returns 202 while synthesizing; we
+  // re-queue + poll. MAX_MODULE_POLLS*POLL_MS ~= 5 min backstop before a section is marked failed.
+  var POLL_MS=2500, MAX_MODULE_POLLS=120, pollCount={};
   // Transient toast shown when a learner tries to open a section in preview mode.
   function previewNote(){
     var n=document.getElementById("preview-note");
     if(!n){ n=document.createElement("div"); n.id="preview-note"; document.body.appendChild(n);
-      n.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:var(--ink,#15171c);color:#fff;font:600 13px/1.4 inherit;padding:10px 16px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:84vw;text-align:center;opacity:0;transition:opacity .15s"; }
+      // Theme-INDEPENDENT dark toast + white text: var(--ink) inverts to a LIGHT color in dark
+      // mode, which made this banner white-on-light (invisible) — the #1 reason users didn't know to
+      // click "Generate Lesson". Hardcode a dark bg so it reads in both light AND dark mode.
+      n.style.cssText="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#15171c;color:#fff;font:600 13px/1.4 inherit;padding:10px 16px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.35);max-width:84vw;text-align:center;opacity:0;transition:opacity .15s"; }
     n.textContent="🔒 This is the free overview — click “Generate Lesson” to build and read the full sections.";
     requestAnimationFrame(function(){ n.style.opacity="1"; });
     clearTimeout(n._t); n._t=setTimeout(function(){ n.style.opacity="0"; },3200);
@@ -440,27 +463,41 @@ export const RUNTIME_JS = String.raw`
   function isStub(id){ var p=panelEl(id); return !!(p && p.classList.contains("is-stub")); }
   // Hide the "your trainer is getting your lesson ready" overview banner once no section is still building.
   function updateBuildBanner(){ var bn=document.getElementById("build-banner"); if(bn && document.querySelectorAll(".navitem.building").length===0) bn.style.display="none"; }
+  function markSectionFailed(id){
+    var nav=navItem(id); if(nav){ nav.classList.remove("building"); nav.classList.add("failed"); }
+    var panel=panelEl(id), b=panel&&panel.querySelector(".building");
+    if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
+  }
   function pump(){
     if(busy || !ARTIFACT_ID) return;
     var id=queue.shift(); if(!id) return;
     if(!isStub(id)){ pump(); return; }            // already built (e.g. via priority) — skip
     busy=true;
     var nav=navItem(id);
+    var st=0;
     fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:id})})
-      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(function(r){ st=r.status; if(!r.ok && r.status!==202) throw new Error("HTTP "+r.status); return r.json().catch(function(){ return {}; }); })
       .then(function(data){
+        // 202 / {building:true}: the body is synthesized OFF the request (no gateway-timeout 502).
+        // Re-queue + poll again shortly — do NOT mark it failed. Backstop after MAX_MODULE_POLLS.
+        if(st===202 || (data && data.building)){
+          pollCount[id]=(pollCount[id]||0)+1;
+          if(pollCount[id]>MAX_MODULE_POLLS){ markSectionFailed(id); busy=false; updateBuildBanner(); pump(); return; }
+          if(queue.indexOf(id)===-1) queue.push(id);   // retry after the others
+          busy=false; setTimeout(pump, POLL_MS); return;
+        }
+        pollCount[id]=0;
         var panel=panelEl(id);
         // Inject into the page body when present (horizontal h-page), else the panel itself.
         var target=panel ? (panel.querySelector(".h-page-body")||panel) : null;
         if(target && data && data.fragmentHtml){ target.innerHTML=data.fragmentHtml; if(panel) panel.classList.remove("is-stub"); hydrate(target); observeReveals(target); }
         if(nav){ nav.classList.remove("building","failed"); }
+        busy=false; updateBuildBanner(); pump();
       })
       .catch(function(){
-        if(nav){ nav.classList.remove("building"); nav.classList.add("failed"); }
-        var panel=panelEl(id), b=panel&&panel.querySelector(".building");
-        if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
-      })
-      .then(function(){ busy=false; updateBuildBanner(); pump(); });
+        markSectionFailed(id);
+        busy=false; updateBuildBanner(); pump();
+      });
   }
   function prioritize(id){
     if(PREVIEW) return;               // preview gate: never build on demand

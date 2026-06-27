@@ -1,0 +1,125 @@
+/* ============================================================================
+   LLM Skills tab — form, progress, and the result (rail + pane + file preview).
+   Loaded by skills.js (loadCssOnce) so it stays decoupled from styles.css.
+   Reuses the shared design tokens (--surface, --border, --muted, --accent…).
+   ============================================================================ */
+
+/* State machine: the three top-level states toggle via the `hidden` attribute.
+   Some of them set `display` (e.g. .skill-progress: flex; .landing), which would
+   override the UA `[hidden] { display:none }` — so force it here. */
+#skill-form-state[hidden], #skill-progress-state[hidden], #skill-result-state[hidden], #skill-myskills-state[hidden] { display: none !important; }
+
+/* The brief form reuses .ctx / .ctx-grid / .prompt-card from styles.css; these
+   tweaks make the full-width text rows read well. */
+#tab-llm-skills .ctx-row { display: flex; flex-direction: column; gap: 5px; margin: 11px 0 2px; }
+#tab-llm-skills .ctx-row input,
+#tab-llm-skills .ctx-row textarea,
+#tab-llm-skills .ctx input,
+#tab-llm-skills .ctx textarea {
+  width: 100%; box-sizing: border-box; font: inherit; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px;
+  resize: vertical;
+}
+#tab-llm-skills .ctx-row input:focus,
+#tab-llm-skills .ctx-row textarea:focus,
+#tab-llm-skills .ctx input:focus,
+#tab-llm-skills .ctx textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+#tab-llm-skills .hero-content .sub code { background: rgba(255, 255, 255, 0.14); padding: 1px 6px; border-radius: 6px; }
+
+/* ---- Progress state ---- */
+.skill-progress { display: flex; justify-content: center; padding: 80px 20px; }
+.skill-progress-card {
+  width: 100%; max-width: 520px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 40px 32px;
+}
+.skill-prog-label { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--ink); }
+.skill-prog-bar { width: 100%; height: 8px; background: var(--accent-weak); border-radius: 99px; overflow: hidden; }
+.skill-prog-fill { height: 100%; width: 4%; background: var(--grad); border-radius: 99px; transition: width 0.4s ease; }
+.skill-prog-err { margin-top: 6px; color: var(--warn); font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+/* ---- Result state ---- */
+.skill-result { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
+.skill-result-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.skill-result-title { font-family: var(--font-head); font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
+.skill-grounded-badge { font-size: 12px; font-weight: 600; color: var(--ok); background: rgba(29, 158, 117, 0.1); border: 1px solid rgba(29, 158, 117, 0.25); padding: 3px 10px; border-radius: 99px; }
+.skill-saved-badge { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-weak); border: 1px solid #cfe0ff; padding: 3px 10px; border-radius: 99px; }
+
+/* ---- My Skills (saved skills list) ---- */
+.skill-myskills { max-width: 880px; margin: 0 auto; padding: 28px 20px 60px; }
+.skill-myskills-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.skill-myskills-head h2 { font-family: var(--font-head); font-size: 24px; font-weight: 800; color: var(--ink); margin: 0; letter-spacing: -0.01em; }
+.skill-myskills-note { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.skill-myskills-list { display: flex; flex-direction: column; gap: 12px; }
+.ms-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); padding: 16px 18px; }
+.ms-main { flex: 1 1 auto; min-width: 0; }
+.ms-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--ink); }
+.ms-task { color: var(--muted); font-size: 13px; margin: 2px 0 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.ms-iface { font-weight: 600; color: var(--accent); background: var(--accent-weak); padding: 2px 8px; border-radius: 6px; }
+.ms-badge { color: var(--ok); font-weight: 600; }
+.ms-date { margin-left: auto; }
+.ms-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.skill-empty-card { background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 14px; padding: 28px; text-align: center; color: var(--muted); font-size: 14px; }
+.linklike { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; padding: 0; }
+
+.skill-layout { display: grid; grid-template-columns: 220px 1fr; gap: 22px; align-items: start; }
+.skill-rail { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; box-shadow: var(--shadow-sm); }
+.skill-rail-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--muted);
+  background: transparent; border: 0; border-radius: 10px; padding: 10px 12px;
+}
+.skill-rail-item:hover { background: var(--bg); color: var(--ink); }
+.skill-rail-item.active { background: var(--accent-weak); color: var(--accent); }
+.skill-rail-item .sr-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 99px; background: var(--border); color: var(--muted); font-size: 11px; font-weight: 700; flex: 0 0 auto; }
+.skill-rail-item.active .sr-num { background: var(--accent); color: #fff; }
+
+.skill-pane { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 26px 28px; min-height: 320px; min-width: 0; }
+.skill-pane h3 { font-family: var(--font-head); font-size: 20px; font-weight: 800; margin: 0 0 4px; color: var(--ink); }
+.skill-pane .skill-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.skill-h { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--ink); margin: 22px 0 8px; }
+.skill-h:first-child { margin-top: 0; }
+
+.skill-md { color: var(--ink); font-size: 14.5px; line-height: 1.65; }
+.skill-md p { margin: 0 0 11px; }
+.skill-md h1, .skill-md h2, .skill-md h3, .skill-md h4, .skill-md h5, .skill-md h6 { font-family: var(--font-head); color: var(--ink); margin: 16px 0 7px; line-height: 1.3; }
+.skill-md h1 { font-size: 18px; } .skill-md h2 { font-size: 16px; } .skill-md h3 { font-size: 15px; } .skill-md h4 { font-size: 14px; }
+.skill-md ul, .skill-md ol { margin: 4px 0 12px; padding-left: 22px; }
+.skill-md li { margin: 3px 0; }
+.skill-md a { color: var(--accent); }
+.skill-md code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-weak); color: #1e3a8a; padding: 1px 6px; border-radius: 6px; }
+.skill-md .md-pre { margin: 8px 0 14px; padding: 13px 15px; background: #0d1117; border-radius: 12px; overflow-x: auto; }
+.skill-md .md-pre code { background: transparent; color: #e6edf3; padding: 0; font-size: 12.5px; line-height: 1.55; }
+
+/* Sample I/O pairs */
+.skill-io-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.skill-io { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.skill-io-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; }
+.skill-io-cell.out { background: var(--accent-weak); border-color: #cfe0ff; }
+.skill-io-lab { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.skill-io-txt { font-size: 13px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; }
+
+/* Files */
+.skill-files-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.skill-files-count { font-size: 13px; font-weight: 600; color: var(--muted); }
+.generate.sm { padding: 8px 14px; font-size: 13px; }
+.skill-file { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+.skill-file-head { display: flex; align-items: center; gap: 10px; background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 12px; }
+.skill-file-path { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: var(--ink); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-file-lang { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); background: var(--border); padding: 2px 8px; border-radius: 6px; flex: 0 0 auto; }
+.skill-dl { flex: 0 0 auto; }
+.skill-code { margin: 0; padding: 14px 16px; background: #0d1117; overflow-x: auto; max-height: 460px; }
+.skill-code code { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; color: #e6edf3; background: transparent; white-space: pre; }
+
+/* Sources */
+.skill-sources { margin: 0; padding-left: 20px; }
+.skill-sources li { margin: 6px 0; font-size: 14px; }
+.skill-sources a { color: var(--accent); word-break: break-word; }
+.skill-empty { color: var(--muted); font-size: 14px; }
+
+@media (max-width: 760px) {
+  .skill-layout { grid-template-columns: 1fr; }
+  .skill-rail { position: static; flex-direction: row; flex-wrap: wrap; }
+  .skill-rail-item { width: auto; }
+  .skill-io { grid-template-columns: 1fr; }
+}

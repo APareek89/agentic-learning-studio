@@ -72,6 +72,19 @@ export function activeJobs(userId: string): Job[] {
   return [...jobs.values()].filter((j) => j.userId === userId && j.createdAt > cutoff && j.status !== "done" && j.status !== "error");
 }
 
+/**
+ * Is a BUILD job currently building this artifact? Used by the public /api/module endpoint to decide
+ * whether the background runBuildJob is already the builder (just poll) vs. needs an on-demand
+ * single-module build kicked (standalone / library / restarted-mid-build lessons). Cross-user by
+ * design — /api/module is unauthenticated (the artifact UUID is the access token).
+ */
+export function hasActiveBuildForArtifact(artifactId: string): boolean {
+  for (const j of jobs.values()) {
+    if (j.stage === "build" && (j.status === "running" || j.status === "planning") && j.lessons.some((l) => l.artifactId === artifactId)) return true;
+  }
+  return false;
+}
+
 /** Compute a lesson's percent from its build progress (overview ready = 30%). */
 export function lessonPercent(l: JobLesson): number {
   if (l.status === "pending" || l.status === "designing") return l.status === "designing" ? 12 : 2;

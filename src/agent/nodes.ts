@@ -47,7 +47,10 @@ const profilerLLM = makeLLM("sonnet", 0);
 //     Opus-only streaming double-encode bug doesn't apply to Sonnet).
 // If the planner fails (e.g. a hard overload), state.plan is null and the architect plans +
 // writes in one Sonnet call (graceful fallback — see plannerUserPrompt / architectUserPrompt).
-const plannerLLM = makeLLM("opus", 0.2, { maxTokens: 9000 });
+// PLANNER on SONNET (was Opus 4.8 — the slow leg of the overview; B3 latency). Sonnet plans the
+// structure fast enough, and the graceful fallback (architect plans+writes in one) still covers a
+// miss. Env-overridable via ANTHROPIC_MODEL_SONNET (set ANTHROPIC_MODEL_OPUS-tier here to revert).
+const plannerLLM = makeLLM("sonnet", 0.2, { maxTokens: 9000 });
 const skeletonLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
@@ -576,8 +579,12 @@ export async function runDeepDive(
     .filter((x) => x.order < module.order)
     .sort((a, b) => a.order - b.order)
     .map((x) => ({ order: x.order, title: x.title, terms: (x.termIds ?? []).map((id) => bp.glossary[id]?.label).filter((t): t is string => !!t) }));
+  // PROMPT CACHING (B3): MODULE_SYSTEM (~7k tok) is byte-identical across all ~5 module calls, so
+  // mark it cacheable — module 1 WRITES the cache, modules 2..N READ it (runBuildJob builds module 1
+  // first, then fans out, so the cached prefix exists before the wave). The stable ModuleBlocksSchema
+  // tool definition caches alongside it (tools→system prefix). Verify via the [module-cache] log.
   const messages = [
-    new SystemMessage(MODULE_SYSTEM),
+    new SystemMessage({ content: [{ type: "text", text: MODULE_SYSTEM, cache_control: { type: "ephemeral" } }] }),
     new HumanMessage(
       moduleUserPrompt({
         moduleTitle: module.title,
@@ -624,9 +631,17 @@ export async function runDeepDive(
   let lastErr = "";
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
-      const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks" }).invoke(messages, config ?? {});
-      blocks = (out.blocks as Block[]) ?? [];
-      nodeMeta = out.nodeMeta;
+      // includeRaw so we can read usage (cache hit telemetry) off the raw AIMessage; the parsed
+      // structured object is unchanged.
+      const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks", includeRaw: true }).invoke(messages, config ?? {});
+      // B3 cache telemetry: confirm modules 2..N READ the cached MODULE_SYSTEM (+ tool) prefix.
+      try {
+        const u = (out.raw as { response_metadata?: { usage?: Record<string, number> } })?.response_metadata?.usage;
+        if (u) console.log(`[module-cache] "${moduleId}": cache_read=${u.cache_read_input_tokens ?? 0} cache_write=${u.cache_creation_input_tokens ?? 0} input=${u.input_tokens ?? 0} output=${u.output_tokens ?? 0}`);
+      } catch { /* telemetry only — never affect the build */ }
+      const parsed = out.parsed as { blocks?: Block[]; nodeMeta?: typeof nodeMeta };
+      blocks = (parsed.blocks as Block[]) ?? [];
+      nodeMeta = parsed.nodeMeta;
       if (blocks.length) break;
       lastErr = "model returned no blocks";
     } catch (err) {

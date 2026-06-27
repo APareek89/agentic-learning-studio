@@ -40,9 +40,18 @@ const RRF_K = 60;
 
 export async function retrieve(
   q: string,
-  k = 8
+  k = 8,
+  opts: { category?: string } = {}
 ): Promise<{ chunks: RetrievedChunk[]; coverage: number }> {
   if (!ragEnabled() || !q.trim()) return { chunks: [], coverage: 0 };
+
+  // Optional category scope (e.g. "Agent Skills") — ADDITIVE: when omitted the
+  // queries are exactly as before, so existing callers are unaffected. When set,
+  // both the vector and keyword paths are restricted to that KB category so a
+  // feature can ground itself in just the slice of the KB it cares about.
+  const cat = opts.category?.trim() || "";
+  const catVec = cat ? `and category = $2` : "";
+  const catKw = cat ? `and category = $2` : "";
 
   // ---- vector candidates ----
   let vec: Row[] = [];
@@ -54,9 +63,10 @@ export async function retrieve(
               1 - (embedding <=> $1::vector) as sim
          from chunks
         where embedding is not null
+          ${catVec}
         order by embedding <=> $1::vector
         limit 20`,
-      [lit]
+      cat ? [lit, cat] : [lit]
     );
   } catch (err) {
     console.warn("[retrieve] vector search failed:", (err as Error).message);
@@ -69,9 +79,10 @@ export async function retrieve(
       `select id::text, content, title, url, category, verdict, as_of_date
          from chunks
         where to_tsvector('english', concat_ws(' ', title, title, category, content)) @@ plainto_tsquery('english', $1)
+          ${catKw}
         order by ts_rank(to_tsvector('english', concat_ws(' ', title, title, category, content)), plainto_tsquery('english', $1)) desc
         limit 20`,
-      [q]
+      cat ? [q, cat] : [q]
     );
   } catch (err) {
     console.warn("[retrieve] keyword search failed:", (err as Error).message);
