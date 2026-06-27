@@ -17,6 +17,15 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > check (`bp.finalCheck`; `_check` pane/page BEFORE Sources), dynamic module count (profiler `scope` → 5/6/8), and `[retrieve]`
 > grounded/ungrounded telemetry. **Batch B (GPT failover) is coded + env-gated but NOT pushed** — pending the OpenAI key (validation +
 > exact model-id confirmation); `.env` now has a blank `OPENAI_API_KEY=` field. Full detail: the ⚡ LATENCY bullet in §7.
+> **2026-06-27 — BATCH-1 (27-Jun doc) ON STAGING (`origin/staging edbabd7`), NOT yet prod:** signup grant 1→2; fractional credits
+> (lesson=1, skill=0.5) via migration **0019** (`credit_lots`/`credit_ledger` int→numeric) + `spend(userId, amount)` multi-lot FIFO
+> draw + a skill 402 gate/charge-on-success; out-of-credits **buy-a-plan popup**; **"while you wait"** 4 relevant free-library cards
+> during overview generation; **Free** pill on Community; a built skill shows in **My Skills** immediately; **library KC nav fix**
+> (`showsFinalCheckPane` — no empty `_check` on old per-module-KC lessons). Migration 0019 applied to the STAGING DB. Verified:
+> fractional spend 8/8 vs staging DB; Playwright on staging (Community pill, buy popup, gen-suggest off the 100-lesson library, 5 KC
+> library lessons with no empty nav). PENDING: full build/skill charge re-QA (staging Anthropic cap → 07-01); item 9 (home example
+> richness — needs a pointer); 2 separate-session prompts (poor diagrams; add real KCs to library content); prod promote (incl.
+> applying 0019 to the PROD DB) on owner confirm.
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
