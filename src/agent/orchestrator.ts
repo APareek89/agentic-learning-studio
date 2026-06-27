@@ -183,7 +183,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     // in withOverloadRetry still covers a burst). Sharing `bp` is safe: each module writes only its
     // own slot, and the bp-wide repairBlueprint() is synchronous (atomic in Node) and skips stub
     // modules, so concurrent builds can't corrupt each other. Env-overridable.
-    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 5);
+    const MODULE_CONCURRENCY = Math.max(1, Number(process.env.MAX_MODULE_CONCURRENCY) || 8);
 
     // Persist serially in completion order (A4 — incremental render) so the stored lesson grows
     // monotonically and the front-end shows each module as soon as it's ready. renderArtifact is
@@ -233,12 +233,14 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
       }
     })();
 
-    // CACHE WARM-UP (B3): build module 1 ALONE first so its call WRITES the cached MODULE_SYSTEM
-    // (+ tool) prefix; only then fan out the rest, which READ the cache (a cache entry is readable
-    // only after the first response streams — a simultaneous fan-out would all miss + each pay full
-    // price). Cost: module 1 doesn't overlap the wave, but the cache reads more than pay it back.
+    // ALL MODULES IN PARALLEL (one wave). The earlier B3 "build module 1 first to warm the prompt
+    // cache, then fan out" serialized one full module (~100-200s) before parallelism — but LATENCY is
+    // dominated by OUTPUT-token generation, not input/cache, so that warm-up traded wall-clock for a
+    // few cents of input cost. Output is the constraint, so fan out everything at once: wall-clock ≈
+    // the SLOWEST single module, not the sum. cache_control stays on each call (it still helps
+    // within-module retries + back-to-back builds within the 5-min TTL); we just don't gate the wave
+    // on it. On Scale-tier OTPM (2M/min) a wave of up to MAX_MODULE_CONCURRENCY 16k-output calls fits.
     let cursor = 0;
-    if (pending.length) await buildOne(pending[cursor++]);
     const buildNext = async (): Promise<void> => {
       for (;;) {
         const idx = cursor++;
@@ -246,7 +248,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         await buildOne(pending[idx]);
       }
     };
-    const workerCount = Math.min(MODULE_CONCURRENCY, Math.max(0, pending.length - cursor));
+    const workerCount = Math.min(MODULE_CONCURRENCY, pending.length);
     await Promise.all([proseTask, ...Array.from({ length: workerCount }, () => buildNext())]);
     await persistChain; // make sure the final, complete state is written
     console.log(`[timing] build TOTAL: ${Date.now() - buildStart}ms (${successCount} ok, ${failCount} failed of ${pending.length})`);
