@@ -39,12 +39,12 @@ import { createJob, getJob, lessonPercent, acquireGenSlot, activeJobs, hasActive
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
 import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
-import { getBalance, ensureFreeGrant, addCredits, getAccountSummary } from "./lib/credits";
+import { getBalance, ensureFreeGrant, addCredits, getAccountSummary, spend } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
-import { makeLLM } from "./agent/llm";
+import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, invokeResilient } from "./agent/llm";
 import { renderArtifact } from "./render/index";
 import { handsOnEligible, resolveBlueprint, peekCache, createHandsOnJob, getHandsOnJob, runHandsOnJob } from "./lib/handson";
 import { renderModuleFragment } from "./render/components";
@@ -456,6 +456,12 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
   const user = await getUser(req.headers.authorization);
   input.userId = user?.id ?? "";
   input.userEmail = user?.email ?? "";
+  // Credit gate (batch-1): a SKILL costs 0.5 credits. Grant the free credits on first use, then
+  // block below 0.5 (the buyer gets the buy-a-plan popup). Skipped when DB/auth is off (local dev).
+  if (user && dbEnabled()) {
+    const bal = await ensureFreeGrant(user.id);
+    if (bal < 0.5) { res.status(402).json({ error: "You need 0.5 credits to generate a skill. Add more to keep going.", needCredits: true }); return; }
+  }
   // Cache hit → return a job that's already done (no gen slot needed). Still persist
   // it to THIS user's My Skills (fire-and-forget; never blocks the response).
   const cached = getCachedSkill(input);
@@ -467,6 +473,8 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
     job.status = "done";
     job.saved = true;
     void persistSkill(input.userId, input.userEmail, cached, !!job.grounded);
+    // Charge 0.5 on delivery (a cache hit still delivers a skill to this user's My Skills).
+    if (user && dbEnabled()) void spend(user.id, 0.5, "skill").catch((e) => console.error("[skill] credit deduct failed (cache)", e));
     res.json({ jobId: job.id });
     return;
   }
@@ -892,15 +900,19 @@ app.post("/api/check", async (req, res) => {
     res.json({ correct, correctIndex, explanation: q.explanation });
     return;
   }
-  // freeText → LLM grade against the reference answer.
+  // freeText → LLM grade against the reference answer. (Batch B — Haiku grader fails over to
+  // GPT-5.4-mini when wired; env-gated no-op otherwise.)
   try {
-    const grader = makeLLM("haiku", 0).withStructuredOutput(
-      z.object({ correct: z.boolean(), feedback: z.string() }), { name: "grade" }
+    const GradeSchema = z.object({ correct: z.boolean(), feedback: z.string() });
+    const grader = structuredWithFallback(
+      makeLLM("haiku", 0, { maxRetries: gptFallbackEnabled() ? 2 : 4 }),
+      makeGptLLM("haiku"),
+      GradeSchema, { name: "grade" }
     );
-    const out = await grader.invoke([
+    const out = (await invokeResilient(grader, [
       new SystemMessage("You grade a learner's free-text answer. Mark correct=true if it captures the key idea (be encouraging, not pedantic). feedback = ONE short sentence of specific feedback."),
       new HumanMessage(`QUESTION: ${q.prompt}\nREFERENCE ANSWER: ${q.acceptableAnswer ?? q.explanation}\nLEARNER ANSWER: ${text ?? ""}`),
-    ]);
+    ])) as z.infer<typeof GradeSchema>;
     res.json({ correct: out.correct, feedback: out.feedback, explanation: q.explanation });
   } catch (err) {
     console.error("[/api/check]", err);

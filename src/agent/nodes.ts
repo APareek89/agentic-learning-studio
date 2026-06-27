@@ -14,7 +14,7 @@
 import { z } from "zod";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { makeLLM, withOverloadRetry } from "./llm";
+import { makeLLM, withOverloadRetry, makeGptLLM, gptFallbackEnabled, structuredWithFallback, rawWithFallback, invokeResilient } from "./llm";
 import type { GraphStateType, LearnerProfile } from "./state";
 import {
   BlueprintSchema,
@@ -35,9 +35,14 @@ import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
 import type { Intent, RetrievedSource } from "./state";
 
+// BATCH B — when GPT failover is wired (OPENAI_API_KEY set), cut the Claude SDK retry budget to ~2
+// quick tries so a bad Anthropic day fails over to GPT fast instead of riding the long overload
+// backoff. No key → 4 retries (unchanged). Each Claude tier gets a paired GPT client (null w/o key).
+const CLAUDE_RETRIES = gptFallbackEnabled() ? 2 : 4;
 // Profiler runs on HAIKU: it's a small prompt→structured-inference task (who/what extraction),
 // not content generation — Haiku is ~3x cheaper + faster and accurate enough here. Env-overridable.
-const profilerLLM = makeLLM("haiku", 0);
+const profilerLLM = makeLLM("haiku", 0, { maxRetries: CLAUDE_RETRIES });
+const profilerGpt = makeGptLLM("haiku");
 // OVERVIEW = a TWO-STAGE split (planner / writer) so each model does the job it's best at:
 //   planner (OPUS) → the STRUCTURE only: spine, module plan, mental-map shape, glossary term
 //     list, structureType. The reasoning-heavy step — kept LEAN (NO prose), so Opus is fast +
@@ -52,15 +57,18 @@ const profilerLLM = makeLLM("haiku", 0);
 // PLANNER on SONNET (was Opus 4.8 — the slow leg of the overview; B3 latency). Sonnet plans the
 // structure fast enough, and the graceful fallback (architect plans+writes in one) still covers a
 // miss. Env-overridable via ANTHROPIC_MODEL_SONNET (set ANTHROPIC_MODEL_OPUS-tier here to revert).
-const plannerLLM = makeLLM("sonnet", 0.2, { maxTokens: 9000 });
-const skeletonLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
+const plannerLLM = makeLLM("sonnet", 0.2, { maxTokens: 9000, maxRetries: CLAUDE_RETRIES });
+const plannerGpt = makeGptLLM("sonnet", { maxTokens: 9000 });
+const skeletonLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true, maxRetries: CLAUDE_RETRIES });
+const skeletonGpt = makeGptLLM("sonnet", { maxTokens: 16000, streaming: true });
 // Each module's blocks are written by a SEPARATE small call (Module 1 up front in
 // seedFirstModule; the rest on demand via runDeepDive / POST /api/module). streaming
 // keeps us safe if a visuals+syntax+high-density module runs long.
 // 16k (streaming) so code/example-heavy modules don't truncate mid-tool-call (a
 // truncated structured output = a persistent "couldn't build this section" failure,
 // not a transient one). Streaming keeps it under the SDK's non-streaming ceiling.
-const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true });
+const moduleLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true, maxRetries: CLAUDE_RETRIES });
+const moduleGpt = makeGptLLM("sonnet", { maxTokens: 16000, streaming: true });
 
 /** Structured-output shape for one module's body: blocks + the map node's detail lines. */
 const ModuleBlocksSchema = z.object({
@@ -122,12 +130,13 @@ function moduleTargetFor(scope?: "narrow" | "moderate" | "broad"): number {
 // ============================================================================
 export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const cards = state.cards ?? {};
-  // Ride out a transient Anthropic 529/overload during the (free) overview rather than failing it.
-  const inf = await withOverloadRetry(() =>
-    profilerLLM
-      .withStructuredOutput(InferenceSchema, { name: "infer" })
-      .invoke([new SystemMessage(PROFILER_SYSTEM), new HumanMessage(state.userPrompt)], config)
-  );
+  // Ride out a transient Anthropic 529/overload during the (free) overview rather than failing it;
+  // when GPT failover is wired, fail over to GPT-5.4-mini instead (Batch B).
+  const inf = (await invokeResilient(
+    structuredWithFallback(profilerLLM, profilerGpt, InferenceSchema, { name: "infer" }),
+    [new SystemMessage(PROFILER_SYSTEM), new HumanMessage(state.userPrompt)],
+    config
+  )) as z.infer<typeof InferenceSchema>;
 
   // Level can now be MULTI-select on the landing. The base `level` (used for the
   // 27-combo gating + acronym policy) is the LEAST-advanced selected, so a mixed
@@ -400,8 +409,8 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
   const sources = state.retrieved ?? [];
   let plan: unknown = null;
   try {
-    const raw = await withOverloadRetry(() =>
-      plannerLLM.invoke(
+    const raw = (await invokeResilient(
+      rawWithFallback(plannerLLM, plannerGpt),
         [
           new SystemMessage(PLANNER_SYSTEM),
           new HumanMessage(
@@ -426,7 +435,7 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
         ],
         config
       )
-    );
+    ) as { content: unknown };
     const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
     plan = extractJsonObject(text);
   } catch (err) {
@@ -457,8 +466,10 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   // below still enforces the shape (Zod), so an off-shape parse routes through the repair edge.
   let candidate: Blueprint;
   try {
-    // Ride out a transient Anthropic 529/overload on the Opus skeleton rather than failing the overview.
-    const raw = await withOverloadRetry(() => skeletonLLM.invoke(
+    // Ride out a transient Anthropic 529/overload on the skeleton rather than failing the overview;
+    // when GPT failover is wired, fail over to GPT-5.5 instead (Batch B).
+    const raw = (await invokeResilient(
+      rawWithFallback(skeletonLLM, skeletonGpt),
       [
         new SystemMessage(SKELETON_SYSTEM),
         new HumanMessage(
@@ -491,7 +502,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
         ),
       ],
       config
-    ));
+    )) as { content: unknown };
     const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
     candidate = coerceSkeleton(extractJsonObject(text), p);
   } catch (err) {
@@ -643,7 +654,12 @@ export async function runDeepDive(
   const isOverloadOrRate = (m: string) =>
     /overloaded|529|rate.?limit|\b429\b|too many requests/i.test(m);
   const OVERLOAD_BACKOFF_MS = [2000, 5000, 12000, 25000, 40000]; // ~84s total across the waits
-  const MAX_ATTEMPTS = 6;
+  // BATCH B — the module-body runnable carries the GPT-5.5 fallback (cache_control stripped on the
+  // GPT branch). With failover wired, provider errors fail over to GPT WITHIN each invoke, so this
+  // outer loop only needs a couple of tries (mainly for the empty-blocks case); without failover,
+  // keep the 6-attempt overload ride-out.
+  const runnable = structuredWithFallback(moduleLLM, moduleGpt, ModuleBlocksSchema, { name: "module_blocks", includeRaw: true });
+  const MAX_ATTEMPTS = gptFallbackEnabled() ? 3 : 6;
   let blocks: Block[] = [];
   let nodeMeta: { what?: string; relevance?: string; laymanExplanation?: string } | undefined;
   let lastErr = "";
@@ -651,7 +667,7 @@ export async function runDeepDive(
     try {
       // includeRaw so we can read usage (cache hit telemetry) off the raw AIMessage; the parsed
       // structured object is unchanged.
-      const out = await moduleLLM.withStructuredOutput(ModuleBlocksSchema, { name: "module_blocks", includeRaw: true }).invoke(messages, config ?? {});
+      const out = (await runnable.invoke(messages, config ?? {})) as { raw?: unknown; parsed?: unknown };
       // B3 cache telemetry: confirm modules 2..N READ the cached MODULE_SYSTEM (+ tool) prefix.
       try {
         const u = (out.raw as { response_metadata?: { usage?: Record<string, number> } })?.response_metadata?.usage;
@@ -768,30 +784,29 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
   const needFinalCheck = wantsCheck && !bp.finalCheck;
   if (!needDefs.length && !needSynthesis && !needFinalCheck) return; // already filled (old draft / re-run)
 
-  const out = await withOverloadRetry(() =>
-    moduleLLM.withStructuredOutput(OverviewProseSchema, { name: "overview_prose" }).invoke(
-      [
-        new SystemMessage(OVERVIEW_PROSE_SYSTEM),
-        new HumanMessage(
-          overviewProseUserPrompt({
-            topic: bp.meta.topic,
-            level: p.level,
-            density: p.density,
-            buildGoal: p.buildGoal,
-            objective: p.objective,
-            terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
-            modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces, objectives: m.objectives })),
-            needSynthesis,
-            needFinalCheck,
-          })
-        ),
-      ],
-      config ?? {}
-    )
+  const out = (await invokeResilient(
+    structuredWithFallback(moduleLLM, moduleGpt, OverviewProseSchema, { name: "overview_prose" }),
+    [
+      new SystemMessage(OVERVIEW_PROSE_SYSTEM),
+      new HumanMessage(
+        overviewProseUserPrompt({
+          topic: bp.meta.topic,
+          level: p.level,
+          density: p.density,
+          buildGoal: p.buildGoal,
+          objective: p.objective,
+          terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
+          modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces, objectives: m.objectives })),
+          needSynthesis,
+          needFinalCheck,
+        })
+      ),
+    ],
+    config ?? {}
   ).catch((err: unknown) => {
     console.warn("[overview-prose] failed:", (err instanceof Error ? err.message : String(err)).slice(0, 160));
     return null;
-  });
+  })) as z.infer<typeof OverviewProseSchema> | null;
   if (!out) return;
 
   // Merge glossary definitions (only fill empties).

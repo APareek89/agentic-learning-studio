@@ -25,6 +25,7 @@ import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { makeLLM, withOverloadRetry } from "../agent/llm";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled, dbEnabled, query } from "./db";
+import { spend } from "./credits";
 import { retrieveFromUploads } from "./uploads";
 import { releaseGenSlot } from "./jobs";
 import { sha256 } from "./hash";
@@ -455,6 +456,12 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
     skillCache.set(skillCacheKey(input), pkg);
     const savedId = await persistSkill(input.userId ?? "", input.userEmail ?? "", pkg, grounded);
     job.saved = !!savedId;
+    // Charge 0.5 credits on SUCCESSFUL delivery only (batch-1). The catch below skips this, so a
+    // mid-way failure never deducts — mirrors the lesson charge-on-success rule.
+    if (input.userId && dbEnabled()) {
+      try { await spend(input.userId, 0.5, "skill"); }
+      catch (e) { console.error("[runSkillJob] credit deduct failed", e); }
+    }
   } catch (e) {
     job.status = "error";
     job.error = e instanceof Error ? e.message : String(e);

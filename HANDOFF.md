@@ -13,6 +13,66 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > force-fresh lesson switch during a build. Migration `0015` (`hands_on_notebooks`) applied to **BOTH** the staging AND prod
 > Supabase projects. Live-verified: `/hands-on` 200 + the `Beta` button present on both onrender hosts. Owner is still
 > reviewing Hands-On on local and may request changes.
+> **2026-06-27 UPDATE — S5 + S6 + grounding-log ON STAGING + PROD (`main e134aeb`, no DB migration):** ONE end-of-lesson knowledge
+> check (`bp.finalCheck`; `_check` pane/page BEFORE Sources), dynamic module count (profiler `scope` → 5/6/8), and `[retrieve]`
+> grounded/ungrounded telemetry. **Batch B (GPT failover) — now ON STAGING + working (see the BATCH B note below).** Full detail: §7.
+> **2026-06-27 — BATCH-1 (27-Jun doc) ON STAGING (`origin/staging edbabd7`), NOT yet prod:** signup grant 1→2; fractional credits
+> (lesson=1, skill=0.5) via migration **0019** (`credit_lots`/`credit_ledger` int→numeric) + `spend(userId, amount)` multi-lot FIFO
+> draw + a skill 402 gate/charge-on-success; out-of-credits **buy-a-plan popup**; **"while you wait"** 4 relevant free-library cards
+> during overview generation; **Free** pill on Community; a built skill shows in **My Skills** immediately; **library KC nav fix**
+> (`showsFinalCheckPane` — no empty `_check` on old per-module-KC lessons). Migration 0019 applied to the STAGING DB. Verified:
+> fractional spend 8/8 vs staging DB; Playwright on staging (Community pill, buy popup, gen-suggest off the 100-lesson library, 5 KC
+> library lessons with no empty nav). PENDING: full build/skill charge re-QA (staging Anthropic cap → 07-01); item 9 (home example
+> richness — needs a pointer); 2 separate-session prompts (poor diagrams; add real KCs to library content); prod promote (incl.
+> applying 0019 to the PROD DB) on owner confirm.
+> **2026-06-27 (later) — BATCH B (GPT FAILOVER) NOW ON STAGING + FIXED (`origin/staging 1f15b34`):** OpenAI key set on the
+> staging+prod Render envs (and local `.env`). Confirmed `gpt-5.5` / `gpt-5.4-mini` exist on the account. Fixed the real failover bug —
+> OpenAI's strict structured-output rejects `.optional()` Zod fields ("all fields must be required"), so EVERY structured GPT fallback
+> failed silently (withFallbacks re-raised the Claude error); fix = force `method:"functionCalling"` (tool-calling) on the GPT branch.
+> Validated by FORCING failover (invalid Anthropic key) → a full build ran ENTIRELY on GPT, **5/5**, finalCheck/KC generated on GPT, 0
+> errors. ⚠️ gpt-5.5 is a SLOW reasoning model (~10-min build); fine as a failover, but while the staging Anthropic spend cap is active
+> (→ 2026-07-01) every staging build runs on GPT and is slow — it reverts to fast Claude when the cap resets. This ALSO fixes the
+> "KC not coming on staging" report (the cap was blocking `writeOverviewProse` → no `finalCheck`; failover now generates it).
+>
+> ### 📌 ON STAGING (`origin/staging 1f15b34`) BUT NOT ON PROD (`main e134aeb`) — as of 2026-06-27:
+> 1. **Batch-1 (27-Jun doc):** signup→2 credits; fractional credits lesson=1/skill=0.5 (**migration 0019** — applied to the STAGING DB
+>    ONLY, NOT prod); out-of-credits buy-a-plan popup; "while you wait" library popup; Community **Free** pill; skill→My-Skills refresh;
+>    library-KC nav fix (`showsFinalCheckPane`).
+> 2. **Batch B (GPT failover):** all nodes fall over to GPT-5.5 / GPT-5.4-mini after ~2 quick Claude tries (env-gated on `OPENAI_API_KEY`).
+>
+> **To promote to PROD:** cherry-pick the staging files into `main`, **apply migration 0019 to the PROD DB** (`DATABASE_URL=$PROD_DATABASE_URL`),
+> and confirm `OPENAI_API_KEY` is on the prod Render env (then Batch B is live on prod too). **Latency (local Claude, S5/S6 active):**
+> overview ~75s→**71s**, build 108s→**81.5s** (~25% faster — S5 drops per-module KC tokens; 5/5, 0 failover).
+
+## 🐞 KNOWN ISSUES / TO-FIX (QA backlog — 2026-06-27)
+Consolidated from the full QA sweep (prod UAT, staging re-QA, mobile, KB coverage, input/upload code-trace, verify-before-promote). Full detail + repros: `~/Documents/wizbit-issues-master.md`; per-area: `wizbit-prod-uat-2026-06-26.md`, `wizbit-staging-reqa-2026-06-26.md`, `wizbit-staging-mobile-qa-2026-06-26.md`, `wizbit-kb-coverage-2026-06-26.md`, `wizbit-input-cycle-codetrace.md`. Key: ✅ fixed-on-staging · 🟡 open · 🔴 high · ⚙️ infra · 📋 data.
+
+**🔴 High**
+- **Repo upload crashes the instance** — `/api/upload-repo` (server.ts:1123) clones + embeds *synchronously* in the request; a non-trivial repo 502s and on PROD knocked out the next overview+skill (OOM/restart). Tiny repos work but ~16s. → async background ingest off the request path. (Same root as build/module 502s.)
+- **Build/skill OOM on the 512MB Starter** → job_404 (in-memory jobs lost on restart). Worsened by the Anthropic cap → all staging gen on slow GPT-5.5 (~10min) until 2026-07-01. → persist job state; bigger/warm instance.
+
+**🟡 Input cycle — accepted-but-silently-dropped (code-trace)**
+- `cards` ignored by `/api/build` (runBuildJob never reads `art.cards` — editing card knobs between overview & build has no effect).
+- `lessonTypes[]` ignored by the planner (only architect/overview-prose see it).
+- `framework` silently dropped unless `examples`=code.
+- Stale `uploadIds` → silent ungrounded build (uploads are **in-memory only**, lost on restart; `referOnly` quietly falls back). → persist uploads or fail loudly.
+- P3: `objective:'other'`=no-op; `readingMode` never reaches a prompt (`horizontal` secretly adds a KC); body `userProfile` overridden by saved prefs.
+
+**🟡 Uploads**
+- `.csv` rejected (415); `/api/upload` + `/api/upload-repo` have **no requireAuth**; file-picker `accept` lists inconsistent + offer `.markdown` (server 415s) / omit several server-accepted exts; docs-only repo (README, no ext) → 422.
+
+**📋 Library / KC**
+- ~half of library lessons render a **perpetual empty KC pane** — lessons with neither per-module KC nor a backfilled `finalCheck` show `class="kc kc-pending"` "…appears once the lesson finishes building…" (components.ts:264; showsFinalCheckPane:280 returns true when `!hasModuleKC`). → run `scripts/backfill-finalcheck.ts` over the library, or suppress the pane for library lessons without a real finalCheck. (Affected in sample: the-agent-loop, human-in-the-loop-agents, tool-use-action-boundaries, model-context-protocol, planning-and-reflection, multi-agent-orchestration, serve-local-llm-ollama.)
+
+**🟡 RAG/KB**
+- No retrievable **code** or **business** examples (intents return code=false/biz=false); topic gaps (classic ML, generative media, hardware, governance, bias/fairness); coverage metric inflated (gate on `topSim`). See `wizbit-kb-coverage-2026-06-26.md`.
+
+**🟡 Mobile (staging)**
+- Lesson build-path map doesn't reflow; stacked sticky toolbars; toggle bar nested h-scroll; tap targets <44px (13×21 ▾); 9–11px fonts; Builder input placeholder clipping. (Page overflow itself ✅ fixed.)
+
+**⚙️ Infra/routing**
+- `prathibhax.com` apex has **no DNS A record** (prod only reachable via onrender origin). `/account` + `/my-lessons` direct URLs fall back to Home.
+
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
@@ -209,6 +269,250 @@ Then restart :5070 and `curl localhost:5070/healthz` (expect `db:true`). Push to
 ---
 
 ## 7. Open / next
+
+> ### 🚀 PROMOTED TO PROD — 2026-06-27 (`main` `3d3fae4`)
+> All 5 items below (1 UAT Batch 1 · 2 LLM Skills · 3 Lesson visuals/v5 · 4 B3 durability+latency · 5 Home/nav UI) were
+> promoted to prod on 2026-06-27: the **19 staging files** (byte-identical to `origin/staging`, tsc clean) pushed to `main`
+> (`f6347eb..3d3fae4`); **migrations `0017`+`0018` applied to the PROD DB**; **visuals ingested (129/129) + backfilled
+> (95/100 library lessons, 136 visuals)** on prod. Verified live on `https://agentic-learning-studio.onrender.com`: healthz
+> green; new home heading + AI-landscape box + Library FREE pill + LLM-Skills-after-My-Lessons tab order; a library lesson
+> renders the "Visualize this" CTA. ✅ **Authed overview+build re-QA on prod — PASSED (2026-06-27):** a full build completed
+> **5/5 = 100%** (`stubModuleIds: []`) and the prod credit debited **1 → 0** — charge-once-on-full-success verified LIVE on
+> prod; durability held (build completed despite a slow module). NO 502/404 (B3 ship-blocker gone on prod). Auth used the
+> public `anon` key from prod `/api/config` + the prod QA account. **Latency this run was slow (overview ~429s, build ~658s)
+> purely from elevated Anthropic latency TODAY** (the same broad slowness hit staging earlier) — NOT the instance (prod is
+> Standard 2GB) and NOT rate-limiting (org is Scale tier). On a normal Anthropic day prod does the whole build in ~3.5–6 min
+> (and local same-code = 307s); re-measure latency when Anthropic latency normalizes. **All 5 items are now fully promoted +
+> verified on prod.**
+>
+> _(Original staging-ready note, 2026-06-26 — kept for the promote-mechanism reference:)_
+> Staging = `https://agentic-learning-studio-1.onrender.com` (Supabase `ydgiyst…`). Prod = `https://agentic-learning-studio.onrender.com`
+> (Supabase `kdgtlbnl…`). Promote to `main` with the `git checkout origin/staging -- <paths>` pattern, then run any per-item DB
+> step against the **PROD** DB (`PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`).
+>
+> 1. **UAT Batch 1 fixes** (`3ad0e1e`) — B2 SPA fallback · B6 401-race · B5 stale-build badge · B8 library KC grading ·
+>    B9 popover · B4 mobile header · download-mid-build. **No DB migration.** Promote: 6 files (`server.ts`,
+>    `render/{runtime,tokens}.ts`, `public/{app.js,styles.css,home.css}`).
+> 2. **LLM Skills tab** (`e4be14c`+`da61062`) — Build a Skill / My Skills dropdown. **Migration `0017_generated_skills.sql`**
+>    (apply to PROD DB). Promote: `lib/skillgen.ts`, `rag/retrieve.ts`, `server.ts`, `public/{index.html,skills.js,skills.css,app.js}`, migration.
+> 3. **Lesson visuals + v5 swap** (`2a200fe`+`2402f53`) — "Visualize this" CTA/popup, v5 diagrams. **Migration
+>    `0018_lesson_visuals.sql`** + ingest + backfill on PROD DB (`npm run migrate` → `ingest-visuals.ts` → `backfill-visuals.ts`,
+>    all with `DATABASE_URL="$PROD_URL"`). Promote: `lib/visuals.ts`, `render/{schema,components,tokens,runtime}.ts`,
+>    `agent/orchestrator.ts`, `scripts/{ingest,backfill}-visuals.ts`, plus the two migrations.
+> 4. **B3 build durability + latency** (`bda97ee`) — the 502/404 ship-blocker fix + caching/planner/concurrency (full
+>    detail in the B3 bullet below). **No DB migration.** Promote: `src/server.ts`, `src/agent/{orchestrator,nodes}.ts`,
+>    `src/lib/jobs.ts`, `src/render/runtime.ts`, `public/app.js`. ⚠️ `orchestrator.ts` + `render/runtime.ts` are shared with
+>    item 3 (visuals) — promote the CURRENT files (they contain both). ⚠️ A clean 5/5 *generation* re-QA on the Render host is
+>    blocked until the staging Anthropic spend cap resets (2026-07-01) — verified locally (5/5) + 202/no-502 on the host.
+> 5. **Home + nav UI batch** (`d5e9235`) — broadened home messaging to the whole AI landscape (new H1, broadened sub/chips,
+>    a new `#ai-areas` box: 8 grouped topic areas / 50 chips below the community band); **sticky top nav** (`.topbar`
+>    position:sticky + `html,body` height→min-height); **Library "FREE" pill**; **LLM Skills tab moved after My Lessons**;
+>    **bigger/lighter dropdown caret**; **dark-mode fix** for the "free overview" toast in the lesson iframe (was white-on-light
+>    → invisible; now hardcoded dark bg). **No DB migration.** Promote: `public/{index.html,home.css,styles.css}`,
+>    `src/render/runtime.ts` (runtime.ts also shared with items 3+4 — promote current). Verified: home in-browser (Playwright,
+>    sticky pinned at scrollY=5481) + served HTML/CSS/runtime bytes. Dark-mode toast fix verified in served bytes (the
+>    end-to-end dark lesson view needs a built lesson → re-confirm visually after the Anthropic cap resets).
+> KNOWN minor (pre-existing, non-visible): standalone artifact at 375px reports a ~117px phantom scroll while a viz modal is open.
+> ✅ **SHIP-BLOCKER LIFTED (2026-06-26, `bda97ee` on `origin/staging`):** the build **502/404 ship-blocker is FIXED** (see the B3
+> entry below — `/api/module` now returns 202 + polls instead of synthesizing on the request; `runBuildJob` is per-module
+> resilient; `pollJob` 404 reconstructs persisted state). Verified: `/api/module` returns **202 in <1s** on the staging host
+> (was ~120s synchronous → 502), and a full build to **5/5 = 100%** locally (staging DB; was timing out at 3/5). When promoting
+> these items to prod, `agent/orchestrator.ts` is now shared between item 3 (visuals) and B3 — promote the **current** file.
+> ⚠️ **Final clean 5/5 re-QA on the staging Render host is BLOCKED until the Anthropic spend cap resets** (the staging
+> `ANTHROPIC_API_KEY` hit its specified usage limit — `400 invalid_request_error: "regain access on 2026-07-01 at 00:00 UTC"`;
+> my verification builds exhausted the remaining budget). Until then staging builds degrade gracefully (partial lesson, NOT
+> charged) rather than 502/404. Raise the key's limit (or wait for 2026-07-01) to capture a clean staging build-to-100%.
+
+- **🧠 PROD OOM + MEMORY FIX (2026-06-27) — FIXED & ON PROD.** The prod instance (Standard 2 GB) exceeded RAM and Render
+  auto-restarted it. Root cause = two unbounded in-memory Maps (audit P0-2/P0-3), aggravated by the Batch-A concurrency bump +
+  go-live traffic:
+  - **`src/lib/jobs.ts`** — generation progress trackers were never freed (the `activeJobs` cutoff only filtered the view).
+    Added the opportunistic sweep the `skillgen`/`handson` maps already use: drop trackers >60 min on each `createJob`. (`8fce4e4`)
+  - **`src/lib/uploads.ts`** — parsed/embedded uploads were never evicted. Added `createdAt` + a 2 h `gcUploads()` on each
+    upload. (`8fce4e4`)
+  - **Concurrency defaults lowered to bound PEAK RAM:** `MAX_MODULE_CONCURRENCY` 8→5 (`orchestrator.ts`),
+    `MAX_CONCURRENT_GENERATIONS` 4→2 (`jobs.ts`). Both still env-overridable. (this commit)
+  Jobs/uploads are RAM-only; lessons live in Postgres, so these GCs have **zero user impact** (pollJob reconstructs from the
+  persisted artifact if a tracker is ever missing). After deploy the Render **Memory graph should plateau** instead of climbing
+  to a cliff. NOTE (still open, see STAGING_AUDIT.md Scalability): all this state is single-instance in-memory — it must move to
+  Postgres/Redis before any horizontal scaling, and **Sentry + memory alerting (Phase-2 prompt) would have flagged this pre-OOM**.
+- **⚡ LATENCY / MODEL-TIERING — Batch A + S5 + S6 + grounding-log DONE & ON PROD; Batch B (GPT failover) coded + env-gated, pending the OpenAI-key validation (2026-06-27, `main e134aeb`).**
+  Root cause of slow builds was **output-token generation** (latency ≈ output_tokens ÷ decode_rate), NOT input/cache/RAG/rate-limit
+  (org is Scale tier). **Batch A (shipped to staging `6610833` + prod `e23fa33`):**
+  - **All modules build in ONE parallel wave** — removed the B3 serial "module-1 cache-warm-up" (it traded wall-clock for cents
+    of input cost). `orchestrator.ts` `runBuildJob`. Measured **build 307s → 108s (2.8×)** locally (5/5, 0 failed; wall-clock ≈
+    slowest module, not the sum). `MAX_MODULE_CONCURRENCY` 5→8 (env).
+  - **Model tiering:** `profiler` → Haiku (`nodes.ts`), `repairDensity` → Haiku (`density.ts`) — both env-overridable; verified
+    clean (profiler 6s→2.5s). No gate/credit/schema change.
+  - **Overview still ~74s** (planner 23s + **architect 49s = the long pole**, one 16k Sonnet skeleton call) — NOT addressed by
+    Batch A; the planner leg is targeted by Batch B (planner→a cheaper model), the architect stays Sonnet (quality-critical).
+  - **Cost reality (flag for finance):** a full 5-module lesson ≈ **$0.95–1.70** Anthropic spend vs **$0.99/credit** — thin/negative
+    margin. S5 (single end-KC) + Haiku tiering improve it; fewer/lighter modules help.
+  - **✅ S5 / S6 / grounding-log — DONE, ON STAGING (`origin/staging 1f3b899`) AND PROD (`main e134aeb`, 2026-06-27; NO DB migration).**
+    Verified locally (staging Supabase + working key) + tsc-clean on the prod base; a full build runs 5/5=100% and
+    charge-once-on-full-success holds. Promoted 7 files: `src/agent/{nodes,prompts,state}.ts`, `src/rag/retrieve.ts`,
+    `src/render/{components,schema}.ts`, `src/server.ts`.
+    - **S5 — single end-of-lesson KC:** modules NEVER emit knowledgeCheck/selfCheckQuiz (`moduleUserPrompt` directive forced OFF +
+      `runDeepDive` strips both; the in-flow retrieval primitives — predictThenReveal, recall hooks, scenarios — are KEPT). ONE
+      lesson-level KC is generated in `writeOverviewProse` → **`bp.finalCheck`** (stable id `_final_check`; schema: extracted
+      `KnowledgeCheckBlockSchema`, optional Blueprint field). Rendered in a **`_check` pane (vertical) / page (horizontal) BEFORE
+      Sources** (`finalCheckInner` in `components.ts`; the old DEAD `cumulativeCheckItems`/`horizontalCheckPage` were removed).
+      `/api/check` resolves `bp.finalCheck` by block id (per-module KC fallback kept for old/library lessons). Gated on `lessonTypes`
+      incl `knowledge_check` (horizontal implies it). Verified: broad vertical → 1 KC (5 Qs) before Sources, narrow horizontal → 1 KC
+      page, grading works, ZERO per-module quizzes, both modes.
+      ⚠️ **Transitional (cosmetic, prod):** an OLD KC lesson re-rendered with this code shows its old per-module KCs AND an empty
+      `_check` placeholder (it has no `finalCheck`). Only affects pre-existing KC lessons; new builds are clean. Candidate follow-up:
+      suppress the `_check` placeholder when a lesson already has per-module KC blocks and no `finalCheck`.
+    - **S6 — dynamic module count:** profiler classifies `scope` (narrow|moderate|broad) → `moduleTarget` **5/6/8** (on `Intent`),
+      threaded into the planner + architect (skeleton) prompts (was hardcoded 4-5). `MAX_MODULE_CONCURRENCY` already defaults to 8.
+      Verified: "the whole field of machine learning" → 8 modules; "what is an AI agent" → 5.
+    - **grounding telemetry:** `src/rag/retrieve.ts` logs `[retrieve] grounded|ungrounded · N chunk(s) · coverage=… · q="…"` per call
+      (the early `!ragEnabled()`/empty-query return logs ungrounded with a reason). Cheap; gives data on how often broad topics ground.
+  - **🟡 Batch B — GPT failover: CODED + COMMITTED LOCALLY (`feat/credits-billing 192aabf`), NOT pushed; env-gated NO-OP without `OPENAI_API_KEY`.**
+    `src/agent/llm.ts` adds `gptFallbackEnabled()` / `makeGptLLM(tier)` (Sonnet→`gpt-5.5`, Haiku→`gpt-5.4-mini`; env-overridable via
+    `OPENAI_MODEL_SONNET`/`OPENAI_MODEL_HAIKU`) / `stripCacheControl` (drops the Anthropic-only cache_control on the GPT branch) /
+    `structuredWithFallback` / `rawWithFallback` / `invokeResilient`. Wired into profiler, planner, architect, runDeepDive,
+    writeOverviewProse, density-repair, and `/api/check`. With a key: Claude SDK retries cut to 2 (`CLAUDE_RETRIES`) + LangChain
+    `.withFallbacks([gpt…])` → fails over to GPT FAST (not the ~84s backoff); without a key: unchanged (Claude-only + `withOverloadRetry`).
+    Verified: tsc clean + a full no-key build is 5/5=100% with ZERO GPT refs (no regression). `.env` + `.env.example` now carry a blank
+    `OPENAI_API_KEY=` field (+ the two `OPENAI_MODEL_*` defaults). **PENDING (needs the user's key):** (1) confirm the exact OpenAI
+    model-id strings vs the account (`gpt-5.5`/`gpt-5.4-mini` are best-guess defaults), (2) FORCE the fallback + run full GPT-only
+    builds (structured-output parse + lesson quality; watch for GPT-5.x temperature/max_tokens 400s), (3) push to `origin/staging` +
+    add `OPENAI_API_KEY` to BOTH the staging AND prod Render envs before any prod promote.
+- **🔎 FULL STAGING AUDIT — see [`STAGING_AUDIT.md`](STAGING_AUDIT.md) (2026-06-27, `8f1c8e2`).** A read-only code /
+  security / scalability / resilience audit + the full generation-pipeline data-flow map (input → agents → output → user
+  context). Owner to review tomorrow. **Headline P0s** (full detail + P1/P2/P3 + ops runbook in the doc):
+  - **P0-1 unmetered model-spend faucet** — `POST /api/module` is public, unrate-limited, takes no gen slot, and runs real
+    ~16k-tok Sonnet builds (via `ensureModuleBuild`) for FREE; the credit is only charged in `runBuildJob`. A known artifact
+    UUID = free paid generation. (Pre-existing: the old synchronous `/api/module` was also free; B3 made it async.) **Decide:**
+    add a light gen-slot + per-IP rate-limit to `/api/module`, and/or only allow on-demand builds for artifacts owned by the
+    caller. Trade-off: `/api/module` must stay token-less for the lesson iframe — gate by cost/rate, not auth.
+  - **P0-2 unauthenticated expensive `/api/upload` + `/api/upload-repo`** (CPU/embedding, `git clone`, unbounded in-mem
+    `uploads` Map) → DoS/OOM. **Decide:** rate-limit + cap + TTL-evict the uploads Map.
+  - **P0-3 `jobs` Map never pruned** (`src/lib/jobs.ts`) — siblings `skillgen`/`handson` sweep, this one doesn't → slow OOM.
+    Quick fix: add the same periodic sweep.
+  - **P0-4 credit charge depends on the process surviving the whole build** — a restart/deploy (or the `/api/module`
+    recovery path) yields a free lesson; the bare `-1` spend is non-idempotent. **Architectural:** make the charge idempotent
+    (key it to the artifact + a "charged" flag) so it survives restarts and can't double/under-charge.
+  - **✅ P0-5 zero-module build charged — FIXED (`8f1c8e2`):** `fullSuccess` now requires `pending.length > 0`.
+  - **P0-6 backups/PITR undefined** — confirm Supabase PITR is on for BOTH DBs + do a restore drill (single biggest
+    data-loss risk; all durable state has one home). See the doc's runbook.
+  - **13× P1** incl: per-resource authz (`/api/build` can charge another user; `/api/ask/expand` edits any lesson),
+    `module_cache` key omits `uploadIds`/`referOnly` (cross-user upload-grounded leak), `runBuildJob`⇄`ensureModuleBuild`
+    last-write-wins blueprint clobber, iframe sandbox effectively disabled (`allow-scripts allow-same-origin` + CSP off),
+    DB `rejectUnauthorized:false`, uploaded-doc grounding silently lost on restart, migrations manual/untracked (no
+    `schema_migrations`). All in `STAGING_AUDIT.md` with file:line + fixes.
+- **🔑 Anthropic API limit (the staging-build blocker):** the `400 "regain access 2026-07-01"` is a **monthly SPEND cap**
+  (not a rate limit). Raise it in console.anthropic.com → **Settings → Limits** (org AND the key's **Workspace** — workspace
+  limit overrides org) and ensure **Billing** has credit/auto-reload. Give **prod** a high cap, **staging** a modest one
+  (~$2-5 covers a clean 5/5 build). Code already degrades gracefully on the cap. After raising it (or after 2026-07-01),
+  run the clean 5/5 staging build-to-100% + the live dark-mode lesson check that the cap blocked.
+
+- **✅ B3 — DONE (2026-06-26, `bda97ee` on `origin/staging`): build durability (502/404 ship-blocker) FIXED + latency work landed.**
+  **PART A — durability (the ship-blocker):**
+  (1) **`/api/module` 502 → 202/poll (`server.ts`).** The PUBLIC per-module endpoint no longer synthesizes a ~16k-tok Sonnet
+  body SYNCHRONOUSLY (that exceeded Render's gateway timeout → 502 / a ~120s hang). It now: serves the `module_cache` hit →
+  serves the module if the persisted artifact already has it (renders + caches) → else returns **`202 {building:true}`** and a
+  deduped off-request worker `ensureModuleBuild()` synthesizes it; the iframe POLLS. If a `runBuildJob` is already building the
+  artifact (`hasActiveBuildForArtifact` in `lib/jobs.ts`), IT stays the builder (no double-build). `render/runtime.ts` `pump()`
+  handles the 202 (re-queue + poll every 2.5s, 5-min backstop). Verified on the staging host: **202 in <1s** (was ~120s sync).
+  (2) **`runBuildJob` per-module resilience (`orchestrator.ts`).** Each module builds in a try/catch — one module that errors
+  (502/overload-exhausted/parse) becomes a STUB and the build CONTINUES to a usable 100% (remaining stubs build on demand via
+  /api/module). **Credit now charges ONLY on FULL success** (`failCount===0`) — NOT on a partial/failed build; "charge once,
+  only on full success, never on failure/partial" preserved. Verified locally: a forced single-module failure → build still
+  reaches done (4/5 ok, 1 stub) and **balance unchanged** (no charge); a clean 5/5 build charges exactly 1.
+  (3) **`pollJob` 404 (`public/app.js`).** A Render restart that drops the in-memory job mid-build no longer reverts the UI to
+  0%/failed — 404 now reveals the PERSISTED lesson (`/api/artifact/:id`, built modules + self-building stubs) + reloads the
+  dashboard. (Modules persist to Postgres incrementally; `runBuildJob` promotes `kind` at the start, so the lesson is already
+  in My Lessons.)
+  **PART B — latency (all landed):** (a) **prompt caching** — `cache_control:{type:"ephemeral"}` on `MODULE_SYSTEM` (~7k tok,
+  byte-identical across module calls) via `@langchain/anthropic` in `runDeepDive` (`nodes.ts`); `runBuildJob` builds **module 1
+  first** (writes the cache) THEN fans out modules 2..N which READ it. Verified locally: **`cache_read=8641` on modules 2..N**
+  (`[module-cache]` log; `withStructuredOutput(..., {includeRaw:true})`). (b) **`MAX_MODULE_CONCURRENCY` 3→5** (env-overridable).
+  (c) **planner Opus 4.8 → Sonnet 4.6** (`nodes.ts` `plannerLLM` — the slow overview leg; env-overridable via
+  `ANTHROPIC_MODEL_SONNET`). (d) **honest progress copy** (`app.js` STAGE_TEXT + gen overlay). (e) **per-stage wall-clock
+  logging** (`[timing]` in `orchestrator.ts`: profiler/retriever/planner/architect + per-module + totals).
+  **MEASURED (local, working key + staging DB):** overview ~75s (profiler 6s · retriever 0.3s · **planner 22s** · **architect
+  46s ← now the dominant leg**); build **307s → 5/5 = 100%** (was timing out at **3/5 after >480s** BEFORE; module 1 ~200s incl.
+  a transient retry, modules 2-5 ~80-105s in one cached parallel wave). Overview is improved (~82s→~75s) but still over the
+  <60s target — the bottleneck is now the **architect** skeleton call (46s), which was NOT in the approved caching scope.
+  **LIVE STAGING (2026-06-27, cap raised):** a full build COMPLETED **5/5 = 100%** and **charged exactly once (25→24)** —
+  durability + charge-once-on-full-success verified on the real Render host. BUT latency this run was slow (overview ~249s,
+  ~160s/module, build ~13 min). **Cause = the under-resourced STAGING Render instance (Starter 512 MB), NOT rate-limiting and
+  NOT a code regression** — confirmed: the org is on **Scale tier** (Sonnet 2M OTPM / 10K RPM; the build uses ~4% of OTPM), and
+  the 2026-06-25 "🐢 STAGING PERF" note already documents staging module-builds crawling (~1 module / ~7 min) vs **prod
+  (Standard 2 GB) doing the whole build in 3.5–6 min**, with "NOT a code/stack problem." The CPU-heavy local ONNX embedder +
+  concurrent 16k streams crawl on 512 MB. **Real numbers = local 307s / prod 3.5–6 min.** To get a representative staging
+  latency, bump the staging service to Standard (2 GB); longer-term, move RAG embeddings to a hosted API (the one fragile
+  CPU-heavy piece). The optimization is sound; it's masked on the small staging box.
+  **NO changes to the gate/credit logic, the 7 Blueprint gates, or the overview→build HITL flow.** Changed files (all in
+  `bda97ee`): `src/server.ts` · `src/agent/orchestrator.ts` · `src/agent/nodes.ts` · `src/lib/jobs.ts` · `src/render/runtime.ts`
+  · `public/app.js`. **PROMOTE TO PROD (after the staging cap resets + a clean 5/5 staging re-QA):** `git checkout origin/staging
+  -- src/server.ts src/agent/orchestrator.ts src/agent/nodes.ts src/lib/jobs.ts src/render/runtime.ts public/app.js` into
+  `main`. **No DB migration.** ⚠️ `agent/orchestrator.ts` is now shared with the visuals item (#3 above) — promote the current
+  file (it contains both). Prod has the SAME Render gateway-timeout exposure, so this should land with/before the other three.
+  **⚠️ OPEN — staging Anthropic spend cap:** the staging `ANTHROPIC_API_KEY` hit its specified usage limit during verification
+  (`400: regain access 2026-07-01 00:00 UTC`), so a clean 5/5 build on the Render host couldn't be captured. Builds degrade
+  gracefully (partial, not charged) meanwhile. Raise the key's limit or re-QA after 2026-07-01. (This is the HANDOFF's
+  long-noted "USER-side: Anthropic spend cap".)
+- **🩹 Prod-UAT Batch 1 fixes — ON STAGING, AWAITING REVIEW BEFORE PROD (2026-06-26; commit `3ad0e1e`).** Seven UAT items,
+  each verified locally (Playwright + curl). **B2** SPA history fallback: a catch-all (`app.get(/.*/)` registered LAST in
+  `server.ts`) serves `index.html` for non-API/non-asset GETs so `/pricing /library /community /builder /llm-skills` survive
+  refresh/deep-link/share; `routeFromUrl()` (app.js) maps those paths to their tab (NO URL-push — by decision). **B6** load
+  401 race: `loadDashboard()` returns early until the Supabase token is attached (`applySession` re-runs it) → 0 boot 401s.
+  **B5** stale "Building… X%": `loadDashboard` is now SERVER-AUTHORITATIVE (a completed build absent from `/api/jobs/active`
+  can't show a stale badge from a dead local poller); the `X%` itself was reading-progress (working as designed). **B8**
+  Library/Community knowledge checks now grade for REAL: `/api/check` resolves the prebuilt/community Blueprint **by slug**
+  (`{slug,source}`), and the artifact runtime sends the slug for `/api/lesson/*` + `/api/community/lesson/*` pages (was
+  `!ARTIFACT_ID` → "Saved (grading needs the live app)"). **B9** (i) popover: `closePopover()` on vertical module nav +
+  a visible `×`. **B4** mobile header (375px): CSS-only — the 9-tab bar becomes a horizontal-scroll strip + reflow (no
+  overlap/overflow); also fixed a Home feature-row grid overflow (`minmax(0,1fr)` + `min-width:0`). **Download mid-build:**
+  `/api/artifact/:id/full` serves best-available HTML immediately when modules are stubs (no 30s hang); a completed lesson
+  downloads full. **B7 (community ♥) needed NO change** — it works; the UAT's "no network call" was the per-browser like
+  dedupe on an already-liked lesson (verified: like fires, count 2→3). Files: `server.ts` · `render/{runtime,tokens}.ts` ·
+  `public/{app.js,styles.css,home.css}`. NO DB migration. **Still pending (separate sign-off):** B3 latency (plan), B1 DNS.
+  **PROMOTE TO PROD (after review):** `checkout origin/staging --` those 6 files into `main` (no migration).
+- **📊 Lesson visuals ("Visualize this") — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commit `2a200fe`).**
+  A small **"Visualize this"** CTA on a lesson module opens a ~65% popup with a curated, self-contained concept diagram
+  (inline SVG; no iframe/external fetch). Additive: a deterministic retrieval post-step + one OPTIONAL `module.visual
+  {title,svg}` schema field + a CTA/popup in the renderer — the lesson-gen model output, the 7 gates, and the credit flow
+  are UNCHANGED. **Diagram source = `~/Documents/KB - Visuals/custom-html-v5` (129; the high-quality REPLACEMENT for the
+  earlier low-quality v3/v4 set — swapped 2026-06-26, commit `2402f53`).** v5 is a pure DATA swap: same `visual_id` /
+  `kb_identifier_keys` / `keywords` per concept (so retrieval + schema + renderer are untouched), only the SVG bytes +
+  shared CSS changed (now `assets/diagram.css`). **Migration `0018_lesson_visuals.sql` (pgvector 384d + HNSW,
+  RLS-on/no-policies) is APPLIED to the STAGING DB**, and the v5 set is ingested (129 rows, all embedded) + backfilled
+  (library: 96/100 lessons, 132 visuals) on STAGING. Files: `src/lib/visuals.ts` (retrieveVisual: keyword/identifier match →
+  embedding fallback @0.84, symmetric embedPassages; env-tuneable `VISUAL_SIM_THRESHOLD`/`VISUAL_KEYWORD_MIN`),
+  `scripts/ingest-visuals.ts` (FOLDERS=`[custom-html-v5]`; reads `assets/diagram.css` per folder; extract `<svg>` + INLINE
+  CSS SCOPED under `.viz-svg` so page rules can't leak), `scripts/backfill-visuals.ts` (no regen — re-renders from blueprint;
+  now CLEARS a module's stale visual before re-attaching → idempotent across diagram swaps),
+  `src/render/{schema,components,tokens,runtime}.ts`, `src/agent/orchestrator.ts` (auto-attach per module on new builds;
+  try/catch never fails a build). Verified locally + on the STAGING onrender host (Playwright desktop+mobile): CTA → 65%
+  popup with the new clean v5 diagram, ✕/Esc/backdrop close, NO CSS leak, correct concept per unchanged identifiers, 0
+  console errors, tsc clean. **TO RE-SWAP a future diagram set:** drop it in a folder, point `FOLDERS` at it, then per env:
+  `delete from lesson_visuals;` → `ingest-visuals.ts` → `backfill-visuals.ts`. **MINOR (pre-existing, non-visible):** the
+  standalone artifact at 375px reports a ~117px phantom scroll while the viz modal is open (the modal/diagram render fine;
+  the artifact is normally iframed) — modal CSS unchanged by the swap; left as-is.
+  **PROD: NOT YET — the visuals feature isn't on `main`/prod** (no `0018`, no visuals code on `main`). When the feature is
+  promoted: `checkout origin/staging --` the ~11 paths into `main`, then `DATABASE_URL="$PROD_URL" npm run migrate &&
+  DATABASE_URL="$PROD_URL" npx tsx scripts/ingest-visuals.ts && DATABASE_URL="$PROD_URL" npx tsx scripts/backfill-visuals.ts`
+  (already v5 from the start — no separate prod swap needed).
+- **🧩 LLM Skills tab — ON STAGING, AWAITING FINAL REVIEW BEFORE PROD (2026-06-26; commits `e4be14c` + `da61062`).** A new
+  top-nav **"LLM Skills"** dropdown (mirrors the Trainer dropdown) with two items: **Build a Skill** and **My Skills**.
+  *Build a Skill* turns a free-text brief (LLM interface · task · data sources · access method + 4 optional fields, NO
+  dropdowns) + optional file/repo references into an installable **Agent Skill** (`SKILL.md` + scripts), shown IN-TAB as a
+  3-module + Sources result (syntax-highlighted preview · per-file download · Download-all .zip). Grounded by the **"Agent
+  Skills" KB category** (`retrieve()` gained an additive `category` filter); generates ungrounded (logged) if the KB is
+  absent. *My Skills* lists each user's saved skills like My Lessons (open / delete). **FREE in v1**, **Sonnet**
+  (`makeLLM("sonnet").withStructuredOutput(SkillPackageSchema)` — model emits STRUCTURED JSON only, app renders escaped).
+  Files: `src/lib/skillgen.ts` (schema + detached job + SKILL.md sanitize + persist), `src/rag/retrieve.ts` (category
+  filter), `src/server.ts` (`/api/skill/generate` · `/api/skill/job/:id` · `/api/skills` · `/api/skill/saved/:id`),
+  `public/skills.js` + `skills.css` (own files; avoid app.js/styles.css contention), `public/index.html` (nav + tab).
+  **Migration `0017_generated_skills.sql` is APPLIED to the STAGING DB** (generated_skills, RLS-on/no-policies). Verified
+  locally (Playwright desktop): tab/form (no dropdowns, blue band) · upload chip · generate→result · rail switching ·
+  SKILL.md frontmatter (kebab `name` + "Use when…" desc) · per-file + zip download · grounded sources · My Skills
+  save/list/open/delete · 0 console errors · tsc clean. **PROMOTE TO PROD (after review):** `checkout origin/staging --`
+  the 7 paths into `main`, then `DATABASE_URL="$PROD_URL" npm run migrate` to apply `0017` to the PROD DB.
 - **🖼️ Catalog thumbnails moved PixelBin CDN → Supabase Storage (2026-06-26, ON STAGING AND PROD; promote `d5cb676`).** The
   Library/Community card covers (`.lib-cover` background `--cov-img`) no longer use `cdn.pixelbin.io`. They now load from each
   environment's OWN **Supabase Storage public bucket `lesson-thumbs`** (CDN-backed, edge-cached) — 10 optimized webp images
