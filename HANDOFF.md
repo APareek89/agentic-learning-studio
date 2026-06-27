@@ -43,6 +43,36 @@ file has a one-line responsibility — that tells you where to go. Companion mem
 > **To promote to PROD:** cherry-pick the staging files into `main`, **apply migration 0019 to the PROD DB** (`DATABASE_URL=$PROD_DATABASE_URL`),
 > and confirm `OPENAI_API_KEY` is on the prod Render env (then Batch B is live on prod too). **Latency (local Claude, S5/S6 active):**
 > overview ~75s→**71s**, build 108s→**81.5s** (~25% faster — S5 drops per-module KC tokens; 5/5, 0 failover).
+
+## 🐞 KNOWN ISSUES / TO-FIX (QA backlog — 2026-06-27)
+Consolidated from the full QA sweep (prod UAT, staging re-QA, mobile, KB coverage, input/upload code-trace, verify-before-promote). Full detail + repros: `~/Documents/wizbit-issues-master.md`; per-area: `wizbit-prod-uat-2026-06-26.md`, `wizbit-staging-reqa-2026-06-26.md`, `wizbit-staging-mobile-qa-2026-06-26.md`, `wizbit-kb-coverage-2026-06-26.md`, `wizbit-input-cycle-codetrace.md`. Key: ✅ fixed-on-staging · 🟡 open · 🔴 high · ⚙️ infra · 📋 data.
+
+**🔴 High**
+- **Repo upload crashes the instance** — `/api/upload-repo` (server.ts:1123) clones + embeds *synchronously* in the request; a non-trivial repo 502s and on PROD knocked out the next overview+skill (OOM/restart). Tiny repos work but ~16s. → async background ingest off the request path. (Same root as build/module 502s.)
+- **Build/skill OOM on the 512MB Starter** → job_404 (in-memory jobs lost on restart). Worsened by the Anthropic cap → all staging gen on slow GPT-5.5 (~10min) until 2026-07-01. → persist job state; bigger/warm instance.
+
+**🟡 Input cycle — accepted-but-silently-dropped (code-trace)**
+- `cards` ignored by `/api/build` (runBuildJob never reads `art.cards` — editing card knobs between overview & build has no effect).
+- `lessonTypes[]` ignored by the planner (only architect/overview-prose see it).
+- `framework` silently dropped unless `examples`=code.
+- Stale `uploadIds` → silent ungrounded build (uploads are **in-memory only**, lost on restart; `referOnly` quietly falls back). → persist uploads or fail loudly.
+- P3: `objective:'other'`=no-op; `readingMode` never reaches a prompt (`horizontal` secretly adds a KC); body `userProfile` overridden by saved prefs.
+
+**🟡 Uploads**
+- `.csv` rejected (415); `/api/upload` + `/api/upload-repo` have **no requireAuth**; file-picker `accept` lists inconsistent + offer `.markdown` (server 415s) / omit several server-accepted exts; docs-only repo (README, no ext) → 422.
+
+**📋 Library / KC**
+- ~half of library lessons render a **perpetual empty KC pane** — lessons with neither per-module KC nor a backfilled `finalCheck` show `class="kc kc-pending"` "…appears once the lesson finishes building…" (components.ts:264; showsFinalCheckPane:280 returns true when `!hasModuleKC`). → run `scripts/backfill-finalcheck.ts` over the library, or suppress the pane for library lessons without a real finalCheck. (Affected in sample: the-agent-loop, human-in-the-loop-agents, tool-use-action-boundaries, model-context-protocol, planning-and-reflection, multi-agent-orchestration, serve-local-llm-ollama.)
+
+**🟡 RAG/KB**
+- No retrievable **code** or **business** examples (intents return code=false/biz=false); topic gaps (classic ML, generative media, hardware, governance, bias/fairness); coverage metric inflated (gate on `topSim`). See `wizbit-kb-coverage-2026-06-26.md`.
+
+**🟡 Mobile (staging)**
+- Lesson build-path map doesn't reflow; stacked sticky toolbars; toggle bar nested h-scroll; tap targets <44px (13×21 ▾); 9–11px fonts; Builder input placeholder clipping. (Page overflow itself ✅ fixed.)
+
+**⚙️ Infra/routing**
+- `prathibhax.com` apex has **no DNS A record** (prod only reachable via onrender origin). `/account` + `/my-lessons` direct URLs fall back to Home.
+
 Solo dev → both environments carry the SAME code (pushed together). Everything below is live + runtime-verified
 on local `:5070` (the opus-split worktree). The whole pipeline + UI set on both:
 - **Module-cache correctness** — `moduleCacheKey` keys on objective/buildGoal/framework/lessonTypes (no wrong-input bleed).
