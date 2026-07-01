@@ -430,13 +430,15 @@ export const RUNTIME_JS = String.raw`
   // Community lessons (/api/lesson/<slug>, /api/community/lesson/<slug>). The server resolves
   // whichever it is back to a Blueprint.
   var _hl=(location.pathname||"").match(/\/(?:api\/artifact|api\/lesson|api\/community\/lesson)\/([^\/?#]+)/);
-  var HANDSON_LESSON=_hl?_hl[1]:ARTIFACT_ID;
+  var HANDSON_LESSON=_hl?_hl[1]:(ARTIFACT_ID||cfg.slug||"");
   // Knowledge-check grading id: live user lessons grade by artifactId; PUBLIC Library /
   // Community lessons grade by SLUG (the server resolves the prebuilt/community Blueprint).
   // Only a downloaded file:// page (no match at all) can't be graded.
   var _ls=(location.pathname||"").match(/\/api\/(community\/lesson|lesson)\/([^\/?#]+)/);
-  var LESSON_SLUG=_ls?_ls[2]:"";
-  var LESSON_SRC=_ls?(_ls[1]==="community/lesson"?"community":"library"):"";
+  // On /library/<slug> (and /learn-style pretty URLs) the path won't match the /api/lesson regex,
+  // so fall back to the slug/source injected into lesson-config by the SEO renderer.
+  var LESSON_SLUG=_ls?_ls[2]:(cfg.slug||"");
+  var LESSON_SRC=_ls?(_ls[1]==="community/lesson"?"community":"library"):(cfg.source||"library");
   function kcGradeId(){ return ARTIFACT_ID ? {artifactId:ARTIFACT_ID} : (LESSON_SLUG ? {slug:LESSON_SLUG, source:LESSON_SRC} : null); }
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing

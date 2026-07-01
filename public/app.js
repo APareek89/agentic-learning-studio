@@ -779,7 +779,7 @@ function resetToLanding() {
 const TAB_PANELS = { home: "tab-home", configurator: "tab-configurator", "llm-skills": "tab-llm-skills", trainer: "tab-trainer", library: "tab-library", pricing: "tab-pricing", community: "tab-community", "build-community": "tab-build-community", dashboard: "tab-dashboard", account: "tab-account", auth: "tab-auth" };
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
   if (t.disabled) return;
-  t.addEventListener("click", () => switchTab(t.dataset.tab));
+  t.addEventListener("click", () => { switchTab(t.dataset.tab); syncTabUrl(t.dataset.tab); });
 });
 function switchTab(name) {
   document.querySelectorAll(".tab[data-tab]").forEach((t) => {
@@ -799,6 +799,18 @@ function switchTab(name) {
   if (name === "library") loadLibrary();
   if (name === "community") loadCommunity();
   if (name === "build-community") loadBuildCommunity();
+}
+
+// Keep the address bar in sync with the Library section so /library (and /library/<slug>) are
+// real, shareable, crawlable URLs — WITHOUT leaving the SPA. Called on USER tab clicks only
+// (never during popstate/routeFromUrl restore, so we never pushState mid history-navigation).
+// Entering Library → push /library; leaving the Library section → reset to "/". Other tabs untouched.
+function syncTabUrl(name) {
+  const path = location.pathname.replace(/\/+$/, "");
+  try {
+    if (name === "library") { if (path !== "/library") history.pushState({ tab: "library" }, "", "/library"); }
+    else if (path === "/library" || path.indexOf("/library/") === 0) history.replaceState({}, "", "/");
+  } catch (e) { /* ignore */ }
 }
 
 // ---- Home tab (Halo landing) interactions ----
@@ -1020,7 +1032,16 @@ function renderLibrary() {
 }
 libSearch.addEventListener("input", () => { if (libLoaded) renderLibrary(); });
 
-function openLibraryLesson(slug, title) { track("library_lesson_opened", slug); openTab({ type: "library", title: title, slug: slug }); }
+function openLibraryLesson(slug, title, push) {
+  track("library_lesson_opened", slug);
+  openTab({ type: "library", title: title, slug: slug });
+  // Reflect the open lesson as /library/<slug> (shareable; reload/share serves the crawlable page)
+  // without leaving the SPA. push===false when RESTORING from the URL (popstate / routeFromUrl) so
+  // we don't stack a new history entry during back/forward.
+  if (push !== false) {
+    try { if (location.pathname.replace(/\/+$/, "") !== "/library/" + slug) history.pushState({ lib: slug }, "", "/library/" + encodeURIComponent(slug)); } catch (e) { /* ignore */ }
+  }
+}
 
 // ---- Item 4: "while you wait" — relevant free Library lessons shown during overview generation ----
 const genSuggest = document.getElementById("gen-suggest");
@@ -2258,6 +2279,8 @@ const URL_TAB_MAP = { "/builder": "configurator", "/library": "library", "/commu
 function routeFromUrl() {
   const p = location.pathname.replace(/\/+$/, "");
   if (p === "/account") { gotoAccount(false); return; }
+  const libM = p.match(/^\/library\/(.+)$/);
+  if (libM) { const s = decodeURIComponent(libM[1]); openLibraryLesson(s, s, false); return; }
   if (URL_TAB_MAP[p]) switchTab(URL_TAB_MAP[p]);
 }
 function fmtMemberSince(iso) {
@@ -2291,7 +2314,11 @@ async function loadAccount() {
 }
 // Back/forward between /account and the rest of the SPA.
 window.addEventListener("popstate", () => {
-  if (location.pathname.replace(/\/+$/, "") === "/account") { gotoAccount(false); return; }
+  const p = location.pathname.replace(/\/+$/, "");
+  if (p === "/account") { gotoAccount(false); return; }
+  const libM = p.match(/^\/library\/(.+)$/);
+  if (libM) { const s = decodeURIComponent(libM[1]); openLibraryLesson(s, s, false); return; } // restore an open library lesson
+  if (p === "/library") { switchTab("library"); return; }                                       // restore the library grid
   let top = "home"; try { top = sessionStorage.getItem("als-toptab") || "home"; } catch (e) {}
   if (top === "account") top = "home";
   switchTab(top);

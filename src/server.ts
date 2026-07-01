@@ -35,6 +35,8 @@ import { addUpload, addRepoUpload, hasUploads, hydrateUploads } from "./lib/uplo
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
+import { listLibrary, getLibraryLesson, relatedLibrary } from "./lib/library";
+import { renderLibraryLessonPage, renderLibraryIndexPage, renderSitemap, renderNotFound } from "./render/seo";
 import { createJob, getJob, getPersistedJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
@@ -162,6 +164,39 @@ for (const [route, file] of Object.entries(PAGE_ROUTES)) {
     } catch { res.sendFile(join(PUBLIC_DIR, file)); }
   });
 }
+
+// ----------------------------------------------------------------------------
+// SEO — PUBLIC, server-rendered, CRAWLABLE Library pages (ADDITIVE; nothing here
+// removes or alters an existing route). These expose the prebuilt lessons to search
+// engines as REAL pages, with the lesson content in the INITIAL HTML (reusing
+// renderArtifact — NOT an iframe, NOT JS-injected). Registered BEFORE the SPA
+// catch-all so they win over the index.html fallback. The in-app SPA Library TAB is
+// client-side (switchTab) and is UNAFFECTED — only a direct load / crawler hit of
+// /library now returns the crawlable index instead of the SPA shell.
+// ----------------------------------------------------------------------------
+
+// GET /library/:slug — a standalone crawlable page for ONE library lesson (same source
+// as /api/lesson/:slug: re-rendered from the stored Blueprint). Unknown slug → a real 404.
+app.get("/library/:slug", async (req, res) => {
+  const lesson = await getLibraryLesson(req.params.slug).catch(() => null);
+  if (!lesson) { res.status(404).type("html").send(renderNotFound(req.params.slug)); return; }
+  const related = await relatedLibrary(lesson.slug, lesson.category).catch(() => []);
+  res.type("html").send(renderLibraryLessonPage(lesson, related));
+});
+
+// GET /library — a crawlable INDEX of every library lesson (links to each /library/:slug).
+app.get("/library", async (_req, res) => {
+  const cards = await listLibrary().catch(() => []);
+  res.type("html").send(renderLibraryIndexPage(cards));
+});
+
+// GET /sitemap.xml — generated from the live lesson list + the static public pages, so it
+// stays in sync automatically. (public/sitemap.xml was removed so express.static can't shadow
+// this route.) Graceful: if the DB is off, it still emits the static URLs.
+app.get("/sitemap.xml", async (_req, res) => {
+  const cards = await listLibrary().catch(() => []);
+  res.type("application/xml").send(renderSitemap(cards));
+});
 
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
 const ipKey = (req: express.Request) => req.ip || "unknown";
