@@ -2310,8 +2310,54 @@ async function loadAccount() {
     set("acct-bought", String(d.creditsPurchased ?? 0));
     set("acct-since", fmtMemberSince(d.memberSince));
     updateCreditPill(d.balance); cacheCredits(d.balance); // keep the nav pill in sync
+    // Admin card — shown only when the server says so (endpoints re-verify on every call).
+    const adminCard = document.getElementById("acct-admin-card");
+    if (adminCard) adminCard.hidden = !d.isAdmin;
   } catch (e) {}
 }
+
+// ---- Admin · add credits (card is hidden unless /api/account returns isAdmin) ----
+function adminMsg(text, ok) {
+  const el = document.getElementById("admin-msg");
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text || "";
+  el.classList.toggle("ok", !!ok);
+}
+async function adminCall(path, opts) {
+  const res = await fetch(path, opts);
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error || `Request failed (${res.status}).`);
+  return d;
+}
+const adminCheckBtn = document.getElementById("admin-check");
+const adminAddBtn = document.getElementById("admin-add");
+if (adminCheckBtn) adminCheckBtn.addEventListener("click", async () => {
+  const email = (document.getElementById("admin-email")?.value || "").trim();
+  if (!email) { adminMsg("Enter the user's email first.", false); return; }
+  adminMsg("Looking up…", true);
+  try {
+    const d = await adminCall(`/api/admin/user?email=${encodeURIComponent(email)}`, { headers: authHeaders() });
+    adminMsg(d.found ? `${d.email} — current balance: ${d.balance} credit${d.balance === 1 ? "" : "s"}.` : "No signed-up user with that email.", d.found);
+  } catch (e) { adminMsg(e.message, false); }
+});
+if (adminAddBtn) adminAddBtn.addEventListener("click", async () => {
+  const email = (document.getElementById("admin-email")?.value || "").trim();
+  const credits = Number(document.getElementById("admin-credits")?.value);
+  if (!email) { adminMsg("Enter the user's email first.", false); return; }
+  if (!(credits > 0)) { adminMsg("Enter a positive credit amount.", false); return; }
+  adminAddBtn.disabled = true;
+  adminMsg(`Adding ${credits} credit${credits === 1 ? "" : "s"} to ${email}…`, true);
+  try {
+    const d = await adminCall("/api/admin/credits", {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+      body: JSON.stringify({ email, credits }),
+    });
+    adminMsg(`Done — ${d.email} now has ${d.balance} credit${d.balance === 1 ? "" : "s"}.`, true);
+  } catch (e) { adminMsg(e.message, false); }
+  finally { adminAddBtn.disabled = false; }
+});
 // Back/forward between /account and the rest of the SPA.
 window.addEventListener("popstate", () => {
   const p = location.pathname.replace(/\/+$/, "");

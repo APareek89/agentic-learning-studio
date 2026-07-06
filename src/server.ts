@@ -336,7 +336,65 @@ app.get("/api/account", requireAuth, async (req, res) => {
     return;
   }
   const summary = await getAccountSummary(user.id, user.email ?? "");
-  res.json({ ...summary, userId: user.id, email: user.email ?? "" });
+  res.json({ ...summary, userId: user.id, email: user.email ?? "", isAdmin: isAdminUser(user) });
+});
+
+// ----------------------------------------------------------------------------
+// Admin — allowlisted emails only (ADMIN_EMAILS env, comma-separated). The UI
+// gate (the Admin card on /account) is cosmetic; THESE checks are the security
+// boundary. Requires auth to be ON — the local-dev pseudo-user is never admin.
+// ----------------------------------------------------------------------------
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "anandp.pareek6@gmail.com")
+  .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+function isAdminUser(user: { email?: string } | null): boolean {
+  return !!(authEnabled() && user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+}
+
+/** Resolve a signed-up user by email straight from Supabase's auth schema (the
+ *  server's DATABASE_URL is the Supabase Postgres, so auth.users is readable). */
+async function findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
+  const rows = await query<{ id: string; email: string }>(
+    `select id::text as id, email from auth.users where lower(email) = lower($1) limit 1`,
+    [email]
+  ).catch(() => []);
+  return rows[0] ?? null;
+}
+
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+
+// GET /api/admin/user?email= — look up a signed-up user + their live balance.
+app.get("/api/admin/user", requireAuth, async (req, res) => {
+  const admin = await getUser(req.headers.authorization);
+  if (!isAdminUser(admin)) { res.status(403).json({ error: "Not authorized." }); return; }
+  const email = String(req.query.email ?? "").trim();
+  if (!EMAIL_RE.test(email)) { res.status(400).json({ error: "Provide a valid email." }); return; }
+  const target = await findUserByEmail(email);
+  if (!target) { res.json({ found: false }); return; }
+  res.json({ found: true, email: target.email, userId: target.id, balance: await getBalance(target.id) });
+});
+
+// POST /api/admin/credits {email, credits} — top up a signed-up user's balance.
+// Uses the normal credit-lot machinery (reason:"admin"), so the grant shows in the
+// ledger with the acting admin's email in `code` for audit.
+app.post("/api/admin/credits", requireAuth, async (req, res) => {
+  const admin = await getUser(req.headers.authorization);
+  if (!isAdminUser(admin)) { res.status(403).json({ error: "Not authorized." }); return; }
+  const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
+  const credits = Number(req.body?.credits);
+  if (!EMAIL_RE.test(email)) { res.status(400).json({ error: "Provide a valid email." }); return; }
+  if (!Number.isFinite(credits) || credits <= 0 || credits > 500) {
+    res.status(400).json({ error: "Credits must be a number between 0 and 500." }); return;
+  }
+  const target = await findUserByEmail(email);
+  if (!target) { res.status(404).json({ error: `No signed-up user found for ${email}.` }); return; }
+  const { balance } = await addCredits(target.id, credits, {
+    reason: "admin",
+    planId: "admin-topup",
+    code: `by:${admin?.email ?? "?"}`,
+  });
+  console.log(`[admin] ${admin?.email} credited ${credits} to ${target.email} → balance ${balance}`);
+  res.json({ ok: true, email: target.email, credited: credits, balance });
 });
 
 // GET /api/preferences — the user's stored landing selections (to pre-fill the form).
