@@ -18,7 +18,8 @@
 #               Tool use / MCP · Vector DBs and clients · RAG tooling ·
 #               Deployment & serving / gateways · Evaluation & observability ·
 #               Guardrails & security · Providers & models · Foundations ·
-#               Prompting & context · Memory · Training & adaptation
+#               Prompting & context · Memory · Training & adaptation ·
+#               Agent Skills
 #
 # Licensing notes:
 #   - GitHub release NOTES are factual changelogs; we summarize, never copy
@@ -26,6 +27,21 @@
 #   - arXiv abstracts are summarized under fair-use; many papers are CC-BY but we
 #     do not assume it — we record "arXiv-abstract" and keep only our summary.
 #   - Vendor blogs/docs are summarized + linked; recorded as "official-docs".
+#
+# Scope decisions (2026-07-14/15, Session 1 · per docs/kb-gap-report.md):
+#   - ADDED sources for the residual demand gaps, in the report's "add first"
+#     order: eval depth incl. CI gating → Claude Code / Agent SDK / Agent Skills
+#     → applied end-to-end build recipes (RAG chatbot / support agent / multi-
+#     agent) → streaming / SSE. See the "SESSION-1 GAP-FILL ADDITIONS" block
+#     at the bottom of this file.
+#   - GraphQL-for-agents is declared OUT OF SCOPE. It recurs in demand (~2 prod
+#     lessons) but is an adjacent domain with no clean official source and only
+#     off-topic KB neighbours; the model answers it ungrounded by design. Revisit
+#     only if demand climbs materially.
+#   - Applied-build recipes are ALSO seeded as hand-authored kb/ docs this session
+#     (immediate breadth via `npm run ingest`); the tutorial-doc sources below keep
+#     them fresh. Docs sitemaps are bounded by the per-source item cap, so they
+#     trickle rather than flood.
 # ============================================================================
 
 # ---- GitHub releases: agent frameworks --------------------------------------
@@ -251,3 +267,91 @@
   license: arXiv-abstract
   fetch: auto
   category: Memory
+
+# ============================================================================
+# SESSION-1 GAP-FILL ADDITIONS (2026-07-14/15 · per docs/kb-gap-report.md)
+# Ordered by the report's "add first" priority. URLs are the report's; verify
+# each feed/license before the first live curator run (this session made no
+# network calls to confirm them). Categories match an existing kb/ folder +
+# documents.category value.
+# ============================================================================
+
+# ---- (1) Eval depth incl. CI gating -----------------------------------------
+- id: sitemap-promptfoo-docs
+  type: sitemap
+  url: https://www.promptfoo.dev/sitemap.xml
+  license: official-docs
+  fetch: auto
+  category: Evaluation & observability
+
+- id: gh-openai-evals
+  type: github
+  url: https://github.com/openai/evals/releases.atom
+  repo: openai/evals
+  license: MIT
+  fetch: auto
+  category: Evaluation & observability
+
+- id: gh-deepeval-releases
+  type: github
+  url: https://github.com/confident-ai/deepeval/releases.atom
+  repo: confident-ai/deepeval
+  license: Apache-2.0
+  fetch: auto
+  category: Evaluation & observability
+
+# ---- (2) Claude Code / Agent SDK / Agent Skills -----------------------------
+# NOTE: staging already holds the 21 Agent-Skills chunks; PROD has 0 (drift).
+# The prod fix is a scoped, additive `ingest -- kb/agent-skills` (see HANDOFF
+# Session-1 bullet / the ⚠️ HUMAN TASK), NOT a wholesale copy-kb.
+- id: gh-anthropic-claude-agent-sdk-python
+  type: github
+  url: https://github.com/anthropics/claude-agent-sdk-python/releases.atom
+  repo: anthropics/claude-agent-sdk-python
+  license: MIT
+  fetch: auto
+  category: Agent Skills
+
+- id: sitemap-claude-code-docs
+  type: sitemap
+  url: https://code.claude.com/docs/sitemap.xml
+  license: official-docs
+  fetch: auto
+  category: Agent Skills
+
+# ---- (3) Applied end-to-end build recipes -----------------------------------
+# Tutorial-bearing official docs; keep the hand-authored applied-build kb/ docs
+# fresh. Bounded by the per-source item cap, so they trickle.
+- id: sitemap-langchain-python-docs
+  type: sitemap
+  url: https://python.langchain.com/sitemap.xml
+  license: official-docs
+  fetch: auto
+  category: Agent frameworks
+
+- id: sitemap-llamaindex-docs
+  type: sitemap
+  url: https://docs.llamaindex.ai/en/stable/sitemap.xml
+  license: official-docs
+  fetch: auto
+  category: RAG tooling
+
+# ---- (4) Streaming / SSE ----------------------------------------------------
+- id: gh-vercel-ai-releases
+  type: github
+  url: https://github.com/vercel/ai/releases.atom
+  repo: vercel/ai
+  license: Apache-2.0
+  fetch: auto
+  category: Deployment & serving / gateways
+
+- id: sitemap-vercel-ai-sdk-docs
+  type: sitemap
+  url: https://ai-sdk.dev/sitemap.xml
+  license: official-docs
+  fetch: auto
+  category: Deployment & serving / gateways
+
+# ---- OUT OF SCOPE (declared, not added): GraphQL-for-agents ------------------
+# Recurs in demand but adjacent-domain with no clean official source; answered
+# ungrounded by design. See the Scope decisions note in the header.

@@ -271,8 +271,23 @@ export async function detectSource(src: SourceDef, state: SourceState, sinceMs: 
   items.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
 
   const fresh = items.filter((it) => withinWindow(it.timestamp, sinceMs));
+
+  // FIRST-EVER POLL (a never-checked source: no persisted cursor at all) → BACKFILL.
+  // A newly-allowlisted source's latest item usually predates the 24h delta window,
+  // so the change-cursor path below would surface only ONE item — and the source would
+  // then trickle a single item per run forever. That is exactly the "curator only
+  // refreshes, never adds breadth" failure from the KB gap report: adding a source did
+  // little because it never backfilled. On first contact, seed the newest N (items are
+  // already sorted newest-first) so a new source contributes real breadth immediately.
+  // index.ts still caps this to KB_MAX_ITEMS_PER_SOURCE, so a cold run stays bounded.
+  const neverChecked = !state.lastChecked && !state.lastHash;
+  if (neverChecked && items.length > 0) {
+    const backfill = Number(process.env.KB_FIRST_POLL_BACKFILL) || 8;
+    return items.slice(0, Math.max(backfill, fresh.length));
+  }
+
   // If nothing is in the window but the newest item's hash changed vs. last seen,
-  // surface JUST that one (covers slow feeds + first-ever poll of a source).
+  // surface JUST that one (covers slow feeds on an ALREADY-known source).
   if (fresh.length === 0 && items.length > 0) {
     const top = items[0];
     if (top.hash && top.hash !== state.lastHash) return [top];
