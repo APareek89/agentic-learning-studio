@@ -69,12 +69,15 @@ export const LearnerProfileSchema = z.object({
   /** when true (landing "Explain syntax"), every codeExample carries a syntax[] breakdown
    *  that the in-lesson "Explain syntax" toggle reveals. */
   explainSyntax: z.boolean().default(false),
+  /** ⚡ Quick read (Builder toggle): 4 short modules, low density, ~4-5 lean blocks each —
+   *  a ~2-minute build for learners who want the gist, not the full practice arc. */
+  quick: z.boolean().optional(),
   /** how the rendered lesson behaves (landing "Reading" preference):
    *  - "vertical"   = the classic scrolling overview→workbench lesson (DEFAULT, unchanged)
    *  - "horizontal" = a fixed-viewport paged deck: swipe page-to-page with a Next button,
    *    heavy blocks open in a modal, and the last page is a knowledge check.
    *  Drives the renderer (components/tokens/runtime); does not change lesson CONTENT. */
-  readingMode: z.enum(["vertical", "horizontal"]).default("vertical"),
+  readingMode: z.enum(["vertical", "horizontal", "world"]).default("vertical"),
 });
 
 // ----------------------------------------------------------------------------
@@ -275,6 +278,10 @@ export const BlockSchema = z.discriminatedUnion("kind", [
     language: z.string(),
     code: z.string(),
     explain: RichTextSchema.optional(),
+    /** honesty label (owner-approved): "runnable" = runs as shown; "fragment" = config/excerpt
+     *  that needs surrounding files; "illustrative" = pseudocode. The UI badges non-runnable
+     *  blocks so "copy-paste failed" can't happen silently on a labeled fragment. */
+    codeRole: z.enum(["runnable", "fragment", "illustrative"]).optional(),
     predictThenReveal: z.object({ prompt: z.string(), answer: z.string() }).optional(),
     /** plain-language syntax breakdown, revealed by the in-lesson "Explain syntax"
      *  toggle. Each item maps a construct/term in the code to what it does. */
@@ -317,7 +324,16 @@ export const BlockSchema = z.discriminatedUnion("kind", [
     title: z.string().optional(),
     groups: z.array(z.object({ name: z.string(), items: z.array(z.string()) })).min(1),
   }),
-  z.object({ ...blockBase, kind: z.literal("note"), tone: z.enum(["info", "good", "warn", "danger"]).optional(), body: RichTextSchema }),
+  z.object({
+    ...blockBase,
+    kind: z.literal("note"),
+    /** content-flow pass: notes render as cards in the world template (title + first
+     *  sentence); a title keeps them from being anonymous "NOTE" chips. Optional so
+     *  every stored lesson stays valid. */
+    title: z.string().optional(),
+    tone: z.enum(["info", "good", "warn", "danger"]).optional(),
+    body: RichTextSchema,
+  }),
   z.object({
     ...blockBase,
     kind: z.literal("selfCheckQuiz"),
@@ -462,7 +478,28 @@ export const MetaSchema = z.object({
   recap: z.object({ previousTitle: z.string(), points: z.array(z.string()) }).optional(),
   // Course position (set by the orchestrator); drives the lesson-tab strip.
   course: z.object({ index: z.number(), total: z.number(), title: z.string().optional() }).optional(),
+  /** FACT LEDGER (content-integrity pass): short pinned-fact lines emitted by the planner
+   *  (canonical taxonomy names, dataset field names, file names, exact model IDs, thresholds,
+   *  running-example constants) and threaded VERBATIM to every module writer + the synthesis
+   *  writer, so parallel writers can't drift on shared facts. Set by code, not the model. */
+  contract: z.array(z.string()).optional(),
 });
+
+/** FAST OVERVIEW — the bullets-only coverage brief the learner approves before building.
+ *  Written by a small/fast model in seconds (no mental map, no skeleton); the full skeleton
+ *  (planner + architect) is generated later, during the build, honoring this brief. Present
+ *  only on fast-overview drafts (and carried on the built lesson for provenance). */
+export const OverviewBriefSchema = z.object({
+  /** 1–2 sentence framing: what this lesson is and why it matters, pitched at the level. */
+  framing: z.string(),
+  /** Concepts the lesson will teach — label + a one-line "why it matters". */
+  concepts: z.array(z.object({ label: z.string(), why: z.string().optional() })),
+  /** Examples the learner will work through (flavored by industry/framework). */
+  examples: z.array(z.string()).default([]),
+  /** "After this you'll be able to …" outcome bullets. */
+  outcomes: z.array(z.string()).default([]),
+});
+export type OverviewBrief = z.infer<typeof OverviewBriefSchema>;
 
 // ----------------------------------------------------------------------------
 // 8. The top-level Blueprint.
@@ -483,6 +520,10 @@ export const BlueprintSchema = z.object({
    *  renderer shows it as a `_check` pane BEFORE Sources (vertical) / final page (horizontal),
    *  and POST /api/check grades it by its (stable) block id. Absent on content-only lessons. */
   finalCheck: KnowledgeCheckBlockSchema.optional(),
+  /** FAST OVERVIEW — the approved coverage brief (see OverviewBriefSchema). On a draft this is
+   *  what the preview renders (bullets only); the build injects it into the planner/architect
+   *  prompts so the final lesson delivers the approved coverage. */
+  brief: OverviewBriefSchema.optional(),
 });
 export type Blueprint = z.infer<typeof BlueprintSchema>;
 
@@ -576,8 +617,10 @@ export function repairBlueprint(bp: Blueprint): Blueprint {
       if (b.kind === "walkthrough") for (const st of b.steps) fixRich(st.detail as never);
       if (b.kind === "decisionMatrix") {
         // Drop criteria that duplicate the renderer's built-in columns (the renderer
-        // always adds "When to choose", "Cost", "Complexity"), so they don't repeat.
-        b.criteria = b.criteria.filter((c) => !/^(when to choose|cost|complexity)$/i.test(c.trim()));
+        // always adds "When to choose", "Cost", "Complexity"), so they don't repeat —
+        // including the common near-duplicates the model invents ("Computational cost",
+        // "Setup complexity", "When to use") that made 8-column tables restate one fact 3×.
+        b.criteria = b.criteria.filter((c) => !/^(when to (choose|use)|(computational |compute )?cost|(setup |operational )?complexity)$/i.test(c.trim()));
         // gate6: every option's cells must cover the criteria (fill gaps, drop extras).
         for (const opt of b.options) {
           const have = new Set(opt.cells.map((c) => c.criterion));

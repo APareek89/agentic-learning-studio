@@ -113,6 +113,16 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 
 .landing-inner { width: 100%; max-width: 880px; padding: 0 20px; margin-top: -34px; position: relative; z-index: 2; }
 
+/* Lesson Builder fits the viewport — kill the PAGE scroll (same class of fix as the Trainer
+   .workspace / Ask-chat one): the panel is exactly viewport-minus-the-MEASURED-topbar, and the
+   landing scrolls INTERNALLY only if a very short viewport can't fit it — so at normal heights
+   the "Suggested for you" row is visible with no scroll at all. Trimmed hero/landing padding
+   reclaims the ~67px that overflowed once suggestions appear (measured at 1440×900, topbar 73px).
+   Scoped to #tab-configurator so the LLM-Skills landing (shared .landing) is untouched. */
+#tab-configurator { height: calc(100dvh - var(--topbarH, 73px)); overflow: hidden; }
+#tab-configurator #landing { height: 100%; overflow-y: auto; padding-bottom: 18px; }
+#tab-configurator .hero-band { padding: 30px 20px 38px; }
+
 /* ---- Dashboard tab ---- */
 .dash-panel { padding: 32px 20px 48px; }
 .dash-wrap { max-width: 980px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border);
@@ -135,6 +145,9 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .lr-pct { font-size: 11px; color: var(--muted); white-space: nowrap; }
 .lr-actions { flex: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .lr-actions .ghost { font-size: 12.5px; padding: 7px 12px; }
+/* Item (d): "Open" is disabled until a lesson is ≥50% built — read it clearly as inert. */
+.lr-actions .ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+.lr-actions .ghost:disabled:hover { border-color: var(--border-strong); color: var(--ink); }
 .lr-share { font: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 13px; border-radius: 9px; cursor: pointer;
   border: 1px solid var(--accent); background: var(--accent); color: #fff; white-space: nowrap; }
 .lr-share:hover { filter: brightness(1.06); }
@@ -318,7 +331,10 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .hint { font-size: 12.5px; color: var(--muted); }
 
 /* ---- Workspace: full-screen lesson; "Ask more" chat slides in on the RIGHT ---- */
-.workspace { display: grid; grid-template-columns: 1fr 0; height: calc(100vh - 57px); transition: grid-template-columns 0.2s ease; }
+/* height uses the MEASURED topbar height (set by app.js as --topbarH) — the old hardcoded
+   57px undershot the real ~73px bar, leaving a 16px page scroll that showed when the Ask
+   chat opened. Fallback keeps the old value for safety. */
+.workspace { display: grid; grid-template-columns: 1fr 0; height: calc(100dvh - var(--topbarH, 57px)); transition: grid-template-columns 0.2s ease; overflow: hidden; }
 .workspace.chat-open { grid-template-columns: 1fr minmax(320px, 32%); }
 .chat { border-left: 1px solid var(--border); display: flex; flex-direction: column; background: var(--surface); min-width: 0; overflow: hidden; }
 .chat[hidden] { display: none; }
@@ -723,3 +739,11 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .fb-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .fb-x { position: absolute; top: 10px; right: 12px; border: none; background: transparent; font-size: 20px; line-height: 1; color: var(--muted, #56607a); cursor: pointer; }
 .fb-thanks { margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--ok, #1d9e75); }
+
+/* Quick-read toggle (Builder) — 4 short modules, minimal text, ~2-min build */
+.quick-toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); border: 1px solid var(--border-strong); border-radius: 10px; padding: 9px 13px;
+  cursor: pointer; user-select: none; background: var(--surface); }
+.quick-toggle:hover { border-color: var(--accent); color: var(--accent-2); }
+.quick-toggle:has(input:checked) { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-2); }
+.quick-toggle input { accent-color: var(--accent); }

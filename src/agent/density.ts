@@ -66,7 +66,78 @@ function blockViolates(b: Block, ceiling: number): boolean {
   return false;
 }
 
+// ---- snippet length (content-flow pass): tiered line caps on codeExample code ----
+// The prompt aims teaching stages at ≤10 lines; a FINAL assembly / guided-practice stage
+// may legitimately run longer (observed: every Stage 1 lands ≤10, only integration stages
+// overflow). So the deterministic repair fires only above the assembly ceiling — squeezing
+// a wiring snippet below it mechanically wrecks readability for no pedagogic gain.
+export const CODE_LINE_LIMIT = 10;      // the prompt's aim for teaching stages
+export const CODE_LINE_REPAIR_AT = 14;  // hard ceiling — above this we compress
+function codeLines(code: string): number {
+  return code.split("\n").filter((l) => l.trim().length > 0).length;
+}
+/** codeExample blocks whose snippet exceeds a line cap (default: the repair ceiling). */
+export function codeOffenders(m: Module, limit: number = CODE_LINE_REPAIR_AT): Extract<Block, { kind: "codeExample" }>[] {
+  return m.blocks.filter((b): b is Extract<Block, { kind: "codeExample" }> => b.kind === "codeExample" && codeLines(b.code) > limit);
+}
+
 const RepairSchema = z.object({ blocks: z.array(z.object({ id: z.string(), body: RichTextSchema })) });
+const CodeRepairSchema = z.object({ blocks: z.array(z.object({ id: z.string(), code: z.string() })) });
+
+/**
+ * Repair over-long code snippets: one constrained Haiku pass that compresses each
+ * offending codeExample to ≤CODE_LINE_LIMIT lines. CONSERVATIVE by instruction: the
+ * block's explain/predict text may reference specific line numbers ("the check on
+ * line 4"), so the model must keep referenced lines at their numbers — and return
+ * the code UNCHANGED when it can't compress without breaking a reference. Never throws.
+ */
+export async function repairCodeLength(bp: Blueprint, moduleId: string, config?: RunnableConfig): Promise<{ repaired: number; residual: number }> {
+  const m = bp.modules.find((x) => x.id === moduleId);
+  if (!m) return { repaired: 0, residual: 0 };
+  const offenders = codeOffenders(m);
+  if (!offenders.length) return { repaired: 0, residual: 0 };
+  // Ship the surrounding text too, so the model can see which line numbers are load-bearing.
+  const payload = offenders.map((b) => ({
+    id: b.id,
+    code: b.code,
+    referencedBy: [
+      ...blockProse(b),
+      b.predictThenReveal ? `${b.predictThenReveal.prompt} ${b.predictThenReveal.answer}` : "",
+    ].join(" ").slice(0, 800),
+  }));
+  try {
+    // SONNET (not Haiku): eliding boilerplate while preserving taught lines is surgical
+    // editing Haiku reliably refuses; this fires only on >CODE_LINE_REPAIR_AT snippets
+    // (rare — one per few lessons), so the cost difference is negligible.
+    const runnable = structuredWithFallback(
+      makeLLM("sonnet", 0.2, { maxTokens: 4000, maxRetries: gptFallbackEnabled() ? 2 : 4 }),
+      makeGptLLM("sonnet", { maxTokens: 4000 }),
+      CodeRepairSchema,
+      { name: "repair-code" }
+    );
+    const out = (await invokeResilient(
+      runnable,
+      [
+        new SystemMessage(
+          `You COMPRESS teaching code snippets. Return EVERY block at ${CODE_LINE_REPAIR_AT} non-empty lines or fewer — this is mandatory, not optional. Moves, in order of preference: drop blank lines; compact dict/JSON/object literals onto fewer lines; merge trivial statements; shorten comments; finally, ELIDE non-teaching boilerplate (auth checks, logging, imports the lesson isn't about) with a single "# …" comment line in its place. FORBIDDEN: dropping a step the snippet TEACHES, removing TODO placeholders, removing "changed line" markers (★ / CHANGED / <--), renaming identifiers. The "referencedBy" text tells you what the snippet teaches — keep those lines' CONTENT intact.`
+        ),
+        new HumanMessage(JSON.stringify({ blocks: payload }).slice(0, 14000)),
+      ],
+      config ?? {}
+    )) as z.infer<typeof CodeRepairSchema>;
+    const byId = new Map(out.blocks.map((x) => [x.id, x.code]));
+    let repaired = 0;
+    for (const b of offenders) {
+      const nc = byId.get(b.id);
+      // Accept a rewrite only if it fits the ceiling AND actually shrank — else keep the original.
+      if (nc && nc.trim() && codeLines(nc) <= CODE_LINE_REPAIR_AT && codeLines(nc) < codeLines(b.code)) { b.code = nc; repaired++; }
+    }
+    return { repaired, residual: codeOffenders(m).length };
+  } catch (err) {
+    console.warn("[repairCodeLength] failed:", (err as Error).message?.slice(0, 120));
+    return { repaired: 0, residual: codeOffenders(m).length };
+  }
+}
 
 /**
  * Repair density: rewrite ONLY the blocks with over-ceiling sentences (one LLM pass).

@@ -161,8 +161,18 @@ export const RUNTIME_JS = String.raw`
       if(ev.target.closest(".hmodal-x")){ closeModal(); return; }
       if(ev.target.id==="hmodal"){ closeModal(); return; }
     }
-    var t = ev.target.closest("[data-deepdive],[data-goto],[data-hmod],#hx-next,#hx-back,.hx-see,#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf,.handson-btn");
+    // Slides details popup: close button / backdrop (handle before .closest).
+    if(ev.target.closest(".smodal-x")){ closeSlideModal(); return; }
+    if(ev.target.id==="smodal"){ closeSlideModal(); return; }
+    var t = ev.target.closest("[data-deepdive],[data-goto],[data-hmod],#hx-next,#hx-back,.hx-see,#to-overview,.term,.term-chip,.deeper-toggle,.quiz .opt,.quiz .reveal,#theme,.copy,.toggle,.building,.collapse-h,.kc-opt,.kc-submit,.kc-recall-done,.kc-conf,.handson-btn,#t-slides,.sl-details,.sl-dot,#sl-prev,#sl-next");
     if(!t){ if(!ev.target.closest("#popover")) closePopover(); return; }
+
+    // ---- SLIDES view (vertical): toggle, per-slide nav, details popup ----
+    if(t.id==="t-slides"){ if(PREVIEW){ previewNote(); return; } if(SL.on){ slidesExit(false); } else { slidesEnter(null); } return; }
+    if(t.matches(".sl-details")){ openSlideModal(SL.deck[SL.idx]); return; }
+    if(t.matches(".sl-dot")){ slGo(SL.sec, +t.getAttribute("data-i"), 1); return; }
+    if(t.id==="sl-next"){ slStep(1); return; }
+    if(t.id==="sl-prev"){ slStep(-1); return; }
 
     // "⚡ Get Hands on" → open the browser-run notebook page in a NEW TAB. Inside the
     // host iframe we ask the parent to open it (it knows the window); standalone we open it ourselves.
@@ -193,9 +203,10 @@ export const RUNTIME_JS = String.raw`
       // preview renders ONLY the concept map (no module panes), so isStub() can't find a panel —
       // the note must still fire there, matching the vertical preview behaviour. (Bug 2.)
       if(PREVIEW){ previewNote(); return; }
+      if(SL.on){ var si=SL.list.indexOf(gid); if(si!==-1){ slGo(si, 0, 1); return; } }
       if(HORIZ){ showPane(gid); } else { enterWorkbench(gid); if(isStub(gid)) prioritize(gid); } return; }
     if(t.matches(".building")){ var bp_=t.closest(".panel[data-module]"); if(bp_){ var mid=bp_.getAttribute("data-module"); t.classList.remove("failed"); t.innerHTML='<span class="bspin"></span> Building this section…'; prioritize(mid); } return; }
-    if(t.id==="to-overview"){ showOverview(); return; }
+    if(t.id==="to-overview"){ if(SL.on) slidesExit(true); showOverview(); return; }
     if(t.matches(".term,.term-chip")){ ev.preventDefault(); ev.stopPropagation(); if(pop.classList.contains("on") && pop._for===t){ closePopover(); } else { openPopover(t); pop._for=t; } return; }
     if(t.matches(".deeper-toggle")){
       if(HORIZ){ openDeeperModal(t); return; }
@@ -222,7 +233,16 @@ export const RUNTIME_JS = String.raw`
     }
   });
 
-  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ closeViz(); if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } } });
+  document.addEventListener("keydown", function(e){
+    if(e.key==="Escape"){ closeViz(); var sm=document.getElementById("smodal"); if(sm && !sm.hidden){ closeSlideModal(); return; } if(HORIZ && hModal && !hModal.hidden){ closeModal(); } else { closePopover(); } return; }
+    // Slides keyboard nav: ←/→/Space page the deck (not while typing / while the popup is open).
+    if(SL.on){
+      var tag=(e.target && e.target.tagName)||""; if(tag==="INPUT"||tag==="TEXTAREA"||e.target.isContentEditable) return;
+      var smo=document.getElementById("smodal"); if(smo && !smo.hidden) return;
+      if(e.key==="ArrowRight"|| e.key===" "){ e.preventDefault(); slStep(1); }
+      else if(e.key==="ArrowLeft"){ e.preventDefault(); slStep(-1); }
+    }
+  });
   window.addEventListener("resize", closePopover);
 
   // ---- knowledge check (grades via /api/check; MCQ vs the stored Blueprint, freeText by LLM) ----
@@ -492,7 +512,7 @@ export const RUNTIME_JS = String.raw`
         var panel=panelEl(id);
         // Inject into the page body when present (horizontal h-page), else the panel itself.
         var target=panel ? (panel.querySelector(".h-page-body")||panel) : null;
-        if(target && data && data.fragmentHtml){ target.innerHTML=data.fragmentHtml; if(panel) panel.classList.remove("is-stub"); hydrate(target); observeReveals(target); }
+        if(target && data && data.fragmentHtml){ target.innerHTML=data.fragmentHtml; if(panel) panel.classList.remove("is-stub"); hydrate(target); observeReveals(target); refreshSlidesFor(id); }
         if(nav){ nav.classList.remove("building","failed"); }
         busy=false; updateBuildBanner(); pump();
       })
@@ -508,6 +528,166 @@ export const RUNTIME_JS = String.raw`
     else if(i===-1 && isStub(id)){ queue.unshift(id); }
     pump();
   }
+
+  // ============================================================================
+  // SLIDES view (vertical mode) — a NO-SCROLL presentation stage filling the whole
+  // area between the left module nav and the lesson toolbar. Decks are DERIVED
+  // client-side from the already-rendered panel DOM (deterministic, $0, works on
+  // every existing lesson and on modules that finish building later): a title
+  // slide per module, then one slide per block. Full block content opens in the
+  // #smodal popup ("Details") — the slide itself never scrolls.
+  // ============================================================================
+  var SL={on:false, list:[], sec:0, idx:0, deck:[]};
+  function slSections(){ return Array.prototype.map.call(document.querySelectorAll("#blocknav .navitem"), function(b){ return b.getAttribute("data-goto"); }).filter(Boolean); }
+  function ensureStage(){
+    if(document.getElementById("slidestage")) return;
+    var main=document.getElementById("blockmain"); if(!main) return;
+    var st=document.createElement("div"); st.id="slidestage";
+    st.innerHTML='<div class="sl-head"><div class="sl-htext"><span class="sl-eyebrow" id="sl-eyebrow"></span><h2 class="sl-title" id="sl-title"></h2></div><button class="sl-details" id="sl-det" type="button" hidden>⤢ Details</button></div>'
+      +'<div class="sl-body" id="sl-body"></div>'
+      +'<div class="sl-foot"><button class="sl-nav sl-prev" id="sl-prev" type="button">← Back</button><div class="sl-dots" id="sl-dots"></div><span class="sl-pos" id="sl-pos"></span><button class="sl-nav sl-next" id="sl-next" type="button">Next →</button></div>';
+    main.appendChild(st);
+  }
+  // Deep-clone a piece of the read view for a slide: collapsibles forced open,
+  // scroll-reveals forced visible (the stage has no scroll to trigger them).
+  function pieceClone(el){
+    var c=el.cloneNode(true);
+    if(c.classList&&c.classList.contains("collapse")) c.classList.add("open");
+    var i,cs=c.querySelectorAll?c.querySelectorAll(".collapse"):[]; for(i=0;i<cs.length;i++) cs[i].classList.add("open");
+    if(c.classList&&c.classList.contains("reveal")) c.classList.add("in");
+    var rs=c.querySelectorAll?c.querySelectorAll(".reveal"):[]; for(i=0;i<rs.length;i++) rs[i].classList.add("in");
+    return c;
+  }
+  function slideBlockTitle(el){
+    var h=el.querySelector("h3"); if(h && h.textContent.trim()) return h.textContent.trim();
+    var lab=el.querySelector(".col-lab"); if(lab && lab.textContent.trim()) return lab.textContent.trim();
+    if(el.classList.contains("blk-check")) return "Knowledge check";
+    if(el.classList.contains("blk-code")) return "Code example";
+    if(el.classList.contains("blk-example")) return "Real-world example";
+    if(el.querySelector(".dcall")) return "When to use it";
+    if(el.querySelector(".scn")) return "Scenario";
+    if(el.querySelector(".callout")) return "Worth knowing";
+    if(el.querySelector(".viz")) return "Explore it";
+    return "";
+  }
+  function buildDeck(id){
+    var panel=document.querySelector('.panel[data-panel="'+cssEsc(id)+'"]');
+    if(!panel) return [{title:"", eyebrow:"", nodes:[], full:null}];
+    var isModule=moduleIds.indexOf(id)!==-1;
+    var i;
+    if(!isModule){
+      // Special pane (synthesis / knowledge check / sources) = ONE slide; long content may
+      // scroll INSIDE the body (class "free") — quizzes need the room.
+      var h2=panel.querySelector("h2"), eb=panel.querySelector(".eyebrow");
+      var nodes=[];
+      for(i=0;i<panel.children.length;i++){ var ch=panel.children[i]; if(ch.tagName==="H2"||(ch.classList&&ch.classList.contains("eyebrow"))) continue; nodes.push(pieceClone(ch)); }
+      return [{title:h2?h2.textContent:"", eyebrow:eb?eb.textContent:"Lesson", nodes:nodes, full:null, free:true}];
+    }
+    var mtitleEl=panel.querySelector(".module-head h2");
+    var mtitle=mtitleEl?mtitleEl.textContent.trim():"";
+    var posEl=panel.querySelector(".m-spine .m-pos");
+    var spine=posEl?posEl.textContent.trim():"Module";
+    if(panel.classList.contains("is-stub")){
+      var nodes2=[];
+      var sump=panel.querySelector(".module-body>p"); if(sump) nodes2.push(pieceClone(sump));
+      var ob=panel.querySelector(".objectives"); if(ob) nodes2.push(pieceClone(ob));
+      var bn=document.createElement("div"); bn.className="building"; bn.innerHTML='<span class="bspin"></span> Building this section… <span class="muted">its slides appear the moment it’s ready</span>';
+      nodes2.push(bn);
+      return [{title:mtitle, eyebrow:spine, nodes:nodes2, full:null}];
+    }
+    var deck=[];
+    // Title slide: summary + plain-words analogy + why-it-matters + objectives.
+    var tsel=[".m-what",".analogy",".m-rel"], tnodes=[];
+    for(i=0;i<tsel.length;i++){ var te=panel.querySelector(tsel[i]); if(te) tnodes.push(pieceClone(te)); }
+    var sm=panel.querySelector(".module-body>p"); if(sm) tnodes.push(pieceClone(sm));
+    var obj=panel.querySelector(".module-body>.objectives"); if(obj) tnodes.push(pieceClone(obj));
+    var df=panel.querySelector(".module-body>.decision-forces"); if(df) tnodes.push(pieceClone(df));
+    deck.push({title:mtitle, eyebrow:spine, nodes:tnodes, full:panel});
+    // One slide per block (core first, then "Going deeper" blocks).
+    var blocks=panel.querySelectorAll(".module-body > .block, .module-body > .deeper > .block");
+    for(i=0;i<blocks.length;i++){
+      var b=blocks[i];
+      var title=slideBlockTitle(b)||mtitle;
+      var deeper=!!(b.parentElement&&b.parentElement.classList.contains("deeper"));
+      var c=pieceClone(b);
+      var h=c.querySelector("h3"); if(h && h.textContent.trim()===title) h.parentNode.removeChild(h);
+      deck.push({title:title, eyebrow:spine+" · "+mtitle+(deeper?" · Going deeper":""), nodes:[c], full:b, free:b.classList.contains("blk-check")});
+    }
+    return deck;
+  }
+  function renderSlide(){
+    var s=SL.deck[SL.idx]; if(!s) return;
+    var head=document.querySelector("#slidestage .sl-head"), body=document.getElementById("sl-body");
+    var eb=document.getElementById("sl-eyebrow"), ti=document.getElementById("sl-title"), det=document.getElementById("sl-det");
+    if(eb) eb.textContent=s.eyebrow||""; if(ti) ti.textContent=s.title||"";
+    if(body){
+      body.className="sl-body"+(s.free?" free":"");
+      body.innerHTML="";
+      for(var i=0;i<s.nodes.length;i++){ s.nodes[i].style.setProperty("--i", String(i)); body.appendChild(s.nodes[i]); }
+      hydrate(body);
+      if(head){ head.classList.remove("enter"); void head.offsetWidth; head.classList.add("enter"); }
+      body.classList.remove("enter"); void body.offsetWidth; body.classList.add("enter");
+      requestAnimationFrame(function(){ body.classList.toggle("clipped", !s.free && body.scrollHeight>body.clientHeight+4); });
+    }
+    if(det) det.hidden=!s.full;
+    var dots=document.getElementById("sl-dots"), pos=document.getElementById("sl-pos");
+    if(dots){ var dh=""; for(var d=0;d<SL.deck.length;d++) dh+='<button class="sl-dot'+(d===SL.idx?" on":"")+'" data-i="'+d+'" type="button" aria-label="Slide '+(d+1)+'"></button>'; dots.innerHTML=SL.deck.length>1?dh:""; }
+    if(pos) pos.textContent=(SL.idx+1)+" / "+SL.deck.length;
+    var prev=document.getElementById("sl-prev"), next=document.getElementById("sl-next");
+    if(prev){ if(SL.sec===0 && SL.idx===0) prev.setAttribute("disabled","1"); else prev.removeAttribute("disabled"); }
+    if(next){
+      var last=SL.sec===SL.list.length-1 && SL.idx===SL.deck.length-1;
+      if(last) next.setAttribute("disabled","1"); else next.removeAttribute("disabled");
+      next.textContent=(SL.idx===SL.deck.length-1 && !last)?"Next section →":"Next →";
+    }
+    closePopover();
+  }
+  function slGo(secIdx, slideIdx, dir){
+    if(secIdx<0 || secIdx>=SL.list.length) return;
+    SL.sec=secIdx;
+    var id=SL.list[secIdx];
+    SL.deck=buildDeck(id);
+    SL.idx=slideIdx<0 ? SL.deck.length-1 : Math.min(slideIdx, SL.deck.length-1);
+    document.querySelectorAll(".navitem").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-goto")===id); });
+    if(moduleIds.indexOf(id)!==-1){ curMod=id; markVisited(id); if(isStub(id)) prioritize(id); } else { curMod=null; }
+    renderSlide(dir); setProgress();
+  }
+  function slStep(d){
+    var ni=SL.idx+d;
+    if(ni>=0 && ni<SL.deck.length){ SL.idx=ni; renderSlide(d); return; }
+    if(d>0 && SL.sec<SL.list.length-1){ slGo(SL.sec+1, 0, 1); }
+    else if(d<0 && SL.sec>0){ slGo(SL.sec-1, -1, -1); }
+  }
+  function slidesEnter(id){
+    ensureStage(); if(!document.getElementById("slidestage")) return;
+    SL.on=true; document.body.classList.add("slides-on");
+    var btn=document.getElementById("t-slides"); if(btn) btn.setAttribute("aria-pressed","true");
+    var ov=document.getElementById("overview"), wb=document.getElementById("workbench"), back=document.getElementById("to-overview");
+    if(ov) ov.hidden=true; if(wb) wb.hidden=false; if(back) back.hidden=false;
+    SL.list=slSections();
+    var target=id||curMod||SL.list[0];
+    var si=SL.list.indexOf(target);
+    slGo(si>=0?si:0, 0, 1);
+  }
+  function slidesExit(toOverview){
+    SL.on=false; document.body.classList.remove("slides-on");
+    var btn=document.getElementById("t-slides"); if(btn) btn.setAttribute("aria-pressed","false");
+    closeSlideModal();
+    // Land the read view on the section the slides were showing.
+    var id=SL.list[SL.sec];
+    if(!toOverview && id) activatePanel(id);
+  }
+  function openSlideModal(s){
+    if(!s || !s.full) return;
+    var sm=document.getElementById("smodal"); if(!sm) return;
+    var tt=sm.querySelector(".smodal-title"), bd=sm.querySelector(".smodal-body");
+    if(tt) tt.textContent=s.title||"Details";
+    if(bd){ bd.innerHTML=""; bd.appendChild(pieceClone(s.full)); hydrate(bd); }
+    sm.hidden=false;
+  }
+  function closeSlideModal(){ var sm=document.getElementById("smodal"); if(sm && !sm.hidden){ sm.hidden=true; var bd=sm.querySelector(".smodal-body"); if(bd) bd.innerHTML=""; } }
+  // A module that finishes building while its slides are on screen swaps its deck in live.
+  function refreshSlidesFor(id){ if(SL.on && SL.list[SL.sec]===id){ slGo(SL.sec, 0, 1); } }
 
   hydrate(document);
   observeReveals(document);

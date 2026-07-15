@@ -1,0 +1,104 @@
+%% ============================================================================
+%% MASTERFLOW — Agentic Learning Studio, end-to-end generation + delivery flow
+%% Convention: one step per box · AGENT = LLM call (model named) · FN = deterministic
+%% code · GATE = fail-closed check · in→out on every node · latencies = measured
+%% locally (M-series Mac, July 2026; Render prod is similar ±20%). LLM latencies
+%% vary with load — treat as typical, not guaranteed.
+%% Render: paste into mermaid.live, or any Mermaid preview.
+%% ============================================================================
+flowchart TD
+
+%% ------------------------------- INPUTS -------------------------------------
+subgraph INPUTS["INPUTS — Builder (public/index.html + app.js)"]
+  U["Learner prompt<br/>+ Level + Coverage picks<br/>fixed: examples=functional_code · visuals=on<br/>readingMode=world · KC=on"]
+  UP["FN uploads (optional)<br/>in: PDF/repo → out: docIds (in-mem, session)<br/>PDF parse ~1-3s · repo clone ≤90s cap"]
+  AUTHW{"auth wall<br/>Supabase JWT valid?"}
+  U --> AUTHW
+  UP --> AUTHW
+end
+
+AUTHW -- "401 → sign-in modal" --> X0["blocked (uploads allowed pre-auth,<br/>generation is the paid wall)"]
+AUTHW -- ok --> OV0
+
+%% --------------------------- OVERVIEW JOB (free) -----------------------------
+subgraph OVERVIEW["STAGE 1 — runOverviewJob (detached bg) · TOTAL ~7.5-10s"]
+  OV0["POST /api/overview<br/>in: prompt+cards → out: jobId (instant)<br/>gate: rate limit 40/hr · gen slots ≤4"]
+  P1["AGENT profiler (Haiku)<br/>in: raw prompt → out: intent<br/>(topic·level·focus·mustCover·scope)<br/>~1-2s ∥ with retriever"]
+  R1["FN retriever (RAG)<br/>in: topic query → out: 6 chunks + coverage<br/>bge-m3 ONNX CPU embed ~0.5-1s<br/>+ pgvector + keyword + fusion ~0.5s"]
+  B1["AGENT coverageBrief (2× Haiku ∥)<br/>in: intent+chunks → out: bp.brief<br/>(framing·concepts·examples·outcomes·sections)<br/>~5.5s"]
+  D1["FN registerArtifact<br/>out: DRAFT kind=overview-draft<br/>(preview-only, hidden from My Lessons)<br/>~50ms"]
+  OV0 --> P1
+  OV0 --> R1
+  P1 --> B1
+  R1 --> B1
+  B1 --> D1
+end
+
+D1 --> HITL{"HUMAN GATE<br/>learner reviews brief"}
+HITL -- "Edit overview → re-run w/ feedback" --> OV0
+HITL -- "Generate Lesson (1 credit)" --> BJ0
+
+%% ----------------------------- BUILD JOB (paid) ------------------------------
+subgraph BUILD["STAGE 2 — runBuildJob (detached bg) · TOTAL ~5-7 min for 6 modules"]
+  BJ0["POST /api/build<br/>in: artifactId → out: jobId (instant)<br/>FN: promote draft→learning-artifact · charge once"]
+  PL["AGENT planner (Opus 4.8)<br/>in: intent+brief+chunks → out: STRUCTURE plan<br/>(modules·spine·mentalMap·terms·running example pinned)<br/>~30-45s"]
+  AR["AGENT architect (Sonnet, RAW parse)<br/>in: plan → out: skeleton Blueprint prose<br/>(orient·summaries·objectives — 2nd person, story arc)<br/>~30-45s · design leg total ~70-90s"]
+  OP["AGENT writeOverviewProse (Sonnet) ∥ modules<br/>in: terms+spine → out: glossary defs + synthesis<br/>(recap+25w rule·capstone+rubric) + finalCheck 5Q<br/>~30-60s"]
+  AR --> WAVE
+  AR --> OP
+
+  subgraph WAVE["MODULE WAVE — runDeepDive ×6 ∥ (cap 5) · each ~60-150s"]
+    RM["FN retrieve (per module)<br/>in: module query → out: 6 chunks<br/>~1-2s"]
+    MW["AGENT module writer (Sonnet, ≤16k out)<br/>in: module brief+ramp+priors+chunks<br/>out: 4-8 blocks (storyboarded: Recap→chapters→<br/>stages→practice→breaks; NO diagram blocks)<br/>~50-140s"]
+    G1{"GATES 1-7 (FN validateBlueprint)<br/>terms·citations·decisions·map wiring·<br/>matrix align·combo soundness · <1ms"}
+    RB["FN repairBlueprint<br/>mechanical fixes: dangling refs,<br/>dup matrix columns, unwired map · <1ms"]
+    DG{"density gate (FN measureModule)<br/>≥3 sentences over ceiling OR ≥25%?<br/>code >14 lines?"}
+    DR["AGENT repairDensity (Haiku)<br/>rewrite offending prose ~7-24s<br/>∥ AGENT repairCodeLength (Sonnet)<br/>compress >14L snippets ~5-15s"]
+    RM --> MW --> G1 --> RB --> DG
+    DG -- yes --> DR --> PS
+    DG -- no --> PS
+    PS["FN persist (graft ONLY this module<br/>into fresh blueprint — no clobber race)<br/>+ module_cache fragment · ~50ms"]
+  end
+
+  BJ0 --> PL --> AR
+  OP --> DONE
+  PS --> DONE
+  DONE["FN finalize: updateArtifact + render<br/>job done · learner lands in My Lessons"]
+end
+
+%% --------------------------------- RAG --------------------------------------
+subgraph RAG["RAG (offline ingest · Supabase pgvector, one chunks table)"]
+  ING["FN ingest pipeline (npm run ingest / kb-curator cron)<br/>in: allowlisted sources → chunk → bge-m3 embed → upsert<br/>offline, not in request path"]
+  KB[("chunks table<br/>dense vec + keywords + metadata")]
+  ING --> KB
+  KB -.-> R1
+  KB -.-> RM
+end
+
+%% --------------------------- RENDER & RUNTIME --------------------------------
+subgraph RENDER["DELIVERY — deterministic render + world runtime ($0, no LLM)"]
+  RA["FN GET /api/artifact/:id (public)<br/>in: stored Blueprint → out: self-contained HTML<br/>re-renders EVERY open (renderer fixes reach old lessons)<br/>~50-150ms"]
+  W["FN world template (world.ts)<br/>5-6 story cards/module (examples+code grouped<br/>as Example/Code buttons) · serpentine grid ·<br/>order badges · popups = 100% block content ·<br/>mdLite md-rendering · theme follows host toggle"]
+  RT["world runtime (JS in page)<br/>beats (Next/→) · pan/zoom/recenter=refit ·<br/>KC graded client-side (known gap: /api/check parity) ·<br/>progress postMessage → host"]
+  HEAL["FN stub self-heal<br/>iframe POSTs /api/module per stub + reload 22s<br/>single module heal ~60-120s"]
+  RA --> W --> RT
+  RT -- "stub module?" --> HEAL
+  HEAL --> RA
+end
+DONE --> RA
+
+%% --------------------------------- ASK --------------------------------------
+subgraph ASK["ASK MORE (host chat, right drawer)"]
+  A1["AGENT /api/ask — FAST path, NO RAG<br/>in: question+lesson structure → out: short answer<br/>~2-5s"]
+  A2["AGENT /api/ask/expand — add to lesson<br/>full runDeepDive w/ RAG ~60-120s"]
+  A1 -- "learner clicks 'add to lesson'" --> A2
+end
+RT -.-> A1
+
+%% ------------------------------ style hints ---------------------------------
+classDef agent fill:#6d28d9,color:#fff,stroke:#4c1d95
+classDef fn fill:#1e3a8a,color:#fff,stroke:#172554
+classDef gate fill:#9a3412,color:#fff,stroke:#7c2d12
+class P1,B1,PL,AR,OP,MW,DR,A1,A2 agent
+class R1,D1,RM,RB,PS,DONE,RA,W,HEAL,ING,UP,OV0,BJ0 fn
+class AUTHW,HITL,G1,DG gate

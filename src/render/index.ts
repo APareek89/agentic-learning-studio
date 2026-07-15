@@ -13,6 +13,7 @@ import type { Blueprint } from "./schema";
 import { ARTIFACT_CSS } from "./tokens";
 import { RUNTIME_JS } from "./runtime";
 import { renderBody } from "./components";
+import { renderBodyWorld, WORLD_CSS, WORLD_JS } from "./world";
 
 function escAttr(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -52,24 +53,29 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
   const configJson = JSON.stringify(config).replace(/</g, "\\u003c");
   // Optional per-industry accent override (only the accent token changes).
   const accentStyle = bp.meta.accent ? `<style>:root{--accent:${escAttr(bp.meta.accent)}}</style>` : "";
+  // V2 TEMPLATE ("world"): new lessons render as pannable block-map worlds. Drafts still show
+  // the fast-overview brief (renderBody handles that), so world kicks in only on real lessons.
+  const world = p.readingMode === "world" && !previewOnly;
+  const theme = world ? "dark" : "light"; // the world stage is dark by design; block content uses the dark palette
 
   return `<!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="${theme}">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" href="data:,"/>
 <title>${escAttr(seo?.title ?? bp.meta.title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>${ARTIFACT_CSS}</style>${accentStyle}${seo?.headHtml ?? ""}
+<style>${ARTIFACT_CSS}</style>${world ? `<style>${WORLD_CSS}</style>` : ""}${accentStyle}${seo?.headHtml ?? ""}
 </head>
-<body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="light">${seo?.bodyTop ?? ""}
-${renderBody(bp, { previewOnly })}
+<body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="${theme}">${seo?.bodyTop ?? ""}
+${world ? renderBodyWorld(bp, { currentModuleId }) : renderBody(bp, { previewOnly })}
 <div id="popover" role="dialog" aria-label="Definition"></div>
 <script type="application/json" id="glossary-data">${glossaryJson}</script>
 <script type="application/json" id="lesson-config">${configJson}</script>
-<script>${RUNTIME_JS}</script>
+<script>${world ? WORLD_JS : RUNTIME_JS}</script>
 ${seo?.bodyEnd ?? ""}
 </body>
 </html>`;

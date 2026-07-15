@@ -116,6 +116,89 @@ Prefer ONE excellent visual for the hardest concept over many shallow ones.
 COMPLETENESS (critical): return ONE complete object with ALL fields populated: meta, learnerProfile, mentalMap, modules (4–6 with blocks), glossary (every term), synthesis, citations. A response with only meta + mentalMap is INVALID. Do not stop after the mental map. Keep prose tight so the whole object fits — completeness beats length.`;
 
 /**
+ * FAST OVERVIEW — the coverage-brief writer (HAIKU, seconds). Replaces the slow skeleton
+ * in the free "Generate Overview" step: fills a fixed bullets-only template (framing,
+ * concepts, examples, outcomes, planned sections). The real skeleton (planner + architect)
+ * is generated later, during the build, with this approved brief injected.
+ */
+export const BRIEF_SYSTEM = `You write the FREE OVERVIEW of an interactive agentic-AI lesson — a short, concrete coverage brief the learner approves before the full lesson is built. DATA ONLY (you will be asked for structured output). Be FAST and SPECIFIC — no filler, no marketing language.
+
+Produce:
+- title: the lesson's title (specific to the ask, not generic).
+- framing: 1–2 sentences — a HOOK: the concrete problem this lesson solves, aimed at this learner (speak to their industry/build goal when given). Direct, second person; never "This lesson will cover…".
+- concepts: 5–7 bullets — the concepts the lesson will teach. Each = { label (3–7 words), why (≤10 words: why it matters / what it unlocks) }. These are the LEARNING points, not module titles.
+- examples: 2–4 bullets (≤12 words each) — the concrete examples the learner will work through (flavor by their industry / framework / build goal when given; name real tools/scenarios).
+- outcomes: 2–3 bullets (≤10 words each) — "After this you'll be able to …" (action verbs — build, debug, decide; never "understand X"; tie to their goal).
+- sections: the planned lesson sections, in teaching order (use the SECTION COUNT given). Each = { title (specific, not "Introduction"), summary (≤10 words: what it covers) }.
+Every bullet is SHORT — this brief renders in seconds; brevity is a feature.
+
+INTENT FIDELITY: answer the learner's ACTUAL ask — compare-and-choose gets the named options as first-class sections; how-to-build gets build steps; understand-mechanism goes deep on the one subject. Honor every MUST COVER item. The subject is EXACTLY what they asked — industry/role flavor examples only, never reframe the subject.
+LEVEL: beginner/intermediate — plain words, no unexpanded acronyms; advanced — terse and technical.
+If the request carries revision feedback in brackets, apply it.`;
+
+/** Human message for the coverage-brief writer. */
+export function briefUserPrompt(args: {
+  topic: string;
+  level: string;
+  depth: string;
+  examples: string;
+  industry?: string;
+  buildGoal?: string;
+  objective?: string;
+  levels?: string[];
+  framework?: string;
+  userPrompt: string;
+  learningGoal?: string;
+  lessonFocus?: string;
+  mustCover?: string[];
+  moduleTarget?: number;
+  sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
+}): string {
+  const target = args.moduleTarget ?? 5;
+  const lines = [
+    `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
+    `TOPIC: ${args.topic}`,
+    args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
+    args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
+    args.mustCover && args.mustCover.length ? `MUST COVER: ${args.mustCover.join(", ")}` : "",
+    `LEVEL: ${args.level} · DEPTH: ${args.depth} · EXAMPLES: ${args.examples}`,
+    args.levels && args.levels.length > 1 ? `AUDIENCE SPANS LEVELS: ${args.levels.join(", ")}` : "",
+    args.industry ? `FOCUS INDUSTRY (flavor for examples only): ${args.industry}` : "",
+    args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal} — aim outcomes + examples at this` : "",
+    args.framework ? `CODE FRAMEWORK (for examples): ${args.framework}` : "",
+    objectiveDirective(args.objective),
+    `SECTION COUNT: plan ${target} sections (${target - 1}–${target + 1} acceptable if the topic truly demands it).`,
+  ].filter(Boolean);
+  const kb = (args.sources ?? []).filter((s) => s.origin !== "upload");
+  const up = (args.sources ?? []).filter((s) => s.origin === "upload");
+  if (up.length) {
+    lines.push("", "LEARNER'S OWN UPLOADS — shape the coverage around these:");
+    for (const s of up) lines.push(`[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 300)}`);
+  }
+  if (kb.length) {
+    lines.push("", "KNOWLEDGE-BASE NOTES (name the right options/terms):");
+    for (const s of kb) lines.push(`[${s.sid}]${s.title ? ` ${s.title}` : ""}: ${s.content.slice(0, 200)}`);
+  }
+  return lines.join("\n");
+}
+
+/** The approved fast-overview brief, injected into the planner/architect prompts at BUILD
+ *  time so the full lesson delivers exactly the coverage the learner signed off on. */
+export function approvedBriefDirective(brief: unknown): string {
+  if (!brief || typeof brief !== "object") return "";
+  const b = brief as { approvedTitle?: string; framing?: string; concepts?: { label: string; why?: string }[]; examples?: string[]; outcomes?: string[] };
+  const parts = [
+    `THE LEARNER APPROVED THIS OVERVIEW — the lesson MUST deliver this coverage (expand it, never drop from it):`,
+    b.approvedTitle ? `- Approved title: ${b.approvedTitle}` : "",
+    b.framing ? `- Framing: ${b.framing}` : "",
+    b.concepts && b.concepts.length ? `- Concepts promised: ${b.concepts.map((c) => c.label).join("; ")}` : "",
+    b.examples && b.examples.length ? `- Examples promised: ${b.examples.join("; ")}` : "",
+    b.outcomes && b.outcomes.length ? `- Outcomes promised: ${b.outcomes.join("; ")}` : "",
+  ].filter(Boolean);
+  return parts.length > 1 ? parts.join("\n") : "";
+}
+
+/**
  * The PLANNER system prompt (OPUS). Designs the lesson STRUCTURE only — no prose. The
  * architect (Sonnet) writes the descriptions/definitions/objectives/synthesis from this plan.
  * Keeping Opus to structure-only makes it fast + cheap; the writing goes to the cheaper model.
@@ -131,7 +214,10 @@ Answer the learner's ACTUAL question; the structure must mirror their goal.
 Honor mustCover — every item is a first-class module or a comparison row.
 
 == SUBJECT FIDELITY ==
-The subject is EXACTLY what the learner asked about. Role/industry are CONTEXT for examples only — NEVER retitle or restructure the lesson "for <role>" or "for <industry>".
+The subject is EXACTLY what the learner asked about. Role/industry are CONTEXT for examples only — NEVER retitle or restructure the lesson "for <role>" or "for <industry>". Likewise, do NOT make a specific third-party framework/library the SUBJECT of a module (e.g. "Wire it with LangChain's ConversationBufferMemory") unless the learner named that framework or asked for it — teach the concept; libraries belong inside examples, not module titles.
+
+== ONE RUNNING EXAMPLE ==
+Pick ONE concrete example scenario for the whole lesson (from the learner's industry/build goal/role when given; else a concrete everyday one) and name it in each module's "covers" hint — the writers grow the SAME example stage by stage instead of switching scenarios every module. PIN the scenario's concrete constants in the covers hints too (e.g. the embedding model and its dimension count, the API, key numbers) — module writers work in parallel and will contradict each other on any constant you leave unpinned.
 
 == ONE SPINE + RAMP + THE 7 QUESTIONS ==
 The mental-map node order, the module order, and the synthesis are ONE consistent spine. Shape it to the topic: procedural → ordered steps with a single START (entryNodeId = the order-1 node); conceptual → the REAL relationships (OMIT order — do not fake a line); comparative → the options weighed along shared dimensions. Sequence so WHAT/WHY/PIECES land early, HOW in the middle, WHEN-IT-BREAKS late, and KNOW-IT/WHAT-NEXT in the synthesis. ONE idea per module; cut anything that doesn't earn its place. No orphan module.
@@ -144,8 +230,9 @@ The mental-map node order, the module order, and the synthesis are ONE consisten
     edges: [{ from, to }]   (the REAL relationships)
     entryNodeId   (the order-1 node — ONLY for procedural)
   Do NOT include "orient", "what", or "relevance" — the writer adds those.
-- modules: the number given in MODULE COUNT (the user message) [{ id, order, title, sub (ONE short phrase: how it follows from the previous module), covers (ONE short line naming what this module covers — a hint for the writer, NOT prose), decisionItForces (ONLY if it involves a choice), termIds (the glossary ids this module will use) }]. Honor that count — scale a broad field UP to it and keep a narrow subject AT it; one idea per module, no orphans. For compare_and_choose, the LAST module is the head-to-head pick. Do NOT include "summary" or "objectives".
+- modules: the number given in MODULE COUNT (the user message) [{ id, order, title, sub (ONE short phrase: how it follows from the previous module), covers (ONE short line naming what this module covers + the stage of the running example it grows — a hint for the writer, NOT prose), decisionItForces (ONLY if it involves a choice), termIds (the glossary ids this module will use) }]. Honor that count — scale a broad field UP to it and keep a narrow subject AT it; one idea per module, no orphans. For compare_and_choose, the LAST module is the head-to-head pick. Do NOT include "summary" or "objectives".
 - glossaryTerms: the MOST IMPORTANT terms only (~8-12, more for a broad multi-module field): [{ id, label, acronymExpansion (ONLY for ALL-CAPS terms) }]. NO definitions — the writer adds them.
+- contract: 5-12 SHORT lines — the lesson's PINNED FACTS that every writer must repeat EXACTLY and may never rename, renumber, or contradict: any canonical list/taxonomy the lesson will teach (with its exact item names and count), the test-case/dataset FIELD NAMES, file names, exact tool/model ID strings, numeric thresholds, and the running example's constants. Format each line as "<what>: <the exact fact>". These lines are LAW for the module writers and the synthesis writer — choose them carefully.
 
 CRITICAL: STRUCTURE ONLY — no prose, no definitions, no objective sentences, no synthesis text. Keep it COMPACT. Return ONE complete JSON object. Match the learner's level when choosing terms (beginner/intermediate: don't pick obscure jargon as a node label).`;
 
@@ -166,7 +253,7 @@ ANSWER THE LEARNER'S ACTUAL QUESTION; the lesson's structure must mirror their g
 Honor mustCover — every item there is a first-class module or a row of the comparison.
 
 == SUBJECT FIDELITY (do not reframe) ==
-The lesson SUBJECT is EXACTLY what the learner asked about — the title, mental map, and modules teach that subject as it would be taught to anyone. The learner's ROLE and INDUSTRY are CONTEXT, not the subject: use them ONLY to choose fitting EXAMPLES and analogies later. NEVER retitle or restructure the lesson "for <role>s" or "for <industry>" (e.g. a request to explain RAG must be a lesson about RAG, NOT "RAG for product managers"). If no industry is stated or implied by the request, keep examples general and concrete — do not force the learner's saved industry onto an unrelated subject.
+The lesson SUBJECT is EXACTLY what the learner asked about — the title, mental map, and modules teach that subject as it would be taught to anyone. The learner's ROLE and INDUSTRY are CONTEXT, not the subject: use them ONLY to choose fitting EXAMPLES and analogies later. Do NOT make a specific third-party framework/library the subject of a module unless the learner named one — teach the concept; libraries belong inside examples, not module titles. NEVER retitle or restructure the lesson "for <role>s" or "for <industry>" (e.g. a request to explain RAG must be a lesson about RAG, NOT "RAG for product managers"). If no industry is stated or implied by the request, keep examples general and concrete — do not force the learner's saved industry onto an unrelated subject.
 
 == ONE STRUCTURE SPINE (start to finish) ==
 The lesson has ONE coherent sequence, and you set it here. The mental-map node order, the module order, and the synthesis buildOrder are the SAME backbone — reconcile them into one consistent spine, never three parallel orderings. The spine's SHAPE must match the topic: procedural → ordered steps with a single unambiguous START (entryNodeId = the order-1 node); conceptual → the REAL relationships (omit fake order); comparative → options along shared dimensions. Every module must have a clear place in the path — NO orphaned module that doesn't connect to what came before. Each module's "sub" should say how it follows from the previous one so the learner always knows where they are.
@@ -191,6 +278,7 @@ Order the modules so this arc holds: WHAT/WHY/PIECES early → HOW in the middle
 
 == CONTEXTUALIZE THROUGH THE LEARNER'S INPUTS ==
 If an industry or build goal is given, thread it through the SPINE so the modules read as THEIR build path toward that goal — not a generic lesson with a topical label. The capstone and buildOrder should aim at what they said they're building. (Subject fidelity still holds: contextualize the examples and framing, never the subject itself.)
+Pick ONE concrete running example scenario for the whole lesson (their industry/build goal/role when given; else a concrete everyday one) and NAME it in the module summaries — every module's example grows the SAME scenario stage by stage, never a new scenario per module. Pin the scenario's concrete constants (model names, dimensions, key numbers) in the summaries so the parallel module writers can't contradict each other.
 
 == GROUNDING ==
 If SOURCES are provided, prefer them for facts (names, capabilities, verdicts, recency); trust their dates over your training data; you'll cite them in the bodies. If none, use your own accurate knowledge.
@@ -206,7 +294,7 @@ If the learner UPLOADED DOCUMENTS ([U#]), the outline MUST be shaped around them
     • "comparative" — "X vs Y" / "which should I use" → nodes are the OPTIONS being weighed (OMIT "order"); the decision is the spine.
   Do NOT organize by difficulty (foundations/core/advanced) — difficulty is at most secondary metadata, never the primary axis. Most nodes link to a module via moduleId; mark the main path emphasis:"spine".
   The overview is a CONCEPT/PROCESS MAP of uniform square cards — convey the SHAPE of the topic, NOT a table of contents. Keep each node MINIMAL — for the OVERVIEW only: "label" = a HEADLINE of 4–6 words MAX (the node's name, not a sentence), "order" (if ordered), an "icon" emoji (used as the corner badge for unordered maps), "moduleId", and "orient" = a SHORT DESCRIPTION of 10–15 words saying what this block covers / why it's here (a description for the card, not a full explanation). Nothing else on the card. Do NOT put "what", "relevance", or "laymanExplanation" here — those detail-layer lines are written with each module's body (keeps this outline small + fast).
-- modules: the number given in MODULE COUNT (the user message), ordered along the spine — honor that count (scale a broad field UP to it, keep a narrow subject AT it; one idea per module, no orphans, no filler). Each: id, order, title, sub (ONE short phrase: how it follows from the previous module), summary (1–2 sentences MAX), objectives (2–4 "After this you'll be able to…"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
+- modules: the number given in MODULE COUNT (the user message), ordered along the spine — honor that count (scale a broad field UP to it, keep a narrow subject AT it; one idea per module, no orphans, no filler). Each: id, order, title, sub (ONE short phrase: how it follows from the previous module), summary (1–2 sentences MAX, direct SECOND PERSON stating what the learner does/gets — name the module's running example; BANNED openers: "This module covers/explains…", "We introduce/build…" — write "Trace the full message flow…", not "This module traces…"), objectives (2–4 "After this you'll be able to…" — CAPABILITY statements with action verbs like build, debug, decide, fix, choose; NEVER "understand X" / "learn about X" / "be familiar with X"), decisionItForces (when it involves a choice), termIds (the glossary ids this module will use), loadState:"stub", and blocks: [] (EMPTY). For compare_and_choose, include ONE final module titled like "Head-to-head: picking your X" whose decisionItForces names the choice.
 - glossary: define the 8–12 MOST IMPORTANT terms only (core concepts + named options) — NOT every minor word. Each: id, label, a ONE-SENTENCE plain laymanDefinition; acronymExpansion for ALL-CAPS terms. SKIP technicalNote here (added when bodies are written). (Module bodies can ONLY use term ids that exist here.)
 - synthesis (NOT a dead-end summary — it consolidates and creates forward pull):
     • recap: phrase it as a RETRIEVAL prompt, not a re-read — ask the learner to reconstruct the key structure/build-order from memory before it's shown (2–3 sentences MAX).
@@ -224,21 +312,32 @@ CRITICAL — SIZE: this is an OUTLINE, not the lesson. EVERY module's "blocks" M
  */
 export const MODULE_SYSTEM = `You write the CONTENT BLOCKS for ONE module of an interactive agentic-AI lesson. Output DATA ONLY (a "blocks" array) — never HTML/CSS/JS.
 
-Produce 2–6 blocks that teach THIS module well:
+Produce 4–8 blocks that teach THIS module well (HARD MAX 8 — the module renders as a mental map of its blocks, and more than 8 cards overwhelms; if you're over, MERGE kin blocks — e.g. fold the verify-AI checklist into the failure-modes block — or cut the weakest):
 - Pick fitting kinds: conceptual / technical (depth-gated), functionalExample (plain scenario) / codeExample (short correct snippet) (examples-gated), decisionMatrix / decisionCallout / decisionTree (when there's a choice), scenario, walkthrough, taxonomy, note.
 - NO QUIZ/KNOWLEDGE-CHECK BLOCKS IN A MODULE: never emit a selfCheckQuiz or knowledgeCheck block — the lesson's single end-of-lesson knowledge check is generated separately. NOTE: this only forbids formal quiz blocks — it does NOT forbid the always-available retrieval primitives below (predict-then-reveal on code, a "predict first" prose hook, a scenario). Retrieval is woven into the content regardless.
 - BLOCK ORDER builds a RAMP, not just explanation→example: EXPLANATION (conceptual/technical) → real-world functionalExample → codeExample. But add the rungs that turn recognition into recall (see RETRIEVAL & THE LEARNING RAMP below) — do not present a full worked example and then jump to a from-scratch task.
-- On a conceptual/technical block for beginner/intermediate, add an "analogy" field: one plain everyday-analogy sentence that makes the idea click.
+- On a conceptual/technical block for beginner/intermediate, add an "analogy" field — ONE bridge from the learner's NEAREST ANCHOR (their role, or a concept from a prior module, before any stock image), framed side-by-side familiar : new (e.g. "a tool schema is to the agent what a menu is to a diner: it lists what can be ordered, not how the kitchen cooks"). One bridge per module; never a generic filler analogy.
 - codeExample: honor the requested CODE FRAMEWORK (real APIs when a framework is named; clean pseudocode when framework-agnostic).
+- Snippets: teaching stages AIM FOR 8 lines, ceiling 10 (COUNT the lines — if over, cut boilerplate, compact JSON/dict literals, or split the stage). ONLY the final assembly / guided-practice stage may run longer when wiring genuinely needs it — NEVER above 14 lines; above that, elide non-teaching boilerplate with a "# …" comment or split the block.
+- HONEST codeRole on EVERY codeExample: "runnable" = runs as shown with only stated setup (a completion snippet may carry ONE TODO); "fragment" = a config/excerpt needing surrounding files (YAML configs, CI steps, partial functions); "illustrative" = pseudocode. The runnable-as-shown bar applies ONLY where you claim codeRole:"runnable" — label fragments as fragments instead of pretending. Exact tool/model ID strings and dataset FIELD NAMES in code must match the LESSON CONTRACT character-for-character.
+- EVERY block gets a specific "title" (3–7 words naming ITS one idea — never "Overview"/"Introduction", never a bare pronoun like "How This Breaks"; notes included — only scenario/decisionCallout lack the field), and its body's FIRST sentence must stand alone as a one-line orientation that names the idea. The UI renders title + first sentence as the block's card — a weak first sentence makes a dead card. EVERY codeExample MUST carry a 1–2 sentence "explain" whose first sentence orients (a bare code block is a dead card).
 - Honor the learner's depth and examples settings. Tailor examples to their industry/build goal/role when given.
 - Reference glossary terms by id inside spans ({text, term:"<id>"}) — ONLY ids from the provided glossary list. Cite sources via sources:["S#"] when a claim comes from them; trust the sources' recency over your training data.
 - If the learner uploaded documents ([U#]), treat them as the PRIMARY source: prefer their facts, names, and specifics over the knowledge base and your training data, and cite them via sources:["U#"]. The knowledge base only supplements what the uploads don't cover.
-- If this module's title or summary implies a COMPARISON or a CHOICE among named options (e.g. "X vs Y", "head-to-head", "picking your…", "comparison"), you MUST include a decisionMatrix block: rows = the specific named options; columns = the capabilities/criteria that matter; a REQUIRED whenToUse ("When to choose") per option; plus cost and complexity. This is the single most important block for such modules — do not replace it with a plain table or prose.
+- If this module's title or summary implies a COMPARISON or a CHOICE among named options (e.g. "X vs Y", "head-to-head", "picking your…", "comparison"), you MUST include a decisionMatrix block: rows = the specific named options; columns = the capabilities/criteria that matter; a REQUIRED whenToUse ("When to choose") per option; plus cost and complexity. This is the single most important block for such modules — do not replace it with a plain table or prose. The "criteria" array must NOT contain cost/complexity/when-to-choose (or variants like "computational cost", "setup complexity") — the renderer adds those columns automatically; keep 2–4 criteria MAX so the table fits.
+- NEVER emit "diagram" blocks — static diagrams are retired from lessons (the renderer skips them). When a structure needs picturing, DESCRIBE it in prose or use steppedFlow for a process; the interactive visuals (scatter/slider/steppedFlow) are the only visual blocks.
 - At least ONE block must be always-visible (no visibleWhen) so every learner sees something.
+
+== STORYBOARD THE MODULE (the block list reads as a STORY, not a pile) ==
+The UI renders your blocks as a map of titled cards in order — a learner reads the titles top-to-bottom BEFORE opening anything, so the titles must narrate a 3-beat story:
+1. SETUP — ONE opening card: module 1 opens with the hook; later modules open with the recall bridge, TITLED as a bridge ("Recap: <the earlier concept>") so nobody mistakes it for new material. The setup card ends by posing THIS module's driving question.
+2. BUILD — the core idea in 2–4 cards whose titles read like chapter headings, each advancing the story (name the sub-theme progression explicitly: e.g. first the "what", then the mechanics, then the choice). An example or code stage belongs IMMEDIATELY AFTER the concept it illustrates — never separated from it by an unrelated card.
+3. PAYOFF — how it breaks + the practice rung, then END with a forward hand-off: the last block's final line points at what the next module unlocks.
+SELF-CHECK before emitting: read your block titles aloud in order. If they don't tell one continuous story ("we recap X → meet Y → see it run → make it fail → try it ourselves → which sets up Z"), reorder or retitle until they do.
 
 == ANSWER THE LEARNER'S QUESTIONS, NOT JUST "WHAT" ==
 A module that only defines and demonstrates leaves the learner with facts, no hook, and no idea when to use them. Where they apply to THIS module, cover (these are guidance, not a rigid template):
-- WHY THIS EXISTS / WHEN YOU'D REACH FOR IT — open (or early) with the problem this solves and the situation that calls for it, so the learner knows when the knowledge applies. This is the single most-skipped move — do NOT bury it. Frame it as "why it was built", not history.
+- OPEN WITH THE HOOK — the module's FIRST block starts with the problem this solves POSED AS A QUESTION, concrete and set in the learner's world, pitched just beyond what they can already do. Max 2 sentences, NO definitions before it (e.g. "Your agent just answered from a week-old doc and the customer noticed. How do you make it check freshness before it speaks?"). This is the single most-skipped move — never open with a definition or "In this module we will…".
 - THE PIECES BEFORE THE STEPS — name the moving parts and how they relate before diving into the mechanism.
 - WHAT NOW — end by pointing at how this feeds what they're building / the next module: a forward bridge, never a dead stop.
 (Failure modes #5, verify-the-AI-output, and retrieval/self-check #6 are the dedicated sections below — cover them there.)
@@ -246,17 +345,24 @@ A module that only defines and demonstrates leaves the learner with facts, no ho
 == RETRIEVAL & THE LEARNING RAMP (the highest-value content move) ==
 Optimize for DURABLE learning, not smooth reading. Make the learner act and recall, don't just hand them polished prose.
 - EFFORTFUL, RECALL-FIRST: before revealing an answer, make the learner produce it from memory. On a codeExample, use predictThenReveal {prompt, answer} so they predict the output/behavior BEFORE seeing it. In prose, OPEN a hard concept with a one-line "Before reading on, predict: …" hook (a callout), then explain — recognition is weaker than recall, so make them try first.
-- WORKED → COMPLETION → SOLO: a fully WORKED example builds recognition; a COMPLETION problem (a near-complete artifact with the key piece missing for them to supply) builds recall. Provide the completion rung before any solo/from-scratch task — e.g. a codeExample with the critical line left as a TODO and a predictThenReveal asking what goes there. Match the rung to LEVEL (beginner → mostly worked; intermediate → completion; advanced → solo/predict).
-- SPACED & INTERLEAVED (not a quiz dump): if PRIOR MODULES are listed in the user message and this is not module 1, briefly bring back an EARLIER concept for retrieval near the START of this module (one short recall prompt) before the new material — spacing beats massing, and it must be answered from memory, not by re-reading. Do NOT cluster all retrieval at the end of the module.
+- SHOW THE NAIVE APPROACH FAILING: when the module teaches code or a build step, follow the hook with the obvious-but-wrong attempt — a ≤10-line codeExample whose predictThenReveal asks "what happens when this runs?" and whose answer shows the ACTUAL result: the real error message or the messy/wrong output, verbatim. The learner must SEE it break before reading the fix.
+- PROGRESSIVE, NEVER ONE-SHOT: build the module's worked example in 2–3 STAGES (consecutive codeExample blocks — "Stage 1: …", "Stage 2: …"), each ≤10 lines showing the DELTA from the previous stage, each with a predictThenReveal carrying the REAL intermediate output at that point. Never dump finished code in one block. Grow the lesson's ONE running example — do not switch scenarios mid-lesson.
+- WORKED → COMPLETION → SOLO: a fully WORKED example builds recognition; a COMPLETION problem (a near-complete artifact with the key piece missing for them to supply) builds recall. Provide the completion rung before any solo/from-scratch task — e.g. a codeExample with the critical line left as a TODO and a predictThenReveal asking what goes there. Match the rung to LEVEL (beginner → mostly worked; intermediate → completion; advanced → solo/predict). A completion rung is GUIDED PRACTICE: a small VARIATION of the worked example (not a repeat) — put an explicit "Stop — attempt this before revealing" line plus 1–2 hints in the predictThenReveal prompt, and FLAG in the answer which lines changed and why. THE GAP MUST BE THE CRUX: the missing piece is the line(s) that exercise THIS module's core idea — never boilerplate (a return statement, a print, an import) and never code the learner already saw completed in an earlier stage. If the natural gap is trivial, WIDEN the variation (new scenario, new parameter, an added requirement) until supplying the missing piece requires real thought. The practice snippet must also stand alone — carry enough surrounding code to attempt it without re-opening earlier blocks.
+- SPACED & INTERLEAVED (not a quiz dump): if PRIOR MODULES are listed in the user message and this is not module 1, briefly bring back an EARLIER concept for retrieval near the START of this module (one short recall prompt) before the new material — spacing beats massing, and it must be answered from memory, not by re-reading. Do NOT cluster all retrieval at the end of the module. When you reference an earlier module by NUMBER or recall what it "named/taught", use ONLY the exact module numbers and titles from the PRIOR MODULES list — never invent terms an earlier module supposedly introduced.
+- NEVER LEAK THE ANSWER: a completion snippet must not contain its own solution (no completed line right under the TODO); the reveal carries the answer. And never point the learner to "the walkthrough/answer below" inside the same block unless it IS below in that block — blocks render as separate cards.
 
 == FAILURE MODES ARE FIRST-CLASS CONTENT ==
-For any technical/build topic, teach how it BREAKS in practice as deliberate content (a "How this breaks" conceptual or note block, or a decisionCallout's avoidWhen) — the common failure modes, the non-obvious ones, and what to watch for. This is high-value for builders and is usually underweight. Do not scatter it as one-off warning asides; make it a real part of the module.
+For any technical/build topic, teach how it BREAKS in practice as deliberate content (a "How this breaks" conceptual or note block, or a decisionCallout's avoidWhen): 2–3 failure modes, EVERY ONE carrying its EVIDENCE — the actual error message, the wrong output, or (for genuinely SILENT failures, which are often the most important) the concrete observable symptom the learner would SEE, verbatim/specific (e.g. "rows silently vanish after a restart — SELECT returns 0"), never just "the API returns an error". Never drop an important failure mode because it has no error string — show its symptom instead.
+VARY THE FORM by module position so the lesson doesn't repeat one template six times: odd-numbered modules → numbered symptom→cause→fix triplets; even-numbered → a short annotated error-dump walkthrough (the output, then what each line reveals). Don't reuse the same stock phrases ("silent/silently", "Observable symptom:") in every module — say it differently here. Filter by level: beginner/intermediate → setup mistakes, syntax traps, and wrong mental models; advanced → design, cost, and reliability mistakes. Do not scatter one-off warning asides; make failure a real part of the module.
 
 == EVALUATING WHAT YOU BUILD WITH AI (when the module involves code/building) ==
 Our learners build WITH AI. When this module teaches code or a build step, include a short, concrete "How to verify the AI-generated version" element (a note or checklist callout): the specific things to check before trusting generated code for THIS topic (e.g. does it handle the failure mode just taught, does it actually call the right API, does it guard the edge case). Teach the judgment, not just the happy path.
 
 == COGNITIVE LOAD, SCAFFOLDING & PROGRESSIVE DISCLOSURE ==
 - ONE idea per block; segment; cut anything that doesn't serve a stated objective. Resist over-stuffing parallel explanations/definitions of the same thing.
+- 30/70 — EXPLANATION EARNS, DOING TEACHES: across this module's blocks, explanation prose (conceptual/technical) is ~30% of the volume; DOING — failing runs, predictions, staged builds, completion tasks, scenarios — is ~70%. Hit the ratio by COMPRESSING the explanation, never by adding blocks or words: total module output must NOT grow. Every abstraction is paired with code or a described visual in this module.
+- CONCEPT PROSE IS CAPPED AND PLAIN: a conceptual/technical block's body is AT MOST 4 sentences (advanced: 5) of SIMPLE English — short everyday words, one clause per sentence, no stacked qualifiers; a smart 12-year-old should follow it. COUNT your sentences. If the idea needs more, the extra belongs in the example or the code's explain — never more concept prose. (Caps apply to concept explanation only, not to examples/code/steps.)
+- NOTHING UNEXPLAINED: never lean on a term, tool, or flag this level won't already know without either a glossary span ({text, term:"<id>"}) or an inline micro-explanation at FIRST use. The usual leaks are BACKGROUND jargon that isn't in the glossary — context window, inference, tokens, HTTP, JSON, API — for a beginner give each a short parenthetical gloss the first time, e.g. "the context window (the model's working memory)".
 - LEVEL = SCAFFOLDING and it FADES, it doesn't deepen difficulty for its own sake: beginner = pre-teach vocab, concrete-before-abstract, fully worked, explain the why; intermediate = assume vocab, completion problems, tradeoffs/when-to-use, edge cases; advanced = STRIP explanations of what a practitioner already knows, problems over worked examples, focus on edge cases/failure modes/non-obvious interactions/performance. For an advanced learner "more text" must add DEPTH (substance), never re-explain basics (redundancy/expertise-reversal).
 - PROGRESSIVE DISCLOSURE AS PEDAGOGY: gate deeper/advanced detail behind depthTier:"deeper" so a novice isn't overloaded and an expert can still dig in — and let learners discover answers by ACTING (predict→reveal) rather than being handed them. Calibrate difficulty to be productively effortful for THIS level — added difficulty helps a learner with spare capacity and overwhelms an overloaded novice.
 - WHERE IS THE LEARNER: open the module by connecting to the PREVIOUS one (the user message gives this module's position); the learner should always know where they are in the spine.
@@ -266,7 +372,7 @@ Follow the WRITING LEVEL and TEXT DENSITY spec in the user message EXACTLY. LEVE
 
 == INTERACTIVE VISUALS ==
 When VISUALS is "on", add an interactive visual block for a genuinely COMPLEX or hard-to-picture idea in THIS module (something a hands-on novice struggles to imagine) — at most ONE per module, only if it truly helps. When VISUALS is "off", emit none. You supply DATA ONLY — the renderer draws it. Pick by shape:
-- interactiveScatter — SIMILARITY / CLUSTERING / "near vs far in meaning" / embedding-or-vector space / classification boundaries. "points" {label,x,y(0–100),group?} placed so related ones sit close; 1–3 "queries" {label,x,y} to highlight nearest points.
+- interactiveScatter — SIMILARITY / CLUSTERING / "near vs far in meaning" / embedding-or-vector space / classification boundaries. "points" {label,x,y(0–100),group?} placed so related ones sit close; 1–3 "queries" {label,x,y} to highlight nearest points. The widget is CLICK-to-pick (the learner clicks a query button) — never write "drag" in its title/caption; keep point labels ≤18 chars so they don't clip.
 - interactiveSlider — a THRESHOLD / TRADEOFF / one PARAMETER's effect. min, max, optional unit, 2–5 "stops" {at,label,note} (e.g. temperature, chunk size, similarity cutoff, top-k).
 - steppedFlow — a multi-stage PROCESS / PIPELINE / LIFECYCLE. ordered "steps" {label,detail,icon?} (e.g. ingest→chunk→embed→store, the agent loop).
 
@@ -275,7 +381,7 @@ When EXPLAIN SYNTAX is "on", EVERY codeExample MUST include a "syntax" array bre
 
 Also return "nodeMeta" for this module's overview node: "what" (one plain sentence — what this block IS), "relevance" (one sentence — why it matters for THIS learner's goal/context), and for beginner/intermediate a "laymanExplanation" (one everyday-analogy sentence). These render in the module's detail header, not on the overview map.
 
-Keep prose tight, concrete, and accurate.`;
+TONE: direct, second person ("you"), zero filler — never "In this module we will…", no marketing language, no restating the question. Keep prose tight, concrete, and accurate.`;
 
 /** Human message for the module-writer: the module's role + lesson context + sources. */
 export function moduleUserPrompt(args: {
@@ -287,6 +393,12 @@ export function moduleUserPrompt(args: {
   depth: string;
   examples: string;
   density?: string;
+  /** ⚡ Quick read: 4-5 lean blocks, minimal prose. */
+  quick?: boolean;
+  /** FACT LEDGER — pinned facts every module must agree with exactly. */
+  contract?: string[];
+  /** The module AFTER this one — so the closing bridge points at it accurately. */
+  nextModule?: { title: string; summary?: string };
   visualsRequested?: boolean;
   explainSyntax?: boolean;
   industry?: string;
@@ -303,8 +415,9 @@ export function moduleUserPrompt(args: {
   /** This module's position in the spine + the total, so it can connect backward and pace the ramp. */
   thisOrder?: number;
   totalModules?: number;
-  /** The modules BEFORE this one (title + key terms) — for spaced/interleaved retrieval of earlier concepts. */
-  priorModules?: { order: number; title: string; terms?: string[] }[];
+  /** The modules BEFORE this one (title + summary + key terms) — recall prompts may only
+   *  assert facts present here (or in the contract), never invented answer keys. */
+  priorModules?: { order: number; title: string; summary?: string; terms?: string[] }[];
   glossary: { id: string; label: string }[];
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
 }): string {
@@ -315,12 +428,12 @@ export function moduleUserPrompt(args: {
   const isLate = total > 1 && pos >= Math.ceil(total * 0.6); // back ~40% of the lesson
   // The worked→completion→solo rung this module should sit on, paced by position AND level.
   const ramp = args.level === "advanced"
-    ? "Lead with PROBLEMS over worked examples: pose the situation and have the learner predict/reason it through (predictThenReveal); strip explanations of what a practitioner already knows."
+    ? "Lead with PROBLEMS over worked examples: pose the situation and have the learner predict/reason it through (predictThenReveal); strip explanations of what a practitioner already knows. Snippets stay ≤10 lines."
     : isFirst
-      ? "This is an EARLY module: use a fully WORKED example (show every step), but still make them PREDICT the result before it's revealed."
+      ? "This is an EARLY module: hook first, then SHOW the naive attempt failing (predictThenReveal reveals the real error/wrong output), then build the worked example in 2–3 progressive stages — each stage's REAL output predicted before it's revealed."
       : isLate
-        ? "This is a LATE module: shift to a COMPLETION problem — give a near-complete artifact (e.g. code with the key line as a TODO) and have the learner supply the missing piece via predictThenReveal, ramping toward the solo capstone."
-        : "Use a worked example, then a COMPLETION rung (leave the key step for the learner to supply via predictThenReveal) — build recall, not just recognition.";
+        ? "This is a LATE module: shift to GUIDED PRACTICE — a small VARIATION of the running example as a near-complete artifact (key line as a TODO); put \"Stop — attempt this before revealing\" plus 1–2 hints in the predictThenReveal prompt, and flag the changed lines in the answer. Ramp toward the solo capstone."
+        : "Build the worked example in progressive stages (delta + real intermediate output per stage), then a COMPLETION rung (leave the key step for the learner to supply via predictThenReveal) — recall, not just recognition.";
   const lines = [
     `LESSON TOPIC FOCUS: ${args.lessonFocus ?? "teach this module"}`,
     args.lessonTopic ? `LESSON TOPIC: ${args.lessonTopic}` : "",
@@ -333,9 +446,22 @@ export function moduleUserPrompt(args: {
     calibrationDirective((args.level as Level) ?? "beginner", (args.density as Density) ?? "medium"),
     args.levels && args.levels.length > 1 ? `TARGET AUDIENCE SPANS LEVELS: ${args.levels.join(", ")} — scaffold for the least experienced while offering depthTier:"deeper" blocks for the more advanced.` : "",
     `LEARNING RAMP (worked→completion→solo): ${ramp}`,
-    !isFirst && args.priorModules && args.priorModules.length
-      ? `SPACED RETRIEVAL: near the START of this module, briefly bring back ONE concept from an EARLIER module for effortful recall (answered from memory, not re-read) before the new material. Earlier modules: ${args.priorModules.map((m) => `${m.order}. ${m.title}${m.terms && m.terms.length ? ` [${m.terms.slice(0, 4).join(", ")}]` : ""}`).join(" · ")}. Prefer a concept from ~1–2 modules back, not just the immediately previous one.`
+    `CONTENT MIX: ~30% explanation / ~70% doing (failing runs, predictions, staged builds, completion tasks). Compress the prose to hit it — do NOT grow total output. Snippets: aim 8 lines / ceiling 10 for teaching stages; final assembly or practice may reach 14 MAX (COUNT them — compact JSON, elide boilerplate with "# …"). HARD MAX 8 blocks; every block titled (incl. notes).`,
+    args.quick
+      ? `⚡ QUICK READ MODE: this learner wants the GIST, fast. Produce 4-5 blocks TOTAL: the hook/recall opener (≤2 sentences) → ONE concept block (≤3 short sentences) → ONE example or a 2-stage code build (stages ≤8 lines) → a 3-bullet "how it breaks" → ONE small completion task. No extras, no deeper tiers, no second example.`
       : "",
+    !args.industry && !args.buildGoal
+      ? `EXAMPLE DOMAIN: none given — anchor this module's example in the ONE concrete scenario the module summary names (the lesson's running example); never generic "foo/bar" filler, and never switch scenarios.`
+      : "",
+    args.contract && args.contract.length
+      ? `LESSON CONTRACT (pinned facts — LAW for this module; every claim, recap, snippet, and label must agree with these EXACTLY; never rename, renumber, or contradict them):\n${args.contract.map((c) => `  • ${c}`).join("\n")}`
+      : "",
+    !isFirst && args.priorModules && args.priorModules.length
+      ? `SPACED RETRIEVAL: near the START of this module, briefly bring back ONE concept from an EARLIER module for effortful recall (answered from memory, not re-read) before the new material. Earlier modules:\n${args.priorModules.map((m) => `  ${m.order}. ${m.title}${m.summary ? ` — ${m.summary}` : ""}${m.terms && m.terms.length ? ` [${m.terms.slice(0, 4).join(", ")}]` : ""}`).join("\n")}\nRECALL ANSWER KEYS MUST BE TRUE: a recall prompt's answer may ONLY assert what these summaries or the LESSON CONTRACT explicitly state — if the specific fact (a count, a scale, a list) isn't there, ask a question whose answer IS there. Never invent what an earlier module "said".`
+      : "",
+    args.nextModule
+      ? `NEXT MODULE: "${args.nextModule.title}"${args.nextModule.summary ? ` — ${args.nextModule.summary}` : ""}. Your last block's closing line bridges to it — describe it ACCURATELY from this line, never guess its content.`
+      : `THIS IS THE FINAL MODULE: your last block's closing line bridges to the lesson's synthesis + capstone (the solo challenge), not to another module.`,
     `FAILURE MODES: include a deliberate "how this breaks in practice" element for this module's idea (common + non-obvious failure modes, what to watch for) — not scattered warning asides.`,
     (args.examples === "code" || args.examples === "functional_code")
       ? `VERIFY-AI-OUTPUT: this module involves building — add a short, concrete "how to check the AI-generated version before trusting it" element (the specific things to verify for THIS topic).`
@@ -386,10 +512,13 @@ export function plannerUserPrompt(args: {
   /** S6 — target module count (broad=8 / moderate=6 / narrow=5). */
   moduleTarget?: number;
   sources?: { sid: string; title?: string; content: string; origin?: "kb" | "upload" }[];
+  /** FAST OVERVIEW — the learner-approved coverage brief (build stage). */
+  approvedBrief?: unknown;
 }): string {
   const target = args.moduleTarget ?? 5;
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
+    approvedBriefDirective(args.approvedBrief),
     `TOPIC: ${args.topic}`,
     args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
     args.lessonFocus ? `LESSON FOCUS: ${args.lessonFocus}` : "",
@@ -446,6 +575,8 @@ export function architectUserPrompt(args: {
   repairErrors?: string[];
   /** The OPUS planner's structural plan. When present, FOLLOW it and only WRITE the prose. */
   plan?: unknown;
+  /** FAST OVERVIEW — the learner-approved coverage brief (build stage). */
+  approvedBrief?: unknown;
 }): string {
   const knowledgeCheck = (args.lessonTypes ?? []).includes("knowledge_check");
   const beginnerish = args.level === "beginner" || args.level === "intermediate";
@@ -453,8 +584,9 @@ export function architectUserPrompt(args: {
   const target = args.moduleTarget ?? 5;
   const lines = [
     `LEARNER REQUEST (verbatim): ${args.userPrompt}`,
+    approvedBriefDirective(args.approvedBrief),
     hasPlan
-      ? `STRUCTURAL PLAN — a planner has ALREADY decided the structure. FOLLOW IT EXACTLY: keep the same modules, ids, order, titles, sub, decisionItForces, termIds, the mentalMap nodes/edges/structureType, and the glossary term ids+labels. Do NOT re-classify or re-order. YOUR JOB IS TO WRITE ONLY THE OVERVIEW-PREVIEW PROSE (the part the learner reviews before building): each mentalMap node's "orient" (a 10-15 word description of what that block covers) and each module's "summary" (1-2 sentences) + "objectives" (2-4 "After this you'll be able to…"). For the glossary, output EVERY term with its id + label and "laymanDefinition" set to "" (EMPTY string) — the definitions are written later during the build, not now. OMIT the "synthesis" object entirely — it is also written during the build. ALSO write "mentalMap.willCover" = a short learner-facing list of AT MOST 4 bullets (each ≤10 words) summarizing what the lesson covers — e.g. the key concepts, the main how-to, a worked example, and when to use it (phrase them as the things they'll learn, not module titles). Do NOT write glossary definitions or synthesis here; writing them now only slows the free preview. Output the Blueprint = the plan's structure + your orient/summary/objective prose + willCover + the empty-definition glossary. PLAN:\n${JSON.stringify(args.plan)}`
+      ? `STRUCTURAL PLAN — a planner has ALREADY decided the structure. FOLLOW IT EXACTLY: keep the same modules, ids, order, titles, sub, decisionItForces, termIds, the mentalMap nodes/edges/structureType, and the glossary term ids+labels. Do NOT re-classify or re-order. YOUR JOB IS TO WRITE ONLY THE OVERVIEW-PREVIEW PROSE (the part the learner reviews before building): each mentalMap node's "orient" (a 10-15 word description of what that block covers) and each module's "summary" (1-2 sentences, direct SECOND PERSON stating what the learner does/gets — fold in the plan's "covers" hint including its running-example stage. BANNED openers: "This module covers/explains/traces…", "We introduce/build/explore…" — write "Trace the full message flow from prompt to answer…", not "This module traces…") + "objectives" (2-4 "After this you'll be able to…" — action verbs like build/debug/decide/fix, NEVER "understand X" or "learn about X"). For the glossary, output EVERY term with its id + label and "laymanDefinition" set to "" (EMPTY string) — the definitions are written later during the build, not now. OMIT the "synthesis" object entirely — it is also written during the build. ALSO write "mentalMap.willCover" = a short learner-facing list of AT MOST 4 bullets (each ≤10 words) summarizing what the lesson covers — e.g. the key concepts, the main how-to, a worked example, and when to use it (phrase them as the things they'll learn, not module titles). Do NOT write glossary definitions or synthesis here; writing them now only slows the free preview. Output the Blueprint = the plan's structure + your orient/summary/objective prose + willCover + the empty-definition glossary. PLAN:\n${JSON.stringify(args.plan)}`
       : "",
     `TOPIC: ${args.topic}`,
     args.learningGoal ? `LEARNING GOAL: ${args.learningGoal}` : "",
@@ -514,17 +646,19 @@ export function architectUserPrompt(args: {
 export const OVERVIEW_PROSE_SYSTEM = `You write the closing pieces of an interactive agentic-AI lesson — DATA ONLY.
 1. GLOSSARY definitions: for each term given (id — label), write a ONE-sentence plain "laymanDefinition" — concrete, for the learner's level (beginner/intermediate: don't explain jargon with more jargon; use an everyday frame). Add "acronymExpansion" only for ALL-CAPS terms.
 2. SYNTHESIS (only when asked): the lesson's closing consolidation.
-   - recap: a RETRIEVAL prompt (ask the learner to reconstruct the build order / key structure FROM MEMORY before it's shown — 1-2 sentences, not a re-read).
+   - recap: a RETRIEVAL prompt (ask the learner to reconstruct the build order / key structure FROM MEMORY before it's shown — 1-2 sentences, not a re-read), ENDING with ONE memorable DECISION RULE for the whole lesson ("Use X when …; reach for Y when …") — a rule they can recite, never a topic summary.
    - buildOrder: the spine as ordered steps, mirroring the module order exactly.
    - checklist: the key decisions (from the modules' decision points).
-   - capstonePrompt: a SOLO build tied to the learner's goal/buildGoal.
-   - capstoneNext: the NEXT rung — what to learn or build next, so the lesson ends with momentum.
-3. KNOWLEDGE CHECK (only when asked): ONE end-of-lesson check of 4–5 questions that span the WHOLE lesson (interleave across its modules — do NOT cluster on one module). Each question in "finalCheck":
+   - capstonePrompt: an INDEPENDENT CHALLENGE — the lesson's skill transferred to a DIFFERENT but adjacent context (NOT the lesson's running example scenario). Give the spec + the expected output format ONLY — no skeleton, no hints, no solution — then end with "You've nailed it when:" and 3–5 short checkable criteria.
+   - capstoneNext: ONE sentence naming the problem THIS lesson still can't solve — the door to the next lesson, so it ends with momentum.
+3. KNOWLEDGE CHECK (only when asked): ONE end-of-lesson check of 4–5 questions that span the WHOLE lesson (interleave across its modules — do NOT cluster on one module). The set MUST include ≥1 CODE-READING question (a tiny snippet of 1–3 short lines inside the prompt; ask what it outputs or what's wrong with it) and ≥1 DECISION question ("when would you choose X over Y?"). Each question in "finalCheck":
    - "kind": "mcq" (3–4 plausible "options", EXACTLY ONE with "correct":true) or "freeText" (give an "acceptableAnswer" — the reference the grader checks against). Use mostly mcq with 1 freeText.
    - "prompt": tests what the learner actually wanted to learn (tie to the module objectives / decisions / the build goal) — comprehension and application, not trivia.
-   - "explanation": ONE sentence explaining the right answer (shown after grading).
+   - "explanation": WHY the right answer is right AND why each wrong option is wrong — name each distractor's specific flaw (2–3 sentences; this is the teaching moment, shown after grading).
    - retention flags: set "freeRecallFirst":true on AT LEAST ONE question; set "confidence":true on every question; add "conceptTags" = the glossary term ids each question exercises.
-Keep everything tight, concrete, and accurate.`;
+LESSON CONTRACT: when the user message carries pinned contract facts, your recap, checklist, capstone, and every question MUST use those exact names, counts, field labels, and thresholds — the capstone may NOT rename a taxonomy or a field the modules taught. INDEPENDENCE: no finalCheck question may be answerable verbatim by the synthesis/capstone text you are writing in the same response — if your capstone sentence hands a question its answer, change the question.
+FORMATTING — PLAIN TEXT ONLY: never emit markdown syntax (** bold, *italics*, \`\`\` fences, # headings) in any string — the renderer shows strings verbatim, so learners would see raw asterisks. For structure in capstonePrompt, use REAL newlines with "1." / "-" at line starts. For a code snippet inside a question prompt, keep it to 1–3 short lines on their own lines — no fences. The recap's decision rule is ONE rule of AT MOST 25 words ("Use X when …; reach for Y when …") — never staple several rules together.
+Keep everything tight, concrete, and accurate — direct, second person, zero filler.`;
 
 /** Human message for the overview-prose writer: the terms to define + (optionally) the module
  *  spine for synthesis + (optionally) the lesson-level knowledge check. */
@@ -536,6 +670,8 @@ export function overviewProseUserPrompt(args: {
   objective?: string;
   terms: { id: string; label: string }[];
   modules: { order: number; title: string; decisionItForces?: string; objectives?: string[] }[];
+  /** FACT LEDGER — the synthesis/finalCheck must use these exact names/counts/thresholds. */
+  contract?: string[];
   needSynthesis: boolean;
   /** S5 — when true, also write the single end-of-lesson knowledge check (4–5 Qs). */
   needFinalCheck: boolean;
@@ -545,6 +681,9 @@ export function overviewProseUserPrompt(args: {
     `LEVEL: ${args.level}${args.density ? ` · DENSITY: ${args.density}` : ""}`,
     args.buildGoal ? `THEY ARE BUILDING: ${args.buildGoal}` : "",
     objectiveDirective(args.objective),
+    args.contract && args.contract.length
+      ? `LESSON CONTRACT (pinned facts — use these EXACT names/counts/field labels/thresholds; never rename or contradict):\n${args.contract.map((c) => `  • ${c}`).join("\n")}`
+      : "",
     args.terms.length ? `GLOSSARY TERMS TO DEFINE (id — label): ${args.terms.map((t) => `${t.id} — ${t.label}`).join("; ")}` : "GLOSSARY: (none to define)",
     args.needSynthesis
       ? `ALSO WRITE THE SYNTHESIS. MODULE SPINE (use for buildOrder + checklist, mirror this order): ${args.modules.map((m) => `${m.order}. ${m.title}${m.decisionItForces ? ` [decision: ${m.decisionItForces}]` : ""}`).join(" | ")}`

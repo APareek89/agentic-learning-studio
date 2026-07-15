@@ -16,7 +16,7 @@
  * course artifacts still render and open fine.)
  */
 
-import { profiler, retriever, planner, architect, runDeepDive, writeOverviewProse } from "./nodes";
+import { profiler, retriever, planner, architect, coverageBrief, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { spendOne } from "../lib/credits";
 import { retrieveVisual } from "../lib/visuals";
@@ -73,42 +73,44 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     const ovStart = Date.now();
     let lap = ovStart;
     const stageLog = (n: string) => { const t = Date.now(); console.log(`[timing] overview ${n}: ${t - lap}ms`); lap = t; };
+    // FAST OVERVIEW: profiler ∥ retriever (the retriever's query degrades gracefully to the raw
+    // prompt when the profile isn't resolved yet — fine for grounding a bullets brief).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await profiler(st as any, cfg("profiler") as any));
-    stageLog("profiler");
+    const [profOut, retrOut] = await Promise.all([profiler(st as any, cfg("profiler") as any), retriever(st as any)]);
+    Object.assign(st, profOut, retrOut);
+    stageLog("profiler+retriever");
     job.status = "running";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = st.profile as any;
     const jl: JobLesson = { index: 1, title: profile?.topic || "Your lesson", artifactId: null, status: "designing", builtModules: 0, totalModules: 0, percent: 12 };
     job.lessons = [jl];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await retriever(st as any));
-    stageLog("retriever");
-    // SONNET plans the STRUCTURE (lean/fast — was Opus, the slow leg); the architect (Sonnet) then
-    // WRITES the prose from it.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await planner(st as any, cfg("planner") as any));
-    stageLog("planner");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.assign(st, await architect(st as any, cfg("architect") as any));
-    stageLog("architect");
-    // Deterministic overview repair (A5): only re-run Opus when the skeleton didn't PARSE (no
-    // usable blueprint). A validation-GATE miss already carries a repairBlueprint()-fixed
-    // best-effort skeleton — ship it rather than pay a second ~56s Opus call. The overview is a
-    // FREE, user-reviewed preview (editable via "Edit overview"), so best-effort is the right
-    // default; a genuine parse/shape failure (architect returns no blueprint) still re-gens.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) { Object.assign(st, await architect(st as any, cfg("architect") as any)); stageLog("architect-retry"); }
+    // FAST OVERVIEW — ONE small Haiku call fills the bullets-only coverage template (framing /
+    // concepts / examples / outcomes / planned sections) wrapped in a minimal valid Blueprint.
+    // The real skeleton (planner + architect, ~70s) moved into runBuildJob, which honors this
+    // approved brief. One quick retry on a transient miss (the call is only a few seconds).
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.assign(st, await coverageBrief(st as any, cfg("coverage-brief") as any));
+    } catch (e) {
+      console.warn("[runOverviewJob] coverage brief failed — retrying once:", e instanceof Error ? e.message : String(e));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.assign(st, await coverageBrief(st as any, cfg("coverage-brief-retry") as any));
+    }
+    stageLog("coverage-brief");
     console.log(`[timing] overview TOTAL: ${Date.now() - ovStart}ms`);
 
     const bp = st.blueprint as Blueprint | null;
     if (!bp) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design an overview for that — try rephrasing."; return; }
 
+    // Persist the FULL generation input (+ resolved intent) with the draft so the build stage
+    // can run the real skeleton pipeline faithfully — this also carries the config selections
+    // (lessonTypes/framework/cards) that the old build path silently dropped. Rides in the
+    // existing `cards` JSONB — no DB migration.
+    const draftCards: Record<string, unknown> = { ...(input.cards ?? {}), __genInput: input, __intent: st.intent ?? null };
     const ref = await registerArtifact({
       kind: OVERVIEW_DRAFT_KIND, title: bp.meta.title, html: renderArtifact(bp, { previewOnly: true }), blueprint: bp,
       uploadIds: input.uploadIds, referOnly: input.referOnly, userId: input.userId, userEmail: input.userEmail,
-      prompt: input.userPrompt, cards: input.cards, profile: bp.learnerProfile,
+      prompt: input.userPrompt, cards: draftCards, profile: bp.learnerProfile,
     });
     jl.artifactId = ref.id; jl.title = bp.meta.title; jl.totalModules = bp.modules.length;
     jl.status = "ready"; jl.percent = 100;
@@ -137,8 +139,9 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
   let langfuse: ReturnType<typeof makeRootedLangfuseHandler> = null;
   try {
     const art = await getArtifact(artifactId);
-    const bp = art?.blueprint;
-    if (!art || !bp) { job.status = "error"; job.error = "That overview wasn't found (it may have expired)."; return; }
+    if (!art || !art.blueprint) { job.status = "error"; job.error = "That overview wasn't found (it may have expired)."; return; }
+    // `let` (not const): a FAST draft's blueprint is REPLACED by the real skeleton below.
+    let bp: Blueprint = art.blueprint;
 
     // ONE root trace for the whole build; each module body + the prose writer nests under it as a
     // labelled child (a tree in Langfuse). `cfg(name)` names each child observation.
@@ -155,6 +158,56 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     const jl: JobLesson = { index: 1, title: bp.meta.title, artifactId, status: "building", builtModules: 0, totalModules: bp.modules.length, percent: 30 };
     job.lessons = [jl];
 
+    // FAST OVERVIEW → REAL SKELETON. A fast draft carries only the approved coverage brief +
+    // section stubs (no mental map/glossary/plan) — the ~70s planner+architect skeleton that
+    // used to run in the free overview runs HERE instead, with the approved brief injected so
+    // the lesson delivers exactly the coverage the learner signed off on. Old-style drafts
+    // (full skeleton, no brief) and re-builds (built modules present) skip this unchanged.
+    const isFastDraft = !!bp.brief && !bp.modules.some((m) => m.loadState === "full" && m.blocks.length > 0) && Object.keys(bp.glossary).length === 0;
+    if (isFastDraft) {
+      jl.status = "designing"; jl.percent = 15;
+      const cardsBag = (art.cards ?? {}) as Record<string, unknown>;
+      const gi = (cardsBag.__genInput ?? null) as GenerateInput | null;
+      const storedIntent = cardsBag.__intent ?? null;
+      const st: Record<string, unknown> = {
+        userPrompt: gi?.userPrompt ?? art.prompt ?? bp.meta.topic,
+        cards: gi?.cards ?? {}, uploadIds: art.uploadIds ?? [], referOnly: !!art.referOnly,
+        industry: gi?.industry ?? "", buildGoal: gi?.buildGoal ?? "", objective: gi?.objective ?? "",
+        levels: gi?.levels ?? [], lessonTypes: gi?.lessonTypes ?? [], framework: gi?.framework ?? "",
+        readingMode: gi?.readingMode ?? "", userProfile: gi?.userProfile ?? {},
+        profile: bp.learnerProfile, intent: storedIntent,
+        brief: { ...bp.brief, approvedTitle: bp.meta.title },
+      };
+      const dStart = Date.now();
+      let lap = dStart;
+      const stageLog = (n: string) => { const t = Date.now(); console.log(`[timing] build-design ${n}: ${t - lap}ms`); lap = t; };
+      // The overview stored profile + intent; only an old/partial draft re-derives them.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!storedIntent) { Object.assign(st, await profiler(st as any, cfg("profiler") as any)); stageLog("profiler"); }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.assign(st, await retriever(st as any));
+      stageLog("retriever");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.assign(st, await planner(st as any, cfg("planner") as any));
+      stageLog("planner");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.assign(st, await architect(st as any, cfg("architect") as any));
+      stageLog("architect");
+      // Same repair policy the overview stage used: re-run only when nothing PARSED.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) { Object.assign(st, await architect(st as any, cfg("architect-retry") as any)); stageLog("architect-retry"); }
+      console.log(`[timing] build-design TOTAL: ${Date.now() - dStart}ms`);
+
+      const skeleton = st.blueprint as Blueprint | null;
+      if (!skeleton) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design the lesson structure — please try again (you were not charged)."; return; }
+      skeleton.meta.title = bp.meta.title; // honor the approved title
+      skeleton.brief = bp.brief;           // carry the approved brief on the built lesson
+      bp = skeleton;
+      await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) });
+      jl.totalModules = bp.modules.length;
+      jl.status = "building"; jl.percent = 30;
+    }
+
     // Modules already built (a re-run, or a seeded Module 1) count immediately. The rest build
     // in SPINE ORDER so Module 1 lands in the first wave (A4: the learner can start reading it
     // while the others finish).
@@ -164,17 +217,11 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     jl.builtModules = bp.modules.length - pending.length;
     jl.percent = lessonPercent(jl);
 
-    // Attach a CURATED concept diagram to a module when one strongly matches (deterministic
-    // retrieval — NOT model output; one visual per module, max). try/catch so a visual lookup
-    // can NEVER fail a build. Already-built modules (e.g. a seeded Module 1) get a pass here too.
-    const attachVisual = async (mod: (typeof bp.modules)[number]): Promise<void> => {
-      try {
-        if (mod.visual) return;
-        const hit = await retrieveVisual({ topic: bp.meta.title, moduleTitle: mod.title, moduleSummary: mod.summary });
-        if (hit) mod.visual = { title: hit.title, svg: hit.svg };
-      } catch { /* never fail a build over a visual */ }
-    };
-    await Promise.all(bp.modules.filter((m) => m.loadState === "full" && m.blocks.length > 0).map(attachVisual));
+    // DIAGRAMS RETIRED (owner call, 2026-07-14): the curated-visual attach is disabled — the
+    // diagram quality wasn't earning its place in lessons; prose/code/interactives carry the
+    // content. (`retrieveVisual` + `module.visual` stay in the codebase for old artifacts;
+    // the world renderer also skips rendering both curated visuals and `diagram` blocks.)
+    void retrieveVisual; // keep the import referenced without attaching visuals
 
     // Build module bodies in ONE parallel wave with a concurrency cap. Default 5 (covers a typical
     // 5-module lesson in one wave); lowered from 8 to bound PEAK memory — each concurrent build holds
@@ -208,7 +255,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
       try {
         const r = await runDeepDive(bp, mod.id, { uploadIds: art.uploadIds, referOnly: art.referOnly, config: cfg(`module ${mod.order}: ${mod.title}`) });
         ok = !!r.ok;
-        if (ok) { successCount++; await attachVisual(mod); }
+        if (ok) { successCount++; }
         else { failCount++; console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" did not build (kept as stub; builds on demand)`); }
       } catch (e) {
         failCount++; // never let one module throw the whole build

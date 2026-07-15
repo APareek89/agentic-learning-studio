@@ -72,7 +72,7 @@ function appendReducer<T>(existing: T[] | undefined, incoming: T[] | undefined):
 export const GraphState = Annotation.Root({
   // ---- inputs ----
   userPrompt: Annotation<string>(),
-  cards: Annotation<Partial<{ level: string; depth: string; examples: string; density: string; visuals: string; syntax: string }>>({
+  cards: Annotation<Partial<{ level: string; depth: string; examples: string; density: string; visuals: string; syntax: string; quick: string }>>({
     reducer: (_o, n) => n ?? _o,
     default: () => ({}),
   }),
@@ -102,6 +102,10 @@ export const GraphState = Annotation.Root({
   // Ownership — so the composer persists the lesson against the right user.
   userId: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
   userEmail: Annotation<string>({ reducer: (_o, n) => n ?? _o, default: () => "" }),
+
+  // FAST OVERVIEW — the learner-approved coverage brief (set by the BUILD stage from the
+  // draft's blueprint.brief; the planner/architect prompts honor it). null on the old path.
+  brief: Annotation<unknown>({ reducer: (_o, n) => n ?? _o, default: () => null }),
 
   // ---- produced by the nodes ----
   profile: Annotation<LearnerProfile | null>({ reducer: (_o, n) => n ?? _o, default: () => null }),

@@ -846,7 +846,20 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
          on conflict (cache_key) do update set fragment_html = excluded.fragment_html`,
         [buildModuleCacheKey(bp, moduleId), fragmentHtml]
       ).catch(() => {});
-      await updateArtifact(artifactId, { blueprint: bp, html: renderArtifact(bp) }).catch(() => {});
+      // Persist by GRAFTING this module into a freshly-fetched blueprint — two concurrent
+      // single-module builds each held their own full-blueprint copy, so the later write
+      // clobbered the earlier module back to a stub (read-modify-write race).
+      const fresh = await getArtifact(artifactId);
+      const fbp = fresh?.blueprint ?? bp;
+      if (fresh?.blueprint) {
+        const i = fbp.modules.findIndex((m) => m.id === moduleId);
+        if (i >= 0) fbp.modules[i] = module;
+        Object.assign(fbp.citations, bp.citations); // deep-dive may add source citations
+        const node = bp.mentalMap.nodes.find((n) => n.moduleId === moduleId); // + nodeMeta
+        const fnode = node && fbp.mentalMap.nodes.find((n) => n.moduleId === moduleId);
+        if (node && fnode) { fnode.what = node.what; fnode.relevance = node.relevance; fnode.laymanExplanation = node.laymanExplanation; }
+      }
+      await updateArtifact(artifactId, { blueprint: fbp, html: renderArtifact(fbp) }).catch(() => {});
     } catch (e) {
       console.warn("[ensureModuleBuild]", moduleId, e instanceof Error ? e.message : String(e));
     } finally {
@@ -867,7 +880,14 @@ app.post("/api/module", async (req, res) => {
     const cacheKey = buildModuleCacheKey(bp, moduleId);
     // 1) Cache hit → instant, no Claude call.
     const cached = await query<{ fragment_html: string }>(`select fragment_html from module_cache where cache_key = $1`, [cacheKey]);
-    if (cached.length) { res.json({ moduleId, fragmentHtml: cached[0].fragment_html, cached: true }); return; }
+    if (cached.length) {
+      // A cached fragment with a STUB blueprint means a prior persist was lost (e.g. the
+      // clobber race above). The classic view is happy with the fragment, but world mode
+      // renders from the blueprint — heal it in the background so the reload loop ends.
+      if (module.loadState !== "full" || module.blocks.length === 0) ensureModuleBuild(artifactId!, moduleId);
+      res.json({ moduleId, fragmentHtml: cached[0].fragment_html, cached: true });
+      return;
+    }
 
     // 2) Already built in the persisted artifact (e.g. runBuildJob finished it) → render now + cache.
     if (module.loadState === "full" && module.blocks.length > 0) {

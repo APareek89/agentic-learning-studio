@@ -23,6 +23,12 @@ export interface LessonCard {
   courseTotal: number | null;
   /** % of the lesson's modules the user has opened (server-persisted; 0 when none). */
   percent: number;
+  /** BUILD progress (distinct from `percent`, which is LEARNER progress): the share of the
+   *  blueprint's modules that are actually written (loadState "full" with blocks), 0–100.
+   *  A lesson still building shows < 100; the dashboard gates "Open" on this. */
+  buildPct: number;
+  modulesBuilt: number;
+  modulesTotal: number;
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -37,12 +43,20 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     id: string; title: string | null; prompt: string | null;
     created_at: Date; expires_at: Date; rating: number | null; profile: { industry?: string } | null;
     course_id: string | null; course_total: number | null; percent: number | null;
+    built_modules: string | number | null; total_modules: number | null;
   }>(
     // Match by user id OR email, so a learner's lessons follow their email across
     // sign-ins / a project migration (their auth user id can change; email is stable).
     // Left-join lesson_progress for the % completed bar (0 when never opened).
+    // BUILD progress is counted in SQL straight from the blueprint's module loadState (a module
+    // is "built" once loadState = 'full' AND it has blocks) — so we NEVER ship the (large)
+    // blueprint JSON to the client just to know how far a background build has got.
     `select l.id, l.title, l.prompt, l.created_at, l.expires_at, l.rating, l.profile,
-            l.course_id, l.course_total, p.percent
+            l.course_id, l.course_total, p.percent,
+            (select count(*) from jsonb_array_elements(coalesce(l.blueprint->'modules','[]'::jsonb)) m
+               where m->>'loadState' = 'full'
+                 and jsonb_array_length(coalesce(m->'blocks','[]'::jsonb)) > 0) as built_modules,
+            jsonb_array_length(coalesce(l.blueprint->'modules','[]'::jsonb)) as total_modules
        from lessons l
        left join lesson_progress p on p.lesson_id = l.id and p.user_id = $1
       where (l.user_id = $1 or ($2 <> '' and l.user_email = $2)) and l.expires_at > now()
@@ -53,19 +67,29 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     [userId, email]
   ).catch(() => []);
   const now = Date.now();
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title || "Untitled lesson",
-    prompt: r.prompt,
-    createdAt: new Date(r.created_at).toISOString(),
-    expiresAt: new Date(r.expires_at).toISOString(),
-    daysRemaining: Math.max(0, Math.ceil((new Date(r.expires_at).getTime() - now) / MS_PER_DAY)),
-    rating: r.rating,
-    industry: r.profile?.industry ?? null,
-    courseId: r.course_id,
-    courseTotal: r.course_total,
-    percent: Math.max(0, Math.min(100, r.percent ?? 0)),
-  }));
+  return rows.map((r) => {
+    const modulesTotal = Number(r.total_modules ?? 0);
+    const modulesBuilt = Math.min(modulesTotal, Number(r.built_modules ?? 0));
+    // No modules recorded yet (e.g. a legacy/library row without a modules array) ⇒ treat as
+    // fully built so we never wrongly lock its "Open" button.
+    const buildPct = modulesTotal > 0 ? Math.round((modulesBuilt / modulesTotal) * 100) : 100;
+    return {
+      id: r.id,
+      title: r.title || "Untitled lesson",
+      prompt: r.prompt,
+      createdAt: new Date(r.created_at).toISOString(),
+      expiresAt: new Date(r.expires_at).toISOString(),
+      daysRemaining: Math.max(0, Math.ceil((new Date(r.expires_at).getTime() - now) / MS_PER_DAY)),
+      rating: r.rating,
+      industry: r.profile?.industry ?? null,
+      courseId: r.course_id,
+      courseTotal: r.course_total,
+      percent: Math.max(0, Math.min(100, r.percent ?? 0)),
+      buildPct,
+      modulesBuilt,
+      modulesTotal,
+    };
+  });
 }
 
 /** Upsert a user's % completed for a lesson (relayed by the host from the artifact iframe). */

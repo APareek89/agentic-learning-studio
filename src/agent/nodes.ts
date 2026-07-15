@@ -28,8 +28,9 @@ import {
 import type { Blueprint, Block } from "../render/schema";
 import { renderArtifact } from "../render/index";
 import { registerArtifact } from "../lib/artifacts";
-import { PROFILER_SYSTEM, PLANNER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, OVERVIEW_PROSE_SYSTEM, plannerUserPrompt, architectUserPrompt, moduleUserPrompt, overviewProseUserPrompt } from "./prompts";
-import { measureModule, repairDensity } from "./density";
+import { PROFILER_SYSTEM, PLANNER_SYSTEM, SKELETON_SYSTEM, MODULE_SYSTEM, OVERVIEW_PROSE_SYSTEM, BRIEF_SYSTEM, plannerUserPrompt, architectUserPrompt, moduleUserPrompt, overviewProseUserPrompt, briefUserPrompt } from "./prompts";
+import { measureModule, repairDensity, repairCodeLength, codeOffenders } from "./density";
+import { lintModuleCode, repairCodeIssues } from "./codegate";
 import { retrieve } from "../rag/retrieve";
 import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
@@ -43,6 +44,10 @@ const CLAUDE_RETRIES = gptFallbackEnabled() ? 2 : 4;
 // not content generation — Haiku is ~3x cheaper + faster and accurate enough here. Env-overridable.
 const profilerLLM = makeLLM("haiku", 0, { maxRetries: CLAUDE_RETRIES });
 const profilerGpt = makeGptLLM("haiku");
+// FAST OVERVIEW — the coverage brief is a small structured fill (bullets only), so HAIKU:
+// seconds instead of the ~70s planner+architect skeleton. Env-overridable like the others.
+const briefLLM = makeLLM("haiku", 0.2, { maxTokens: 3000, maxRetries: CLAUDE_RETRIES });
+const briefGpt = makeGptLLM("haiku", { maxTokens: 3000 });
 // OVERVIEW = a TWO-STAGE split (planner / writer) so each model does the job it's best at:
 //   planner (OPUS) → the STRUCTURE only: spine, module plan, mental-map shape, glossary term
 //     list, structureType. The reasoning-heavy step — kept LEAN (NO prose), so Opus is fast +
@@ -160,7 +165,12 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const noCards = !(pickedLevels.length || cards.level || cards.depth || cards.examples);
 
   // New landing controls (all optional; sensible defaults preserve old behaviour).
-  const density = (["low", "medium", "high"].includes(cards.density as string) ? cards.density : "medium") as LearnerProfile["density"];
+  // V2 DEFAULT: text density follows the LEVEL when not explicitly picked — beginners get the
+  // most explanation, advanced learners get it terse. (The Builder no longer exposes density.)
+  const densityFromLevel: LearnerProfile["density"] = level === "advanced" ? "low" : level === "intermediate" ? "medium" : "high";
+  // ⚡ Quick read overrides density DOWN regardless of level — the learner asked for the gist.
+  const quick = cards.quick === "on";
+  const density = (quick ? "low" : (["low", "medium", "high"].includes(cards.density as string) ? cards.density : densityFromLevel)) as LearnerProfile["density"];
   const visualsRequested = cards.visuals === "on";
   const explainSyntax = cards.syntax === "on";
 
@@ -181,11 +191,13 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
   const lessonTypes = ((state.lessonTypes ?? []).filter((t) => t === "content" || t === "knowledge_check") as ("content" | "knowledge_check")[]);
   let finalLessonTypes = lessonTypes.length ? lessonTypes : (["content"] as ("content" | "knowledge_check")[]);
 
-  // Reading preference (renderer-only). Horizontal mode ENDS on a knowledge-check page,
-  // so it implies generating questions — fold knowledge_check in so the modules produce
-  // the knowledgeCheck blocks the final page is built from.
-  const readingMode: LearnerProfile["readingMode"] = state.readingMode === "horizontal" ? "horizontal" : "vertical";
-  if (readingMode === "horizontal" && !finalLessonTypes.includes("knowledge_check")) {
+  // Reading mode. V2: "world" (the block-map template) is the DEFAULT for all new lessons —
+  // the Builder no longer exposes a reading picker. Legacy "vertical"/"horizontal" still pass
+  // through (e.g. re-runs of old drafts). World and horizontal both end on a knowledge check,
+  // so they fold knowledge_check in.
+  const readingMode: LearnerProfile["readingMode"] =
+    state.readingMode === "horizontal" ? "horizontal" : state.readingMode === "vertical" ? "vertical" : "world";
+  if ((readingMode === "horizontal" || readingMode === "world") && !finalLessonTypes.includes("knowledge_check")) {
     finalLessonTypes = [...finalLessonTypes, "knowledge_check"];
   }
 
@@ -209,6 +221,7 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     density,
     visualsRequested,
     explainSyntax,
+    quick: quick || undefined,
     readingMode,
   };
 
@@ -217,8 +230,9 @@ export async function profiler(state: GraphStateType, config: RunnableConfig) {
     lessonFocus: inf.lessonFocus,
     mustCover: inf.mustCover ?? [],
     // S6 — breadth → target module count (broad=8 / moderate=6 / narrow=5).
+    // ⚡ Quick read pins it to 4 regardless of breadth.
     scope: inf.scope,
-    moduleTarget: moduleTargetFor(inf.scope),
+    moduleTarget: quick ? 4 : moduleTargetFor(inf.scope),
   };
 
   const focus = profile.industry ? ` for **${profile.industry}**` : "";
@@ -296,6 +310,110 @@ export async function retriever(state: GraphStateType) {
   }
 
   return { retrieved: sources, coverage, messages: [{ role: "assistant" as const, node: "Retriever", content: msg }] };
+}
+
+// ============================================================================
+// NODE 1.6 — coverageBrief (FAST OVERVIEW): one small HAIKU call fills the bullets-only
+// coverage template (framing / concepts / examples / outcomes / planned sections), and we
+// deterministically wrap it in a MINIMAL valid Blueprint (module stubs from the sections,
+// empty map/glossary) so all the existing draft/preview/promote machinery keeps working.
+// The REAL skeleton (planner + architect) is generated later, during the build, with this
+// approved brief injected. Replaces the ~70s planner+architect leg in the free overview.
+// ============================================================================
+// Split into TWO schemas so the brief generates as two PARALLEL Haiku calls — latency is
+// output-token decode time, so halving each call's output ~halves the wall-clock (~11s → ~6s).
+const BriefCoreSchema = z.object({
+  title: z.string(),
+  framing: z.string(),
+  concepts: z.array(z.object({ label: z.string(), why: z.string().optional() })),
+  examples: z.array(z.string()).default([]),
+  outcomes: z.array(z.string()).default([]),
+});
+const BriefSectionsSchema = z.object({
+  sections: z.array(z.object({ title: z.string(), summary: z.string().optional() })),
+});
+
+export async function coverageBrief(state: GraphStateType, config: RunnableConfig) {
+  const p = state.profile!;
+  const intent = state.intent;
+  const sources = state.retrieved ?? [];
+  const userMsg = briefUserPrompt({
+    topic: p.topic,
+    level: p.level,
+    depth: p.depth,
+    examples: p.examples,
+    industry: p.industry,
+    buildGoal: p.buildGoal,
+    objective: p.objective,
+    levels: p.levels,
+    framework: p.framework,
+    userPrompt: state.userPrompt,
+    learningGoal: intent?.learningGoal,
+    lessonFocus: intent?.lessonFocus,
+    mustCover: intent?.mustCover,
+    moduleTarget: intent?.moduleTarget,
+    sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
+  });
+  const [core, secOut] = (await Promise.all([
+    invokeResilient(
+      structuredWithFallback(briefLLM, briefGpt, BriefCoreSchema, { name: "coverage_brief" }),
+      [new SystemMessage(BRIEF_SYSTEM), new HumanMessage(userMsg + "\n\nReturn ONLY: title, framing, concepts, examples, outcomes (no sections).")],
+      config
+    ),
+    invokeResilient(
+      structuredWithFallback(briefLLM, briefGpt, BriefSectionsSchema, { name: "coverage_sections" }),
+      [new SystemMessage(BRIEF_SYSTEM), new HumanMessage(userMsg + "\n\nReturn ONLY the planned sections.")],
+      config
+    ),
+  ])) as [z.infer<typeof BriefCoreSchema>, z.infer<typeof BriefSectionsSchema>];
+  const out = { ...core, sections: secOut.sections };
+
+  // Clamp to the template's bounds in code (looser Zod = fewer structured-output retries).
+  const sections = out.sections.filter((s) => (s.title || "").trim()).slice(0, 9);
+  if (!sections.length) throw new Error("brief returned no sections");
+  const brief = {
+    framing: (out.framing || "").trim(),
+    concepts: out.concepts.filter((c) => (c.label || "").trim()).slice(0, 8),
+    examples: out.examples.filter((e) => (e || "").trim()).slice(0, 4),
+    outcomes: out.outcomes.filter((o) => (o || "").trim()).slice(0, 3),
+  };
+
+  // Minimal valid Blueprint: module stubs from the planned sections + a placeholder map
+  // (never rendered — the preview shows the brief; the build replaces this wholesale).
+  const candidate = {
+    schemaVersion: "1.0",
+    meta: { topic: p.topic, title: (out.title || p.topic).trim(), thesis: brief.framing },
+    learnerProfile: p,
+    mentalMap: {
+      title: `${p.topic} — the map`,
+      oneLineThesis: brief.framing,
+      structureType: "conceptual",
+      nodes: sections.map((s, i) => ({ id: `n${i + 1}`, label: s.title.slice(0, 80), moduleId: `m${i + 1}` })),
+      edges: [],
+      willCover: brief.concepts.slice(0, 4).map((c) => c.label),
+    },
+    modules: sections.map((s, i) => ({
+      id: `m${i + 1}`, order: i + 1, title: s.title, summary: (s.summary || "").trim(),
+      objectives: [], termIds: [], citations: [], blocks: [], loadState: "stub",
+    })),
+    glossary: {},
+    citations: {},
+    synthesis: { buildOrder: [], checklist: [], capstone: { prompt: `Apply what you learned to ${p.buildGoal || p.topic}.` } },
+    brief,
+  };
+  // Provenance (uploads) — same flags the architect sets, so the preview banner shows.
+  const uploadTitles = getUploadTitles(state.uploadIds);
+  if (uploadTitles.length) {
+    (candidate.meta as Record<string, unknown>).usedUpload = true;
+    (candidate.meta as Record<string, unknown>).referOnly = !!state.referOnly;
+    (candidate.meta as Record<string, unknown>).uploadTitles = uploadTitles;
+  }
+  const parsed = BlueprintSchema.safeParse(candidate);
+  if (!parsed.success) throw new Error("brief blueprint invalid: " + parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")} — ${i.message}`).join("; "));
+  return {
+    blueprint: parsed.data,
+    messages: [{ role: "assistant" as const, node: "Overview", content: `Planned **${sections.length} sections** covering ${brief.concepts.length} concepts.` }],
+  };
 }
 
 /** Pull the Blueprint JSON object out of a raw model response (tolerates a ```json fence
@@ -430,6 +548,7 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
               mustCover: intent?.mustCover,
               moduleTarget: intent?.moduleTarget,
               sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, origin: s.origin })),
+              approvedBrief: state.brief ?? undefined,
             })
           ),
         ],
@@ -497,6 +616,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
             moduleTarget: intent?.moduleTarget,
             sources: sources.map((s) => ({ sid: s.sid, title: s.title, content: s.content, asOfDate: s.asOfDate, origin: s.origin })),
             plan: state.plan,
+            approvedBrief: state.brief ?? undefined,
             repairErrors,
           })
         ),
@@ -515,6 +635,12 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   }
 
   candidate.learnerProfile = { ...candidate.learnerProfile, ...p };
+  // FACT LEDGER: pin the planner's contract on the blueprint (code-set, survives persist/heals)
+  // so every module writer + the synthesis writer receive the SAME shared facts verbatim.
+  const planContract = (state.plan as { contract?: unknown } | undefined)?.contract;
+  if (Array.isArray(planContract)) {
+    candidate.meta.contract = planContract.filter((x): x is string => typeof x === "string" && !!x.trim()).slice(0, 14);
+  }
   // Merge retrieved sources into citations so any [S#]/[U#] resolves + shows in Sources,
   // tagged by origin (the learner's upload vs the shared KB).
   candidate.citations = candidate.citations ?? {};
@@ -608,7 +734,10 @@ export async function runDeepDive(
   const priorModules = bp.modules
     .filter((x) => x.order < module.order)
     .sort((a, b) => a.order - b.order)
-    .map((x) => ({ order: x.order, title: x.title, terms: (x.termIds ?? []).map((id) => bp.glossary[id]?.label).filter((t): t is string => !!t) }));
+    // summary included so RECALL cards can only assert what the prior module actually SAYS
+    // (title+terms alone made writers invent answer keys — the "three fields vs four" bug).
+    .map((x) => ({ order: x.order, title: x.title, summary: (x.summary || "").slice(0, 240), terms: (x.termIds ?? []).map((id) => bp.glossary[id]?.label).filter((t): t is string => !!t) }));
+  const nextModule = bp.modules.filter((x) => x.order > module.order).sort((a, b) => a.order - b.order)[0];
   // PROMPT CACHING (B3): MODULE_SYSTEM (~7k tok) is byte-identical across all ~5 module calls, so
   // mark it cacheable — module 1 WRITES the cache, modules 2..N READ it (runBuildJob builds module 1
   // first, then fans out, so the cached prefix exists before the wave). The stable ModuleBlocksSchema
@@ -625,6 +754,9 @@ export async function runDeepDive(
         depth: p.depth,
         examples: p.examples,
         density: p.density,
+        quick: p.quick,
+        contract: bp.meta.contract,
+        nextModule: nextModule ? { title: nextModule.title, summary: (nextModule.summary || "").slice(0, 160) } : undefined,
         visualsRequested: p.visualsRequested,
         explainSyntax: p.explainSyntax,
         industry: p.industry,
@@ -731,12 +863,32 @@ export async function runDeepDive(
   // correctness — a slightly-long sentence isn't worth doubling the build time.)
   try {
     const dstats = measureModule(module, p.density);
-    if (dstats.overCeiling >= 3 || dstats.pctOver >= 0.25) {
-      const { repaired, residual } = await repairDensity(bp, moduleId, p.density, config);
-      if (residual > 0) console.warn(`[density] "${moduleId}" (${p.density}): ${residual} sentence(s) over ceiling after repairing ${repaired} block(s)`);
+    const codeViol = codeOffenders(module).length;
+    const needProse = dstats.overCeiling >= 3 || dstats.pctOver >= 0.25;
+    if (needProse || codeViol > 0) {
+      // Prose and code repairs are independent constrained Haiku calls — run them in parallel.
+      const [proseRes, codeRes] = await Promise.all([
+        needProse ? repairDensity(bp, moduleId, p.density, config) : Promise.resolve(null),
+        codeViol > 0 ? repairCodeLength(bp, moduleId, config) : Promise.resolve(null),
+      ]);
+      if (proseRes && proseRes.residual > 0) console.warn(`[density] "${moduleId}" (${p.density}): ${proseRes.residual} sentence(s) over ceiling after repairing ${proseRes.repaired} block(s)`);
+      if (codeRes && codeRes.residual > 0) console.warn(`[code-length] "${moduleId}": ${codeRes.residual} snippet(s) still over the line cap after repairing ${codeRes.repaired}`);
       repairBlueprint(bp); // re-fix any refs the rewrite touched
     }
   } catch { /* never block on density */ }
+
+  // CODE GATE (content-integrity pass): objective checks — YAML/JSON must parse, provider
+  // IDs must look real, contract fields/files must exist. Hard errors get ONE targeted
+  // repair (kept only if re-lint passes); heuristics are logged, never blocking.
+  try {
+    const lint = lintModuleCode(bp, module);
+    for (const w of lint.warnings) console.warn(`[code-gate] "${moduleId}" warn (${w.blockId}): ${w.msg}`);
+    if (lint.errors.length) {
+      for (const e of lint.errors) console.warn(`[code-gate] "${moduleId}" ERROR (${e.blockId}): ${e.msg}`);
+      const fixed = await repairCodeIssues(bp, module, lint, config);
+      console.log(`[code-gate] "${moduleId}": repaired ${fixed}/${lint.errors.length} error block(s)`);
+    }
+  } catch { /* never block a build on the gate */ }
   return { ok: true, sources };
 }
 
@@ -798,6 +950,7 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
           objective: p.objective,
           terms: needDefs.map(([id, t]) => ({ id, label: t.label })),
           modules: bp.modules.map((m) => ({ order: m.order, title: m.title, decisionItForces: m.decisionItForces, objectives: m.objectives })),
+          contract: bp.meta.contract,
           needSynthesis,
           needFinalCheck,
         })

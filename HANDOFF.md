@@ -1,10 +1,516 @@
 # HANDOFF — Agentic Learning Studio
 
+## 🌍 V2 DESIGN AND UX — CHANGES MADE (2026-07-13 · LOCAL-ONLY, not committed/pushed)
+> **STATUS: design APPROVED by the owner (2026-07-13, "the design is mostly fine now").** The
+> "Zoom World" template is the PRODUCTION lesson experience for ALL NEW generations, and the
+> Builder was reduced to its essentials. Everything below is LOCAL-only — not committed, not
+> pushed; the staging push decision comes after the content pass.
+>
+> **NEXT (separate session, owner has the prompt ready): CONTENT-FLOW PASS** — rework the
+> generation-agent SYSTEM PROMPTS (`src/agent/prompts.ts`: PLANNER_SYSTEM / SKELETON_SYSTEM /
+> MODULE_SYSTEM / OVERVIEW_PROSE_SYSTEM + their user-prompt builders) against the owner's
+> "Content flow guideline" (hook → failure demo → action-verb outcomes → anchored bridge →
+> concept at depth → progressive worked example → common mistakes w/ real errors → guided
+> practice → independent challenge → knowledge check → decision rule + next gap; 30/70
+> explain-to-do ratio, ≤10-line snippets, no filler tone). The guideline is a REFERENCE to be
+> MAPPED onto the existing Blueprint block vocabulary — not a new schema; any additive schema
+> field needs explicit owner sign-off first.
+>
+> **1. New lesson template — `readingMode: "world"` (default for every new generation).**
+> - **`src/render/world.ts` (NEW)** — `renderBodyWorld` + `WORLD_CSS` + `WORLD_JS`. Each module renders
+>   as a MENTAL MAP of its blocks on a pannable/zoomable canvas: every block = a card (kind chip +
+>   heading + one-line orient, all DERIVED from the Blueprint — headings from block titles, orient/
+>   caption lines from first sentences; the model authors nothing presentation-specific). Clicking a
+>   card opens a POPUP carrying 100% of the block content, rendered by the SAME `components.ts block()`
+>   renderers as the classic view (now exported, with `synthesisInner`/`citationsInner`) — zero content
+>   loss. Beats (Next ▸ / Auto / ↺ / ←→) tour the map with a one-line caption + console strip; stages =
+>   modules + lead "This module" card (summary/objectives/why-it-matters/curated visual) + Putting it
+>   together + Knowledge check (bp.finalCheck as question cards; mcq graded client-side from embedded
+>   correct flags, freeText = write-then-reveal — NOTE: deviates from /api/check server grading, revisit
+>   before prod) + Sources. Canvas: drag-pan (6px threshold, works from cards), wheel-zoom, ⤾ recenter.
+>   Collapsible in-artifact module rail (hidden by default). Glossary (i) popovers + scatter/slider/
+>   stepped viz hydration ported into WORLD_JS. Progress relays to the host via the same `als-progress`
+>   postMessage. **Stub modules** (mid-build): a "being built" card + the runtime fires POST /api/module
+>   once per stub and self-reloads every 22s — verified live: a stub module self-healed in ~90s.
+> - **`src/render/index.ts`** — dispatches to the world renderer when `readingMode==="world"` &&
+>   !previewOnly (fast-overview drafts still show the brief); world pages force `data-theme="dark"`
+>   (block content uses the existing dark palette) and load WORLD_CSS + WORLD_JS instead of RUNTIME_JS.
+> - **`src/render/schema.ts`** — `readingMode` enum gains `"world"`. Existing vertical/horizontal
+>   lessons (My Lessons, Library, Community) are UNTOUCHED — they keep the classic renderer.
+>
+> **2. Builder reduced to essentials (`public/index.html` + `public/app.js`).**
+> - KEPT: prompt ("what do you want to learn"), **Level**, **Coverage** (the conceptual/technical
+>   depth picker), document/repo uploads, Generate Overview.
+> - REMOVED: Objective, Examples, Text (density), Extras (visuals/syntax), Lesson type, **Reading
+>   (vertical/horizontal)**, Code framework, and the industry/build-goal context fields.
+> - Fixed defaults now sent by `buildPayload`: `examples=functional_code` (every lesson has examples),
+>   `visuals=on`, `lessonTypes=["content","knowledge_check"]`, `readingMode="world"`,
+>   framework/objective/industry/buildGoal empty. Suggested-topic quick-generate uses the same defaults.
+> - **`src/agent/nodes.ts` (profiler)** — density is now DERIVED from level when not sent:
+>   beginner→high · intermediate→medium · advanced→low; readingMode defaults to `"world"` (legacy
+>   vertical/horizontal still honored for old drafts); world implies knowledge_check (like horizontal).
+>
+> **3. Verified locally** — `tsc --noEmit` clean · $0 fixture `scripts/test-world.ts` (crewai library
+> blueprint → /tmp/als-world.html; Playwright: 8 stages, popups 1000+ chars via REAL clicks, (i)
+> popovers inside popups, quiz answers, pan/recenter, 0 errors) · **fresh LIVE lesson end-to-end** on
+> :5070 with the exact trimmed-Builder payload: overview 9s → build 354s (5/6; module 1 stubbed,
+> uncharged) → artifact renders in world mode (9 stages) → stub self-healed via the world runtime in
+> ~90s → full map (screenshots in /tmp/live-world-*.png).
+>
+> **Known gaps / follow-ups before staging:** (a) final-check grading is client-side in world mode
+> (embedded correct flags) — wire /api/check for parity; (b) host "Ask more"/rating flows untouched
+> and work; the host Dark toggle is a no-op on world pages (always dark by design); (c) the Slides
+> toggle + horizontal mode still exist for old lessons — retire later if the owner wants; (d) design
+> mockups that led here live in `public/mockups/` (untracked) — `interactive-v9-full.html` is the
+> approved reference.
+>
+> **4. CONTENT-FLOW PASS (2026-07-13 · LOCAL-ONLY · prompts only, ZERO schema changes).** The owner's
+> content-flow guideline (hook → failure demo → verb outcomes → anchored bridge → concept-at-level →
+> progressive example → mistakes-with-real-errors → guided practice → independent challenge →
+> knowledge check → decision rule + next gap; 30/70 explain-to-do; ≤10-line snippets; no filler) is
+> now encoded in the generation prompts, mapped onto the EXISTING block vocabulary. Files touched:
+> `src/agent/prompts.ts` (MODULE_SYSTEM + moduleUserPrompt = main work; SKELETON_SYSTEM,
+> PLANNER_SYSTEM, architectUserPrompt plan-branch, OVERVIEW_PROSE_SYSTEM, BRIEF_SYSTEM) and
+> `src/agent/calibration.ts` (LevelSpec gains `conceptShape`, emitted by calibrationDirective —
+> extends, composes with densityBuys()).
+> - **Mapping (guideline item → existing home):** hook → module's FIRST block opens with a ≤2-sentence
+>   problem-question (also the world card's orient line) · failure demo → codeExample + predictThenReveal
+>   whose `answer` carries the VERBATIM error/wrong output (no `output` field needed) · outcomes →
+>   module.objectives + brief.outcomes (action verbs; "understand X" banned) · bridge → the `analogy`
+>   field, anchored to nearest anchor (role > prior modules > everyday), side-by-side framed · concept →
+>   conceptual/technical + one visual + glossary spans; per-level shape via calibration `conceptShape` ·
+>   worked example → 2–3 "Stage N" codeExamples, delta-only, real intermediate output per stage, ONE
+>   running example named by planner/skeleton in covers/summaries · mistakes → "How X breaks" block, 2–3
+>   modes each with verbatim error, level-filtered · guided practice → late-module completion codeExample
+>   ("Stop — attempt before revealing" + 1–2 hints + changed-lines-flagged answer) · independent
+>   challenge → synthesis.capstone (adjacent context, spec + output format + "You've nailed it when:"
+>   3–5-criterion rubric, no hints) · knowledge check → bp.finalCheck (S5 intact; ≥1 code-reading + ≥1
+>   decision Q; explanation covers why each distractor is wrong) · recap → retrieval prompt ENDING in one
+>   memorable decision rule; capstoneNext = the problem this lesson can't solve. Cross-cutting: 30/70 as
+>   a block-mix rule (compress prose, never add volume — composes with density = sentence shape); every
+>   block gets a specific 3–7-word title + strong standalone first sentence (world cards derive from
+>   these); ≤1 untitled note/module; HARD MAX 8 blocks/module; snippets aim-8/ceiling-10 lines; banned
+>   openers ("This module covers…", "We introduce…") in summaries.
+> - **Scorecard (live, 2 fresh beginner lessons on :5070):** Lesson 1 "Tool Calling in LLM Agents" —
+>   8 pass / 4 partial / 1 fail (5-agent rubric review): hooks, bridges, failure demos (real tool_call
+>   JSON + KeyError + validation errors), progressive stages w/ flagged deltas, guided practice (all 3
+>   elements), 0 objective violations, finalCheck mix + per-distractor explanations, recap rule +
+>   adjacent capstone all PASSED; misses were block inflation (11 blocks/module), snippets 11–16L,
+>   "This module covers…" summaries, thin M1/M3 mistake evidence, un-glossed background jargon.
+>   Round-2 prompt fixes → Lesson 2 "Building Agent Memory": blocks exactly 8/8/8/8/8/8, summaries all
+>   second-person action openers (0 violations), ≤1 untitled note, every codeExample has explain,
+>   inline glosses present ("a JSON file (a plain text format…)"), explain/doing ≈ 31–37% / 63–69%
+>   per module (target 30/70), 0 JS errors in the world template. Residual: snippets still drift
+>   1–5 lines over 10 (8 of ~16) — mitigated post-generation with "aim 8 / ceiling 10" wording (in the
+>   prompts, not yet live-verified); if it persists, the deterministic fix is a line-count repair in
+>   density.ts, NOT more prompt text.
+> - Verify: `npx tsc --noEmit` clean · blueprints at /tmp/als-bp.json + /tmp/als-bp2.json · artifacts
+>   `84e6d210…` (tool calling) + `af89df70…` (agent memory) on the staging DB, world-rendered
+>   screenshots /tmp/als2-shot-*.png. NOT committed (LOCAL ONLY, per instruction).
+> - **Visual-bug round (2026-07-14, from owner's real-usage screenshots — 5 issues + Auto-mode blend):**
+>   (1) **Card overlap (the big one):** `world.ts gridPos` top-row Y offset was `Math.floor(i/3)*0` —
+>   multiplied by ZERO — so with ≥7 cards (standard at 8 blocks + lead) cards 4+ stacked EXACTLY on
+>   cards 1-3. Also explains the "Example before Concept 1" scramble AND the Auto-mode text blend
+>   (a dimmed card sat exactly under the focused one, seen zoomed-in). Fix: serpentine grid — rows
+>   of 3, odd rows right-to-left, real 342px row offsets; card N+1 always spatially adjacent.
+>   Verified: 0 overlaps across 9 stages × 69 cards on two lessons; 22-frame Auto-mode capture
+>   eyeballed clean (single focused card per frame incl. the exact card from the owner's screenshot).
+>   (2) **Empty popups:** the 27-combo gates (`body[data-depth] .needs-*{display:none}`) hid
+>   non-matching blocks INSIDE world popups (map shows a card for every block → card opened empty,
+>   e.g. conceptual blocks on a technical-coverage lesson). Fix: `.w-pob .needs-*{display:block
+>   !important}` — a popup always carries 100% of its block (the world design intent). Verified on a
+>   technical-depth variant: 69/69 popups non-empty. (3) **Brown example block:** dark
+>   `.blk-example` `#241d0f` → `#1d2136` slate-indigo (tokens.ts; amber border keeps the identity).
+>   (4) **Trivial completion code:** MODULE_SYSTEM now requires the practice gap to be THE CRUX
+>   (never a return/print/import; widen the variation if the natural gap is trivial; snippet must
+>   stand alone). (5) **LIGHT MODE for world lessons:** header ☀/☾ toggle (persists in
+>   localStorage `als-world-theme`), light values for all --w* vars + every hard-coded dark color;
+>   sets `data-theme` on BOTH html and body (block content CSS keys off either). Playwright-verified
+>   both themes, map + popups readable.
+> - **2026-07-14 session 2 (finishing pass):** (a) **module-persist race fixed** (`server.ts
+>   ensureModuleBuild`): two concurrent single-module builds each persisted their own FULL blueprint
+>   copy — later write clobbered the earlier module back to a stub (fragment cached, blueprint stub
+>   ⇒ world mode showed "being built" forever). Now grafts ONLY the built module (+ its citations +
+>   nodeMeta) into a freshly-fetched blueprint; and the /api/module cache-hit path kicks
+>   `ensureModuleBuild` when the blueprint is still stub (heals world mode). Verified live on the
+>   raced lesson. (b) **snippet caps made tiered + honest** (`density.ts`): observed every Stage 1
+>   lands ≤10L, only final assembly/practice stages overflow — so prompt says teaching stages ≤10,
+>   assembly/practice ≤14 HARD; `repairCodeLength` fires only >14 (`CODE_LINE_REPAIR_AT`), uses
+>   SONNET (Haiku refuses surgical elision), accepts only shrunk-and-fits rewrites. Known residual:
+>   RAG lesson m6 keeps a 15L + 20L pair (Sonnet declined twice; render is a scrollable code block,
+>   acceptable) — new generations are capped at write time.
+> - **LEARNER-REVIEW ROUND (2026-07-14): 4 parallel Playwright learner-agents reviewed 4 fresh
+>   lessons (RAG chatbot · LangGraph-vs-CrewAI-vs-AutoGen · embeddings-technical · prompt-injection),
+>   ~70 issues found, the systemic ones FIXED + re-verified:** (1) **markdown leak (top issue, all 4
+>   lessons):** synthesis capstones/finalCheck prompts showed raw \`**\`/\`\`\` fences/inline "1. -"
+>   lists as wall-of-text. New `mdLite()` in components.ts (fences→pre, **→strong, \`→code,
+>   inline enumerations→real lists, newline paragraphs — deliberately not a full parser) applied to
+>   capstone, classic + world finalCheck prompts, predict-reveal answers; spanHtml converts inline
+>   **/\`/newlines in span text; firstSentence strips markers from card teasers/captions. Verified:
+>   0 non-code ** leaks across all 4 lessons. (2) **beat-caption text-over-text (all 4):** caption
+>   lines now sit on scrim pills (dark+light) + header got a gradient backdrop + counter pill.
+>   (3) **span-glue typos** ("adoption.'You", "trim_historyfunction", bare floating ⓘ):
+>   joinSpans() heals missing spaces at clause/chip boundaries; empty-text term spans no longer
+>   render bare chips. (4) **popup title shown twice (all 4):** body's first h3 / collapse-h /
+>   eyebrow+h2 hidden inside popups (header carries the title). (5) **sources duplicates (3/4):**
+>   citationsInner dedupes by title+kind. (6) **KC polish:** options lettered A/B/C/D (matches the
+>   explanations), explanation pre-rendered via mdLite (shown with ✓ Correct / ✗ Not quite verdict),
+>   contrast raised; Reveal buttons now disable → "Revealed ✓"; "Predict:" label suppressed when the
+>   prompt already opens with Stop/Predict. (7) **matrix column bloat:** repairBlueprint also drops
+>   "computational cost"/"setup complexity"/"when to use" dup criteria + prompt caps criteria at
+>   2–4. (8) firstSentence no longer cuts at "e.g."/"i.e."; beat captions use a longer capline (210)
+>   + stage taglines 240 so tours don't end mid-thought; "[map] 1 blocks" grammar; knowledge-check
+>   stage badges number 1..N (no "▸ start" on Question 1). (9) **prompt guards for future
+>   generations:** OVERVIEW_PROSE plain-text-only + ≤25-word single decision rule; MODULE_SYSTEM —
+>   never leak a completion answer next to its TODO, cross-refs use exact PRIOR-MODULES numbers,
+>   diagram blocks must have edges, scatter is click-not-drag, matrix criteria exclusions;
+>   PLANNER/SKELETON pin running-example constants (fixes the 1536-vs-384 dimension flip class).
+>   **Known content-level residuals in the 4 sample lessons** (would regenerate away, left as-is):
+>   RAG m6 15L+20L snippets, RAG 1536/384 dim flip, injection lesson's one wrong module cross-ref,
+>   frameworks lesson's non-functional "drag" wording on its scatter. Reviewer verdicts: 4/4 "yes,
+>   this would teach me" — pedagogy consistently rated the strongest part.
+> - **DELIVERY-DESIGN ROUND (2026-07-14 evening, owner's 7 fixes):** (1+5+7 structural) **story-card
+>   GROUPING** — `buildStages` folds functionalExample/codeExample blocks into the nearest preceding
+>   concept/technical card as labelled buttons (`WAtt`, ≤4/card, own popups `wpop-si-ci-aN`,
+>   openPopup(si,ci,ai)); maps drop from 9 to ~5-6 uniform story nodes, so full-view text is
+>   legible (2 rows ⇒ larger camFit scale) — cards now FIXED 360×208 (flex column, title/orient
+>   line-clamped, OPEN pinned bottom); the ▸ start card PULSES until read (`wpulse` keyframes,
+>   stops on .visited). MODULE_SYSTEM gains "STORYBOARD THE MODULE": 3-beat arc (SETUP recall
+>   bridge titled "Recap: …" + driving question → BUILD chapter-titled concepts with artifacts
+>   immediately after their concept → PAYOFF breaks/practice + forward hand-off); titles must read
+>   aloud as one continuous story. Verified on a fresh lesson (streaming, `d1dcf44a…`): every
+>   module reads Recap → chapters → stages → practice → breaks; M4 = 5 cards, one carrying 4
+>   artifact buttons. (2) beat caption full-width + smaller font (right:26px, clamp 12.5-15px) —
+>   half the vertical footprint. (3) **Auto mode now OPENS each block's popup** as beats advance
+>   (11s dwell when a popup is open vs 5.2s; check cards still pause for answering). (4) dotted
+>   wires no longer show THROUGH dimmed cards — .dim fades card CONTENT, surface stays opaque.
+>   (6) Recenter now re-FITS the whole map (camFit) instead of only undoing user pan while zoomed.
+>   All re-render onto existing lessons except the storyboard rule (generation-time).
+> - **POLISH ROUND 2 (2026-07-14 late, owner's 4 fixes + QA mandate):** (1) grouped-card layout bugs
+>   — root cause: card became flex-column so the chip STRETCHED full width (collided with corner
+>   badges) and squeezed/clipped the heading. Fixed: `.w-chip{align-self:flex-start;flex-shrink:0}`,
+>   h3/atts flex-shrink:0. Attachment buttons now SHORT type labels ("▶ Example", "⟨⟩ Code 1/2" —
+>   full block title shows in the popup header via `WAtt.full`). (2) **Auto mode REMOVED** (button +
+>   E.auto/tickAuto/pause/resume machinery — beats are Next/→ only now). (3) **console strip
+>   REMOVED**; the beat caption moved down into its place (bottom:18px). (4) **`scripts/qa-world.mjs`
+>   (NEW, $0)** — element-level QA the owner demanded: per card × per stage × both themes asserts no
+>   content overflow, no clipped headings, no chip↔badge collisions, no att-button overflow, no card
+>   overlaps, no empty popups (incl. attachment popups), 0 JS errors — and saves per-card CLOSE-UP
+>   screenshots (the full-map screenshots that missed these bugs are not enough; run this before
+>   claiming UI is fine). Usage: `node scripts/qa-world.mjs <artifactId> …` (exit 1 on failures).
+>   Verified CLEAN on streaming + embeddings + the new evals lesson `d0a5b71e…` ("Build and Run LLM
+>   App Evaluations", storyboarded, grouped). Full-app view (sign-in → My Lessons → Open, world
+>   lesson inside the viewer iframe) Playwright-verified working.
+> - **POLISH ROUND 3 (2026-07-14, owner's 4 fixes + masterflow):** (1) in-lesson theme button
+>   REMOVED — the world page now follows the HOST nav toggle (`#viewer-theme` posts
+>   `{type:"als-theme"}`; world listens + boots from the shared same-origin `als-theme`
+>   localStorage key; full-screen opens honor it too; `als-world-theme` key retired;
+>   qa-world.mjs flips theme via postMessage now). (2) **Ask-more scroll fixed** — root cause:
+>   `.workspace` height hardcoded `100vh-57px` but the topbar is content-driven (59px signed-out
+>   → 73px signed-in), leaving a 16px page scroll. Now `calc(100dvh - var(--topbarH))` where
+>   app.js measures the bar (+ ResizeObserver for the post-sign-in growth). Verified:
+>   scrollHeight === innerHeight with the chat open. (3) toolbar "↗ Open" → "⛶ Full Screen".
+>   (4) **DIAGRAMS RETIRED as an asset category** (quality call): MODULE_SYSTEM bans `diagram`
+>   blocks (steppedFlow/scatter/slider remain the only visuals); world renderer SKIPS existing
+>   diagram blocks and the curated `module.visual` on lead cards; `attachVisual` disabled in
+>   runBuildJob (retrieveVisual/schema kept for old artifacts). (5) **docs/masterflow.mmd (NEW)**
+>   — full app flow (inputs→auth→overview job→HITL gate→build job→module wave w/ gates+repairs→
+>   RAG→render/runtime→ask) in the one-step-per-box AGENT/FN/GATE convention with measured
+>   latencies per node (overview ~7.5-10s; design ~70-90s; module 60-150s; build total 5-7min;
+>   ask fast-path 2-5s; render 50-150ms). Mermaid-validated + rendered (/tmp/masterflow.png).
+>   All verified live: tsc clean, qa-world CLEAN ×2 lessons, host-toggle theme flip observed in
+>   the iframe, 0 diagram cards rendered.
+> - **LATENCY PROFILE (2026-07-14, measured):** a 6-module build = ~5.5-7 min: design leg
+>   ~70-90s SEQUENTIAL (planner Opus ~30-45s → architect Sonnet ~30-45s), then the module wave
+>   ~150-250s (6 modules ∥ cap 5; each = retrieve 1-2s + Sonnet emitting ~3.3-5k JSON tokens at
+>   ~50-80 tok/s = 50-140s; synthesis/finalCheck writer ~2.5k tokens rides in parallel, hidden).
+>   **~80% of wall time is OUTPUT-TOKEN generation — physics, not waste.** The 16k cap is NOT the
+>   driver (actual module output 3.3-5k); going faster means cutting CONTENT (≈linear: half the
+>   tokens ≈ half the wave). Levers, ranked: (1) PERCEIVED latency — open the lesson at design+
+>   module-1 (~2-2.5 min) and let stubs self-heal (runtime already does this; prioritize module 1
+>   in the wave / revive seedFirstModule) — biggest win, zero quality cost, NOT YET IMPLEMENTED;
+>   (2) wave cap 5→6 (one wave for 6-module lessons, saves 60-120s; watch 2GB memory);
+>   (3) optional "quick lesson" mode = density low + ~5 blocks (≈2.5-3 min, learner-visible
+>   thinness — offer as a choice, don't make global); (4) planner Opus→Sonnet-thinking saves
+>   ~20-30s but risks structure quality — the one output all 6 writers amplify (structure moved
+>   UP to Opus deliberately; needs a scorecard A/B before touching). Haiku for planner/architect
+>   rejected: plan output is small (~2k tokens) so savings are ~30-40s total, while plan/prose
+>   defects cascade into every module and cost more in repairs than they save. Haiku stays where
+>   it already is (profiler, brief, glossary, density repair — fast structured tasks).
+> - **SPEED ROUND (2026-07-14, owner directives 1+3 done; 2+4 assessed):** (1) **concept prose
+>   capped + plain English** — MODULE_SYSTEM: conceptual/technical block bodies ≤4 sentences
+>   (advanced 5), everyday words, one clause/sentence; caps exclude examples/code; calibration
+>   `conceptShape` per level carries the same caps. (3) **⚡ QUICK READ toggle shipped** —
+>   Builder checkbox (`#quick-read`) → `cards.quick="on"` → profiler pins moduleTarget=4 +
+>   density=low + `profile.quick` (new optional LearnerProfile field) → moduleUserPrompt QUICK
+>   line (4-5 lean blocks, ≤3-sentence concepts, one example/2-stage code). MEASURED: MCP quick
+>   lesson `6ba2d6df…` = overview 14s + build 145s = **~2.5 min total** (vs 5.5-7 min), modules
+>   ~1.7-2.3k tokens (half standard), qa-world CLEAN. Known slack: model emits 7-8 small blocks
+>   vs the 4-5 asked (token total is on target so left as-is); one concept block hit 10 sentences
+>   (count caps are prompt-only — a density.ts sentence-count repair is the code lever if it
+>   drifts). (2) architect-leg removal PROPOSED, not implemented: keep Opus planner, DELETE the
+>   Sonnet architect pass (plan→writers direct; writers return summary+objectives — they already
+>   return nodeMeta; deterministic plan→skeleton coercion; stub cards show plan `covers` until
+>   built; finalCheck writer keys off covers). Saves 30-45s sequential; touches nodes/orchestrator/
+>   deep-dive schema — needs one verified build. (4) split-writer-per-module (parallel example
+>   agent) assessed and NOT recommended: coherence of staged examples/predict-reveals is the
+>   praised pedagogy and drift risk is the dimension-bug class; token cuts (1+3) + open-at-module-1
+>   deliver the same seconds safely.
+> - **OWNER DECISIONS (2026-07-14 late):** architect-leg removal and open-at-module-1 are
+>   SKIPPED for now (proposals stay recorded in the SPEED ROUND bullet — do not implement
+>   without a fresh go).
+> - **EXTERNAL AUDITS RECEIVED (2026-07-14, both on the evals lesson `d0a5b71e…`, audited from a
+>   DOWNLOADED HTML that predates the diagram retirement):**
+>   `~/Documents/lesson-content-quality-feedback.md` + `~/Documents/lesson-quality-audit-d0a5b71e.md`.
+>   TRIAGE (full analysis in those files): **already fixed** — duplicate curated SVGs (diagrams
+>   retired; their root-cause note on visuals.ts top-1 selection is correct but moot), code
+>   collapsed-by-default (world popups force collapse open). **Confirmed OPEN renderer bugs** —
+>   objective stem doubled ("After this you'll be able to" hard-coded in world.ts lead card AND
+>   demanded of the model in prompts — single-owner fix); sources card count (Object.keys) vs
+>   deduped rendered list (5 vs 8) — needs a shared visibleCitationCount; mobile focus clipping
+>   (camFocusEl fixed 1.16 scale overflows 390px viewports); scatter "nearest matches" ignores
+>   group/distance (top-3 always, can contradict the caption); mid-clause "…" in world-data
+>   taglines/orients when the FIRST sentence exceeds the clamp. **Confirmed systemic CONTENT
+>   class (the big one)** — parallel writers re-derive shared facts: recap cards misstate prior
+>   modules (writer only gets prior TITLES+TERMS, so it invents answer keys — "three fields" vs
+>   four), synthesis/finalCheck grade a taxonomy no module taught (writeOverviewProse sees only
+>   titles/objectives), forward-pointers misdescribe the next module (writer never sees it),
+>   dataset field/filename/threshold drift across modules, wrong/stale provider IDs
+>   (`openai:gpt-o-…` typo, promptfoo `openai:chat:` format, ~2yr-old snapshots), non-runnable
+>   snippets (KeyError field mismatches, wrong promptfoo output schema, "50-case dataset" of 4).
+>   Their shared top recommendations: (1) a planner-emitted FACT LEDGER/lesson contract threaded
+>   verbatim to every writer + synthesis, (2) a code-validation gate beyond line count, (3)
+>   doc-grounded currency for tool IDs (ties to the pending KB-gap analysis), (4) a rendered-
+>   lesson content-extraction audit script. NOTHING IMPLEMENTED YET marker superseded — see AUDIT-RESPONSE below.
+> - **NEXT SESSIONS QUEUED (2026-07-15, owner-directed, designed to run in PARALLEL — disjoint
+>   file areas, same working tree, still LOCAL-ONLY/no commits):**
+>   **Session 1 — KB curator strengthening** (independent of the app; touches ONLY
+>   services/kb-curator/ + kb/ source docs + docs/ + staging DB ingest; must NOT restart :5070 or
+>   edit src/ or public/): act on `docs/kb-gap-report.md` — add allowlisted sources for the
+>   residual gaps (eval-depth incl. CI gating · Claude Code/Agent SDK/Skills · applied build
+>   recipes · streaming/SSE; GraphQL declared out-of-scope), fix the prod↔staging Agent-Skills
+>   drift (prod has 0 chunks, staging 21 — prod writes ONLY with explicit owner confirmation),
+>   and address the two governance findings (curator refreshes but never adds breadth; curator
+>   never runs on staging). Verify with the report's own $0 coverage probe.
+>   - **✅ SESSION 1 DONE (2026-07-14/15 · repo edits LOCAL-ONLY/no commits; KB docs ingested from repo SOURCE
+>     into BOTH staging AND prod — nothing copied staging→prod).** Full write-up: `docs/kb-gap-report.md` §7. Summary:
+>     - **Sources:** `services/kb-curator/sources.yaml` 28→37 (9 added in add-first order: promptfoo-docs /
+>       openai-evals / deepeval · anthropic-claude-agent-sdk-python / claude-code-docs · langchain-python-docs /
+>       llamaindex-docs · vercel-ai releases + ai-sdk-docs). GraphQL-for-agents declared OUT OF SCOPE in the header.
+>     - **Breadth ($0 local-ONNX, from repo source):** authored 6 kb/ docs, `npm run ingest -- kb` into staging
+>       (+18 chunks) AND prod (+39 chunks incl. the 11 Agent-Skills docs prod was missing): eval-in-CI ·
+>       claude-agent-sdk-and-claude-code · build-a-rag-chatbot · build-a-customer-support-agent ·
+>       build-a-multi-agent-workflow · streaming-llm-responses-sse. Prod 240→279, staging 235→253.
+>     - **Before→after coverage (staging; maxSim + #1 hit is the real lens — the cov score saturates):**
+>       | gap topic | cov b→a | maxSim b→a | #1 hit after |
+>       |---|---|---|---|
+>       | Streaming/SSE | .804→.856 | **.61→.71** | Streaming LLM Responses (SSE) |
+>       | Claude Code/Agent SDK/skills | .835→.900 | **.67→.80** | Claude Agent SDK & Claude Code |
+>       | RAG chatbot build | .816→.896 | **.63→.79** | Build a RAG Chatbot Over Your Docs |
+>       | Evals / CI gating | .843→.860 | **.69→.72** | Evaluating LLM Apps in CI |
+>       | Customer-support agent | .815→.878 | **.63→.76** | Build a Customer Support Agent |
+>       | Multi-agent workflow | .844→.891 | **.69→.78** | Build a Multi-Agent Workflow |
+>       | MCP (control) | .929→.929 | .86→.86 | unchanged (no regression) |
+>       | GraphQL (out of scope) | .843→.843 | .69→.69 | unchanged (deliberately) |
+>       Every gap now retrieves its dedicated doc as #1 (was drifting to wrong-topic neighbours, e.g. RAG-chatbot→AutoGen).
+>     - **Governance (a) FIXED:** `services/kb-curator/detect.ts` — never-checked sources only surfaced 1 item (no
+>       backfill) → added a bounded first-poll backfill (`KB_FIRST_POLL_BACKFILL`, default 8; still capped by
+>       `KB_MAX_ITEMS_PER_SOURCE`). So the 9 new sources ingest real breadth on their first live run. tsc clean.
+>     - **Agent-Skills drift FIXED DIRECTLY IN PROD (from repo source, nothing from staging):** prod had 0
+>       Agent-Skills chunks → ingested the 11 kb/agent-skills docs straight into prod (now 24 chunks). Prod gap
+>       coverage verified: Claude-SDK .63→.80 (#1 was *OpenAI Agents SDK* → now *Claude Agent SDK & Claude Code*),
+>       RAG-chatbot .63→.79 (was *AutoGen*), streaming .61→.71, support-agent .63→.76, multi-agent .69→.78,
+>       eval-CI .69→.72; MCP control + GraphQL(out-of-scope) unchanged. Existing prod chunks untouched (no regression).
+>     - **Governance (b) PROPOSED (not implemented):** curator web-refresh cron is prod-only; smallest = add a
+>       staging leg (2nd workflow / matrix) running `npm run kb:curate` against staging secrets (weekly if Claude
+>       spend matters). No staging↔prod data copy involved. See report §7.
+>     - **COMMITTED + PUSHED TO PROD (`main` `142d8dc`, 2026-07-15):** the curator-related changes are on prod —
+>       `services/kb-curator/{sources.yaml,detect.ts}` + the 6 `kb/` source docs + `docs/kb-gap-report.md`.
+>       Effects: (1) arms the GitHub-Actions curator cron (kb-curate.yml, `main`-only) → the next nightly run
+>       (15:30 UTC) fetches the 9 new sources into the prod DB via Claude Haiku synth (backfills ~5 items/source
+>       on first contact); (2) triggered a Render web-app redeploy (harmless — the app doesn't read
+>       `services/kb-curator/` or `kb/` at runtime). Session 2's `src/`+`public/` WIP and this HANDOFF file were
+>       DELIBERATELY EXCLUDED from the commit (HANDOFF carries other sessions' "LOCAL-ONLY, not committed" V2 notes).
+>   **Session 2 — UI/flow feedback round** (touches public/* + src/agent|render; owns :5070):
+>   (a) agent-memory lesson generated NO code examples — diagnose from the BLUEPRINT first
+>   (check whether codeExamples exist but are folded into attachment buttons vs truly absent;
+>   examples gating; then prompts) and fix; (b) Home page: showcase the new lesson design
+>   (world-template snippets/cards) on the landing; (c) rename tab "Builder"→"Lesson Builder" +
+>   kill the scroll on that page (suggestions area must fit the viewport); (d) after "Generate
+>   Lesson" on an overview → send the user to My Lessons (not Trainer) to watch the build; in My
+>   Lessons DISABLE "Open" until the lesson is ≥50% BUILT (note: the list's "% complete" is
+>   learner progress — build progress must come from blueprint loadState counts via
+>   lessons.ts/artifacts).
+> - **AUDIT-RESPONSE IMPLEMENTED (2026-07-14/15, owner: "all three but only after validation"):**
+>   Validation FIRST caught the audits' two errors: their P0 "openai:gpt-o typo" was NOT in the
+>   blueprint — it was OUR `highlightCode()` DROPPING characters (the number regex's trailing \b
+>   made digit-then-letter tokens like "gpt-4o"/"30s" match NO alternative → silently skipped,
+>   corrupting rendered code AND what the Copy button copies, in EVERY lesson). FIXED (trailing
+>   \b removed + a totality guarantee emitting unmatched chars verbatim); verified 41/41 code
+>   blocks across 3 lessons render byte-identical to blueprint code. Their "code collapsed by
+>   default" was also stale (world popups force collapses open). Everything else validated TRUE.
+>   **Bundle A (renderer parity — re-renders onto all lessons):** objective-stem de-dup (renderer
+>   owns the heading, strips the stem from bullets); shared `visibleCitationIds()` = sources card
+>   count always equals the deduped list; mobile focus-zoom clamped to viewport (390px fits);
+>   scatter "nearest" distance-capped (top-3-always contradicted its own caption); world-data now
+>   carries FULL first sentences (CSS clamps visuals) — 35 mid-clause "…" strings → 0; favicon
+>   data-URL; qa-world.mjs gained permanent checks (sources parity, stutter, ellipsis, 390px fit).
+>   **Bundle B (fact ledger):** planner emits `contract` (5-12 pinned-fact lines: taxonomy names+
+>   order, dataset fields, file names, tool/model IDs, thresholds, running-example constants) →
+>   code-set onto `bp.meta.contract` (new optional field, survives persist/heals) → threaded
+>   VERBATIM to every module writer AND writeOverviewProse. Recall openers may only assert facts
+>   present in priorModules (now carrying SUMMARIES) or the contract; writers receive the NEXT
+>   module for accurate bridges; failure-card FORM varies by module parity; finalCheck may not be
+>   answerable by the capstone. **Bundle C:** `codeExample.codeRole` (runnable|fragment|
+>   illustrative, owner-approved) + honesty badge in codeBlock(); `src/agent/codegate.ts` post-
+>   repair objective lint (YAML/JSON parse, provider-ID allowlist, contract-field word-boundary
+>   refs, never-defined-file commands) with ONE targeted repair kept only if re-lint passes —
+>   wired into runDeepDive (`[code-gate]` logs); `scripts/audit-lesson-content.mjs` (NEW) content
+>   extraction audit (dup SVGs, provider ids scanned from DE-TAGGED code — naive tag-stripping is
+>   exactly what fabricated the audits' phantom "gpt-o" —, stutter, ellipsis, source parity,
+>   threshold drift, md leaks). **A/B PROOF:** same evals prompt regenerated → `eed7cce9…`:
+>   13-line contract (50 cases · cases.yaml · promptfooconfig.yaml · 0.85 threshold · 4 assertion
+>   types in pinned order), codeRole honest (4 runnable/8 fragment/2 illustrative), recall openers
+>   quote pinned facts, capstone keeps the contract taxonomy in an adjacent domain, thresholds
+>   consistent — content audit CLEAN + qa-world CLEAN (the old lesson scores 3-4 findings on the
+>   same scripts). Deferred from the audits: quiz interleaving (S5 deliberate), rubric submission
+>   form, spellcheck stage, python ast (no python on Render). (1) **snippet cap now enforced in CODE** —
+>   `density.ts` gains `CODE_LINE_LIMIT=10`, `codeOffenders()` (counts non-empty lines) +
+>   `repairCodeLength()` (constrained Haiku compress; preserves cited line numbers, TODOs and
+>   ★/CHANGED markers, returns code unchanged if it can't; only accepts rewrites that fit the cap);
+>   wired in `nodes.ts` runDeepDive — prose + code repairs run in PARALLEL, code repair fires on ANY
+>   offender (independent of the prose gate). Detection verified $0 on the memory lesson (caught
+>   M2+M6 snippets). (2) **reading-order badges** — `world.ts` cards get a corner `.w-idx` badge
+>   ("▸ start", 1, 2, …) showing the suggested order on every multi-card map (recall-openers/staged
+>   examples assume a sequence, the map invites free clicking); fades out when a card is read (✓
+>   takes the spot). Playwright-verified on :5070 (badges render, fade on visit, 0 JS errors);
+>   reaches EXISTING lessons via re-render. (3) failure-mode prompt softened: silent failures show
+>   the concrete observable SYMPTOM instead of a fabricated error string — never drop an important
+>   failure mode for lacking one. (4) **schema addition (approved): `note` gains optional `title`**
+>   — `components.ts` renders it as `<h3>`; world cards pick it up automatically via deriveLines;
+>   no validate/repair changes (optional field, old lessons unaffected); MODULE_SYSTEM now requires
+>   titles on notes. (5) PLANNER_SYSTEM + SKELETON_SYSTEM: a third-party framework/library must not
+>   be a module's SUBJECT unless the learner named one (fixes M6 "Connect LangChain's …" despite
+>   framework-agnostic) — libraries live inside examples. All fixes affect FUTURE generations except
+>   (2), which is renderer-side. Still open: world finalCheck client-side grading (pre-existing gap a).
+
+> - **⏸️ LIBRARY REFRESH — PAUSED 2026-07-14, RESUME ON OWNER "GO" (2026-07-15, run throughout the day). LOCAL-ONLY save; NOT committed/pushed (owner skipped the cloud handoff). Full detail: `docs/library-refresh-report.md`.**
+>   Owner-directed 5-phase refresh. **⚠️ ALL WRITES TARGET THE PROD DB** (`kdgtlbnlyscdldogxorb`; owner reversed the initial staging/local scope mid-session → "all in prod DB only"). **STAGING IS DELIBERATELY UNTOUCHED** (verified: staging prebuilt = 100 vertical / 0 world). Area: `scripts/`·`docs/`·`backups/`·DB rows; did NOT edit `src/`·`public/`·`kb-curator` for the refresh itself (but the refresh DEPENDS on the uncommitted world-renderer + pipeline code already in `src/`).
+>   - **Phase 1 INVENTORY ✅** — `scripts/inventory.ts` → `docs/library-inventory.json`. Library=100 (10×10 balanced), community=7 staging / 5 prod.
+>   - **Phase 2 ✅ 50 NEW TOPICS APPROVED as-is** — `docs/new-topics-proposal.json` (grounded in `docs/prod-demand.json` + kb-gap-report + mid-2026 web-trend sweep; deduped vs the 100). Build = Phase 5 (tomorrow).
+>   - **Phase 3 ✅ DONE (design flip live on PROD)** — `scripts/migrate-reading-mode.mjs` ($0, deterministic flip+re-render, covers library+community) flipped `readingMode`→"world" on **all 100 prod `prebuilt_lessons` + 5 prod `community_lessons`**. Backup (pre-flip, LOCAL only, reversible): `backups/prod-lessons-before-world-flip-2026-07-14.json`. **⚠️ prod blueprints now carry `readingMode:"world"` but prod's DEPLOYED code has no world renderer → still renders CLASSIC (verified `world-data=0`, no visible change). The whole library auto-upgrades to the world design the moment the world renderer ships to prod** (`src/render/world.ts` [untracked] + world dispatch in `index.ts` + "world" enum in `schema.ts` + tokens/components/runtime — all currently uncommitted local work). That deploy is a SEPARATE owner decision.
+>   - **Phase 4 ⏸️ PARTIAL (rebuild existing content → PROD)** — rebuilds the 100 through the live pipeline (fact-ledger/code-gate/storyboard/**finalCheck**), world, batches of ~8, concurrency 3, QA-gated. **🐞 Bug caught+FIXED:** first batch shipped `finalCheck:0` (no knowledge check) — `generate()` never called `writeOverviewProse` (the node that writes S5 finalCheck; live build calls it at orchestrator.ts:275). **FIX committed in `rebuild-library.ts`** (`await writeOverviewProse(bp)` after the module loop) + verified (the-agent-loop → 5 MCQs, qa-world+audit CLEAN). **`CONTENT_VERSION` bumped `v5-world-2026-07` → `v5.1-world-2026-07-finalcheck`** so a resumable run redoes the buggy ones. **Current PROD state:** 8 lessons at `v5-world` (5 with finalCheck, 3 buggy) + 92 at v3/v4 (flipped-design-only). ALL 100 are `≠ v5.1` → the resume run redoes everything cleanly (self-heals the 3 buggy).
+>   - **Phase 5 ⏳ NOT STARTED** — build the 50 approved topics; needs a NEW `scripts/build-new-topics.ts` (manifest `docs/new-topics-proposal.json` → live pipeline, `cards.quick="on"` for quick topics, `readingMode` world → insert `prebuilt_lessons`), batches of ~8, QA between.
+>   - **▶️ RESUME ON "GO" (exact commands):** `export NODE_EXTRA_CA_CERTS="/Users/anandpareek/Documents/SEO content Skill/scripts/system-ca-bundle.pem"; set -a; . ./.env; set +a; PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` — then Phase 4: `DATABASE_URL="$PROD_URL" npx tsx scripts/rebuild-library.ts --category "<Cat>" --dump /tmp/lib-rebuild --concurrency 3` per category (or `--all --yes`; resumable via v5.1) → QA each batch: `node scripts/qa-world.mjs /tmp/lib-rebuild/*.html` + `node scripts/audit-lesson-content.mjs <file>.html` + assert `finalCheck.questions.length>0` per lesson → then Phase 5 (write build-new-topics.ts, build 50). **GOTCHAS:** NODE_EXTRA_CA_CERTS on every model/DB call (corp MITM, local only); concurrency ≤3 (shared Anthropic acct); ~8.5min/lesson sequential-modules (batch of 8 @conc3 ≈ 25min; 100 ≈ 5-7h); OPENAI_API_KEY enables GPT failover; `what-is-rag` hit a transient module fail (retries fine).
+
+> - **UI/FLOW ROUND (2026-07-14, owner's 4 items — LOCAL-ONLY; touches `public/*` + `src/render/world.ts` +
+>   `src/lib/lessons.ts`; owns :5070). All four Playwright-verified with element-level screenshots I looked at.**
+>   **(a) "No code examples" in the agent-memory lesson was a LEGIBILITY bug, not a generation gap.** Diagnosed
+>   from the BLUEPRINT first: the code IS there (17 `codeExample` + 4 `functionalExample` per lesson) — world.ts
+>   `buildStages` folds code/example blocks into `.w-att` buttons on the host concept card, and those buttons
+>   were tiny (10.5px, muted) so a learner scanning the map never registered them. Fix is world.ts CSS+JS ONLY
+>   (no prompts): `.w-att` now reads as a real CTA — 11.5px/800, filled accent, per-type identity (CODE = green
+>   `.is-code`, EXAMPLE = violet `.is-ex`; class set from the block icon in `buildWorld`) + light-theme
+>   overrides. Verified on `d8966a14…`: qa-world + audit CLEAN, element close-ups BOTH themes (green "Code 1/2" +
+>   violet "Example" legible AT MAP SCALE), code popups open with real code, 0 JS errors.
+>   **(b) Home showcase of the world design** — replaced the outdated OLD-design CSS mockup in the "See it before
+>   you generate" preview with REAL screenshots of a generated world lesson (`eed7cce9…`), captured 2× into
+>   `public/showcase/{world-map-dark,world-popup-dark,world-map-light}.png` (STATIC assets, no live iframe).
+>   Reuses the existing `.preview/.frame/#ptabs` chrome + toggle JS (3 tabs: Mental map · A block opened · Light
+>   mode); new `.pv-shot` rule in `home.css`. Verified: renders, tabs toggle, lazy imgs load, 0 errors.
+>   **(c) "Builder" → "Lesson Builder"** (topbar tab + every prose ref in `index.html`/`app.js`) AND **killed the
+>   page scroll on that tab.** Measured FIRST (getBoundingClientRect): signed-in, the landing overflowed the
+>   viewport by 67px once "Suggested for you" appears. Fix mirrors the Trainer `.workspace`/Ask-chat one:
+>   `#tab-configurator` height = `calc(100dvh - var(--topbarH))` + internal `#landing` overflow as a safety net,
+>   hero/landing padding trimmed to reclaim the 67px (scoped so the SHARED LLM-Skills `.landing` is untouched).
+>   Verified: `scrollHeight === innerHeight` at 800/900/1000px, suggestions fully visible, both themes, 0 errors.
+>   **(d) Generate Lesson → My Lessons (not Trainer) + gated Open.** `startBuild` now `switchTab("dashboard")`
+>   after kicking the build — the background Trainer tab keeps building and `activateTab` never switches the top
+>   tab, so pollJob's re-activation doesn't yank the user back. BUILD progress is now computed server-side in
+>   `lessons.ts listLessons` straight from the blueprint's module `loadState` (SQL count — the large blueprint is
+>   NEVER shipped to the client): new `buildPct/modulesBuilt/modulesTotal` fields, DISTINCT from `percent`
+>   (= LEARNER progress). `lessonCard` DISABLES "Open" until `buildPct ≥ 50` (greyed + tooltip) and re-enables
+>   LIVE as the dashboard poller refreshes; bar/label/gate all read the same module-based number. Verified
+>   END-TO-END on :5070 with a REAL quick-read build: overview → Generate Lesson → **redirected to My Lessons** →
+>   Open DISABLED at 0% built → **ENABLED at 75%** while still building; 0 console errors.
+>   **(e) "⚡ Get Hands on" restored (follow-up).** Root cause: the launch button lived ONLY in the CLASSIC
+>   renderer toolbars (`components.ts` `.hx-tools` + vertical `.tb-right`, gated by `handsOnEligible(bp)`); the V2
+>   work stripped those classic toolbars AND the world renderer (`world.ts`, the new default) never carried the
+>   button — so it vanished for every new lesson. Fix (world.ts only): render `⚡ Get Hands on` in the `.w-head`
+>   gated by `handsOnEligible(bp)` (imported from `./eligibility`), styled green (`.w-handson`, + a light-theme
+>   override so the higher-specificity light `.w-btn` rule can't flatten it), and wire it in WORLD_JS to
+>   postMessage the host `{type:"als-handson",lessonId,moduleId}` (current stage's module) with a standalone
+>   `window.open("/hands-on?…")` fallback — identical contract to the classic runtime (`app.js` handler unchanged).
+>   NOTE the eligibility gate is unchanged: the button shows ONLY on pure-Python-runnable lessons; the many
+>   lessons that name OpenAI/Anthropic/etc. stay (correctly) ineligible. Verified $0 via a fixture (an ELIGIBLE
+>   blueprint — "The ReAct Loop" — re-rendered `readingMode:"world"`): button present, gating correct on real
+>   ineligible lessons, both themes styled (green), STANDALONE click → `window.open("/hands-on?…&module=…")`,
+>   IN-APP iframe click → parent receives `als-handson`, 0 JS errors. (Classic vertical/horizontal lessons still
+>   have no toolbar post-V2 — restoring theirs is a separate, larger change, deferred.)
+
+> - **MASTER QA GATE — ✅ GO (2026-07-15, local⇄PROD; full report `docs/qa-gate-report.md`).** Ran on live
+>   PROD data (`.env` is entirely prod now; :5070 = prod; QA acct `grz1q@web-library.net`). **No BLOCKERS.**
+>   Passed: STEP-0 pending-push report (no schema drift — 0001-0021 cover everything, changes are JSONB-only);
+>   A code-gate (tsc clean, WORLD_JS `new Function` parses, WORLD_CSS balanced); B library regression (15
+>   library lessons — 7 rebuilt-`v5-world` + 8 flipped-world across all 10 cats — qa-world+audit CLEAN each,
+>   highlighter byte-identical 3/3; + 2 classic user lessons render clean); C two fresh prod builds (standard
+>   `33b2c7ec` ~6 min + quick `d8c771d7` ~2.6 min — redirect→My Lessons ✓, gated Open disabled@0%→enabled@67%
+>   live ✓, pedagogy+host-app+blueprint all ✓, contract present, thresholds consistent); D app sweep (home
+>   showcase, 2 library + 1 community opened from UI, My Lessons sane, 0 console errors); E live-site check
+>   (OLD deployed code degrades world-blueprint library lessons to a **readable CLASSIC** render, 0 errors →
+>   push is SAFE, not urgent). **Gitignore hardened** (`backups/` 20MB prod dump, `.DS_Store`, `design-v2/`,
+>   `public/mockups/` now ignored). Findings: MAJOR(hygiene, pre-existing) components.ts ships git-binary (4
+>   NUL mdLite sentinels — works, optional ` ` cleanup); MINORs logged in the report. **Owner push
+>   sequence + post-push smoke are in `docs/qa-gate-report.md`. STOP — the owner pushes.**
+
 **This doc is a MAP, not the code. Do NOT read the whole repo to get oriented.** Use the file
 map below to jump straight to the one or two files a change touches, and open only those. Each
 file has a one-line responsibility — that tells you where to go. Companion memory:
 `~/.claude/projects/-Users-anandpareek-Documents/memory/agentic-learning-studio-project.md`.
 (`DESIGN_SPEC.md` is older deep detail — optional; this HANDOFF is the source of truth.)
+
+## 🧪 LOCAL‑ONLY (2026‑07‑10) — fast overview + Slides view · NOT committed / NOT pushed
+> Two features working on local `:5070`, awaiting owner verification before any commit/staging push:
+> 1. **FAST OVERVIEW (~7.5s warm, was ~75s):** "Generate Overview" no longer builds the skeleton. `coverageBrief`
+>    (`nodes.ts`, TWO PARALLEL Haiku calls — core bullets ∥ sections) fills a bullets-only template (framing /
+>    concepts / examples / outcomes / planned sections) wrapped in a minimal valid Blueprint via new optional
+>    **`bp.brief`** (schema.ts `OverviewBriefSchema`). The preview renders **`briefPreview()`** (components.ts, `.ov-brief`
+>    CSS in tokens.ts) — bullets only, NO mental map (the map appears on the built lesson). The **planner+architect
+>    skeleton MOVED into `runBuildJob`** (`isFastDraft` branch, `[timing] build-design ...` logs) with the approved brief
+>    injected into both prompts (`approvedBriefDirective` in prompts.ts) and the approved TITLE forced. Full
+>    GenerateInput + resolved intent persist on the draft inside **`cards.__genInput` / `__intent`** (NO migration) — this
+>    also fixes the old "cards/lessonTypes ignored by build" gap. Overview also runs profiler ∥ retriever. Old-style
+>    full-skeleton drafts + rebuilds take the unchanged path. **Live-verified E2E on :5070 (staging DB):** overview
+>    7.5s (profiler+retriever ~2s · brief ~5.5s); build 6/6=100% in ~306s (design 72s + one parallel module wave);
+>    built module titles matched the approved sections ~verbatim; charge-once held (17.5→16.5).
+> 2. **SLIDES VIEW (vertical lessons, additive):** a **"▶ Slides"** toolbar toggle turns the whole area between the left
+>    module nav and the toolbar into a NO-SCROLL slide stage (body becomes a flex column — no hardcoded toolbar
+>    height; plain WHITE bg in light mode, existing dark bg in dark). Decks are derived CLIENT-SIDE from the rendered
+>    panel DOM (`buildDeck` in runtime.ts — $0, works on every existing lesson): a title slide per module (summary /
+>    plain-words / why-it-matters / objectives) + ONE slide per block; collapsibles forced open; **"⤢ Details"** opens the
+>    full block in a new `#smodal` popup; staggered fade-up animations; ←/→/Space keys; clickable dots; Next crosses into
+>    the next section (synthesis/KC/Sources = single free-scroll slides); a stub module's deck live-refreshes when its
+>    body lands (`refreshSlidesFor` in `pump`). PREVIEW drafts block the toggle (previewNote). Files: `components.ts`
+>    (`briefPreview`, `#t-slides` btn, `#smodal`), `tokens.ts` (`.ov-brief` + slides CSS), `runtime.ts` (SL engine).
+> **Fixture (NO credits):** `npx tsx scripts/test-slides.ts` → `/tmp/als-slides-lesson.html` + `/tmp/als-brief-preview.html`.
+> Playwright-verified: stage exact-fits the viewport, white/dark bg correct, modal open/Esc, keyboard nav, left-nav
+> switching, read-view restore, 0 console errors. `tsc --noEmit` clean.
+> 3. **INTERACTIVE-DELIVERY DESIGN EXPLORATION (mockups only, `public/mockups/interactive-*.html`, untracked):** owner is
+>    redesigning in-module delivery. Round 1 = 5 concepts (Guided Reveal / Cinematic / Living Diagram / Story Sim / Game
+>    Deck) on the "Observe" module. Round 2 (owner direction: V2-cinema × V3-anchor × V4-example hybrid, full app chrome +
+>    module rail, lesson `crewai-role-based-agents` M2) = **V6 Anchor Stage · V7 Cinema+Filmstrip · V8 Split Cinema ·
+>    V9 Zoom World · V10 Chapters**. Hub: `/mockups/interactive-index.html` on :5070. Owner picked **V9** →
+>    **`interactive-v9-full.html` = the FULL lesson built in that direction** (all 5 crewai modules as data-driven
+>    spatial worlds + per-module interactives [slider/code-map/kickoff-run/process-race/decision-matrices/TODO-completion/
+>    failure-injection] + synthesis + graded 3-Q knowledge check + sources; collapsible rail; module auto-advance; Auto
+>    plays the whole lesson). **v2 (owner feedback round):** each module = an AUTO-GRID mental map of its BLOCKS
+>    (kind chip + heading + orient; S-flow for 4-6, zigzag for 2-3, wide card for 1 — positions computed, never
+>    hand-placed); click any card → popup with 100% blueprint content (block data GENERATED from the prebuilt
+>    blueprint via /tmp/gen-data.mjs — prose/steps/code+TODO/matrices/slider/quizzes); canvas = drag-pan (threshold
+>    6px, works from cards too) + wheel-zoom + ⤾ recenter; header basics-only (Next·Auto·↺ — run buttons removed,
+>    flows play as beats). Design principles P1-P6 in the file header comment. **Learner-persona Playwright audit**
+>    (walks every beat, opens/reads every popup, uses every interactive, checks P1 bands/P2 no-empty-boxes/P3
+>    coverage/overlaps/scroll): 0 issues, 0 JS errors, KC 3/3. Next: owner reviews → decide app integration scope.
 
 ## ⚠️ PROD‑ONLY DELTA (2026‑06‑27) — these shipped to `main`/PROD but are NOT on `staging`
 > The "IN SYNC" note below is now STALE. A run of beta‑launch work went to **prod only** (owner's
@@ -189,8 +695,18 @@ auto-deploys to Render).
 - `GET /healthz` → `{db, dbConfigured, dbError, auth}` (live `select 1`). `db:false` = env, not code.
 - **Render prod (#1 gotcha):** dashboard env `DATABASE_URL` must be the **new** project with the password `@` as `%40`, and `SUPABASE_URL=https://kdgtlbnlyscdldogxorb.supabase.co`. `render.yaml` has `sync:false` (values live only in the dashboard). A wrong/old value ⇒ empty dashboard + failed downloads.
 - **Staging lane:** see **`STAGING.md`**. `main`→prod Render→prod Supabase (`kdgtlbnlyscdldogxorb`); `staging` branch→staging Render service→a SEPARATE staging Supabase project. ONE local repo (switch branches); local `.env` must point at **staging**, never prod. Migrations run per-DB (staging first, then prod inline). CORS needs no change (staging is same-origin; `EXTRA_ORIGINS` for cross-origin).
-- **`.env` DB vars:** `DATABASE_URL` = **STAGING** (`ydgiysthvxhlfpzxyrmy`, ap-south-1) — the app + all default tooling use this; never repoint it at prod. `PROD_DATABASE_URL` = **PROD** (`kdgtlbnlyscdldogxorb`, ap-southeast-2) — used ONLY for explicit prod data migrations, by overriding per-command: `PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`.
-- **WORKFLOW FOR CLAUDE (default):** do work on **`staging`** (or local→`staging`), push to `staging`, and let the USER verify on the staging site. **Merge `staging`→`main` ONLY after the user explicitly confirms.** Never push features straight to `main` — `main` is live (prathibhax.com, auto-deploys). Verify (`tsc`, local run) before pushing to `staging`.
+- **LOCAL ⇄ PROD (owner directive, 2026-07-14 evening):** local `.env` now points ENTIRELY at
+  PROD — `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` are the prod project
+  (`kdgtlbnlyscdldogxorb`). Localhost sign-in = the PROD QA account (`grz1q@web-library.net`,
+  password in `~/.claude/secrets/als-qa-creds` as QA_PROD_PASSWORD). Everything generated/edited
+  locally now writes the LIVE prod DB — be deliberate (test lessons land in prod under the QA
+  account). Escape hatch: `STAGING_DATABASE_URL`/`STAGING_SUPABASE_URL` preserved in `.env`; the
+  staging ANON key was overwritten during the swap — refetch from the staging dashboard if ever
+  needed. `PROD_SUPABASE_SECRET_KEY` sits in `.env` for server-side use ONLY — never as anon.
+  Verified 2026-07-14: healthz db+auth true, prod QA sign-in OK (3 lessons), /api/library = 100
+  prod entries. (The old "local must point at staging" rule is retired with the staging workflow.)
+- **`.env` DB vars (LEGACY NOTE, superseded above):** `DATABASE_URL` = **STAGING** (`ydgiysthvxhlfpzxyrmy`, ap-south-1) — the app + all default tooling use this; never repoint it at prod. `PROD_DATABASE_URL` = **PROD** (`kdgtlbnlyscdldogxorb`, ap-southeast-2) — used ONLY for explicit prod data migrations, by overriding per-command: `PROD_URL=$(grep '^PROD_DATABASE_URL=' .env | cut -d= -f2-)` then `DATABASE_URL="$PROD_URL" …`.
+- **WORKFLOW FOR CLAUDE (OWNER OVERRIDE 2026-07-14): LOCAL → PROD directly.** We do NOT use the staging branch unless the owner explicitly asks — do not push to `staging`, do not touch the staging Render service. The path is: work LOCAL (uncommitted) → owner runs the MASTER QA GATE (docs/qa-gate-report.md must be GO) → owner commits + pushes local `main` → origin `main` (live: prathibhax.com, auto-deploys). Claude never commits/pushes without an explicit owner instruction. ⚠️ CODE ≠ DATA (scoped precisely): local tooling writes to the STAGING Supabase DB (`.env` guard). A prod push covers ALL code — incl. sources.yaml (prod curator ingests new KB sources on its next daily run) and blueprint JSONB fields (no SQL). The ONLY owner-gated prod-data steps are: (1) the refreshed LIBRARY rows (prebuilt_lessons) — row-copy staging→prod or replay rebuild against PROD_DATABASE_URL; (2) any NEW TABLES must ship as supabase/migrations files + their idempotent backfill scripts re-run once against prod (e.g. lesson_embeddings/lesson_match_log when built); (3) optional: Agent-Skills chunk drift copy. Prod RAG embeddings already exist (curator-fed). Test lessons on the QA account stay in staging — never copy. (Old staging-first workflow retired by owner decision.)
 - **Staging KB:** the RAG `chunks` are reference data, so a fresh staging DB has an empty knowledge base (generations still work, just ungrounded). Populate it once with `SRC_DATABASE_URL="<prod URI>" node scripts/copy-kb.mjs` (copies documents/chunks/glossary/kb_updates prod→staging, idempotent) or re-ingest from source (`npm run ingest`).
 - **QA + DataforSEO creds (NOT committed — secrets live in `~/.claude/secrets/als-qa-creds`, chmod 600):** QA test accounts are **staging `pojidov934@divahd.com`** / **prod `grz1q@web-library.net`** (passwords in the secrets file as `QA_STAGING_PASSWORD`/`QA_PROD_PASSWORD`). Run: `set -a; . ~/.claude/secrets/als-qa-creds; QA_BASE_URL=<url> QA_EMAIL=$QA_STAGING_EMAIL QA_PASSWORD=$QA_STAGING_PASSWORD npm run qa`. **DataforSEO** creds are in the SAME secrets file (`DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`, 16-char pw, confirmed working — ~$47 balance Jun 2026; source `~/Documents/DFSEO.rtf`). Call via curl Basic-auth + `--cacert "$CA"` (Python urllib's TLS doesn't trust the corp proxy; curl does). Plaintext secrets are deliberately kept OUT of this committed file even though the repo is private.
 - **Prod is reachable at `https://agentic-learning-studio.onrender.com` / staging at `…-1.onrender.com`** (the custom domain `prathibhax.com` does NOT resolve from the agent sandbox — use the onrender URLs to verify deploys).

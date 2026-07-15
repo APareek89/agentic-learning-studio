@@ -42,6 +42,15 @@ const editCloseBtn = document.getElementById("edit-close");
 if (genStatus) genStatus.addEventListener("click", () => switchTab("dashboard"));
 document.getElementById("new-thread").addEventListener("click", resetToLanding);
 
+// Publish the topbar's REAL height as --topbarH so .workspace fills the viewport exactly
+// (the bar's height is content-driven — hardcoding it left a page scroll under the lesson).
+const _topbar = document.querySelector(".topbar");
+function syncTopbarH() { try { document.documentElement.style.setProperty("--topbarH", (_topbar?.offsetHeight || 57) + "px"); } catch (e) {} }
+syncTopbarH();
+window.addEventListener("resize", syncTopbarH);
+// The bar GROWS after sign-in (credit pill, profile) — observe it so the var tracks reality.
+try { if (_topbar && window.ResizeObserver) new ResizeObserver(syncTopbarH).observe(_topbar); } catch (e) {}
+
 // Bar-2 Dark toggle — the lesson renders in a same-origin iframe, so we flip the shared
 // `als-theme` and post it live to the frame (its runtime applies it without a reload).
 const viewerTheme = document.getElementById("viewer-theme");
@@ -357,24 +366,27 @@ function updateUploadUI() {
 
 // ---- Build the /api/learn payload from the current selections ----
 function buildPayload(promptText, threadId) {
+  // V2 Builder: only Level + Coverage are user selections. Everything else ships fixed
+  // defaults — examples always included (functional + code), visuals on, text density
+  // derived from level SERVER-side, world reading mode, final knowledge check always.
   const cards = {};
   const depth = combineAxis(sel.depth, "conceptual", "technical", "conceptual_technical");
-  const examples = combineAxis(sel.examples, "functional", "code", "functional_code");
   if (depth) cards.depth = depth;
-  if (examples) cards.examples = examples;
-  if (sel.density) cards.density = sel.density;
-  if (sel.extras.includes("visuals")) cards.visuals = "on";
-  if (sel.extras.includes("syntax")) cards.syntax = "on";
+  cards.examples = "functional_code";
+  cards.visuals = "on";
+  // ⚡ Quick read: 4 short modules, low density — the profiler reads cards.quick.
+  const quickChk = document.getElementById("quick-read");
+  if (quickChk && quickChk.checked) cards.quick = "on";
   return {
     prompt: promptText,
     cards,
     levels: sel.level ? [sel.level] : [],
-    lessonTypes: sel.lessonType.length ? sel.lessonType : ["content"],
-    framework: sel.framework || "",
-    readingMode: sel.readingMode || "vertical",
-    industry: industryEl.value.trim(),
-    buildGoal: buildGoalEl.value.trim(),
-    objective: sel.objective || "",
+    lessonTypes: ["content", "knowledge_check"],
+    framework: "",
+    readingMode: "world",
+    industry: industryEl ? industryEl.value.trim() : "",
+    buildGoal: buildGoalEl ? buildGoalEl.value.trim() : "",
+    objective: "",
     uploadIds: uploadedDocs.map((d) => d.docId),
     referOnly: referChk.checked,
     threadId,
@@ -873,7 +885,12 @@ async function loadDashboard() {
     // already drives loadDashboard (activeJobId set) — don't stack a second timer then.
     if (dashboardPollTimer) { clearTimeout(dashboardPollTimer); dashboardPollTimer = null; }
     const dashOpen = !document.getElementById("tab-dashboard").hidden;
-    if (Object.keys(building).length && dashOpen && !activeJobId) dashboardPollTimer = setTimeout(loadDashboard, 4000);
+    // Keep refreshing while ANYTHING is still building — an active server job OR a lesson whose
+    // blueprint isn't fully written yet — so the gated "Open" unlocks live even with no local
+    // poller (e.g. a page refresh mid-build). (During a client-driven build, pollJob already
+    // drives loadDashboard, so we don't stack a second timer then.)
+    const anyBuilding = Object.keys(building).length > 0 || lessons.some((l) => typeof l.buildPct === "number" && l.buildPct < 100);
+    if (anyBuilding && dashOpen && !activeJobId) dashboardPollTimer = setTimeout(loadDashboard, 4000);
   } catch { /* ignore */ }
 }
 function lessonCard(l, buildingPct) {
@@ -887,11 +904,27 @@ function lessonCard(l, buildingPct) {
   const ratingHtml = l.rating ? `<span class="lc-stars">${"★".repeat(l.rating)}${"☆".repeat(5 - l.rating)}</span>` : "";
   const industry = l.industry ? `<span>${escapeHtml(l.industry)}</span>` : "";
   const courseBadge = isCourse ? `<span class="lc-badge">Course · ${l.courseTotal} parts</span>` : "";
-  const building = typeof buildingPct === "number";
-  const pct = building ? Math.max(0, Math.min(100, buildingPct)) : Math.max(0, Math.min(100, l.percent || 0));
+  // BUILD progress is authoritative from the server (blueprint module loadState); an active
+  // job's percent (buildingPct) is only used so the live bar doesn't lag/step backwards. This is
+  // DISTINCT from l.percent (LEARNER progress). Item (d): a lesson is "still building" whenever
+  // its blueprint isn't fully written — this survives a restart / a dropped poller, unlike the
+  // active-jobs list. "Open" stays DISABLED until ≥50% of the modules are built.
+  const activeBuild = typeof buildingPct === "number";
+  const buildPct = typeof l.buildPct === "number" ? l.buildPct : 100;
+  const fullyBuilt = buildPct >= 100;
+  const building = activeBuild || !fullyBuilt;
+  const canOpen = buildPct >= 50; // Open unlocks at 50% built
+  // While building, the bar AND the gate both read the module-based build progress, so the
+  // label ("N% built"), the tooltip and the disabled state never disagree; once built, the bar
+  // shows LEARNER progress (l.percent).
+  const pct = building ? buildPct : Math.max(0, Math.min(100, l.percent || 0));
   const shared = isShared(l.id);
   const buildBadge = building ? `<span class="lc-badge building"><span class="lt-spin"></span> Building…</span>` : "";
   const progLabel = building ? `${pct}% built` : `${pct}% complete`;
+  const openLabel = isCourse ? "Open course" : "Open";
+  const openBtn = canOpen
+    ? `<button class="ghost lr-open" type="button">${openLabel}</button>`
+    : `<button class="ghost lr-open" type="button" disabled title="Still building — opens at 50% built (now ${buildPct}%)">${openLabel}</button>`;
   el.innerHTML = `
     <div class="lr-main">
       <div class="lr-title">${escapeHtml(l.title)}</div>
@@ -899,11 +932,12 @@ function lessonCard(l, buildingPct) {
       <div class="lr-prog"><div class="lr-bar"><i style="width:${pct}%"></i></div><span class="lr-pct">${progLabel}</span></div>
     </div>
     <div class="lr-actions">
-      <button class="ghost lr-open" type="button">${isCourse ? "Open course" : "Open"}</button>
+      ${openBtn}
       ${isCourse ? "" : `<a class="ghost lr-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
       <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Share with Community"}</button>
     </div>`;
-  el.querySelector(".lr-open").addEventListener("click", () => {
+  const openEl = el.querySelector(".lr-open");
+  if (canOpen) openEl.addEventListener("click", () => {
     if (isCourse) { openCourseById(l.courseId, l.title); return; }
     openLessonInWorkspace(l.id, l.title, l.prompt);
   });
@@ -1465,7 +1499,7 @@ document.getElementById("bc-generate").addEventListener("click", () => {
   const prompt = `${title}. ${desc}${extra ? "\n\nAuthor guidance: " + extra : ""}`;
   contribBuild = true; // mark this overview/build as a contributor course → auto-publish on build
   startOverview({
-    prompt, cards: {}, levels: [level], lessonTypes: ["content"], framework: "", readingMode: "vertical",
+    prompt, cards: { examples: "functional_code", visuals: "on" }, levels: [level], lessonTypes: ["content", "knowledge_check"], framework: "", readingMode: "world",
     industry: "", buildGoal: "", uploadIds: bcDocs.map((d) => d.docId), referOnly: true, threadId: null,
   });
 });
@@ -1573,7 +1607,7 @@ async function startBuild(artifactId) {
     }
     if (res.status === 409) { // referOnly build but the uploads expired (restart) — fail loud, no charge
       const d = await res.json().catch(() => ({}));
-      showGenError(d.error || "Your uploaded documents are no longer available — please re-upload them in the Builder and generate the overview again.", null);
+      showGenError(d.error || "Your uploaded documents are no longer available — please re-upload them in the Lesson Builder and generate the overview again.", null);
       return;
     }
     const data = await res.json();
@@ -1593,6 +1627,12 @@ async function startBuild(artifactId) {
   // reader straight onto a still-WIP module.)
   updateGenStatus(true);
   pollJob(jobId, genTabId);
+  // Item (d): after kicking off the build, send the learner to MY LESSONS to watch it there —
+  // NOT the Trainer. The lesson keeps building in its (now background) tab; My Lessons shows live
+  // build progress and unlocks its "Open" at ≥50% built. activateTab() above only points the
+  // hidden Trainer iframe at the lesson, so switching the top tab here doesn't disturb the build
+  // (pollJob re-activates that tab in place; it never yanks the user off My Lessons).
+  switchTab("dashboard");
 }
 
 // Auto-publish a finished contributor course to the Community (no discount popup).
@@ -1611,7 +1651,7 @@ if (genLessonBtn) genLessonBtn.addEventListener("click", () => {
   if (overviewOptionsChanged() && !confirm(
     "You changed lesson options since this overview was generated.\n\n" +
     "Those changes won't apply to this build — the lesson is built from the overview you reviewed. " +
-    "To apply them, go to the Builder and Generate Overview again.\n\n" +
+    "To apply them, go to the Lesson Builder and Generate Overview again.\n\n" +
     "Build the reviewed overview as-is?"
   )) return;
   startBuild(overviewArtifactId);
@@ -1981,8 +2021,8 @@ async function loadPreferences() {
     if (prefs.syntax) applyPref("extras", "syntax", true, true);
     applyPref("lessonType", prefs.lessonTypes, true);
     if (prefs.readingMode) applyPref("readingMode", prefs.readingMode, false);
-    if (prefs.industry) industryEl.value = prefs.industry;
-    if (prefs.buildGoal) buildGoalEl.value = prefs.buildGoal;
+    if (prefs.industry && industryEl) industryEl.value = prefs.industry;
+    if (prefs.buildGoal && buildGoalEl) buildGoalEl.value = prefs.buildGoal;
     updateFrameworkVisibility();
     if (prefs.framework && sel.examples.includes("code")) applyPref("framework", prefs.framework, false);
   } catch { /* ignore */ }

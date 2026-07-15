@@ -139,6 +139,23 @@ code{font-family:var(--font-mono);font-size:.88em;background:var(--accent-weak);
 .ov-covers li::before{content:"✓";position:absolute;left:0;top:0;color:var(--accent);font-weight:800;font-size:11px}
 @media(max-width:820px){ .ov-covers ul{grid-template-columns:1fr} }
 
+/* ===== FAST OVERVIEW preview (bullets-only coverage brief on a draft) ===== */
+.ov-brief .brief-grid{flex:1 1 auto;display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:16px;align-content:start}
+.brief-card{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:16px 18px;min-width:0}
+.brief-card.bc-sections{grid-row:span 2}
+.brief-card .bc-h{display:flex;align-items:center;gap:8px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:800;margin:0 0 10px}
+.brief-card .bc-ico{flex:none;width:22px;height:22px;border-radius:7px;background:var(--accent-weak);color:var(--accent-2);display:flex;align-items:center;justify-content:center;font-size:11px}
+.brief-card ul,.brief-card ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;counter-reset:bcs}
+.brief-card li{font-size:13.5px;line-height:1.45;color:var(--ink-soft);padding-left:22px;position:relative}
+.brief-card li strong{color:var(--ink);font-weight:650;display:block}
+.brief-card .bc-why{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.bc-concepts li::before{content:"✓";position:absolute;left:0;top:1px;color:var(--accent);font-weight:800;font-size:12px}
+.bc-examples li::before{content:"▹";position:absolute;left:2px;top:0;color:var(--accent);font-weight:800}
+.bc-outcomes li::before{content:"➜";position:absolute;left:0;top:1px;color:var(--accent);font-size:11px}
+.bc-sections li{counter-increment:bcs;padding-left:30px}
+.bc-sections li::before{content:counter(bcs);position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:6px;background:var(--accent-weak);color:var(--accent-2);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+@media(max-width:820px){ .ov-brief .brief-grid{grid-template-columns:1fr} .brief-card.bc-sections{grid-row:auto} }
+
 /* ---- overview / workbench (Fix 2 layout) ---- */
 .ov-hint{text-align:center;color:var(--muted);font-size:13.5px;margin:18px 0 0}
 .nav-back{margin-right:4px}
@@ -365,7 +382,9 @@ body[data-level="beginner"] .lvl-advanced-only{display:none}
 /* ===== Phase 2 — colored block types (break the monotony of text) ===== */
 .blk-explain{background:linear-gradient(180deg,var(--surface) 0%,var(--surface) 100%);border-left:3px solid var(--accent)}
 .blk-example{background:#fff8ec;border-left:3px solid #f0a92b}
-[data-theme="dark"] .blk-example{background:#241d0f}
+/* dark: a slate-indigo tint (the old #241d0f read as muddy brown on navy surfaces);
+   the amber border alone carries the "example" identity. */
+[data-theme="dark"] .blk-example{background:#1d2136}
 .blk-code{background:#eef4ff;border-left:3px solid var(--accent-2)}
 [data-theme="dark"] .blk-code{background:#0e1733}
 .blk-check{background:#f0fbf5;border-left:3px solid var(--ok)}
@@ -523,6 +542,73 @@ body[data-level="advanced"] .analogy,body[data-level="advanced"] .mn-layman{disp
   .ex-pane{display:block!important}.module{break-inside:avoid;box-shadow:none}
 }
 @media (max-width:560px){.dcall{grid-template-columns:1fr}.module-head h2{font-size:20px}}
+
+/* ============================================================================
+   SLIDES view (vertical mode) — a NO-SCROLL presentation stage. The whole area
+   between the left module nav and the lesson toolbar becomes ONE slide; content
+   is spread across it (big headline, roomy body); details open in a popup, never
+   by scrolling. Toggled by the "▶ Slides" toolbar button; additive — the classic
+   read view is untouched when body.slides-on is absent.
+   ============================================================================ */
+.slides-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+/* the page becomes a fixed flex column: toolbar on top, the stage fills EXACTLY the rest —
+   no hardcoded toolbar height (it wraps taller with many toggles), no page scroll ever */
+body.slides-on{overflow:hidden;height:100dvh;display:flex;flex-direction:column}
+.slides-on .topbar{flex:none}
+.slides-on #workbench{flex:1 1 auto;min-height:0;height:auto;align-items:stretch}
+.slides-on #blocknav{position:static;max-height:none;height:100%}
+.slides-on #blockmain{position:relative;max-width:none;margin:0;padding:0;height:100%;min-height:0;overflow:hidden}
+.slides-on #blockmain .panel{display:none!important}
+#slidestage{display:none}
+/* plain WHITE stage in light mode; dark mode keeps the lesson's existing dark background */
+.slides-on #slidestage{display:flex;flex-direction:column;position:absolute;inset:0;background:#fff}
+[data-theme="dark"] body.slides-on #slidestage{background:var(--bg)}
+.sl-head{flex:none;padding:30px 56px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.sl-eyebrow{display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-2);margin-bottom:6px}
+.sl-title{font-family:var(--font-head);font-size:clamp(22px,3vw,38px);font-weight:800;line-height:1.12;margin:0;color:var(--ink)}
+.sl-details{flex:none;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-soft);font:inherit;font-weight:650;font-size:12.5px;padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.sl-details:hover{border-color:var(--accent);color:var(--accent-2)}
+.sl-body{flex:1 1 auto;min-height:0;overflow:hidden;padding:8px 56px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;line-height:1.62;position:relative}
+.sl-body>*{max-width:980px}
+.sl-body p{font-size:1.03em}
+.sl-body h3{font-size:19px}
+.sl-body .objectives{font-size:1em}
+/* slides force everything visible: collapsibles open, scroll-reveals in, deeper shown */
+.sl-body .collapse-body{display:block!important}
+.sl-body .collapse-h{pointer-events:none}
+.sl-body .collapse-h .col-caret{display:none}
+.sl-body .reveal{opacity:1!important;transform:none!important}
+.sl-body .deeper{display:block!important}
+.sl-body .next-step{display:none!important}
+/* bottom fade when a slide's content is taller than the stage (Details holds the rest) */
+.sl-body.clipped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom,transparent,#fff)}
+[data-theme="dark"] body.slides-on .sl-body.clipped::after{background:linear-gradient(to bottom,transparent,var(--bg))}
+.sl-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 56px 20px}
+.sl-pos{font-size:12px;color:var(--faint);font-weight:700;min-width:60px}
+.sl-dots{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+.sl-dot{width:8px;height:8px;border-radius:99px;border:none;padding:0;background:var(--border-strong);cursor:pointer;transition:transform .15s,background .15s}
+.sl-dot.on{background:var(--accent);transform:scale(1.35)}
+.sl-nav{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:13.5px;padding:9px 18px;border-radius:10px;cursor:pointer}
+.sl-nav:hover{border-color:var(--accent);color:var(--accent-2)}
+.sl-nav.sl-next{border-color:var(--accent);background:var(--accent);color:#fff}
+.sl-nav.sl-next:hover{filter:brightness(1.06);color:#fff}
+.sl-nav[disabled]{opacity:.35;cursor:default;pointer-events:none}
+/* enter animations: the slide body's children stagger up as each slide lands */
+.sl-body.enter>*{opacity:0;animation:slUp .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*70ms)}
+.sl-head.enter{animation:slFade .4s ease both}
+@keyframes slUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes slFade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sl-body.enter>*,.sl-head.enter{animation:none;opacity:1}}
+/* details popup (full block content, scrollable) */
+#smodal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(8,12,24,.55);padding:24px}
+#smodal[hidden]{display:none}
+.smodal-card{position:relative;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--shadow);width:100%;max-width:860px;max-height:88vh;overflow:auto;padding:22px 26px}
+.smodal-x{position:absolute;top:12px;right:14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);font:inherit;font-size:18px;line-height:1;width:30px;height:30px;border-radius:8px;cursor:pointer}
+.smodal-x:hover{border-color:var(--accent);color:var(--accent-2)}
+.smodal-title{font-family:var(--font-head);font-weight:700;font-size:17px;margin:0 40px 14px 0;color:var(--ink)}
+.smodal-body .collapse-body{display:block!important}
+.smodal-body .reveal{opacity:1!important;transform:none!important}
+@media (max-width:820px){.sl-head{padding:20px 22px 0}.sl-body{padding:6px 22px 0}.sl-foot{padding:10px 22px 16px}.slides-on #workbench{grid-template-columns:1fr;grid-template-rows:auto 1fr}.slides-on #blocknav{flex-direction:row;overflow-x:auto;height:auto;border-right:none;border-bottom:1px solid var(--border)}.slides-on #blocknav .navitem{flex:0 0 auto}}
 
 /* ============================================================================
    HORIZONTAL reading mode — a fixed-viewport paged deck (additive; vertical mode

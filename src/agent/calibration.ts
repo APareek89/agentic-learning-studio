@@ -79,6 +79,9 @@ export interface LevelSpec {
   omit: string;
   questionType: string;
   scaffolding: string;
+  /** what one CONCEPT unit must contain at this level (content-flow pass) — the
+   *  shape of the explanation itself, not its length (length is DENSITY's job). */
+  conceptShape: string;
 }
 
 export const LEVEL: Record<Level, LevelSpec> = {
@@ -91,6 +94,7 @@ export const LEVEL: Record<Level, LevelSpec> = {
     omit: "Omit nothing essential; skip only deep edge cases and performance tuning.",
     questionType: "Supported recall — questions that point back to what was just shown.",
     scaffolding: "MAXIMUM support",
+    conceptShape: "Mental model FIRST in ≤4 SHORT plain-English sentences (everyday words, one clause each) + the bridge analogy, paired with ONE visual or described picture. No internals — the picture in their head is the deliverable.",
   },
   intermediate: {
     label: "Intermediate",
@@ -101,6 +105,7 @@ export const LEVEL: Record<Level, LevelSpec> = {
     omit: "Omit beginner re-explanations of fundamentals and obvious definitions.",
     questionType: "Applied — use the idea in a new but similar situation.",
     scaffolding: "MODERATE support",
+    conceptShape: "Mental model in ≤4 plain sentences plus ONE annotated code pattern (≤10 lines) showing the idea in real syntax — the pattern, not a toy.",
   },
   advanced: {
     label: "Advanced",
@@ -111,6 +116,7 @@ export const LEVEL: Record<Level, LevelSpec> = {
     omit: "OMIT basics, definitions, and step-by-step hand-holding. Do not spend words on what they already know.",
     questionType: "Transfer — apply to a novel, harder context and surface a tradeoff.",
     scaffolding: "MINIMAL support, higher-order focus",
+    conceptShape: "Skip the mental model they already have — internals, costs, and tradeoffs in ≤5 tight sentences; code only where it shows a non-obvious interaction.",
   },
 };
 
@@ -154,6 +160,7 @@ export function calibrationDirective(level: Level, density: Density): string {
     `- Prior knowledge: ${L.priorKnowledge}`,
     `- Vocabulary: ${L.vocabulary}`,
     `- Examples: ${L.exampleType}`,
+    `- Concept shape: ${L.conceptShape}`,
     `- Explanation: ${L.explanationDepth}`,
     `- OMIT: ${L.omit}`,
     `- Self-check questions: ${L.questionType}`,
