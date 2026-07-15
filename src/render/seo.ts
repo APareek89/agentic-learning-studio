@@ -45,6 +45,45 @@ function metaDesc(primary: string | null | undefined, fallback: string): string 
 function isoDuration(min: number | null | undefined): string | undefined {
   return min && min > 0 ? `PT${Math.round(min)}M` : undefined;
 }
+/** Strip markdown/HTML markers so JSON-LD + the sr-only lede carry clean plain text. */
+function plain(s: unknown): string {
+  return String(s ?? "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // [text](url) → text
+    .replace(/[`*_#>~]+/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+/** What the lesson teaches → schema.org LearningResource.teaches (module titles). */
+function teaches(bp: LibraryLesson["blueprint"]): string[] {
+  return (bp?.modules ?? []).map((m) => plain(m.title)).filter(Boolean).slice(0, 10);
+}
+/**
+ * Genuine Q&A from the lesson's built-in knowledge check → FAQPage. Only real questions
+ * (prompt ends with "?") with a substantive answer (correct option + explanation, or the
+ * reference answer). GEO win: AI engines lift these near-verbatim. Returns [] if <2 qualify.
+ */
+function faqFromCheck(bp: LibraryLesson["blueprint"]): { question: string; answer: string }[] {
+  const out: { question: string; answer: string }[] = [];
+  for (const q of bp?.finalCheck?.questions ?? []) {
+    // Strip quiz recall-cues ("From memory:", "Predict:", "Stop —") so the FAQ reads naturally.
+    let question = plain(q.prompt).replace(/^(from memory|predict|recall|quick check|stop)\b[\s:—–-]*/i, "");
+    question = question.charAt(0).toUpperCase() + question.slice(1);
+    if (!question.endsWith("?")) continue;
+    const correct = q.options?.find((o) => o.correct)?.text;
+    const expl = plain(q.explanation);
+    const ref = plain(q.acceptableAnswer);
+    let answer = correct ? [plain(correct), expl].filter(Boolean).join(". ") : [ref, expl].filter(Boolean).join(" ");
+    answer = answer.trim();
+    if (answer.length >= 20) out.push({ question, answer });
+  }
+  return out.length >= 2 ? out.slice(0, 8) : [];
+}
+/** sr-only page heading: the missing <h1> (+ a lede) for crawlers, zero visual footprint. */
+function lessonH1(lesson: LibraryLesson): string {
+  const lede = metaDesc(lesson.description, lesson.blueprint?.meta?.thesis || "");
+  return `<header class="seo-h1"><h1>${esc(lesson.title)}</h1>${lede ? `<p>${esc(lede)}</p>` : ""}</header>`;
+}
 
 // ---- shared site chrome CSS (scoped .seo-* classes; theme-independent colors) ----
 const CHROME_CSS = `
@@ -62,6 +101,10 @@ const CHROME_CSS = `
 .seo-foot-links a{color:#5a5d67;text-decoration:none;font-size:13px}
 .seo-foot-links a:hover{text-decoration:underline}
 .seo-foot-copy{margin:0;color:#9498a3;font-size:12.5px}
+/* Crawlable page heading + lede. Screen-reader-only: present in the DOM for search/LLM
+   crawlers (adds the previously-missing top-level heading) with ZERO visual footprint,
+   so the immersive world lesson renders exactly as before. */
+.seo-h1{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 `;
 
 /** The slim top site-bar injected at the top of a lesson page (brand → home + CTA → builder). */
@@ -94,7 +137,8 @@ export function renderLibraryLessonPage(lesson: LibraryLesson, related: LibraryC
   const titleText = `${lesson.title} — ${SITE}`;
   const desc = metaDesc(lesson.description, lesson.blueprint?.meta?.thesis || `A free, interactive lesson: ${lesson.title}.`);
 
-  const ld = [
+  const objectives = teaches(lesson.blueprint);
+  const ld: Record<string, unknown>[] = [
     {
       "@context": "https://schema.org", "@type": "LearningResource",
       name: lesson.title, description: desc, url,
@@ -102,6 +146,8 @@ export function renderLibraryLessonPage(lesson: LibraryLesson, related: LibraryC
       ...(lesson.level ? { educationalLevel: lesson.level } : {}),
       ...(isoDuration(lesson.estMinutes) ? { timeRequired: isoDuration(lesson.estMinutes) } : {}),
       ...(lesson.category ? { about: lesson.category } : {}),
+      ...(objectives.length ? { teaches: objectives } : {}),
+      keywords: [lesson.category, lesson.level, "AI", "LLM", "agents"].filter(Boolean).join(", "),
       image: OG_IMAGE,
       provider: { "@type": "Organization", name: SITE, url: BASE },
     },
@@ -114,6 +160,18 @@ export function renderLibraryLessonPage(lesson: LibraryLesson, related: LibraryC
       ],
     },
   ];
+  // FAQPage from the lesson's OWN knowledge check — a strong GEO signal (ChatGPT / Perplexity
+  // / AI Overviews lift structured Q&A). Only emitted when ≥2 genuine questions exist.
+  const faq = faqFromCheck(lesson.blueprint);
+  if (faq.length) {
+    ld.push({
+      "@context": "https://schema.org", "@type": "FAQPage",
+      mainEntity: faq.map((f) => ({
+        "@type": "Question", name: f.question,
+        acceptedAnswer: { "@type": "Answer", text: f.answer },
+      })),
+    });
+  }
 
   const headHtml =
     `<meta name="description" content="${escAttr(desc)}"/>` +
@@ -135,7 +193,7 @@ export function renderLibraryLessonPage(lesson: LibraryLesson, related: LibraryC
 
   const seo = {
     title: titleText, headHtml,
-    bodyTop: lessonHeader(), bodyEnd: lessonFooter(lesson, related),
+    bodyTop: lessonHeader() + lessonH1(lesson), bodyEnd: lessonFooter(lesson, related),
     slug: lesson.slug, source: "library" as const,
   };
 
