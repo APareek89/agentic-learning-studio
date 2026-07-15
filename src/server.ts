@@ -36,7 +36,7 @@ import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { listLibrary, getLibraryLesson, relatedLibrary } from "./lib/library";
-import { renderLibraryLessonPage, renderLibraryIndexPage, renderSitemap, renderNotFound } from "./render/seo";
+import { renderLibraryLessonPage, renderLibraryIndexPage, renderSitemap, renderNotFound, renderGuidesIndexPage, renderGuideBySlug, renderLlmsTxt } from "./render/seo";
 import { createJob, getJob, getPersistedJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
@@ -188,6 +188,26 @@ app.get("/library/:slug", async (req, res) => {
 app.get("/library", async (_req, res) => {
   const cards = await listLibrary().catch(() => []);
   res.type("html").send(renderLibraryIndexPage(cards));
+});
+
+// GET /guides — crawlable index of the category "guide" (overview + lessons) pages.
+app.get("/guides", async (_req, res) => {
+  const cards = await listLibrary().catch(() => []);
+  res.type("html").send(renderGuidesIndexPage(cards));
+});
+
+// GET /guides/:slug — one category guide: LLM-citable overview prose + lesson thumbnails.
+app.get("/guides/:slug", async (req, res) => {
+  const cards = await listLibrary().catch(() => []);
+  const html = renderGuideBySlug(req.params.slug, cards);
+  if (!html) { res.status(404).type("html").send(renderNotFound(req.params.slug)); return; }
+  res.type("html").send(html);
+});
+
+// GET /llms.txt — a curated site map for LLM crawlers (llmstxt.org).
+app.get("/llms.txt", async (_req, res) => {
+  const cards = await listLibrary().catch(() => []);
+  res.type("text/plain").send(renderLlmsTxt(cards));
 });
 
 // GET /sitemap.xml — generated from the live lesson list + the static public pages, so it
