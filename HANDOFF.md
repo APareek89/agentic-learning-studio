@@ -460,8 +460,28 @@
 >   (OLD deployed code degrades world-blueprint library lessons to a **readable CLASSIC** render, 0 errors →
 >   push is SAFE, not urgent). **Gitignore hardened** (`backups/` 20MB prod dump, `.DS_Store`, `design-v2/`,
 >   `public/mockups/` now ignored). Findings: MAJOR(hygiene, pre-existing) components.ts ships git-binary (4
->   NUL mdLite sentinels — works, optional ` ` cleanup); MINORs logged in the report. **Owner push
->   sequence + post-push smoke are in `docs/qa-gate-report.md`. STOP — the owner pushes.**
+>   NUL mdLite sentinels — works, optional `\u0000` cleanup); MINORs logged in the report.
+> - **✅ PUSHED TO PROD (2026-07-15) — `main` `c31b514`** (was `142d8dc`). Owner-authorized; explicit 39-file
+>   ship-list (no `git add -A`; stray tracked `node_modules` symlink deletion left unstaged). Render
+>   auto-deployed; **post-push smoke GREEN on `agentic-learning-studio.onrender.com`:** /healthz db+auth true ·
+>   homepage 200 with the "Lesson Builder" tab + world-map showcase · `the-agent-loop` / `crewai-role-based-
+>   agents` / `what-is-rag` now render the WORLD map (5 cards, Example/Code buttons, ⚡ Get Hands on) not the
+>   old classic fallback · 0 console errors. Rollback target: `142d8dc`.
+> - **🎨 HOME REDESIGN — DONE + PUSHED (2026-07-15, owner-directed).** The landing `#tab-home` now uses a
+>   coursera.org-style, **image-led** design blended INTO the existing SEO content. Files: `public/index.html`
+>   (`#tab-home` only — topbar nav untouched), `public/home.css` (new image-led classes, scoped Coursera blue
+>   `#0056D2`), `public/styles.css` (global font → **Source Sans 3**), `public/home-img/` (**22 nanoBanana2
+>   PHOTOGRAPHIC lifestyle images**, self-hosted + optimized to ~2.1 MB total). Design: photo hero (SEO H1/copy
+>   preserved) + full-width dark-blue Beta strip + stat strip + "Browse AI topics" photo tiles → /library +
+>   "Start with a top lesson" photo cards → real /library/:slug + how-it-works photos; the existing 6 SEO
+>   feature sections, mission, "entire AI landscape" keyword block, and FAQ are all KEPT (restyled). Owner rules
+>   honored: nav kept (font-only change), SEO content blended not replaced, testimonials dropped.
+>   **Technical SEO QA PASS:** exactly 1 H1, title/description/robots/canonical/6 OG/4 Twitter intact, JSON-LD
+>   valid (Organization+WebSite+SoftwareApplication+FAQPage), all imgs alt+lazy+width/height (no CLS), no
+>   horizontal overflow @390px, 0 console errors, other tabs unaffected. **Hyperlink QA PASS:** all 13 internal
+>   routes 200 (/library, 8 lesson pages, 4 footer legal pages), all 8 lesson slugs verified in prod, no dead/`#`
+>   links. Scratch preview `public/home-v2.html` + `home-v2-images.js` are NOT shipped (superseded by the real
+>   integration). The nanoBanana2 credit connector was the owner's PixelBin (org 12026759).
 
 **This doc is a MAP, not the code. Do NOT read the whole repo to get oriented.** Use the file
 map below to jump straight to the one or two files a change touches, and open only those. Each
