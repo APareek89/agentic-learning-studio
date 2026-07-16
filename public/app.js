@@ -412,11 +412,19 @@ function overviewOptionsChanged() {
 }
 
 // ---- Submit ----
+// Preserve a signed-out visitor's typed topic across the sign-in/up redirect (incl. OAuth and
+// email-confirmation page reloads, which wipe the in-memory textarea) so they don't lose their
+// prompt. Persisted to localStorage; cleared once an overview actually starts or on "New".
+const PENDING_PROMPT_KEY = "als-pending-prompt";
+function savePendingPrompt(p) { try { if (p) localStorage.setItem(PENDING_PROMPT_KEY, p); } catch { /* ignore */ } }
+function clearPendingPrompt() { try { localStorage.removeItem(PENDING_PROMPT_KEY); } catch { /* ignore */ } }
+function restorePendingPrompt() { try { const s = localStorage.getItem(PENDING_PROMPT_KEY); if (s && promptEl && !promptEl.value.trim()) promptEl.value = s; } catch { /* ignore */ } }
+
 generateBtn.addEventListener("click", () => {
   if (pendingUploads > 0) return; // button is disabled while uploads finish; belt-and-suspenders
   const p = promptEl.value.trim();
   if (!p) { promptEl.focus(); return; }
-  if (authRequiredAndOut()) { openAuth("signup"); return; }
+  if (authRequiredAndOut()) { savePendingPrompt(p); openAuth("signup"); return; }
   basePrompt = p;
   startOverview(buildPayload(p, null));
 });
@@ -783,6 +791,7 @@ function resetToLanding() {
   toggleChat(false);
   switchTab("configurator");
   promptEl.value = "";
+  clearPendingPrompt(); // "New" = a deliberate fresh start
   promptEl.focus();
   loadSuggestions();
 }
@@ -1534,6 +1543,7 @@ async function startOverview(payload) {
   }
   activeJobId = jobId;
   if (promptEl) promptEl.value = "";
+  clearPendingPrompt(); // the topic made it into a real overview — no longer pending
   pollOverview(jobId, t.id);
 }
 
@@ -1887,7 +1897,11 @@ function applySession(session) {
   if (tabBtnDashboard) tabBtnDashboard.hidden = !signedIn;
   if (authActions) authActions.hidden = signedIn || !authIsEnabled;
   if (signedIn) {
-    closeAuth();
+    // If the auth gate interrupted them mid-generate, return them to the Lesson Builder with their
+    // topic restored — not the Home tab — so they can pick up right where they left off.
+    let pend = null; try { pend = localStorage.getItem(PENDING_PROMPT_KEY); } catch { /* ignore */ }
+    if (pend && promptEl) { switchTab("configurator"); if (!promptEl.value.trim()) promptEl.value = pend; try { promptEl.focus(); } catch { /* ignore */ } }
+    else { closeAuth(); }
     loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
   } else {
     updateCreditPill(null);
@@ -2082,6 +2096,8 @@ async function maybeOnboard() {
 bootAuth();
 // Re-open any Trainer tabs the learner had before a refresh (sessionStorage).
 restoreTabs();
+// Re-fill a topic saved before a sign-in redirect (survives OAuth / email-confirmation reloads).
+restorePendingPrompt();
 
 // ============================================================================
 // Lesson credits + Pricing — the credit pill in the nav, the slider/cost on the
