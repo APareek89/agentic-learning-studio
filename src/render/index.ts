@@ -14,6 +14,7 @@ import { ARTIFACT_CSS } from "./tokens";
 import { RUNTIME_JS } from "./runtime";
 import { renderBody } from "./components";
 import { renderBodyWorld, WORLD_CSS, WORLD_JS } from "./world";
+import { KATEX_CSS } from "./math";
 
 function escAttr(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -58,6 +59,13 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
   const world = p.readingMode === "world" && !previewOnly;
   const theme = world ? "dark" : "light"; // the world stage is dark by design; block content uses the dark palette
 
+  // Equations render server-side (KaTeX, see render/math.ts) — ship its stylesheet only
+  // when the body actually carries math, OR when stub modules might inject some later
+  // (the classic runtime swaps /api/module fragments in without a reload). Inlined like
+  // everything else so downloaded offline lessons render math too.
+  const bodyHtml = world ? renderBodyWorld(bp, { currentModuleId }) : renderBody(bp, { previewOnly });
+  const mathCss = bodyHtml.includes('class="katex') || stubModuleIds.length ? `<style>${KATEX_CSS}</style>` : "";
+
   return `<!doctype html>
 <html lang="en" data-theme="${theme}">
 <head>
@@ -68,10 +76,10 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>${ARTIFACT_CSS}</style>${world ? `<style>${WORLD_CSS}</style>` : ""}${accentStyle}${seo?.headHtml ?? ""}
+<style>${ARTIFACT_CSS}</style>${world ? `<style>${WORLD_CSS}</style>` : ""}${mathCss}${accentStyle}${seo?.headHtml ?? ""}
 </head>
 <body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="${theme}">${seo?.bodyTop ?? ""}
-${world ? renderBodyWorld(bp, { currentModuleId }) : renderBody(bp, { previewOnly })}
+${bodyHtml}
 <div id="popover" role="dialog" aria-label="Definition"></div>
 <script type="application/json" id="glossary-data">${glossaryJson}</script>
 <script type="application/json" id="lesson-config">${configJson}</script>

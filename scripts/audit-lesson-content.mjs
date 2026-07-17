@@ -27,9 +27,13 @@ const templates = [...html.matchAll(/<template id="(wpop-[^"]+)">([\s\S]*?)<\/te
 const worldData = JSON.parse((html.match(/<script type="application\/json" id="world-data">([\s\S]*?)<\/script>/) || [])[1] || "[]");
 console.log(`extracted: ${templates.length} templates · ${worldData.length} stages · ${Math.round(html.length / 1024)}KB html`);
 
-// 1. duplicate SVGs across popups
+// 1. duplicate SVGs across popups. KaTeX math renders stretchy glyphs (fraction bars,
+// \u2016 delimiters, ...) as tiny identical inline SVGs (em-sized, xMinYMin) — sub-glyph
+// artifacts, not curated visuals, so they're skipped (a repeated formula is legit content).
 const svgHash = {};
+const isMathGlyph = (svg) => /preserveAspectRatio="xMinYMin/.test(svg) && /width="[\d.]+em"/.test(svg);
 for (const t of templates) for (const m of t.html.matchAll(/<svg[\s\S]*?<\/svg>/g)) {
+  if (isMathGlyph(m[0])) continue;
   const h = createHash("md5").update(m[0]).digest("hex").slice(0, 12);
   (svgHash[h] = svgHash[h] || []).push(t.id);
 }

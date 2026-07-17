@@ -22,6 +22,7 @@
 import type { Blueprint, Block } from "./schema";
 import { block as renderBlockHtml, synthesisInner, citationsInner, visibleCitationIds, isBuilt, mdLite } from "./components";
 import { handsOnEligible } from "./eligibility";
+import { escMath } from "./math";
 
 const esc = (s: unknown): string => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const escAttr = (s: unknown): string => esc(s).replace(/"/g, "&quot;");
@@ -114,18 +115,18 @@ function moduleLeadCard(bp: Blueprint, m: Blueprint["modules"][number]): WCard {
   // each objective (the prompts ask writers to phrase objectives with it), else learners read
   // "After this you'll be able to After this you'll be able to …" on every module opener.
   const objText = (o: string) => o.replace(/^\s*after this,?\s+you(?:'|’)ll be able to\s*/i, "").replace(/^\w/, (c) => c.toUpperCase());
-  const obj = m.objectives.length ? `<h4>After this you'll be able to</h4><ul>${m.objectives.map((o) => `<li>${esc(objText(o))}</li>`).join("")}</ul>` : "";
+  const obj = m.objectives.length ? `<h4>After this you'll be able to</h4><ul>${m.objectives.map((o) => `<li>${escMath(objText(o))}</li>`).join("")}</ul>` : "";
   const detail =
-    (node?.what ? `<p>${esc(node.what)}</p>` : "") +
-    (node?.laymanExplanation ? `<div class="po-analogy"><b>In plain words —</b> ${esc(node.laymanExplanation)}</div>` : "") +
-    (node?.relevance ? `<p><b>Why this matters:</b> ${esc(node.relevance)}</p>` : "");
-  const forces = m.decisionItForces ? `<p><b>Decision this forces:</b> ${esc(m.decisionItForces)}</p>` : "";
+    (node?.what ? `<p>${escMath(node.what)}</p>` : "") +
+    (node?.laymanExplanation ? `<div class="po-analogy"><b>In plain words —</b> ${escMath(node.laymanExplanation)}</div>` : "") +
+    (node?.relevance ? `<p><b>Why this matters:</b> ${escMath(node.relevance)}</p>` : "");
+  const forces = m.decisionItForces ? `<p><b>Decision this forces:</b> ${escMath(m.decisionItForces)}</p>` : "";
   // (curated m.visual diagrams retired — not rendered even when an old blueprint carries one)
   return {
     chip: "wk-lead", ico: "📌", clabel: "This module", heading: m.title,
     orient: firstSentence(m.summary, 900) || "What this module covers and why.",
     capline: firstSentence(m.summary, 900),
-    popup: `<p>${esc(m.summary)}</p>${detail}${obj}${forces}`,
+    popup: `<p>${escMath(m.summary)}</p>${detail}${obj}${forces}`,
   };
 }
 
@@ -134,11 +135,11 @@ function finalCheckCards(bp: Blueprint): WCard[] {
   if (!fc) return [];
   return fc.questions.map((q, i) => {
     const opts = (q.options ?? []).map((o, oi) =>
-      `<button class="qopt" data-ok="${o.correct ? 1 : 0}"><b class="qL">${String.fromCharCode(65 + oi)}.</b> ${esc(o.text)}</button>`).join("");
+      `<button class="qopt" data-ok="${o.correct ? 1 : 0}"><b class="qL">${String.fromCharCode(65 + oi)}.</b> ${escMath(o.text)}</button>`).join("");
     const free = q.kind === "freeText"
       ? `<textarea class="w-free" rows="3" placeholder="Type your answer from memory…"></textarea>
          <button class="qopt w-reveal" data-reveal="1">Reveal the reference answer</button>
-         <div class="w-ref" hidden><b>Reference answer:</b> ${esc(q.acceptableAnswer || "")}</div>`
+         <div class="w-ref" hidden><b>Reference answer:</b> ${escMath(q.acceptableAnswer || "")}</div>`
       : "";
     return {
       chip: "wk-check", ico: "✅", clabel: "Check", heading: `Question ${i + 1}`,
@@ -223,9 +224,13 @@ export function renderBodyWorld(bp: Blueprint, opts: { currentModuleId?: string 
     `<template id="wpop-${si}-${ci}">${c.popup}</template>` +
     (c.atts ?? []).map((a, ai) => `<template id="wpop-${si}-${ci}-a${ai}">${a.popup}</template>`).join("")
   ).join("")).join("");
-  // The engine's structural data (no HTML) rides as JSON.
-  const data = stages.map((s) => ({ id: s.id, moduleId: s.moduleId, kick: s.kick, tagline: s.tagline, rail: s.rail, num: s.num, special: !!s.special, stub: !!s.stub,
-    cards: s.cards.map((c) => ({ chip: c.chip, ico: c.ico, clabel: c.clabel, heading: c.heading, orient: c.orient, capline: c.capline || c.orient, check: !!c.check,
+  // The engine's structural data rides as JSON. orient/capline/tagline are PRE-ESCAPED
+  // HTML (escMath: HTML-escaped text + rendered KaTeX for any $…$ the teaser carries) —
+  // WORLD_JS inserts these three verbatim; everything else it still escH()'s itself.
+  // Display math renders in inline mode there so a teaser stays a one-line clamp.
+  const teaser = (s: string) => escMath(s, { inlineOnly: true });
+  const data = stages.map((s) => ({ id: s.id, moduleId: s.moduleId, kick: s.kick, tagline: teaser(s.tagline), rail: s.rail, num: s.num, special: !!s.special, stub: !!s.stub,
+    cards: s.cards.map((c) => ({ chip: c.chip, ico: c.ico, clabel: c.clabel, heading: c.heading, orient: teaser(c.orient), capline: teaser(c.capline || c.orient), check: !!c.check,
       atts: (c.atts ?? []).map((a) => ({ label: a.label, full: a.full, ico: a.ico })) })) }));
   const startStage = opts.currentModuleId ? Math.max(0, stages.findIndex((s) => s.moduleId === opts.currentModuleId)) : 0;
   const wcfg = { startStage, title: bp.meta.title, thesis: bp.meta.thesis || "" };
@@ -238,6 +243,8 @@ export function renderBodyWorld(bp: Blueprint, opts: { currentModuleId?: string 
       <span class="w-kick" id="w-kick"></span>
       <div class="w-grow"></div>
       ${handsOnEligible(bp) ? `<button class="w-btn w-handson" id="w-handson" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on<span class="w-hobeta">Beta</span></button>` : ""}
+      <button class="w-btn w-zoom" id="w-zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button class="w-btn w-zoom" id="w-zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
       <button class="w-recenter" id="w-recenter">⤾ Recenter</button>
       <button class="w-btn w-primary" id="w-next">Next ▸</button>
       <button class="w-btn" id="w-reset" title="Restart this module">↺</button>
@@ -293,6 +300,13 @@ body[data-reading="world"]{overflow:hidden;height:100vh;height:100dvh;margin:0;
 .w-btn:hover{border-color:var(--wcy)}
 .w-primary{background:var(--wcy);border-color:var(--wcy);color:#fff}
 .w-btn:disabled{opacity:.35}
+/* compact square +/- zoom buttons — the explicit equivalent of wheel-zoom, for dense maps
+   (and anyone without a wheel/trackpad). Same 0.45–2 clamp as the wheel handler. */
+.w-zoom{width:34px;padding:7px 0;text-align:center;font-size:16px;line-height:1;flex:none}
+/* On phones the header has no room for them: the two extra buttons push #w-next past the
+   390px edge, and any focus/click scroll then drags the whole overflow:hidden stage 34px
+   sideways (the map clips). Hide them — narrow screens keep the pre-existing header. */
+@media (max-width:600px){.w-zoom{display:none}}
 /* "⚡ Get Hands on" — a filled, accent launch button (restores the classic-renderer affordance
    in the world header; opens the browser-run Python notebook). Green so it reads as "run it". */
 .w-handson{background:var(--wgood);border-color:var(--wgood);color:#06231a;font-weight:800;display:inline-flex;align-items:center;gap:6px}
@@ -495,6 +509,10 @@ function applyCam(anim){var w=$("w-world");w.classList.toggle("w-anim",anim!==fa
   w.style.transform="translate("+(E.cam.x+E.usr.x)+"px,"+(E.cam.y+E.usr.y)+"px) scale("+(E.cam.s*E.usr.s)+")";
   $("w-recenter").classList.toggle("show",Math.abs(E.usr.x)+Math.abs(E.usr.y)>4||Math.abs(E.usr.s-1)>.02);}
 function resetUsr(){E.usr={x:0,y:0,s:1};}
+/* +/- button (and keyboard) zoom — same clamp as the wheel handler so behavior matches;
+   animated so a button press reads as a deliberate step. applyCam also flips the
+   Recenter button's visibility, exactly like wheel-zoom does. */
+function zoomBy(f){E.usr.s=Math.min(2,Math.max(.45,E.usr.s*f));applyCam(true);}
 function vpSize(){var r=$("w-vp").getBoundingClientRect();return{w:r.width,h:r.height};}
 function bbox(){var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,any=false;
   document.querySelectorAll("#w-world .w-card").forEach(function(c){any=true;
@@ -526,7 +544,9 @@ function camFocusEl(el){var v=vpSize();
    E.usr.s=Math.min(2,Math.max(.45,E.usr.s*(1-e.deltaY*.0012)));applyCam(false);},{passive:false});
  /* Recenter = re-FIT the whole map (not just undo the user's pan): mid-beat the camera is
     zoomed into one card, and "recenter" while zoomed-in previously left you zoomed-in. */
- $("w-recenter").onclick=function(){camFit();};})();
+ $("w-recenter").onclick=function(){camFit();};
+ $("w-zin").onclick=function(){zoomBy(1.2);};
+ $("w-zout").onclick=function(){zoomBy(.83);};})();
 /* ---- caption + strip ---- */
 function cap(lines,extra){var c=$("w-cap");c.classList.remove("enter");
   c.innerHTML=lines.map(function(l,i){return '<div class="w-line '+(l[1]||"")+'" style="--i:'+i+'">'+l[0]+"</div>";}).join("")+(extra||"");
@@ -561,7 +581,8 @@ function buildWorld(si){var S=DATA[si],w=$("w-world");
       '<span class="w-chip '+c.chip+'">'+c.ico+" "+escH(c.clabel)+'</span><span class="w-seen">✓ read</span>'+
       (S.cards.length>1?'<span class="w-idx" title="suggested reading order">'+(S.special?(ci+1):(ci===0?"▸ start":ci))+'</span>':"")+
       "<h3>"+escH(c.heading)+"</h3>"+
-      '<div class="w-orient">'+escH(c.orient)+"</div>"+atts+
+      /* orient arrives PRE-ESCAPED from the renderer (may carry KaTeX HTML) — no escH */
+      '<div class="w-orient">'+c.orient+"</div>"+atts+
       '<div class="w-open">Open ↗</div></div>';}).join("");
   w.querySelectorAll(".w-card").forEach(function(c){c.onclick=function(){if(E.suppress)return;openPopup(si,+c.dataset.ci);};
     c.querySelectorAll(".w-att").forEach(function(btn){btn.onclick=function(e){e.stopPropagation();if(E.suppress)return;
@@ -679,12 +700,14 @@ function hydrate(root){root.querySelectorAll(".viz").forEach(function(viz){
 function beatsFor(si){var S=DATA[si],beats=[];
   beats.push(function(){closePopup();camFit();focus([]);hotEdge(-1);
     cap([[escH(S.rail).toUpperCase()+" · MENTAL MAP OF "+S.cards.length+" BLOCK"+(S.cards.length>1?"S":""),"kck"],
-         ['<span class="hl">'+escH(S.rail)+"</span> — "+escH(S.tagline),"one"],
+         /* tagline is pre-escaped by the renderer (may carry KaTeX HTML) */
+         ['<span class="hl">'+escH(S.rail)+"</span> — "+S.tagline,"one"],
          ["Click a card for the full detail · drag the canvas · scroll to zoom","hint"]]);});
   S.cards.forEach(function(c,ci){beats.push(function(){closePopup();
     var el=document.querySelector('#w-world .w-card[data-ci="'+ci+'"]');
     if(el)camFocusEl(el);focus([ci]);hotEdge(ci-1);
-    cap([[c.ico+" "+escH(c.clabel)+" · "+escH(c.heading).toUpperCase(),"kck"],[escH(c.capline||c.orient),"one"]]);
+    /* capline/orient are pre-escaped by the renderer (may carry KaTeX HTML) */
+    cap([[c.ico+" "+escH(c.clabel)+" · "+escH(c.heading).toUpperCase(),"kck"],[c.capline||c.orient,"one"]]);
     if(c.check)openPopup(si,ci);});});
   beats.push(function(){closePopup();camFit();focus([]);hotEdge(-1);
     var nx=si<DATA.length-1?DATA[si+1]:null;
@@ -725,7 +748,9 @@ document.addEventListener("keydown",function(e){
   if(e.key==="Escape"){closePopup();hidePopover();return;}
   if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"))return;
   if(e.key==="ArrowRight"){e.preventDefault();nextBeat();}
-  if(e.key==="ArrowLeft"){e.preventDefault();if(E.bi>1){E.bi=E.bi-2;BEATS[E.bi]();E.bi++;paint();}}});
+  if(e.key==="ArrowLeft"){e.preventDefault();if(E.bi>1){E.bi=E.bi-2;BEATS[E.bi]();E.bi++;paint();}}
+  if(e.key==="+"||e.key==="="){e.preventDefault();zoomBy(1.2);}
+  if(e.key==="-"||e.key==="_"){e.preventDefault();zoomBy(.83);}});
 $("w-railbtn").onclick=function(){var on=$("wroot").classList.toggle("rail-open");$("w-railbtn").classList.toggle("on",on);};
 /* ---- progress relay to the host app (same contract as the classic runtime) ---- */
 var moduleStages=DATA.filter(function(s){return !s.special;}).length||1;
