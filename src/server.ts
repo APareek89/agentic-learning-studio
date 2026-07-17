@@ -30,6 +30,7 @@ import { extname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getArtifact, updateArtifact } from "./lib/artifacts";
+import { publicCache, cachedHtml } from "./lib/httpcache";
 import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload, hasUploads, hydrateUploads } from "./lib/uploads";
 import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
@@ -133,7 +134,14 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
 });
 
 app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
-app.use(express.static(PUBLIC_DIR)); // serves the front-end (index.html, app.js, styles.css)
+// Static front-end (index.html, app.js, styles.css, images). A short TTL lets the CDN +
+// browser cache them; index.html stays near-fresh (60s) so a deploy shows up quickly.
+app.use(express.static(PUBLIC_DIR, {
+  setHeaders: (res, path) => {
+    const isHtml = path.endsWith(".html");
+    res.setHeader("Cache-Control", isHtml ? "public, max-age=60, s-maxage=300" : "public, max-age=3600, s-maxage=86400");
+  },
+}));
 
 // SPA route: the Account page is a real URL (/account) so it deep-links + survives a
 // refresh. There's no client-side router beyond this one path, so serve index.html and
@@ -181,18 +189,21 @@ app.get("/library/:slug", async (req, res) => {
   const lesson = await getLibraryLesson(req.params.slug).catch(() => null);
   if (!lesson) { res.status(404).type("html").send(renderNotFound(req.params.slug)); return; }
   const related = await relatedLibrary(lesson.slug, lesson.category).catch(() => []);
+  publicCache(res, 300, 3600);
   res.type("html").send(renderLibraryLessonPage(lesson, related));
 });
 
 // GET /library — a crawlable INDEX of every library lesson (links to each /library/:slug).
 app.get("/library", async (_req, res) => {
   const cards = await listLibrary().catch(() => []);
+  publicCache(res, 300, 3600);
   res.type("html").send(renderLibraryIndexPage(cards));
 });
 
 // GET /guides — crawlable index of the category "guide" (overview + lessons) pages.
 app.get("/guides", async (_req, res) => {
   const cards = await listLibrary().catch(() => []);
+  publicCache(res, 300, 3600);
   res.type("html").send(renderGuidesIndexPage(cards));
 });
 
@@ -201,12 +212,14 @@ app.get("/guides/:slug", async (req, res) => {
   const cards = await listLibrary().catch(() => []);
   const html = renderGuideBySlug(req.params.slug, cards);
   if (!html) { res.status(404).type("html").send(renderNotFound(req.params.slug)); return; }
+  publicCache(res, 300, 3600);
   res.type("html").send(html);
 });
 
 // GET /llms.txt — a curated site map for LLM crawlers (llmstxt.org).
 app.get("/llms.txt", async (_req, res) => {
   const cards = await listLibrary().catch(() => []);
+  publicCache(res, 600, 3600);
   res.type("text/plain").send(renderLlmsTxt(cards));
 });
 
@@ -215,6 +228,7 @@ app.get("/llms.txt", async (_req, res) => {
 // this route.) Graceful: if the DB is off, it still emits the static URLs.
 app.get("/sitemap.xml", async (_req, res) => {
   const cards = await listLibrary().catch(() => []);
+  publicCache(res, 600, 3600);
   res.type("application/xml").send(renderSitemap(cards));
 });
 
@@ -1151,9 +1165,12 @@ app.get("/api/lesson/:slug", async (req, res) => {
   ).catch(() => []);
   if (!rows.length) { res.status(404).send("<p>Lesson not found.</p>"); return; }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  // Public + identical for everyone + fully built (library lessons have no in-progress
+  // stubs) → cacheable at the CDN edge, and the re-render memoised in-process for misses.
+  publicCache(res, 60, 600);
   const bp = maybeParseBlueprint(rows[0].blueprint);
   if (bp) {
-    try { res.send(renderArtifact(bp)); return; }
+    try { res.send(cachedHtml(`lesson:${req.params.slug}`, 300_000, () => renderArtifact(bp))); return; }
     catch (e) { console.warn("[lesson] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(rows[0].html);
@@ -1206,6 +1223,8 @@ app.get("/api/community/lesson/:slug", async (req, res) => {
   const html = await getCommunityHtml(req.params.slug);
   if (!html) { res.status(404).send("<p>Lesson not found.</p>"); return; }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  // Public shared snapshot (same for everyone) → cacheable at the CDN edge.
+  publicCache(res, 60, 600);
   res.send(html);
 });
 
