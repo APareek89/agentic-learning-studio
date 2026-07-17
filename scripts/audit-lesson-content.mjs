@@ -61,14 +61,17 @@ for (const t of templates) {
 for (const t of templates.filter((x) => /-0$/.test(x.id)))
   if (/After this you.?ll be able to\s*(?:•\s*)?After this you.?ll be able to/i.test(t.text)) flag("P1", `doubled objective stem in ${t.id}`);
 
-// 4. mid-clause ellipsis in learner-facing metadata
-const ell = worldData.flatMap((s) => [s.tagline, ...(s.cards || []).flatMap((c) => [c.orient, c.capline])]).filter((x) => x && x.endsWith("…"));
+// 4. mid-clause ellipsis in learner-facing metadata. Teasers ship as *Html fields
+// (pre-escaped, may carry KaTeX spans) — strip tags before inspecting the text.
+const deT = (x) => String(x || "").replace(/<[^>]+>/g, "");
+const teasersOf = (s) => [s.taglineHtml, ...(s.cards || []).flatMap((c) => [c.orientHtml, c.caplineHtml])];
+const ell = worldData.flatMap(teasersOf).map(deT).filter((x) => x && x.endsWith("…"));
 if (ell.length > 2) flag("P1", `${ell.length} metadata strings end mid-clause with "…"`);
 
 // 5. source parity (card label vs rendered list)
 const srcStage = worldData.find((s) => s.id === "_sources");
 if (srcStage) {
-  const label = parseInt((srcStage.cards[0].orient.match(/^(\d+)/) || [])[1] || "0", 10);
+  const label = parseInt((deT(srcStage.cards[0].orientHtml).match(/^(\d+)/) || [])[1] || "0", 10);
   const listed = (templates.find((t) => t.id.startsWith(`wpop-${worldData.indexOf(srcStage)}-`))?.html.match(/<li/g) || []).length;
   if (label !== listed) flag("P1", `sources card says ${label}, list renders ${listed}`);
 }
@@ -85,6 +88,20 @@ for (const [k, set] of Object.entries(nums)) if (set.size > 1) flag("P2", `"${k}
 let mdLeaks = 0;
 for (const t of templates) if (/\*\*[^*]+\*\*/.test(t.text) && !/tk-|\*\*2|\*\* ?2/.test(t.html)) mdLeaks++;
 if (mdLeaks) flag("P1", `${mdLeaks} template(s) show literal **markdown**`);
+
+// 8. unrendered math — the model wrote TeX but the renderer left it raw (unbalanced $,
+// a katex throw, or a field outside the escMath funnel). Rendered math has NO $
+// delimiters in visible text (KaTeX's MathML annotation carries bare TeX), so a
+// $…\cmd…$ pair in prose is a miss. Code is excluded ($ is shell/GraphQL there).
+const texish = /\$\$?[^$]*\\[a-zA-Z]+[^$]*\$\$?/;
+let rawTex = 0;
+for (const t of templates) {
+  const prose = deT(t.html.replace(/<pre class="code">[\s\S]*?<\/pre>/g, " ").replace(/<code>[\s\S]*?<\/code>/g, " "));
+  if (texish.test(prose)) { rawTex++; if (rawTex <= 3) flag("P1", `unrendered TeX in ${t.id}`); }
+}
+if (rawTex > 3) flag("P1", `…and ${rawTex - 3} more template(s) with unrendered TeX`);
+const teaserTex = worldData.flatMap(teasersOf).map(deT).filter((x) => x && texish.test(x));
+if (teaserTex.length) flag("P1", `${teaserTex.length} card teaser(s) show unrendered TeX`);
 
 console.log(`\n${findings.length ? `FINDINGS: ${findings.length}` : "CLEAN — content audit passed"}`);
 process.exit(findings.length ? 1 : 0);

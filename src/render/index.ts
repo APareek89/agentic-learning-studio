@@ -60,11 +60,13 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
   const theme = world ? "dark" : "light"; // the world stage is dark by design; block content uses the dark palette
 
   // Equations render server-side (KaTeX, see render/math.ts) — ship its stylesheet only
-  // when the body actually carries math, OR when stub modules might inject some later
-  // (the classic runtime swaps /api/module fragments in without a reload). Inlined like
-  // everything else so downloaded offline lessons render math too.
+  // when the body actually carries math, OR when a CLASSIC lesson still has stubs (its
+  // runtime swaps /api/module fragments in without a reload, so a late-built module could
+  // introduce math into a page that shipped without the CSS). World lessons self-heal via
+  // location.reload → this condition re-evaluates → no need to pre-pay the ~180KB there.
+  // Inlined like everything else so downloaded offline lessons render math too.
   const bodyHtml = world ? renderBodyWorld(bp, { currentModuleId }) : renderBody(bp, { previewOnly });
-  const mathCss = bodyHtml.includes('class="katex') || stubModuleIds.length ? `<style>${KATEX_CSS}</style>` : "";
+  const mathCss = bodyHtml.includes('class="katex') || (stubModuleIds.length && !world) ? `<style>${KATEX_CSS}</style>` : "";
 
   return `<!doctype html>
 <html lang="en" data-theme="${theme}">

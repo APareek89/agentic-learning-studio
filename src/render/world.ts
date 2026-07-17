@@ -224,13 +224,14 @@ export function renderBodyWorld(bp: Blueprint, opts: { currentModuleId?: string 
     `<template id="wpop-${si}-${ci}">${c.popup}</template>` +
     (c.atts ?? []).map((a, ai) => `<template id="wpop-${si}-${ci}-a${ai}">${a.popup}</template>`).join("")
   ).join("")).join("");
-  // The engine's structural data rides as JSON. orient/capline/tagline are PRE-ESCAPED
-  // HTML (escMath: HTML-escaped text + rendered KaTeX for any $…$ the teaser carries) —
-  // WORLD_JS inserts these three verbatim; everything else it still escH()'s itself.
-  // Display math renders in inline mode there so a teaser stays a one-line clamp.
+  // The engine's structural data rides as JSON. The *Html fields are PRE-ESCAPED HTML
+  // (escMath: HTML-escaped text + rendered KaTeX for any $…$ the teaser carries) —
+  // WORLD_JS inserts them verbatim and must NOT escH them; every non-Html field it
+  // still escapes itself. The suffix IS the contract: never emit a card teaser here
+  // without running it through teaser(). Display math renders inline so teasers clamp.
   const teaser = (s: string) => escMath(s, { inlineOnly: true });
-  const data = stages.map((s) => ({ id: s.id, moduleId: s.moduleId, kick: s.kick, tagline: teaser(s.tagline), rail: s.rail, num: s.num, special: !!s.special, stub: !!s.stub,
-    cards: s.cards.map((c) => ({ chip: c.chip, ico: c.ico, clabel: c.clabel, heading: c.heading, orient: teaser(c.orient), capline: teaser(c.capline || c.orient), check: !!c.check,
+  const data = stages.map((s) => ({ id: s.id, moduleId: s.moduleId, kick: s.kick, taglineHtml: teaser(s.tagline), rail: s.rail, num: s.num, special: !!s.special, stub: !!s.stub,
+    cards: s.cards.map((c) => ({ chip: c.chip, ico: c.ico, clabel: c.clabel, heading: c.heading, orientHtml: teaser(c.orient), caplineHtml: teaser(c.capline || c.orient), check: !!c.check,
       atts: (c.atts ?? []).map((a) => ({ label: a.label, full: a.full, ico: a.ico })) })) }));
   const startStage = opts.currentModuleId ? Math.max(0, stages.findIndex((s) => s.moduleId === opts.currentModuleId)) : 0;
   const wcfg = { startStage, title: bp.meta.title, thesis: bp.meta.thesis || "" };
@@ -588,8 +589,8 @@ function buildWorld(si){var S=DATA[si],w=$("w-world");
       '<span class="w-chip '+c.chip+'">'+c.ico+" "+escH(c.clabel)+'</span><span class="w-seen">✓ read</span>'+
       (S.cards.length>1?'<span class="w-idx" title="suggested reading order">'+(S.special?(ci+1):(ci===0?"▸ start":ci))+'</span>':"")+
       "<h3>"+escH(c.heading)+"</h3>"+
-      /* orient arrives PRE-ESCAPED from the renderer (may carry KaTeX HTML) — no escH */
-      '<div class="w-orient">'+c.orient+"</div>"+atts+
+      /* *Html fields arrive PRE-ESCAPED from the renderer (may carry KaTeX) — no escH */
+      '<div class="w-orient">'+c.orientHtml+"</div>"+atts+
       '<div class="w-open">Open ↗</div></div>';}).join("");
   w.querySelectorAll(".w-card").forEach(function(c){c.onclick=function(){if(E.suppress)return;openPopup(si,+c.dataset.ci);};
     c.querySelectorAll(".w-att").forEach(function(btn){btn.onclick=function(e){e.stopPropagation();if(E.suppress)return;
@@ -707,14 +708,12 @@ function hydrate(root){root.querySelectorAll(".viz").forEach(function(viz){
 function beatsFor(si){var S=DATA[si],beats=[];
   beats.push(function(){closePopup();camFit();focus([]);hotEdge(-1);
     cap([[escH(S.rail).toUpperCase()+" · MENTAL MAP OF "+S.cards.length+" BLOCK"+(S.cards.length>1?"S":""),"kck"],
-         /* tagline is pre-escaped by the renderer (may carry KaTeX HTML) */
-         ['<span class="hl">'+escH(S.rail)+"</span> — "+S.tagline,"one"],
+         ['<span class="hl">'+escH(S.rail)+"</span> — "+S.taglineHtml,"one"],
          ["Click a card for the full detail · drag the canvas · scroll to zoom","hint"]]);});
   S.cards.forEach(function(c,ci){beats.push(function(){closePopup();
     var el=document.querySelector('#w-world .w-card[data-ci="'+ci+'"]');
     if(el)camFocusEl(el);focus([ci]);hotEdge(ci-1);
-    /* capline/orient are pre-escaped by the renderer (may carry KaTeX HTML) */
-    cap([[c.ico+" "+escH(c.clabel)+" · "+escH(c.heading).toUpperCase(),"kck"],[c.capline||c.orient,"one"]]);
+    cap([[c.ico+" "+escH(c.clabel)+" · "+escH(c.heading).toUpperCase(),"kck"],[c.caplineHtml||c.orientHtml,"one"]]);
     if(c.check)openPopup(si,ci);});});
   beats.push(function(){closePopup();camFit();focus([]);hotEdge(-1);
     var nx=si<DATA.length-1?DATA[si+1]:null;
@@ -752,6 +751,8 @@ $("w-reset").onclick=function(){gotoStage(E.si);};
     try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:"als-handson",lessonId:HANDSON_LESSON,moduleId:mid||null},"*");return;}}catch(e){}
     window.open("/hands-on?lesson="+encodeURIComponent(HANDSON_LESSON)+"&module="+encodeURIComponent(mid),"_blank");};})();
 document.addEventListener("keydown",function(e){
+  /* never swallow browser gestures — Cmd/Ctrl+(+/-) is the BROWSER's zoom (accessibility) */
+  if(e.metaKey||e.ctrlKey)return;
   if(e.key==="Escape"){closePopup();hidePopover();return;}
   if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"))return;
   if(e.key==="ArrowRight"){e.preventDefault();nextBeat();}

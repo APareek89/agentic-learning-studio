@@ -20,7 +20,7 @@ import "dotenv/config"; // load .env before anything reads process.env
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { writeFile, unlink, readdir, readFile, rm, stat } from "node:fs/promises";
@@ -219,7 +219,10 @@ app.get("/sitemap.xml", async (_req, res) => {
 });
 
 // ---- Rate limits (per-IP). Protect CPU + the Anthropic bill from a runaway client. ----
-const ipKey = (req: express.Request) => req.ip || "unknown";
+// ipKeyGenerator collapses an IPv6 address to its /56 subnet — a raw req.ip key let an
+// IPv6 client rotate through its subnet's addresses and sidestep every limiter (the
+// ERR_ERL_KEY_GEN_IPV6 warning that fired 3× on every prod boot was exactly this).
+const ipKey = (req: express.Request) => (req.ip ? ipKeyGenerator(req.ip) : "unknown");
 // Expensive: generation + uploads (CPU, model spend, repo clone).
 const heavyLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false, keyGenerator: ipKey,
   message: { error: "You're going a bit fast — please wait a few minutes and try again." } });
