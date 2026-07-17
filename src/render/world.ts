@@ -243,11 +243,11 @@ export function renderBodyWorld(bp: Blueprint, opts: { currentModuleId?: string 
       <span class="w-kick" id="w-kick"></span>
       <div class="w-grow"></div>
       ${handsOnEligible(bp) ? `<button class="w-btn w-handson" id="w-handson" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on<span class="w-hobeta">Beta</span></button>` : ""}
-      <button class="w-btn w-zoom" id="w-zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
-      <button class="w-btn w-zoom" id="w-zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button class="w-btn w-round w-zoom" id="w-zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button class="w-btn w-round w-zoom" id="w-zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
       <button class="w-recenter" id="w-recenter">⤾ Recenter</button>
       <button class="w-btn w-primary" id="w-next">Next ▸</button>
-      <button class="w-btn" id="w-reset" title="Restart this module">↺</button>
+      <button class="w-btn w-round" id="w-reset" title="Restart this module">↺</button>
       <span class="w-meta"><span id="w-sn">0</span>/<span id="w-st">0</span></span>
     </div>
     <div class="w-vp" id="w-vp">
@@ -289,34 +289,41 @@ body[data-reading="world"]{overflow:hidden;height:100vh;height:100dvh;margin:0;
     repeating-linear-gradient(90deg,transparent 0 39px,rgba(91,140,255,.045) 39px 40px),var(--wbg)}
 .w-head{flex:none;display:flex;align-items:center;gap:10px;padding:12px 22px 10px;position:relative;z-index:8;
   background:linear-gradient(180deg,var(--wbg) 62%,transparent)}
-.w-railbtn{flex:none;border:1px solid var(--wline);background:rgba(255,255,255,.05);color:var(--wsoft);border-radius:9px;
-  padding:6px 8px;line-height:0;cursor:pointer;display:flex;align-items:center}
+/* Header controls MATCH THE HOST APP's nav-bar buttons (.vbtn in public/styles.css):
+   9px-radius boxes on the surface token with a 1px border, 13px text at NORMAL weight,
+   content centered; icon-only controls are 32px circles on the same tokens; exactly one
+   primary (Next) carries the accent fill — so the header reads like a third nav bar. */
+.w-railbtn{flex:none;width:32px;height:32px;border:1px solid var(--wline);background:var(--wcard);color:var(--wsoft);
+  border-radius:50%;padding:0;line-height:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .w-railbtn:hover,.w-railbtn.on{border-color:var(--wcy);color:var(--wcy2)}
 .w-kick{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--wcy2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .w-grow{flex:1}
-.w-btn{font-family:inherit;border:1px solid var(--wline);background:rgba(255,255,255,.05);color:var(--wink);border-radius:99px;
-  padding:7px 15px;cursor:pointer;font-weight:700;font-size:12.5px;white-space:nowrap}
-.w-btn:hover{border-color:var(--wcy)}
+.w-btn{font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;
+  border:1px solid var(--wline);background:var(--wcard);color:var(--wink);border-radius:9px;
+  padding:0 13px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap;line-height:1}
+.w-btn:hover{border-color:var(--wcy);color:var(--wcy2)}
 .w-primary{background:var(--wcy);border-color:var(--wcy);color:#fff}
+.w-primary:hover{filter:brightness(1.07);color:#fff}
 .w-btn:disabled{opacity:.35}
-/* compact square +/- zoom buttons — the explicit equivalent of wheel-zoom, for dense maps
-   (and anyone without a wheel/trackpad). Same 0.45–2 clamp as the wheel handler. */
-.w-zoom{width:34px;padding:7px 0;text-align:center;font-size:16px;line-height:1;flex:none}
+/* icon-only circles: zoom −/+ (wheel-zoom equivalents, same 0.45–2 clamp) and restart ↺ */
+.w-round{width:32px;padding:0;border-radius:50%;font-size:15px;flex:none}
 /* On phones the header has no room for them: the two extra buttons push #w-next past the
    390px edge, and any focus/click scroll then drags the whole overflow:hidden stage 34px
    sideways (the map clips). Hide them — narrow screens keep the pre-existing header. */
 @media (max-width:600px){.w-zoom{display:none}}
 /* "⚡ Get Hands on" — a filled, accent launch button (restores the classic-renderer affordance
    in the world header; opens the browser-run Python notebook). Green so it reads as "run it". */
-.w-handson{background:var(--wgood);border-color:var(--wgood);color:#06231a;font-weight:800;display:inline-flex;align-items:center;gap:6px}
-.w-handson:hover{filter:brightness(1.08);border-color:var(--wgood)}
-.w-hobeta{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:rgba(6,35,26,.24);color:#06231a;border-radius:5px;padding:1px 5px;line-height:1.4}
-.w-meta{font-size:12px;color:var(--wmuted);font-weight:700;min-width:40px;text-align:right;
-  background:var(--wcard);border:1px solid var(--wline);border-radius:99px;padding:4px 10px}
-.w-recenter{display:none;font-family:inherit;border:1px solid var(--wwarn);background:rgba(251,191,36,.1);color:var(--wwarn);
-  border-radius:99px;padding:7px 14px;cursor:pointer;font-weight:800;font-size:12px}
-.w-recenter.show{display:block}
+.w-handson{background:var(--wgood);border-color:var(--wgood);color:#06231a}
+.w-handson:hover{filter:brightness(1.06);border-color:var(--wgood);color:#06231a}
+.w-hobeta{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(6,35,26,.18);color:#06231a;border-radius:5px;padding:1px 5px;line-height:1.4}
+.w-meta{font-size:12.5px;color:var(--wmuted);font-weight:500;min-width:40px;height:32px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--wcard);border:1px solid var(--wline);border-radius:9px;padding:0 11px}
+/* Recenter appears only while panned/zoomed — same box, accent-tinted so it reads as a hint */
+.w-recenter{display:none;font-family:inherit;align-items:center;justify-content:center;height:32px;
+  border:1px solid var(--wcy);background:rgba(91,140,255,.1);color:var(--wcy2);
+  border-radius:9px;padding:0 13px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap;line-height:1}
+.w-recenter.show{display:inline-flex}
 .w-vp{flex:1;min-height:0;position:relative;cursor:grab;transition:opacity .4s}
 .w-vp.dragging{cursor:grabbing}
 .w-vp.swap{opacity:0}
@@ -456,8 +463,8 @@ body[data-reading="world"][data-theme="light"] #wstage{
   background:radial-gradient(900px 560px at 60% -8%,#dde6fb 0%,transparent 60%),
     repeating-linear-gradient(0deg,transparent 0 39px,rgba(59,102,224,.06) 39px 40px),
     repeating-linear-gradient(90deg,transparent 0 39px,rgba(59,102,224,.06) 39px 40px),var(--wbg)}
-body[data-reading="world"][data-theme="light"] .w-railbtn,
-body[data-reading="world"][data-theme="light"] .w-btn{background:rgba(22,32,63,.04)}
+/* light surfaces come from var(--wcard) (#fff) in the base rules — same as the host bars */
+body[data-reading="world"][data-theme="light"] .w-recenter{background:rgba(59,102,224,.08)}
 body[data-reading="world"][data-theme="light"] .w-primary{background:var(--wcy);color:#fff}
 /* keep the hands-on button GREEN in light mode — the light .w-btn override above (same base
    class, higher specificity) would otherwise flatten it to the faint surface. */
