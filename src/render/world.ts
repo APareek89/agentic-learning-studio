@@ -765,12 +765,30 @@ var moduleStages=DATA.filter(function(s){return !s.special;}).length||1;
 function markVisited(si){if(DATA[si]&&!DATA[si].special)E.visited[si]=1;
   var n=Object.keys(E.visited).length,pct=Math.round(n/moduleStages*100);
   try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:"als-progress",visited:n,total:moduleStages,percent:pct,module:DATA[si]&&DATA[si].moduleId||null},"*");}catch(e){}}
-/* ---- stub modules: trigger their build + self-refresh until they arrive ---- */
+/* ---- stub modules: trigger their build + self-refresh until they arrive ----
+   Backstop (was: unconditional reload every 22s forever): a module that PERMANENTLY fails to build
+   never leaves stub state, so the old loop reloaded — and bounced the reader back to stage 0 — every
+   22s indefinitely. Now the reload is gated on PROGRESS: the no-progress counter resets whenever a
+   module actually arrives (stub count drops) and only trips the backstop after ~8 stalled cycles
+   (~3 min with no new module), so a normal multi-minute build self-heals freely while a stuck one
+   stops. And before each reload we carry the reader's live stage into ?module= so the server
+   re-renders at their position instead of stage 0. */
 (function(){var stubs=DATA.filter(function(s){return s.stub;});
-  if(!stubs.length||!ARTIFACT_ID)return;
+  var CKEY="als-world-heal:"+ARTIFACT_ID;
+  if(!stubs.length){try{sessionStorage.removeItem(CKEY);}catch(e){}return;} /* fully built → clear state */
+  if(!ARTIFACT_ID)return;
   stubs.forEach(function(s){try{fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:s.moduleId})}).catch(function(){});}catch(e){}});
-  setTimeout(function(){location.reload();},22000);})();
+  var prev={n:0,s:1e9};try{prev=JSON.parse(sessionStorage.getItem(CKEY)||"")||prev;}catch(e){}
+  var noProg=(stubs.length<prev.s)?0:((prev.n||0)+1); /* a module arrived since last load → reset */
+  try{sessionStorage.setItem(CKEY,JSON.stringify({n:noProg,s:stubs.length}));}catch(e){}
+  if(noProg>=8)return; /* stuck module: stop reloading so the reader can keep reading what built */
+  setTimeout(function(){
+    try{var cur=DATA[E.si];var mid=(cur&&cur.moduleId)||"";
+      if(!mid){for(var j=E.si;j>=0;j--){if(DATA[j]&&DATA[j].moduleId){mid=DATA[j].moduleId;break;}}}
+      if(mid){var u=new URL(location.href);u.searchParams.set("module",mid);history.replaceState({},"",u.pathname+u.search);}
+    }catch(e){}
+    location.reload();},22000);})();
 /* ---- theme: driven by the HOST nav-bar toggle (shared same-origin "als-theme" key +
    live postMessage from app.js) — no in-lesson button. Full-screen opens read the key. ---- */
 (function(){function apply(t){var v=t==="light"?"light":"dark";

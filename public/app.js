@@ -97,6 +97,12 @@ let currentViewModule = null; // module the reader is on in the viewer iframe (n
 let basePrompt = ""; // the lesson's original ask (so "modify" keeps context)
 let activeJobId = null;
 let activeJobTimer = null;
+// Synchronous in-flight guards: activeJobId is only set AFTER the awaited /api/overview|/api/build
+// POST resolves, so a fast double-click can slip past the `if (activeJobId)` checks and start a
+// second job (orphan spinner tab / double build + double credit charge). These booleans are set
+// BEFORE any await and cleared in every exit path, closing that race.
+let startingOverview = false;
+let startingBuild = false;
 let currentCourse = null; // { courseId, lessons:[{index,title,artifactId,status}], activeIndex }
 let overviewArtifactId = null; // the free overview draft currently under review (gate)
 let lastOverviewPayload = null; // the payload used to build it (so "Edit overview" can re-run)
@@ -578,6 +584,9 @@ function makeRoomForTab() {
   if (tabs.length < MAX_TABS) return true;
   const victim = tabs.find((t) => t.id !== activeTabId && t.id !== genTabId && t.type !== "generating" && !t.building);
   if (!victim) return false;
+  // An un-built overview draft has no in-app re-entry point once evicted (My Lessons only lists
+  // built lessons), so don't drop the one the user is reviewing without asking.
+  if (victim.type === "overview" && !confirm(`Your reviewed overview "${victim.title || "draft"}" hasn't been turned into a lesson yet and will be closed to open this one. Continue?`)) return false;
   tabs = tabs.filter((t) => t !== victim);
   return true;
 }
@@ -633,36 +642,55 @@ function activateTab(id) {
   const t = tabById(id);
   if (!t) return;
   activeTabId = id;
-  toggleChat(false); chatLog.innerHTML = "";
-  currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
-  basePrompt = t.prompt || t.title || "";
-  document.getElementById("viewer-title").textContent = t.title || "Lesson";
-  // Bug 2: while a build hasn't finished its FIRST module, show the "building" overlay instead of
-  // the lesson — so we never land the reader on a still-empty / work-in-progress module.
-  const buildingFirst = t.type === "lesson" && t.building && !t._firstReady;
-  if (t.type === "generating" || buildingFirst) {
-    viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
-    genLabel.textContent = buildingFirst ? "Building your lesson — this takes a couple of minutes. Your first section opens as soon as it's ready…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview — usually about a minute…");
-    downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
-  } else {
-    const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
-    currentViewUrl = url;
-    genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
-    // Bug 1: when a build is running in ANOTHER tab, the iframe may currently be showing that WIP
-    // lesson (the live-build reload cache-busts its src). FORCE a fresh load of the selected lesson
-    // so the reader is never left stuck on the building lesson's content.
-    const fresh = (activeJobId && t.id !== genTabId) ? url + (url.indexOf("?") < 0 ? "?" : "&") + "v=" + Date.now() : url;
-    if (viewerFrame.getAttribute("src") !== fresh) viewerFrame.src = fresh;
-    if (t.type === "overview") {
-      overviewArtifactId = t.art;
-      downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(true);
-    } else if (t.type === "lesson") {
-      currentArtifactId = t.art; currentLessonOwned = true;
-      downloadBtn.hidden = false; downloadBtn.href = "/api/artifact/" + t.art + "/full";
-      openWindowBtn.hidden = false; askMoreBtn.hidden = false; resetStars(); ratingEl.hidden = false; setOverviewMode(false);
-    } else { // library / community (public, read-only)
-      downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(false);
+  // Bug 1 hardening: any throw between here and the overlay/frame being shown used to leave the
+  // Trainer BLANK (switchTab already un-hid #tab-trainer, but frame+overlay+empty could all stay
+  // hidden). Wrap the whole reveal so a failure always falls back to a visible, recoverable state
+  // instead of a blank screen the user can only fix by refreshing.
+  try {
+    toggleChat(false); chatLog.innerHTML = "";
+    currentArtifactId = null; overviewArtifactId = null; currentLessonOwned = false; currentViewUrl = null; currentViewModule = null;
+    basePrompt = t.prompt || t.title || "";
+    document.getElementById("viewer-title").textContent = t.title || "Lesson";
+    // Bug 2: while a build hasn't finished its FIRST module, show the "building" overlay instead of
+    // the lesson — so we never land the reader on a still-empty / work-in-progress module.
+    const buildingFirst = t.type === "lesson" && t.building && !t._firstReady;
+    if (t.errored) {
+      // A generation that failed in the background: show the error + Try again, not a stuck spinner.
+      showGenError(t.error || "Generation failed — please try again.", t.retry);
+      downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
+    } else if (t.type === "generating" || buildingFirst) {
+      viewerFrame.hidden = true; viewerEmpty.hidden = true; genOverlay.hidden = false;
+      genLabel.textContent = buildingFirst ? "Building your lesson — this takes a couple of minutes. Your first section opens as soon as it's ready…" : ((t.percent || 0) > 8 ? "Designing the lesson outline…" : "Designing your overview — usually about a minute…");
+      downloadBtn.hidden = true; openWindowBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; setOverviewMode(false);
+    } else {
+      const url = t.art ? "/api/artifact/" + t.art : t.type === "community" ? "/api/community/lesson/" + t.slug : "/api/lesson/" + t.slug;
+      currentViewUrl = url;
+      genOverlay.hidden = true; viewerEmpty.hidden = true; viewerFrame.hidden = false;
+      // Bug 2 (the reported "open at 50% lands on the overview"): the single iframe may still hold
+      // this artifact's PRE-PROMOTION preview/overview render (t._preview) — set when the tab was an
+      // overview draft. Revealing it as a real lesson keeps the SAME /api/artifact/:id URL string, so
+      // the src-diff guard below would skip the reload and leave the stale overview on screen. Force a
+      // cache-busted refetch whenever we're revealing a lesson over a preview render. Also keep the
+      // existing cross-tab freshness bust (a build running in another tab dirties the shared iframe).
+      const revealingOverPreview = t.type === "lesson" && t._preview;
+      const needBust = revealingOverPreview || (activeJobId && t.id !== genTabId);
+      const fresh = needBust ? url + (url.indexOf("?") < 0 ? "?" : "&") + "v=" + Date.now() : url;
+      if (viewerFrame.getAttribute("src") !== fresh) viewerFrame.src = fresh;
+      if (t.type === "overview") {
+        overviewArtifactId = t.art; t._preview = true; // iframe now holds the preview-only overview render
+        downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(true);
+      } else if (t.type === "lesson") {
+        t._preview = false; // now showing the real (promoted) lesson render
+        currentArtifactId = t.art; currentLessonOwned = true;
+        downloadBtn.hidden = false; downloadBtn.href = "/api/artifact/" + t.art + "/full";
+        openWindowBtn.hidden = false; askMoreBtn.hidden = false; resetStars(); ratingEl.hidden = false; setOverviewMode(false);
+      } else { // library / community (public, read-only)
+        downloadBtn.hidden = true; askMoreBtn.hidden = true; ratingEl.hidden = true; openWindowBtn.hidden = false; setOverviewMode(false);
+      }
     }
+  } catch (e) {
+    console.error("[activateTab] reveal failed — falling back to a visible state:", e);
+    try { genOverlay.hidden = true; viewerFrame.hidden = true; viewerEmpty.hidden = false; } catch (_) { /* last resort */ }
   }
   renderTabBar();
   persistTabs();
@@ -688,6 +716,15 @@ function reloadViewer() {
 // Fix 4: render the open lessons into the dropdown menu UNDER the "Trainer" tab (was a visible
 // bar). Behavior preserved: open/close/switch/active, the "+" new, and the building spinner. The
 // caret next to "Trainer" appears only when ≥1 lesson is open; selecting a lesson closes the menu.
+// Mark a generating tab as FAILED instead of silently deleting it when the failure happens while the
+// user is on another tab. The tab stays in the list with a ⚠ marker; activating it shows the error +
+// a "Try again". (Was: a background overview/build failure just vanished the tab with no feedback.)
+function markTabError(t, msg, retryFn) {
+  if (!t) return;
+  t.errored = true; t.error = msg; t.retry = retryFn || null;
+  if (t.id === activeTabId) showGenError(msg, retryFn);
+  renderTabBar(); persistTabs();
+}
 function renderTabBar() {
   if (!lessonTabsEl) return;
   lessonTabsEl.innerHTML = "";
@@ -696,9 +733,9 @@ function renderTabBar() {
   if (tabs.length === 0) { closeTrainerMenu(); return; }
   tabs.forEach((t) => {
     const b = document.createElement("button");
-    b.className = "lesson-tab" + (t.id === activeTabId ? " active" : "");
+    b.className = "lesson-tab" + (t.id === activeTabId ? " active" : "") + (t.errored ? " errored" : "");
     b.type = "button"; b.setAttribute("role", "menuitem");
-    const spin = (t.type === "generating" || t.building) ? '<span class="lt-spin"></span>' : "";
+    const spin = t.errored ? '<span class="lt-err" title="Generation failed — click to retry">⚠</span>' : ((t.type === "generating" || t.building) ? '<span class="lt-spin"></span>' : "");
     b.innerHTML = `${spin}<span class="lt-title">${escapeHtml(t.title || "Lesson")}</span><span class="lt-x" title="Close">×</span>`;
     b.addEventListener("click", (e) => {
       if (e.target.classList && e.target.classList.contains("lt-x")) { e.stopPropagation(); closeTab(t.id); return; }
@@ -1521,12 +1558,17 @@ document.getElementById("bc-generate").addEventListener("click", () => {
 // Generate only the overview (skeleton), land on the Trainer, show progress, then
 // render the overview with two CTAs: Generate Lesson / Edit overview.
 async function startOverview(payload) {
-  if (activeJobId) { alert("One lesson generates at a time — let the current one finish, then start the next."); return; }
+  // Re-entrancy guard: reject a second start until the first has claimed activeJobId (set below,
+  // after the awaited POST). `startingOverview` is cleared in every early-return so a failed first
+  // attempt can never wedge generation permanently.
+  if (activeJobId || startingOverview) { alert("One lesson generates at a time — let the current one finish, then start the next."); return; }
+  startingOverview = true;
+  if (generateBtn) generateBtn.disabled = true;
   lastOverviewPayload = payload;
   // Open a "generating" tab — it shows progress and can be left and returned to.
   const title = payload && payload.prompt ? String(payload.prompt).slice(0, 48) : "New lesson…";
   const t = openTab({ type: "generating", title, percent: 0 });
-  if (!t) return;
+  if (!t) { startingOverview = false; if (generateBtn) generateBtn.disabled = false; return; }
   genTabId = t.id;
   showWhileYouWait(payload && payload.prompt); // item 4: relevant free lessons to read while it generates
   let jobId;
@@ -1538,8 +1580,13 @@ async function startOverview(payload) {
     jobId = data.jobId;
   } catch (e) {
     genTabId = null;
-    if (t.id === activeTabId) showGenError(escapeHtml(e.message), () => startOverview(payload)); else closeTab(t.id);
+    markTabError(t, escapeHtml(e.message), () => startOverview(payload));
     return;
+  } finally {
+    // The synchronous guard's job is done once the POST settles: either activeJobId takes over
+    // (success) or we've returned (failure). Always release it and the button here.
+    startingOverview = false;
+    if (generateBtn) generateBtn.disabled = false;
   }
   activeJobId = jobId;
   if (promptEl) promptEl.value = "";
@@ -1571,8 +1618,7 @@ function pollOverview(jobId, tabId) {
       if (++lost > 10) {
         activeJobId = null; genTabId = null;
         const tt = tabById(tabId);
-        if (tt && tt.id === activeTabId) showGenError("The server may have restarted while preparing your overview — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
-        else if (tt) closeTab(tt.id);
+        markTabError(tt, "The server may have restarted while preparing your overview — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
         return;
       }
       activeJobTimer = setTimeout(tick, 3000); return;
@@ -1582,8 +1628,7 @@ function pollOverview(jobId, tabId) {
     const t = tabById(tabId); // may be null if the user closed the tab
     if (job.status === "error") {
       activeJobId = null; genTabId = null;
-      if (t && t.id === activeTabId) showGenError(job.error || "The AI was busy — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
-      else if (t) closeTab(t.id);
+      markTabError(t, job.error || "The AI was busy — please try again.", () => { if (lastOverviewPayload) startOverview(lastOverviewPayload); });
       return;
     }
     if (job.status === "done" && l && l.artifactId) {
@@ -1605,7 +1650,12 @@ function setOverviewMode(on) {
 
 // ---- STAGE 2: approve → build the full lesson IN ITS TAB (readable as modules fill in) ----
 async function startBuild(artifactId) {
-  if (activeJobId) { alert("One lesson generates at a time — let the current one finish first."); return; }
+  // Re-entrancy guard (mirrors startOverview): activeJobId is set only after the awaited POST, so
+  // without `startingBuild` a fast double-click on "Generate Lesson" fires two /api/build POSTs for
+  // the same overview → two builds → a possible double credit charge. Cleared in every exit path.
+  if (activeJobId || startingBuild) { alert("One lesson generates at a time — let the current one finish first."); return; }
+  startingBuild = true;
+  if (genLessonBtn) genLessonBtn.disabled = true;
   let jobId;
   try {
     const res = await fetch("/api/build", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ artifactId }) });
@@ -1615,7 +1665,7 @@ async function startBuild(artifactId) {
       openBuyCredits((d.error || "You're out of credits.") + " Your overview is saved — buy credits and click Generate Lesson again.");
       return;
     }
-    if (res.status === 409) { // referOnly build but the uploads expired (restart) — fail loud, no charge
+    if (res.status === 409) { // already building this artifact, OR referOnly uploads expired — fail loud, no charge
       const d = await res.json().catch(() => ({}));
       showGenError(d.error || "Your uploaded documents are no longer available — please re-upload them in the Lesson Builder and generate the overview again.", null);
       return;
@@ -1624,6 +1674,7 @@ async function startBuild(artifactId) {
     if (!res.ok || !data.jobId) throw new Error(data.error || "Could not start the lesson build.");
     jobId = data.jobId;
   } catch (e) { showGenError(escapeHtml(e.message), () => startBuild(artifactId)); return; }
+  finally { startingBuild = false; if (genLessonBtn) genLessonBtn.disabled = false; }
   activeJobId = jobId;
   lastBuildArtifactId = artifactId; // remember for a retry if the build fails
   if (contribBuild) contribPublishId = artifactId; // auto-publish this one to Community when built
@@ -1689,6 +1740,7 @@ function updateGenStatus(active) { if (genStatus) genStatus.hidden = !active; }
 // cleared) keeps building server-side and just shows up in My Lessons when done.
 function pollJob(jobId, tabId) {
   if (activeJobTimer) clearTimeout(activeJobTimer);
+  let lost = 0; // consecutive network-error misses (offline / DNS / connection refused — no response)
   const tick = async () => {
     if (activeJobId !== jobId) return;
     let job;
@@ -1710,8 +1762,23 @@ function pollJob(jobId, tabId) {
         return;
       }
       job = await r.json();
+      lost = 0;
     }
-    catch { activeJobTimer = setTimeout(tick, 3000); return; }
+    catch {
+      // A genuine network rejection (offline / DNS / connection refused — no response object, so the
+      // !r.ok recovery above is bypassed). Retry a BOUNDED number of times, then run the SAME
+      // persisted-state recovery: clear activeJobId and reveal the modules already saved to Postgres.
+      // Without the cap, activeJobId stays set forever and EVERY future Generate Overview/Lesson is
+      // rejected with the "one lesson at a time" alert until the user refreshes the page.
+      if (++lost > 10) {
+        activeJobId = null; genTabId = null; updateGenStatus(false);
+        const tt = tabById(tabId);
+        if (tt) { tt.building = false; tt._firstReady = true; if (tt.id === activeTabId) activateTab(tt.id); renderTabBar(); persistTabs(); }
+        loadDashboard();
+        return;
+      }
+      activeJobTimer = setTimeout(tick, 3000); return;
+    }
     const l = job.lessons && job.lessons[0];
     const t = tabById(tabId);
     if (t) { t.percent = (l && l.percent) || t.percent; renderTabBar(); }
@@ -1736,8 +1803,9 @@ function pollJob(jobId, tabId) {
       // Contributor course finished → auto-publish it to the Community (credited to them).
       if (job.status === "done" && contribBuild && contribPublishId) {
         const lid = contribPublishId; contribBuild = false; contribPublishId = null; autoPublishContributor(lid);
-      } else if (job.status === "error" && t && t.id === activeTabId) {
-        showGenError("The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
+      } else if (job.status === "error" && t) {
+        // Surface the failure whether or not this is the active tab (was: silently swallowed off-tab).
+        markTabError(t, "The build didn't finish — the AI may have been busy.", () => { if (lastBuildArtifactId) startBuild(lastBuildArtifactId); });
       }
       if (job.status === "done") { loadCredits(); track("lesson_generated", t && t.art); } // a completed build spent 1 credit — refresh the pill
       loadDashboard(); loadSuggestions(); return;

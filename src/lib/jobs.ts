@@ -124,14 +124,29 @@ export async function persistJob(job: Job): Promise<void> {
   } catch { /* best-effort — in-memory is authoritative on this instance */ }
 }
 
-/** Read a job tracker persisted by ANOTHER instance (or before a restart). Null if absent/off. */
+/** A persisted, NON-terminal job row older than this is treated as stale (the process that owned it
+ *  died mid-build and nothing resumes it — remaining modules build on demand). Well above the 2s
+ *  flush cadence, so a genuinely-live job is never mistaken for stale. */
+const STALE_JOB_MS = 30_000;
+
+/** Read a job tracker persisted by ANOTHER instance (or before a restart). Null if absent/off.
+ *  A NON-terminal row that hasn't been flushed within STALE_JOB_MS is treated as absent (returns
+ *  null) so GET /api/job/:id 404s and the client's recovery path reveals the persisted lesson —
+ *  otherwise a restart-mid-build would pin the progress bar at a frozen percent forever. */
 export async function getPersistedJob(id: string): Promise<Job | null> {
   if (!dbEnabled()) return null;
   try {
-    const rows = await query<{ data: unknown }>(`select data from gen_jobs where id = $1 limit 1`, [id]);
+    const rows = await query<{ data: unknown; updated_at: string | Date }>(
+      `select data, updated_at from gen_jobs where id = $1 limit 1`, [id]);
     if (!rows.length) return null;
     const d = rows[0].data;
-    return (typeof d === "string" ? JSON.parse(d) : d) as Job;
+    const job = (typeof d === "string" ? JSON.parse(d) : d) as Job;
+    const terminal = job.status === "done" || job.status === "error";
+    if (!terminal) {
+      const ts = new Date(rows[0].updated_at as string).getTime();
+      if (Number.isFinite(ts) && Date.now() - ts > STALE_JOB_MS) return null;
+    }
+    return job;
   } catch { return null; }
 }
 

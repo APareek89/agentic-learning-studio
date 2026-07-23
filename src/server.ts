@@ -24,8 +24,9 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { writeFile, unlink, readdir, readFile, rm, stat } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { extname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -69,6 +70,39 @@ function maybeParseBlueprint(v: unknown): Blueprint | null {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "..", "public");
+
+// ---- Asset cache-busting (deploy freshness) ----------------------------------------------------
+// app.js/CSS are served with a long browser TTL (max-age=3600) but WITHOUT a version in the URL, so
+// after a deploy returning visitors keep running the OLD app.js for up to an hour while talking to
+// the new server — the classic "the app is broken until I hard-refresh". Fix: compute a content hash
+// of the front-end assets at boot and stamp it onto their URLs in index.html (served templated
+// below). The asset bytes keep their long cache; the querystring changes whenever a file changes, so
+// a deploy invalidates the browser copy immediately. Falls back to the raw file if anything fails.
+const ASSET_V = ((): string => {
+  try {
+    const h = createHash("sha1");
+    for (const f of ["app.js", "styles.css", "home.css", "skills.js", "skills.css"]) {
+      try { h.update(readFileSync(join(PUBLIC_DIR, f))); } catch { /* asset optional */ }
+    }
+    return h.digest("hex").slice(0, 10);
+  } catch { return "1"; }
+})();
+const INDEX_HTML: string | null = ((): string | null => {
+  try {
+    return readFileSync(join(PUBLIC_DIR, "index.html"), "utf8")
+      .replace(/(["'])\/(app\.js|styles\.css|home\.css|skills\.js|skills\.css)\1/g, `$1/$2?v=${ASSET_V}$1`);
+  } catch { return null; }
+})();
+/** Serve the version-stamped index.html (falls back to the raw file). Same 60s HTML TTL as static. */
+function sendIndex(res: express.Response): void {
+  if (INDEX_HTML) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
+    res.send(INDEX_HTML);
+    return;
+  }
+  res.sendFile(join(PUBLIC_DIR, "index.html"));
+}
 
 const app = express();
 
@@ -134,6 +168,10 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
 });
 
 app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
+// Serve the version-stamped index.html for the app shell BEFORE express.static (which would
+// otherwise serve the un-stamped file). Static assets (app.js, styles.css, images) still come from
+// express.static below; requests carry the ?v= query, which static ignores.
+app.get(["/", "/index.html"], (_req, res) => sendIndex(res));
 // Static front-end (index.html, app.js, styles.css, images). A short TTL lets the CDN +
 // browser cache them; index.html stays near-fresh (60s) so a deploy shows up quickly.
 app.use(express.static(PUBLIC_DIR, {
@@ -146,7 +184,7 @@ app.use(express.static(PUBLIC_DIR, {
 // SPA route: the Account page is a real URL (/account) so it deep-links + survives a
 // refresh. There's no client-side router beyond this one path, so serve index.html and
 // let app.js switch to the account tab from window.location. (Static assets above win.)
-app.get("/account", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")));
+app.get("/account", (_req, res) => sendIndex(res));
 // Hands-On notebook page (browser-run Pyodide practice). Opened in a new tab from a lesson.
 app.get("/hands-on", (_req, res) => res.sendFile(join(PUBLIC_DIR, "hands-on.html")));
 
@@ -551,37 +589,57 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
 // draft; promote it to a real lesson and write every module body. Returns a jobId;
 // the dashboard (My Lessons) polls GET /api/job/:id and opens it as bodies fill in.
 // ----------------------------------------------------------------------------
+// In-flight de-dupe: a concurrent build of the SAME overview (a double-click after the client's
+// activeJobId was cleared, two tabs/devices, or a retry) must NOT spawn a second runBuildJob — it
+// would build the lesson twice and can decrement a SECOND credit. hasActiveBuildForArtifact alone
+// has a TOCTOU gap (runBuildJob tags the job's artifactId asynchronously), so we pair it with this
+// synchronous Set, claimed before any await and released when the build settles.
+const buildingArtifacts = new Set<string>();
 app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
   const artifactId = typeof req.body?.artifactId === "string" ? req.body.artifactId : "";
   if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
   const art = await getArtifact(artifactId);
   if (!art) { res.status(404).json({ error: "That overview wasn't found (it may have expired)." }); return; }
-  // Multi-instance: hydrate this artifact's uploads from the DB if they were created elsewhere, so
-  // the (sync) hasUploads()/retrieval below sees them. No-op single-instance / no uploads.
-  await hydrateUploads(art.uploadIds);
-  // P1 stale-upload integrity: uploads live in an in-memory store that's lost on restart. If the
-  // learner asked to build STRICTLY from their documents (referOnly) but those uploads are gone,
-  // fail loudly and DON'T charge — never silently ship an ungrounded lesson they believe is grounded
-  // in their docs. (For non-referOnly, we proceed on the KB but log it so the fallback is visible.)
-  if (art.referOnly && !hasUploads(art.uploadIds)) {
-    res.status(409).json({ error: "Your uploaded documents are no longer available — uploads expire when the server restarts. Please re-upload them and generate the overview again.", uploadsExpired: true });
+  if (buildingArtifacts.has(artifactId) || hasActiveBuildForArtifact(artifactId)) {
+    res.status(409).json({ error: "This lesson is already building — open it from My Lessons to watch it finish.", alreadyBuilding: true });
     return;
   }
-  if ((art.uploadIds?.length ?? 0) > 0 && !hasUploads(art.uploadIds)) {
-    console.warn("[/api/build] uploadIds present but none resolvable (stale after restart?) — building on KB/model for artifact", artifactId);
+  buildingArtifacts.add(artifactId); // claim synchronously (before the first await) to close the race
+  let spawned = false;
+  try {
+    // Multi-instance: hydrate this artifact's uploads from the DB if they were created elsewhere, so
+    // the (sync) hasUploads()/retrieval below sees them. No-op single-instance / no uploads.
+    await hydrateUploads(art.uploadIds);
+    // P1 stale-upload integrity: uploads live in an in-memory store that's lost on restart. If the
+    // learner asked to build STRICTLY from their documents (referOnly) but those uploads are gone,
+    // fail loudly and DON'T charge — never silently ship an ungrounded lesson they believe is grounded
+    // in their docs. (For non-referOnly, we proceed on the KB but log it so the fallback is visible.)
+    if (art.referOnly && !hasUploads(art.uploadIds)) {
+      res.status(409).json({ error: "Your uploaded documents are no longer available — uploads expire when the server restarts. Please re-upload them and generate the overview again.", uploadsExpired: true });
+      return;
+    }
+    if ((art.uploadIds?.length ?? 0) > 0 && !hasUploads(art.uploadIds)) {
+      console.warn("[/api/build] uploadIds present but none resolvable (stale after restart?) — building on KB/model for artifact", artifactId);
+    }
+    const user = await getUser(req.headers.authorization);
+    // Credit gate: a completed build costs 1 lesson credit. Grant the one free credit
+    // on the first attempt, then block at zero (the buyer is sent to Pricing). Skipped
+    // when the DB/auth is off (local dev) so the open-mode flow stays free.
+    if (user && dbEnabled()) {
+      const bal = await ensureFreeGrant(user.id);
+      if (bal < 1) { res.status(402).json({ error: "You're out of lesson credits. Add more to keep generating.", needCredits: true }); return; }
+    }
+    if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
+    const job = createJob(user?.id ?? "anon");
+    spawned = true;
+    void runBuildJob(job, artifactId).finally(() => buildingArtifacts.delete(artifactId));
+    res.json({ jobId: job.id });
+  } finally {
+    // Release the claim on every path that did NOT hand off to runBuildJob (400/404 already returned
+    // above the claim; here it's the 402/409/429 early-returns and any throw). If spawned, the build's
+    // own .finally() owns the release.
+    if (!spawned) buildingArtifacts.delete(artifactId);
   }
-  const user = await getUser(req.headers.authorization);
-  // Credit gate: a completed build costs 1 lesson credit. Grant the one free credit
-  // on the first attempt, then block at zero (the buyer is sent to Pricing). Skipped
-  // when the DB/auth is off (local dev) so the open-mode flow stays free.
-  if (user && dbEnabled()) {
-    const bal = await ensureFreeGrant(user.id);
-    if (bal < 1) { res.status(402).json({ error: "You're out of lesson credits. Add more to keep generating.", needCredits: true }); return; }
-  }
-  if (!acquireGenSlot()) { res.status(429).json({ error: "We're generating a lot of lessons right now — please try again in a minute." }); return; }
-  const job = createJob(user?.id ?? "anon");
-  void runBuildJob(job, artifactId);
-  res.json({ jobId: job.id });
 });
 
 // GET /api/job/:id — live progress for the dashboard / Trainer.
@@ -812,12 +870,22 @@ app.get("/api/artifact/:id", async (req, res) => {
   // (e.g. the no-scroll overview) without regeneration. Fall back to the stored HTML if
   // the blueprint is missing or anything throws — never break an openable lesson.
   if (art.blueprint) {
+    const bp = art.blueprint;
     // A draft (un-approved overview) renders preview-only — overview shown, nothing builds.
-    const previewOnly = art.kind === OVERVIEW_DRAFT_KIND;
+    // ALSO preview-only during the fast-draft "design leg": runBuildJob promotes kind→lesson at build
+    // START, but for ~70s the blueprint is still the throwaway coverage brief (brief present, no module
+    // bodies, glossary not yet written) before the real skeleton lands. Without this, a direct hit /
+    // open-in-new-window / other device during that window would render a half-built STUB lesson.
+    // (Same discriminator as orchestrator.ts's isFastDraft; normal post-skeleton builds have a glossary
+    // and so render the real world lesson with self-healing stubs.)
+    const fastDraftInFlight = !!bp.brief
+      && !bp.modules.some((m) => m.loadState === "full" && (m.blocks?.length ?? 0) > 0)
+      && Object.keys(bp.glossary || {}).length === 0;
+    const previewOnly = art.kind === OVERVIEW_DRAFT_KIND || fastDraftInFlight;
     // ?module=<id> — the host passes the reader's current module on a live-build reload so the
     // runtime restores it instead of bouncing to the overview.
     const currentModuleId = typeof req.query.module === "string" ? req.query.module : undefined;
-    try { res.send(renderArtifact(art.blueprint, { previewOnly, currentModuleId })); return; }
+    try { res.send(renderArtifact(bp, { previewOnly, currentModuleId })); return; }
     catch (e) { console.warn("[artifact] re-render failed, serving stored html:", (e as Error).message?.slice(0, 100)); }
   }
   res.send(art.html);
@@ -1475,7 +1543,7 @@ app.get("/healthz", async (_req, res) => {
 // ----------------------------------------------------------------------------
 app.get(/.*/, (req, res, next) => {
   if (req.path.startsWith("/api/") || req.path.includes(".")) return next();
-  res.sendFile(join(PUBLIC_DIR, "index.html"));
+  sendIndex(res);
 });
 
 // ----------------------------------------------------------------------------
