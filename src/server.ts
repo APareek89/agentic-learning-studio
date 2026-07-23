@@ -74,11 +74,15 @@ const PUBLIC_DIR = join(__dirname, "..", "public");
 // ---- Asset cache-busting (deploy freshness) ----------------------------------------------------
 // app.js/CSS are served with a long browser TTL (max-age=3600) but WITHOUT a version in the URL, so
 // after a deploy returning visitors keep running the OLD app.js for up to an hour while talking to
-// the new server — the classic "the app is broken until I hard-refresh". Fix: compute a content hash
-// of the front-end assets at boot and stamp it onto their URLs in index.html (served templated
-// below). The asset bytes keep their long cache; the querystring changes whenever a file changes, so
-// a deploy invalidates the browser copy immediately. Falls back to the raw file if anything fails.
+// the new server — the classic "the app is broken until I hard-refresh". Fix: stamp a version onto
+// the asset URLs in index.html (served templated below). The asset bytes keep their long cache; the
+// querystring changes on every deploy, so browsers refetch immediately.
 const ASSET_V = ((): string => {
+  // Prefer the deploy's git commit — Render injects RENDER_GIT_COMMIT — so EVERY deploy busts the
+  // asset cache, bulletproof even for a changed file the content hash below wouldn't cover. Fall back
+  // to a content hash of the front-end files for local dev / non-Render hosts (busts on real changes).
+  const sha = process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT_SHA;
+  if (sha && sha.length >= 7) return sha.slice(0, 10);
   try {
     const h = createHash("sha1");
     for (const f of ["app.js", "styles.css", "home.css", "skills.js", "skills.css"]) {
