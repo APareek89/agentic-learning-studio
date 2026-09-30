@@ -16,6 +16,7 @@
  * embeddings are all optional.
  */
 
+import "express-async-errors";
 import "dotenv/config"; // load .env before anything reads process.env
 import express from "express";
 import helmet from "helmet";
@@ -30,11 +31,11 @@ import { randomUUID, createHash } from "node:crypto";
 import { extname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { getArtifact, updateArtifact } from "./lib/artifacts";
+import { getArtifact, updateArtifact, registerArtifact } from "./lib/artifacts";
 import { publicCache, cachedHtml } from "./lib/httpcache";
 import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload, hasUploads, hydrateUploads } from "./lib/uploads";
-import { authEnabled, verifyToken, bearerFrom, getUser } from "./lib/auth";
+import { authEnabled, getUser, mountAuth, requireAuth, requireSameOrigin } from "./lib/auth";
 import { listLessons, rateLesson, getPreferences, savePreferences, getCourse, saveProgress } from "./lib/lessons";
 import { listCommunity, getCommunityHtml, likeCommunity, reportCommunity, shareLesson, getContributor, registerContributor, listDrivers, getDriver } from "./lib/community";
 import { listLibrary, getLibraryLesson, relatedLibrary } from "./lib/library";
@@ -42,15 +43,17 @@ import { renderLibraryLessonPage, renderLibraryIndexPage, renderSitemap, renderN
 import { createJob, getJob, getPersistedJob, lessonPercent, acquireGenSlot, activeJobs, hasActiveBuildForArtifact } from "./lib/jobs";
 import { runOverviewJob, runBuildJob, OVERVIEW_DRAFT_KIND } from "./agent/orchestrator";
 import { createSkillJob, getSkillJob, runSkillJob, getCachedSkill, persistSkill, listSavedSkills, getSavedSkill, deleteSavedSkill, type SkillInput } from "./lib/skillgen";
-import { dbEnabled, ragEnabled, rawPool, query } from "./lib/db";
+import { dbEnabled, ragEnabled, rawPool, query, runWithUser } from "./lib/db";
+import { conversationScope, privateModuleCacheKey } from "./lib/request-scope";
+import { getPublicThumbnail } from "./lib/storage";
 import { getBalance, ensureFreeGrant, addCredits, getAccountSummary, spend } from "./lib/credits";
 import { billingConfigured, webhookConfigured, createCheckout, verifyWebhookSignature, parseOrder, lessonsForOrder, fetchPricing, type PlanId } from "./lib/lemonsqueezy";
 import { makeLangfuseHandler } from "./lib/langfuse";
 import { compiledGraph } from "./agent/graph";
 import { runDeepDive } from "./agent/nodes";
-import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, invokeResilient } from "./agent/llm";
+import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, invokeResilient, primaryProvider } from "./agent/llm";
 import { renderArtifact } from "./render/index";
-import { handsOnEligible, resolveBlueprint, peekCache, createHandsOnJob, getHandsOnJob, runHandsOnJob } from "./lib/handson";
+import { handsOnEligible, resolveBlueprint, peekCache, cacheKey as notebookCacheKey, createHandsOnJob, getHandsOnJob, runHandsOnJob } from "./lib/handson";
 import { renderModuleFragment } from "./render/components";
 import { moduleCacheKey } from "./lib/hash";
 import { saveSupportRequest, saveConsent, CONSENT_VERSION, SUPPORT_CATEGORIES } from "./lib/support";
@@ -77,31 +80,36 @@ const PUBLIC_DIR = join(__dirname, "..", "public");
 // the new server — the classic "the app is broken until I hard-refresh". Fix: stamp a version onto
 // the asset URLs in index.html (served templated below). The asset bytes keep their long cache; the
 // querystring changes on every deploy, so browsers refetch immediately.
+const ASSET_FILES = ["app.js", "styles.css", "home.css", "skills.js", "skills.css", "portfolio-theme.css", "portfolio-ui.js", "vendor/lovable-tokens.css", "vendor/lovable-components.css", "vendor/lucide.min.js"];
 const ASSET_V = ((): string => {
   // Prefer the deploy's git commit — Render injects RENDER_GIT_COMMIT — so EVERY deploy busts the
   // asset cache, bulletproof even for a changed file the content hash below wouldn't cover. Fall back
   // to a content hash of the front-end files for local dev / non-Render hosts (busts on real changes).
   const sha = process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT_SHA;
-  if (sha && sha.length >= 7) return sha.slice(0, 10);
+
   try {
-    const h = createHash("sha1");
-    for (const f of ["app.js", "styles.css", "home.css", "skills.js", "skills.css"]) {
+    const h = createHash("sha256");
+    if (sha) h.update(sha);
+    for (const f of ASSET_FILES) {
       try { h.update(readFileSync(join(PUBLIC_DIR, f))); } catch { /* asset optional */ }
     }
     return h.digest("hex").slice(0, 10);
   } catch { return "1"; }
 })();
+function stampAssets(html: string): string {
+  return html.replace(/(["'])\/([^"'?#]+\.(?:css|js))\1/g, (match, quote: string, file: string) => ASSET_FILES.includes(file) ? `${quote}/${file}?v=${ASSET_V}${quote}` : match);
+}
 const INDEX_HTML: string | null = ((): string | null => {
   try {
-    return readFileSync(join(PUBLIC_DIR, "index.html"), "utf8")
-      .replace(/(["'])\/(app\.js|styles\.css|home\.css|skills\.js|skills\.css)\1/g, `$1/$2?v=${ASSET_V}$1`);
+    return stampAssets(readFileSync(join(PUBLIC_DIR, "index.html"), "utf8")
+      .replaceAll("https://prathibhax.com", process.env.APP_URL || "http://localhost:5070"));
   } catch { return null; }
 })();
 /** Serve the version-stamped index.html (falls back to the raw file). Same 60s HTML TTL as static. */
 function sendIndex(res: express.Response): void {
   if (INDEX_HTML) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
+    res.setHeader("Cache-Control", "no-cache");
     res.send(INDEX_HTML);
     return;
   }
@@ -126,6 +134,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://www.prathibhax.com",
   "https://agentic-learning-studio.onrender.com",
   "http://localhost:5070",
+  "http://127.0.0.1:5070",
+  ...(process.env.APP_URL ? [new URL(process.env.APP_URL).origin] : []),
   ...(process.env.EXTRA_ORIGINS ? process.env.EXTRA_ORIGINS.split(",").map((s) => s.trim()) : []),
 ]);
 app.use(cors({
@@ -157,9 +167,9 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
   const lessons = lessonsForOrder(order.planId, order.quantity);
   if (lessons > 0) {
     try {
-      const { credited } = await addCredits(order.userId, lessons, {
+      const { credited } = await runWithUser(order.userId, () => addCredits(order.userId!, lessons, {
         reason: "purchase", planId: order.planId, amountUsd: order.amountUsd, lsOrderId: order.orderId,
-      });
+      }));
       console.log(`[ls-webhook] order ${order.orderId} ${order.planId} x${order.quantity} → ${lessons} lessons for ${order.userId} (${credited ? "credited" : "duplicate"})`);
     } catch (e) {
       // A DB hiccup → 500 so LS retries (still idempotent on the order id).
@@ -171,13 +181,23 @@ app.post("/api/lemonsqueezy/webhook", express.raw({ type: "*/*", limit: "1mb" })
   res.status(200).json({ ok: true });
 });
 
-app.use(express.json({ limit: "40mb" })); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
+app.use(express.json({ limit: "40mb" }));
+mountAuth(app);
+app.use("/api", requireSameOrigin);
+app.use("/api", async (req, res, next) => {
+  const user = await getUser(req);
+  if (user) { res.locals.user = user; runWithUser(user.id, next); } else next();
+}); // base64-encoded uploads ride in the JSON body (25MB file ≈ 34MB base64)
 // Serve the version-stamped index.html for the app shell BEFORE express.static (which would
 // otherwise serve the un-stamped file). Static assets (app.js, styles.css, images) still come from
 // express.static below; requests carry the ?v= query, which static ignores.
 app.get(["/", "/index.html"], (_req, res) => sendIndex(res));
 // Static front-end (index.html, app.js, styles.css, images). A short TTL lets the CDN +
 // browser cache them; index.html stays near-fresh (60s) so a deploy shows up quickly.
+app.get(["/hands-on", "/hands-on.html"], (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache");
+  res.type("html").send(stampAssets(readFileSync(join(PUBLIC_DIR, "hands-on.html"), "utf8")));
+});
 app.use(express.static(PUBLIC_DIR, {
   setHeaders: (res, path) => {
     const isHtml = path.endsWith(".html");
@@ -190,7 +210,7 @@ app.use(express.static(PUBLIC_DIR, {
 // let app.js switch to the account tab from window.location. (Static assets above win.)
 app.get("/account", (_req, res) => sendIndex(res));
 // Hands-On notebook page (browser-run Pyodide practice). Opened in a new tab from a lesson.
-app.get("/hands-on", (_req, res) => res.sendFile(join(PUBLIC_DIR, "hands-on.html")));
+
 
 // Single swappable contact address — change here (or via the CONTACT_EMAIL env var) and it updates
 // across all policy pages (they use a {{CONTACT_EMAIL}} token, injected when served below).
@@ -297,36 +317,75 @@ function sseSend(res: express.Response, event: string, data: unknown): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-/**
- * requireAuth — gate the generation endpoints behind a Supabase session. No-op when
- * auth isn't configured (local dev / open mode), so the app still runs with zero
- * auth setup. The front-end sends `Authorization: Bearer <access_token>`.
- */
-async function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
-  if (!authEnabled()) {
-    next();
-    return;
-  }
-  const token = bearerFrom(req.headers.authorization);
-  const user = token ? await verifyToken(token) : null;
-  if (!user) {
-    res.status(401).json({ error: "Please sign in to continue." });
-    return;
-  }
-  (req as express.Request & { user?: typeof user }).user = user;
+/** Private artifact URLs carry no access grant: enforce the signed-in owner. */
+async function requireArtifactOwner(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
+  const id = req.params.id || req.body?.artifactId;
+  const art = typeof id === "string" ? await getArtifact(id) : undefined;
+  if (!art || art.userId !== res.locals.user?.id) { res.status(404).json({ error: "Lesson not found." }); return; }
   next();
 }
 
-// Public config the browser needs to wire up Supabase Auth (anon key is public).
+// Safe browser capabilities; no provider keys or database settings are exposed.
 app.get("/api/config", (_req, res) => {
   res.json({
     authEnabled: authEnabled(),
-    supabaseUrl: process.env.SUPABASE_URL ?? "",
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+    authProvider: "credentials",
+    googleEnabled: false,
+    mockMode: process.env.ALS_MOCK_MODE === "1",
+    modelProvider: primaryProvider(),
+    thumbnailBaseUrl: process.env.THUMBNAIL_BASE_URL || (process.env.MEDIA_PUBLIC_BASE_URL ? `${process.env.MEDIA_PUBLIC_BASE_URL.replace(/\/$/, "")}/lesson-thumbs` : ""),
     billingEnabled: billingConfigured(),
     unitPriceUsd: 0.99,
   });
 });
+
+// Public fixed-name thumbnails only; private uploads are never exposed here.
+app.get("/media/lesson-thumbs/:name", async (req, res) => {
+  const asset = await getPublicThumbnail(req.params.name);
+  if (!asset) { res.sendStatus(404); return; }
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.type(asset.contentType).send(Buffer.from(asset.body));
+});
+
+// Cached example runs the real renderer/storage path and never invokes a model.
+app.post("/api/examples/start", heavyLimiter, requireAuth, async (req, res) => {
+  try {
+    const slug = typeof req.body?.slug === "string" ? req.body.slug : "agent-memory";
+    const source = await getLibraryLesson(slug);
+    let bp = source?.blueprint;
+    if (!bp) {
+      const index = JSON.parse(await readFile(join(__dirname, "..", "prebuilt", "index.json"), "utf8")) as { slug: string }[];
+      if (!index.some((entry) => entry.slug === slug)) { res.status(404).json({ error: "Example not found." }); return; }
+      bp = JSON.parse(await readFile(join(__dirname, "..", "prebuilt", "lessons", `${slug}.json`), "utf8")) as Blueprint;
+    }
+    bp = structuredClone(bp);
+    bp.learnerProfile.readingMode = "world";
+    const user = res.locals.user;
+    const artifact = await registerArtifact({ kind: "learning-artifact", title: bp.meta.title,
+      html: renderArtifact(bp), blueprint: bp, userId: user.id, userEmail: user.email, prompt: `Cached example: ${bp.meta.title}` });
+    if (slug === "agent-memory") {
+      const notebook = {
+        title: "A tiny agent memory store", kernelNote: "Cached example · runs locally in your browser. No API keys or model calls.",
+        cells: [
+          { type: "markdown", source: "## Keep a preference between conversations\nAn agent can keep a small memory store and retrieve a relevant fact before answering. Here, a Python dictionary stands in for a persistent store." },
+          { type: "code", heading: "Remember a learner preference", explain: "Store one fact under a stable user ID, then read it in a later conversation.", source: "memory = {}\nuser_id = 'learner-1'\nmemory[user_id] = {'preferred_style': 'worked examples', 'topic': 'agent memory'}\nprint('Saved:', memory[user_id])" },
+          { type: "code", heading: "Retrieve only the current learner", explain: "The second learner has no saved preference. This simple check also demonstrates why memory must be scoped to a user.", source: "for current_user in ['learner-1', 'learner-2']:\n    facts = memory.get(current_user, {})\n    print(current_user, '->', facts.get('preferred_style', 'ask their preference first'))" },
+          { type: "markdown", source: "### Try a change\nAdd a preference for learner-2, rerun the retrieval cell, and compare the two outputs. In a real app, a database preserves these records after the program stops." }
+        ]
+      };
+      for (const moduleId of [null, ...bp.modules.map(m => m.id)]) {
+        await query("insert into hands_on_notebooks(lesson_id,module_id,cache_key,notebook,source,model,user_id) values($1,$2,$3,$4,'template','bundled-example',$5) on conflict(cache_key) do nothing", [artifact.id,moduleId,notebookCacheKey(artifact.id,moduleId),JSON.stringify(notebook),user.id]);
+      }
+    }
+    res.json({ artifact, cached: true, provider: "bundled-example" });
+  } catch { res.status(500).json({ error: "The example could not be opened. Please try again." }); }
+});
+
+// Fail closed in mock mode, after identity/owner validation.
+function requireLiveGeneration(_req: express.Request, res: express.Response, next: express.NextFunction): void {
+  if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "Live generation is disabled in demo mode. Use Try an example for a complete cached lesson.", mock: true }); return; }
+  next();
+}
 
 // ----------------------------------------------------------------------------
 // Lesson credits — balance, checkout. One completed build = 1 credit; the free
@@ -335,7 +394,7 @@ app.get("/api/config", (_req, res) => {
 
 /** GET /api/credits — the signed-in user's spendable balance (grants the free credit on first call). */
 app.get("/api/credits", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.json({ balance: 0, signedIn: false }); return; }
   // First time we see a signed-in user → grant the one free credit (idempotent).
   const balance = await ensureFreeGrant(user.id);
@@ -357,7 +416,7 @@ function appOrigin(req: express.Request): string {
  */
 app.post("/api/checkout", heavyLimiter, requireAuth, async (req, res) => {
   if (!billingConfigured()) { res.status(503).json({ error: "Payments aren't set up yet — check back shortly." }); return; }
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in to buy lesson credits." }); return; }
   const planId = (req.body?.planId === "trial-launch" ? "trial-launch" : "lessons-payg") as PlanId;
   const quantity = Math.min(500, Math.max(1, Math.round(Number(req.body?.quantity) || 1)));
@@ -398,7 +457,7 @@ app.get("/api/pricing", async (_req, res) => {
 // title, prompt, days remaining (30-day window), and any rating.
 // ----------------------------------------------------------------------------
 app.get("/api/lessons", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) {
     res.status(401).json({ error: "Please sign in." });
     return;
@@ -409,7 +468,7 @@ app.get("/api/lessons", requireAuth, async (req, res) => {
 // GET /api/account — the signed-in user's account + usage summary for the /account page
 // (identity, plan, live balance, lessons generated, credits spent, member-since).
 app.get("/api/account", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) {
     res.status(401).json({ error: "Please sign in." });
     return;
@@ -423,18 +482,17 @@ app.get("/api/account", requireAuth, async (req, res) => {
 // gate (the Admin card on /account) is cosmetic; THESE checks are the security
 // boundary. Requires auth to be ON — the local-dev pseudo-user is never admin.
 // ----------------------------------------------------------------------------
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "anandp.pareek6@gmail.com")
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 
-function isAdminUser(user: { email?: string } | null): boolean {
-  return !!(authEnabled() && user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+function isAdminUser(user: { email?: string; emailVerified?: Date | string | null } | null): boolean {
+  return !!(authEnabled() && user?.emailVerified && user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
 }
 
-/** Resolve a signed-up user by email straight from Supabase's auth schema (the
- *  server's DATABASE_URL is the Supabase Postgres, so auth.users is readable). */
+/** Admin-only lookup in the preserved canonical user table. */
 async function findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
   const rows = await query<{ id: string; email: string }>(
-    `select id::text as id, email from auth.users where lower(email) = lower($1) limit 1`,
+    `select id::text as id, email from public.users where lower(email) = lower($1) limit 1`,
     [email]
   ).catch(() => []);
   return rows[0] ?? null;
@@ -444,20 +502,20 @@ const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
 // GET /api/admin/user?email= — look up a signed-up user + their live balance.
 app.get("/api/admin/user", requireAuth, async (req, res) => {
-  const admin = await getUser(req.headers.authorization);
+  const admin = await getUser(req);
   if (!isAdminUser(admin)) { res.status(403).json({ error: "Not authorized." }); return; }
   const email = String(req.query.email ?? "").trim();
   if (!EMAIL_RE.test(email)) { res.status(400).json({ error: "Provide a valid email." }); return; }
   const target = await findUserByEmail(email);
   if (!target) { res.json({ found: false }); return; }
-  res.json({ found: true, email: target.email, userId: target.id, balance: await getBalance(target.id) });
+  res.json({ found: true, email: target.email, userId: target.id, balance: await runWithUser(target.id, () => getBalance(target.id)) });
 });
 
 // POST /api/admin/credits {email, credits} — top up a signed-up user's balance.
 // Uses the normal credit-lot machinery (reason:"admin"), so the grant shows in the
 // ledger with the acting admin's email in `code` for audit.
 app.post("/api/admin/credits", requireAuth, async (req, res) => {
-  const admin = await getUser(req.headers.authorization);
+  const admin = await getUser(req);
   if (!isAdminUser(admin)) { res.status(403).json({ error: "Not authorized." }); return; }
   const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
   const credits = Number(req.body?.credits);
@@ -467,18 +525,18 @@ app.post("/api/admin/credits", requireAuth, async (req, res) => {
   }
   const target = await findUserByEmail(email);
   if (!target) { res.status(404).json({ error: `No signed-up user found for ${email}.` }); return; }
-  const { balance } = await addCredits(target.id, credits, {
+  const { balance } = await runWithUser(target.id, () => addCredits(target.id, credits, {
     reason: "admin",
     planId: "admin-topup",
     code: `by:${admin?.email ?? "?"}`,
-  });
+  }));
   console.log(`[admin] ${admin?.email} credited ${credits} to ${target.email} → balance ${balance}`);
   res.json({ ok: true, email: target.email, credited: credits, balance });
 });
 
 // GET /api/preferences — the user's stored landing selections (to pre-fill the form).
 app.get("/api/preferences", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) {
     res.status(401).json({ error: "Please sign in." });
     return;
@@ -488,7 +546,7 @@ app.get("/api/preferences", requireAuth, async (req, res) => {
 
 // POST /api/profile — save the learner's sign-up profile (industry/role/aspiring role/goal).
 app.post("/api/profile", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   const { industry, role, aspiringRole, personalGoal } = (req.body ?? {}) as Record<string, string>;
   const prefs = await getPreferences(user.id);
@@ -499,26 +557,17 @@ app.post("/api/profile", requireAuth, async (req, res) => {
 
 // GET /api/suggest — 3–4 suggested next topics from the learner's recent lessons + profile.
 app.get("/api/suggest", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.json({ topics: [] }); return; }
-  const lessons = await listLessons(user.id);
-  if (!lessons.length) { res.json({ topics: [] }); return; } // only AFTER the first lesson
-  const prefs = await getPreferences(user.id);
-  const profile = (prefs.profile as Record<string, string>) ?? {};
-  try {
-    const llm = makeLLM("haiku", 0.4).withStructuredOutput(z.object({ topics: z.array(z.string()).max(4) }), { name: "suggest" });
-    const out = await llm.invoke([
-      new SystemMessage("Suggest 3–4 SHORT next lesson topics (each ≤6 words) in agentic/AI engineering that build on what the learner has studied and fit their role/goal. Return concise titles only."),
-      new HumanMessage(`Recent lessons: ${lessons.slice(0, 6).map((l) => l.title).join("; ")}\nRole: ${profile.role ?? "?"} (aspiring ${profile.aspiringRole ?? "?"})\nGoal: ${profile.personalGoal ?? "?"}\nIndustry: ${profile.industry ?? "?"}`),
-    ]);
-    res.json({ topics: out.topics ?? [] });
-  } catch { res.json({ topics: [] }); }
+  const studied = new Set((await listLessons(user.id)).map((l) => l.title.toLowerCase()));
+  const library = await listLibrary();
+  res.json({ topics: library.filter((l) => !studied.has(l.title.toLowerCase())).slice(0, 4).map((l) => l.title), source: "library" });
 });
 
 // POST /api/rate — save a 1..5 rating (+ optional comment) for one of the user's lessons.
 app.post("/api/rate", requireAuth, async (req, res) => {
   const { artifactId, rating, comment } = (req.body ?? {}) as { artifactId?: string; rating?: number; comment?: string };
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) {
     res.status(401).json({ error: "Please sign in." });
     return;
@@ -536,7 +585,7 @@ app.post("/api/rate", requireAuth, async (req, res) => {
 // My Lessons % completed + the Trainer "share & save" popup.
 app.post("/api/progress", requireAuth, async (req, res) => {
   const { lessonId, percent, visited, total } = (req.body ?? {}) as { lessonId?: string; percent?: number; visited?: number; total?: number };
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
   await saveProgress(user.id, user.email ?? "", lessonId, percent ?? 0, visited ?? 0, total ?? 0);
@@ -549,13 +598,13 @@ app.post("/api/progress", requireAuth, async (req, res) => {
 // jobId immediately. No module bodies are written (free); the learner reviews the
 // overview, then clicks "Generate Lesson" (→ /api/build) to commit.
 // ----------------------------------------------------------------------------
-app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
+app.post("/api/overview", heavyLimiter, requireAuth, requireLiveGeneration, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const prompt = typeof body.prompt === "string" ? body.prompt : "";
   if (!prompt.trim()) { res.status(400).json({ error: "Missing 'prompt'." }); return; }
   if (prompt.length > 5000) { res.status(400).json({ error: "That request is too long (max 5000 characters)." }); return; }
   const cards = (body.cards as Record<string, string>) ?? {};
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   // NOTE: any `userProfile` in the request body is intentionally IGNORED — for signed-in users the
   // profile is always sourced from saved preferences (single source of truth), so the body field
   // cannot override it. Anonymous users get an empty profile.
@@ -599,7 +648,7 @@ app.post("/api/overview", heavyLimiter, requireAuth, async (req, res) => {
 // has a TOCTOU gap (runBuildJob tags the job's artifactId asynchronously), so we pair it with this
 // synchronous Set, claimed before any await and released when the build settles.
 const buildingArtifacts = new Set<string>();
-app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
+app.post("/api/build", heavyLimiter, requireAuth, requireArtifactOwner, requireLiveGeneration, async (req, res) => {
   const artifactId = typeof req.body?.artifactId === "string" ? req.body.artifactId : "";
   if (!artifactId) { res.status(400).json({ error: "Missing 'artifactId'." }); return; }
   const art = await getArtifact(artifactId);
@@ -625,7 +674,7 @@ app.post("/api/build", heavyLimiter, requireAuth, async (req, res) => {
     if ((art.uploadIds?.length ?? 0) > 0 && !hasUploads(art.uploadIds)) {
       console.warn("[/api/build] uploadIds present but none resolvable (stale after restart?) — building on KB/model for artifact", artifactId);
     }
-    const user = await getUser(req.headers.authorization);
+    const user = await getUser(req);
     // Credit gate: a completed build costs 1 lesson credit. Grant the one free credit
     // on the first attempt, then block at zero (the buyer is sent to Pricing). Skipped
     // when the DB/auth is off (local dev) so the open-mode flow stays free.
@@ -651,7 +700,7 @@ app.get("/api/job/:id", requireAuth, async (req, res) => {
   // Local memory first; fall back to the DB tracker (a poll may land on a different instance than
   // the one generating, or after a restart). The lesson content itself is always durable.
   const job = getJob(req.params.id) ?? await getPersistedJob(req.params.id);
-  if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
+  if (!job || job.userId !== res.locals.user?.id) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
   res.json({
     id: job.id, status: job.status, stage: job.stage, error: job.error, isCourse: job.isCourse, courseId: job.courseId,
     lessons: job.lessons.map((l) => ({ index: l.index, title: l.title, artifactId: l.artifactId, status: l.status, percent: lessonPercent(l), builtModules: l.builtModules, totalModules: l.totalModules })),
@@ -664,7 +713,7 @@ app.get("/api/job/:id", requireAuth, async (req, res) => {
 // The browser polls GET /api/skill/job/:id. Grounded by the "Agent Skills" KB
 // category when present; generates ungrounded (logged) if not yet ingested.
 // ----------------------------------------------------------------------------
-app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
+app.post("/api/skill/generate", heavyLimiter, requireAuth, requireLiveGeneration, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown, max = 5000) => (typeof v === "string" ? v.slice(0, max) : "");
   const task = str(body.task).trim();
@@ -680,7 +729,7 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
     skillName: str(body.skillName, 120),
     refDocIds: Array.isArray(body.refDocIds) ? (body.refDocIds as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 12) : [],
   };
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   input.userId = user?.id ?? "";
   input.userEmail = user?.email ?? "";
   // Credit gate (batch-1): a SKILL costs 0.5 credits. Grant the free credits on first use, then
@@ -715,13 +764,13 @@ app.post("/api/skill/generate", heavyLimiter, requireAuth, async (req, res) => {
 // GET /api/skill/job/:id — live progress + the finished skill package.
 app.get("/api/skill/job/:id", requireAuth, (req, res) => {
   const job = getSkillJob(req.params.id);
-  if (!job) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
+  if (!job || job.userId !== res.locals.user?.id) { res.status(404).json({ error: "Job not found (finished, or the server restarted)." }); return; }
   res.json({ id: job.id, status: job.status, percent: job.percent, error: job.error, grounded: job.grounded, saved: job.saved, skill: job.skill });
 });
 
 // GET /api/skills — the signed-in user's saved skills (My Skills list).
 app.get("/api/skills", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.json({ skills: [] }); return; }
   const skills = await listSavedSkills(user.id, user.email);
   res.json({ skills });
@@ -729,7 +778,7 @@ app.get("/api/skills", requireAuth, async (req, res) => {
 
 // GET /api/skill/saved/:id — full package of one saved skill (to re-open it).
 app.get("/api/skill/saved/:id", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   const row = await getSavedSkill(req.params.id, user.id, user.email);
   if (!row) { res.status(404).json({ error: "That skill wasn't found." }); return; }
@@ -738,7 +787,7 @@ app.get("/api/skill/saved/:id", requireAuth, async (req, res) => {
 
 // DELETE /api/skill/saved/:id — remove a saved skill from My Skills.
 app.delete("/api/skill/saved/:id", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   const ok = await deleteSavedSkill(req.params.id, user.id, user.email);
   res.json({ ok });
@@ -748,7 +797,7 @@ app.delete("/api/skill/saved/:id", requireAuth, async (req, res) => {
 // truth). Lets My Lessons show a build that's continuing AFTER a page refresh, when the
 // client-side poller is gone. Keyed by artifactId so the dashboard can match its rows.
 app.get("/api/jobs/active", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.json({ jobs: [] }); return; }
   const out = activeJobs(user.id).flatMap((j) =>
     j.lessons.filter((l) => l.artifactId).map((l) => ({
@@ -768,7 +817,7 @@ app.get("/api/course/:courseId", requireAuth, async (req, res) => {
 // ----------------------------------------------------------------------------
 // POST /api/learn — run the real generation graph and stream it over SSE.
 // ----------------------------------------------------------------------------
-app.post("/api/learn", requireAuth, async (req, res) => {
+app.post("/api/learn", heavyLimiter, requireAuth, requireLiveGeneration, async (req, res) => {
   const { prompt, cards, threadId, uploadIds, referOnly, industry, buildGoal, objective, levels, lessonTypes, framework, readingMode } = (req.body ?? {}) as {
     prompt?: string;
     cards?: Record<string, string>;
@@ -791,7 +840,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
 
   // Resolve the owner (real user when auth is on; a stable local id otherwise) so
   // the generated lesson lands in their dashboard, and remember their selections.
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   let userProfile: Record<string, unknown> = {};
   if (user) {
     const prefs = await getPreferences(user.id);
@@ -812,7 +861,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
 
   // Per-request Langfuse handler (null when keys absent → tracing skipped).
   const langfuse = makeLangfuseHandler();
-  const thread_id = threadId || `web-${Date.now()}`;
+  const { publicThreadId, checkpointId: thread_id } = conversationScope(res.locals.user.id, threadId);
   const config = {
     configurable: { thread_id },
     callbacks: langfuse ? [langfuse] : [],
@@ -849,9 +898,9 @@ app.post("/api/learn", requireAuth, async (req, res) => {
         for (const a of u.artifacts ?? []) sseSend(res, "artifact", a);
       }
     }
-    sseSend(res, "done", { thread_id });
+    sseSend(res, "done", { thread_id: publicThreadId });
   } catch (err) {
-    console.error("[/api/learn]", err);
+    console.warn("[/api/learn]", err instanceof Error ? err.name : "Error");
     sseSend(res, "error", { message: err instanceof Error ? err.message : String(err) });
   } finally {
     if (langfuse) await langfuse.flushAsync().catch(() => {});
@@ -863,7 +912,7 @@ app.post("/api/learn", requireAuth, async (req, res) => {
 // GET /api/artifact/:id — serve the self-contained HTML (used as the viewer's
 // iframe source and for "open in new window").
 // ----------------------------------------------------------------------------
-app.get("/api/artifact/:id", async (req, res) => {
+app.get("/api/artifact/:id", requireAuth, requireArtifactOwner, async (req, res) => {
   const art = await getArtifact(req.params.id);
   if (!art) {
     res.status(404).send("<p>Artifact not found.</p>");
@@ -896,7 +945,7 @@ app.get("/api/artifact/:id", async (req, res) => {
 });
 
 // GET /api/artifact/:id/download — same HTML, but as a file download.
-app.get("/api/artifact/:id/download", async (req, res) => {
+app.get("/api/artifact/:id/download", requireAuth, requireArtifactOwner, async (req, res) => {
   const art = await getArtifact(req.params.id);
   if (!art) {
     res.status(404).send("Not found");
@@ -945,7 +994,7 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
       const art = await getArtifact(artifactId);
       const bp = art?.blueprint;
       const module = bp?.modules.find((m) => m.id === moduleId);
-      if (!art || !bp || !module) return;
+      if (!art || !bp || !module || process.env.ALS_MOCK_MODE === "1") return;
       if (module.loadState === "full" && module.blocks.length > 0) return; // already built
       const { ok } = await runDeepDive(bp, moduleId, { uploadIds: art.uploadIds, referOnly: art.referOnly });
       if (!ok) return; // leave as a stub; the next poll re-kicks a build
@@ -953,7 +1002,7 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
       await query(
         `insert into module_cache (cache_key, fragment_html) values ($1, $2)
          on conflict (cache_key) do update set fragment_html = excluded.fragment_html`,
-        [buildModuleCacheKey(bp, moduleId), fragmentHtml]
+        [privateModuleCacheKey(art.userId!, artifactId, buildModuleCacheKey(bp, moduleId)), fragmentHtml]
       ).catch(() => {});
       // Persist by GRAFTING this module into a freshly-fetched blueprint — two concurrent
       // single-module builds each held their own full-blueprint copy, so the later write
@@ -977,7 +1026,7 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
   })();
 }
 
-app.post("/api/module", async (req, res) => {
+app.post("/api/module", requireAuth, requireArtifactOwner, async (req, res) => {
   const { artifactId, moduleId } = (req.body ?? {}) as { artifactId?: string; moduleId?: string };
   const art = artifactId ? await getArtifact(artifactId) : undefined;
   const bp = art?.blueprint;
@@ -986,7 +1035,7 @@ app.post("/api/module", async (req, res) => {
   if (!module) { res.status(404).json({ error: "No such module." }); return; }
 
   try {
-    const cacheKey = buildModuleCacheKey(bp, moduleId);
+    const cacheKey = privateModuleCacheKey(res.locals.user.id, artifactId!, buildModuleCacheKey(bp, moduleId));
     // 1) Cache hit → instant, no Claude call.
     const cached = await query<{ fragment_html: string }>(`select fragment_html from module_cache where cache_key = $1`, [cacheKey]);
     if (cached.length) {
@@ -1014,17 +1063,23 @@ app.post("/api/module", async (req, res) => {
     //    gateway timeout → 502). If a build job is already building this artifact, IT is the builder
     //    — just tell the runtime to poll. Otherwise (standalone / library / restarted-mid-build
     //    lesson) kick a detached single-module build. Either way return 202 so the iframe POLLS.
-    if (!hasActiveBuildForArtifact(artifactId!)) ensureModuleBuild(artifactId!, moduleId);
+    if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "This module is not cached. Live generation is disabled in demo mode." }); return; }
+    if (!hasActiveBuildForArtifact(artifactId!)) {
+      heavyLimiter(req, res, () => { ensureModuleBuild(artifactId!, moduleId); res.status(202).json({ moduleId, building: true }); });
+      return;
+    }
     res.status(202).json({ moduleId, building: true });
   } catch (err) {
-    console.error("[/api/module]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    console.warn("[/api/module]", err instanceof Error ? err.name : "Error");
+    res.status(500).json({ error: "The request could not be completed. Please try again." });
   }
 });
 
 // GET /api/artifact/:id/full — eagerly build EVERY remaining module, then return the
 // complete, offline-self-contained HTML as a download (the runtime queue stays inert).
-app.get("/api/artifact/:id/full", async (req, res) => {
+app.get("/api/artifact/:id/full", requireAuth, requireArtifactOwner, async (req, res) => {
+  const cached = await getArtifact(req.params.id);
+  if (cached?.blueprint?.modules.some((m) => m.loadState !== "full" || !m.blocks.length)) { res.status(409).json({ error: "Finish building the lesson before downloading it." }); return; }
   const art = await getArtifact(req.params.id);
   const bp = art?.blueprint;
   if (!art || !bp) {
@@ -1051,7 +1106,7 @@ app.get("/api/artifact/:id/full", async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="lesson-${art.id}.html"`);
     res.send(html);
   } catch (err) {
-    console.error("[/api/artifact/:id/full]", err);
+    console.warn("[/api/artifact/:id/full]", err instanceof Error ? err.name : "Error");
     // Last resort: serve whatever HTML the artifact already has rather than fail the download.
     if (art.html) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -1066,7 +1121,7 @@ app.get("/api/artifact/:id/full", async (req, res) => {
 // ----------------------------------------------------------------------------
 // POST /api/ask — "Ask More": answer a learner question from RAG (short reply in chat).
 // ----------------------------------------------------------------------------
-app.post("/api/ask", requireAuth, async (req, res) => {
+app.post("/api/ask", heavyLimiter, requireAuth, requireArtifactOwner, requireLiveGeneration, async (req, res) => {
   const { artifactId, question } = (req.body ?? {}) as { artifactId?: string; question?: string };
   if (!question?.trim()) { res.status(400).json({ error: "Missing question." }); return; }
   const art = artifactId ? await getArtifact(artifactId) : undefined;
@@ -1083,18 +1138,19 @@ app.post("/api/ask", requireAuth, async (req, res) => {
       ? `LESSON: ${bp.meta.title}${bp.meta.thesis ? ` — ${bp.meta.thesis}` : ""}\nMODULES: ${bp.modules.map((m) => m.title).join("; ")}`
       : "";
     const sys = `You answer a learner's follow-up question about "${topic}" CONCISELY (3–5 sentences max, plain language). Answer from your own accurate knowledge and stay consistent with the lesson context below. Be concrete; do not pad.`;
-    const llm = makeLLM("sonnet", 0.2, { maxTokens: 500 });
+    const llm = makeLLM("sonnet", 0.2, { maxTokens: 500, maxRetries: 0, auditRequest: true, reasoningEffort: "none" });
     const out = await llm.invoke([new SystemMessage(sys), new HumanMessage(`${ctx ? ctx + "\n\n" : ""}QUESTION: ${question}`)]);
+    console.info("[paid-call]", JSON.stringify({ provider: primaryProvider(), model: llm.model, inputTokens: out.usage_metadata?.input_tokens, outputTokens: out.usage_metadata?.output_tokens, inputCachedTokens: out.usage_metadata?.input_token_details?.cache_read, reasoningTokens: out.usage_metadata?.output_token_details?.reasoning, requestId: out.response_metadata?.id || out.id, endpoint: "/api/ask" }));
     const answer = typeof out.content === "string" ? out.content : Array.isArray(out.content) ? out.content.map((c) => ("text" in c ? c.text : "")).join("") : String(out.content);
     res.json({ answer, sources: [] });
   } catch (err) {
-    console.error("[/api/ask]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    console.warn("[/api/ask]", err instanceof Error ? err.name : "Error");
+    res.status(500).json({ error: "The request could not be completed. Please try again." });
   }
 });
 
 // POST /api/ask/expand — turn a Q&A into a full new module appended to the lesson.
-app.post("/api/ask/expand", requireAuth, async (req, res) => {
+app.post("/api/ask/expand", heavyLimiter, requireAuth, requireArtifactOwner, requireLiveGeneration, async (req, res) => {
   const { artifactId, question } = (req.body ?? {}) as { artifactId?: string; question?: string };
   const art = artifactId ? await getArtifact(artifactId) : undefined;
   const bp = art?.blueprint;
@@ -1112,17 +1168,19 @@ app.post("/api/ask/expand", requireAuth, async (req, res) => {
     await updateArtifact(artifactId!, { blueprint: bp, html: renderArtifact(bp) });
     res.json({ ok: true, moduleId: id });
   } catch (err) {
-    console.error("[/api/ask/expand]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    console.warn("[/api/ask/expand]", err instanceof Error ? err.name : "Error");
+    res.status(500).json({ error: "The request could not be completed. Please try again." });
   }
 });
 
 // POST /api/check — grade ONE knowledge-check question. MCQ is verified against the
 // stored Blueprint ("by DB"); freeText is graded by the LLM.
-// PUBLIC (no requireAuth): the artifact runtime grades knowledge-check answers from inside
-// the iframe (no auth token). Same access model as /api/artifact/:id; only reads/grades an
-// existing artifact's stored questions.
-app.post("/api/check", async (req, res) => {
+// Private questions require their owner; public curated MCQs remain free.
+// The sandboxed iframe uses the authenticated host relay for its active lesson.
+app.post("/api/check", (req, res, next) => {
+  if (req.body?.artifactId) { void requireAuth(req, res, () => { void requireArtifactOwner(req, res, next); }); }
+  else next();
+}, async (req, res) => {
   const { artifactId, slug, source, blockId, questionId, choiceIndex, text } = (req.body ?? {}) as {
     artifactId?: string; slug?: string; source?: string; blockId?: string; questionId?: string; choiceIndex?: number; text?: string;
   };
@@ -1133,7 +1191,7 @@ app.post("/api/check", async (req, res) => {
     bp = (await getArtifact(artifactId))?.blueprint;
   } else if (typeof slug === "string" && slug) {
     const table = source === "community" ? "community_lessons" : "prebuilt_lessons";
-    const rows = await query<{ blueprint: unknown }>(`select blueprint from ${table} where slug = $1 limit 1`, [slug]).catch(() => []);
+    const rows = await query<{ blueprint: unknown }>(`select blueprint from ${table} where slug = $1 ${source === "community" ? "and hidden = false" : ""} limit 1`, [slug]).catch(() => []);
     const raw = rows[0]?.blueprint;
     bp = raw ? ((typeof raw === "string" ? JSON.parse(raw) : raw) as Blueprint) : undefined;
   }
@@ -1157,8 +1215,11 @@ app.post("/api/check", async (req, res) => {
     res.json({ correct, correctIndex, explanation: q.explanation });
     return;
   }
+  if (!(await getUser(req))) { res.status(401).json({ error: "Please sign in for written-answer feedback." }); return; }
+  if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "Written-answer grading is disabled in demo mode." }); return; }
   // freeText → LLM grade against the reference answer. (Batch B — Haiku grader fails over to
   // GPT-5.4-mini when wired; env-gated no-op otherwise.)
+  heavyLimiter(req, res, async () => {
   try {
     const GradeSchema = z.object({ correct: z.boolean(), feedback: z.string() });
     const grader = structuredWithFallback(
@@ -1172,9 +1233,10 @@ app.post("/api/check", async (req, res) => {
     ])) as z.infer<typeof GradeSchema>;
     res.json({ correct: out.correct, feedback: out.feedback, explanation: q.explanation });
   } catch (err) {
-    console.error("[/api/check]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    console.warn("[/api/check]", err instanceof Error ? err.name : "Error");
+    res.status(500).json({ error: "The request could not be completed. Please try again." });
   }
+  });
 });
 
 // ----------------------------------------------------------------------------
@@ -1185,7 +1247,7 @@ app.post("/api/check", async (req, res) => {
 // signing in (the auth wall is at Generate). Uploads go to the session-scoped in-memory
 // store (random docIds, not user data) and generation stays gated, so the real wall holds.
 // ----------------------------------------------------------------------------
-app.post("/api/upload", heavyLimiter, async (req, res) => {
+app.post("/api/upload", heavyLimiter, requireAuth, async (req, res) => {
   const { filename, dataBase64 } = (req.body ?? {}) as { filename?: string; dataBase64?: string };
   if (!filename || !dataBase64) {
     res.status(400).json({ error: "Expected { filename, dataBase64 }." });
@@ -1207,8 +1269,8 @@ app.post("/api/upload", heavyLimiter, async (req, res) => {
     const info = await addUpload(id, loaded);
     res.json({ docId: id, title: info.title, chunkCount: info.chunkCount, sourceType: loaded.sourceType });
   } catch (err) {
-    console.error("[/api/upload]", err);
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    console.warn("[/api/upload]", err instanceof Error ? err.name : "Error");
+    res.status(500).json({ error: "The request could not be completed. Please try again." });
   } finally {
     await unlink(tmp).catch(() => {});
   }
@@ -1269,7 +1331,8 @@ app.post("/api/hands-on/start", heavyLimiter, requireAuth, async (req, res) => {
   }
   const hit = await peekCache(lessonId, moduleId);
   if (hit) { res.json({ status: "done", notebook: hit.notebook, source: hit.source }); return; }
-  const user = await getUser(req.headers.authorization);
+  if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "This notebook is not cached. Live generation is disabled in demo mode." }); return; }
+  const user = await getUser(req);
   const job = createHandsOnJob(user?.id ?? "anon");
   void runHandsOnJob(job, lessonId, moduleId, bp);
   res.json({ status: "pending", jobId: job.id });
@@ -1278,7 +1341,7 @@ app.post("/api/hands-on/start", heavyLimiter, requireAuth, async (req, res) => {
 // GET /api/hands-on/job/:id — poll the generator's progress.
 app.get("/api/hands-on/job/:id", requireAuth, (req, res) => {
   const job = getHandsOnJob(req.params.id);
-  if (!job) { res.status(404).json({ error: "That hands-on job wasn't found (it may have finished or the server restarted)." }); return; }
+  if (!job || job.userId !== res.locals.user?.id) { res.status(404).json({ error: "That hands-on job was not found." }); return; }
   res.json({ status: job.status, percent: job.percent, notebook: job.notebook, source: job.source, error: job.error });
 });
 
@@ -1323,7 +1386,7 @@ app.post("/api/community/report", async (req, res) => {
 // With { contributor: true } it publishes as a contributor (credited name, no reward).
 app.post("/api/community/share", requireAuth, async (req, res) => {
   const { lessonId, displayName, contributor } = (req.body ?? {}) as { lessonId?: string; displayName?: string; contributor?: boolean };
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   if (!lessonId) { res.status(400).json({ error: "Missing lessonId." }); return; }
   const result = await shareLesson(lessonId, { id: user.id, email: user.email ?? "" }, displayName, { contributor: !!contributor });
@@ -1336,13 +1399,13 @@ app.post("/api/community/share", requireAuth, async (req, res) => {
 // the public "Community Drivers" directory + profile pages.
 // ----------------------------------------------------------------------------
 app.get("/api/contributor/me", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   res.json({ registered: !!(await getContributor(user.id)) });
 });
 
 app.post("/api/contributor/register", requireAuth, async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   if (!user) { res.status(401).json({ error: "Please sign in." }); return; }
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
@@ -1374,8 +1437,7 @@ app.get("/api/community/driver/:userId", async (req, res) => {
 // ----------------------------------------------------------------------------
 // POST /api/upload-repo — clone a PUBLIC git repo, extract its text/code, embed it
 // LOCALLY into the session upload store (same grounding path as documents).
-// PUBLIC (no requireAuth): same reason as /api/upload — learners attach a repo in the open
-// Configurator before signing in; generation stays gated. Abuse / OOM bounds (≤150 files / ≤2MB /
+// Authenticated uploads are isolated to the signed-in learner. Abuse / OOM bounds (≤150 files / ≤2MB /
 // ≤128KB-per-file / ≤140 chunks / 45s clone, public https github/gitlab/bitbucket only) — see the
 // REPO_MAX_* constants. Tightened from 400/4MB/90s because clone+embed runs on the request path.
 // ----------------------------------------------------------------------------
@@ -1390,7 +1452,7 @@ const REPO_MAX_FILE_BYTES = 128 * 1024;      // was 200KB
 const REPO_MAX_CHUNKS = 140;                 // was 220 (caps the local-embed workload)
 const REPO_CLONE_TIMEOUT_MS = 45000;         // was 90000
 
-app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
+app.post("/api/upload-repo", heavyLimiter, requireAuth, async (req, res) => {
   const repoUrl = typeof req.body?.repoUrl === "string" ? req.body.repoUrl.trim() : "";
   if (!/^https:\/\/(www\.)?(github|gitlab|bitbucket)\.(com|org)\/[\w.-]+\/[\w.-]+/i.test(repoUrl)) {
     res.status(400).json({ error: "Paste a public https GitHub / GitLab / Bitbucket repo URL." });
@@ -1425,7 +1487,7 @@ app.post("/api/upload-repo", heavyLimiter, async (req, res) => {
     const info = await addRepoUpload(id, title, files, REPO_MAX_CHUNKS);
     res.json({ docId: id, title, chunkCount: info.chunkCount, fileCount: files.length });
   } catch (err) {
-    console.error("[/api/upload-repo]", err);
+    console.warn("[/api/upload-repo]", err instanceof Error ? err.name : "Error");
     res.status(500).json({ error: "Couldn't clone/read that repo. Make sure it's public. " + (err instanceof Error ? err.message.slice(0, 100) : "") });
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
@@ -1482,7 +1544,7 @@ app.post("/api/support/complaint", supportLimiter, async (req, res) => {
 app.post("/api/feedback", betaLimiter, async (req, res) => {
   const message = typeof req.body?.message === "string" ? req.body.message : "";
   if (!message.trim()) { res.status(400).json({ ok: false, error: "Please enter some feedback." }); return; }
-  const user = await getUser(req.headers.authorization).catch(() => null);
+  const user = await getUser(req).catch(() => null);
   const saved = await saveFeedback({
     message, userId: user?.id, userEmail: user?.email,
     userAgent: String(req.headers["user-agent"] || ""), ip: req.ip,
@@ -1493,7 +1555,7 @@ app.post("/api/feedback", betaLimiter, async (req, res) => {
 app.post("/api/event", async (req, res) => {
   const name = typeof req.body?.name === "string" ? req.body.name : "";
   if (!name.trim()) { res.status(400).json({ ok: false }); return; }
-  const user = await getUser(req.headers.authorization).catch(() => null);
+  const user = await getUser(req).catch(() => null);
   const ref = typeof req.body?.ref === "string" ? req.body.ref : undefined;
   const props = (req.body && typeof req.body.props === "object" && req.body.props && !Array.isArray(req.body.props)) ? req.body.props : {};
   await logEvent(name, { userId: user?.id, userEmail: user?.email, ref, props });
@@ -1504,7 +1566,7 @@ app.post("/api/event", async (req, res) => {
 // PUBLIC: consent is logged at signup, possibly before a session exists; user id is
 // attached when a bearer token is present.
 app.post("/api/consent", async (req, res) => {
-  const user = await getUser(req.headers.authorization);
+  const user = await getUser(req);
   const ConsentSchema = z.object({
     consentType: z.string().trim().max(60).optional(),
     email: z.string().trim().email().max(254).optional(),
@@ -1528,12 +1590,12 @@ app.post("/api/consent", async (req, res) => {
 // usual cause of "my lessons aren't saved / dashboard is empty after refresh".
 app.get("/healthz", async (_req, res) => {
   let db = false;
-  let dbError: string | undefined;
+
   if (dbEnabled()) {
     try { const r = await query<{ ok: number }>("select 1 as ok"); db = r.length > 0; }
-    catch (e) { db = false; dbError = e instanceof Error ? e.message.slice(0, 120) : String(e); }
+    catch { db = false; }
   }
-  res.json({ ok: true, db, dbConfigured: dbEnabled(), dbError, rag: db, auth: authEnabled() });
+  res.status(db ? 200 : 503).json({ ok: db, db, dbConfigured: dbEnabled(), rag: db, auth: authEnabled() });
 });
 
 // ----------------------------------------------------------------------------
@@ -1554,13 +1616,20 @@ app.get(/.*/, (req, res, next) => {
 // Boot.
 // ----------------------------------------------------------------------------
 const PORT = Number(process.env.PORT) || 5070;
+app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) { next(error); return; }
+  const status = Number((error as { status?: number })?.status) || 500;
+  console.warn("[request]", error instanceof Error ? error.name : "Error", status);
+  res.status(status >= 400 && status < 600 ? status : 500).json({ error: status === 401 ? "Please sign in." : status === 403 ? "Not authorized." : "The request could not be completed. Please try again." });
+});
 const server = app.listen(PORT, () => {
   console.log(`\n  Agentic Learning Studio → http://localhost:${PORT}\n`);
-  console.log(`  ANTHROPIC_API_KEY : ${process.env.ANTHROPIC_API_KEY ? "set" : "MISSING (required for real generation)"}`);
+  console.log(`  PRIMARY PROVIDER : ${primaryProvider()}`);
+  console.log(`  MODEL KEY        : ${(primaryProvider() === "openai" ? process.env.OPENAI_API_KEY : process.env.ANTHROPIC_API_KEY) ? "set" : "MISSING (required for real generation)"}`);
   console.log(`  Database (RAG)    : ${dbEnabled() ? "on" : "off (graceful — runs without retrieval)"}`);
   console.log(`  ragEnabled()      : ${ragEnabled()}`);
   console.log(`  Langfuse tracing  : ${process.env.LANGFUSE_PUBLIC_KEY ? "on" : "off"}`);
-  console.log(`  Sign-in (Supabase): ${authEnabled() ? "REQUIRED (auth on)" : "off (open — set SUPABASE_URL+SUPABASE_ANON_KEY to require sign-in)"}\n`);
+  console.log("  Sign-in: Auth.js password sessions required");
 });
 
 // ----------------------------------------------------------------------------

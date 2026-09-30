@@ -22,7 +22,7 @@ import type { LibraryCard, LibraryLesson } from "../lib/library";
 
 const SITE = "Agentic Learning Studio";
 /** Canonical production origin (overridable for staging/preview). No trailing slash. */
-const BASE = (process.env.PUBLIC_BASE_URL || "https://prathibhax.com").replace(/\/$/, "");
+const BASE = (process.env.PUBLIC_BASE_URL || process.env.APP_URL || "http://localhost:5070").replace(/\/$/, "");
 const OG_IMAGE = `${BASE}/wizbit-logo.png`;
 
 // ---- tiny escapers (self-contained; renderArtifact has its own) --------------
@@ -323,7 +323,7 @@ ${lessonFooter({ slug: "", title: "", description: null, category: null, level: 
 // (GEO), unlike the interactive world lessons.
 // ============================================================================
 
-/** Per-category chrome: thumbnail key (Supabase `lesson-thumbs` bucket) + swatch (mirrors app.js). */
+/** Per-category chrome: thumbnail key (private S3 `lesson-thumbs` prefix) + swatch (mirrors app.js). */
 const CAT: Record<string, { thumb: string; bg: string; text: string }> = {
   "Agents": { thumb: "agents", bg: "#EEEDFE", text: "#3C3489" },
   "RAG": { thumb: "rag", bg: "#E1F5EE", text: "#0F6E56" },
@@ -336,10 +336,10 @@ const CAT: Record<string, { thumb: string; bg: string; text: string }> = {
   "Foundations": { thumb: "foundations", bg: "#EAF3DE", text: "#27500A" },
   "Build Projects": { thumb: "build", bg: "#FAECE7", text: "#712B13" },
 };
-const SUPA = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
+const THUMB_BASE = (process.env.THUMBNAIL_BASE_URL || (process.env.MEDIA_PUBLIC_BASE_URL ? `${process.env.MEDIA_PUBLIC_BASE_URL.replace(/\/$/, "")}/lesson-thumbs` : "")).replace(/\/$/, "");
 function catThumb(cat: string): string {
   const k = CAT[cat]?.thumb;
-  return SUPA && k ? `${SUPA}/storage/v1/object/public/lesson-thumbs/${k}.webp` : "";
+  return k ? THUMB_BASE ? `${THUMB_BASE}/${k}.webp` : `/home-img/cat-${k}.jpg` : "";
 }
 
 interface Guide {

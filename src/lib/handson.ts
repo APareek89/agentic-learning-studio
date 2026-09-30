@@ -18,8 +18,8 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { makeLLM } from "../agent/llm";
-import { dbEnabled, query } from "./db";
+import { makeLLM, structuredOutput, configuredModelId } from "../agent/llm";
+import { dbEnabled, query, requireUserId } from "./db";
 import { getArtifact } from "./artifacts";
 import { sha256 } from "./hash";
 import { localEmbeddings, toVectorLiteral } from "../rag/embed";
@@ -58,7 +58,7 @@ export interface NotebookResult {
 
 // ---- cache key ----
 export function cacheKey(lessonId: string, moduleId: string | null): string {
-  return sha256(`${lessonId}|${moduleId ?? ""}|${SCHEMA_VERSION}`);
+  return sha256(`${requireUserId()}|${lessonId}|${moduleId ?? ""}|${SCHEMA_VERSION}`);
 }
 
 // ============================================================================
@@ -141,7 +141,7 @@ const VerifySchema = z.object({ ok: z.boolean(), notebook: NotebookSchema });
 
 async function verifyNotebook(nb: Notebook): Promise<{ ok: boolean; notebook: Notebook }> {
   try {
-    const llm = makeLLM("haiku", 0).withStructuredOutput(VerifySchema, { name: "verify_notebook" });
+    const llm = structuredOutput(makeLLM("haiku", 0), VerifySchema, { name: "verify_notebook" });
     const out = await llm.invoke([
       new SystemMessage(VERIFY_SYSTEM),
       new HumanMessage("Review and fix this notebook so EVERY code cell runs with no error and prints clear output:\n\n" + JSON.stringify(nb).slice(0, 7000)),
@@ -182,7 +182,7 @@ function buildContext(bp: Blueprint, module?: Module): NotebookContext {
 }
 
 export async function generateNotebook(ctx: NotebookContext, strict = false): Promise<Notebook> {
-  const llm = makeLLM("haiku", 0).withStructuredOutput(NotebookSchema, { name: "hands_on_notebook" });
+  const llm = structuredOutput(makeLLM("haiku", 0), NotebookSchema, { name: "hands_on_notebook" });
   const sys = strict ? `${HANDSON_SYSTEM}\n\n${STRICT_SUFFIX}` : HANDSON_SYSTEM;
   const human =
     `Lesson topic: ${ctx.topic}\n` +
@@ -226,6 +226,7 @@ function embedTextFor(ctx: NotebookContext): string {
 
 // Nearest prior notebook by embedding (≥ threshold). Skips fallbacks (no embedding stored).
 async function searchKB(embedText: string): Promise<{ notebook: Notebook; sim: number } | null> {
+  const userId = requireUserId();
   if (!dbEnabled() || !embedText) return null;
   try {
     // Symmetric similarity: embed the search topic the SAME way stored topics are embedded
@@ -235,10 +236,10 @@ async function searchKB(embedText: string): Promise<{ notebook: Notebook; sim: n
     const rows = await query<{ notebook: Notebook | string; sim: number | string }>(
       `select notebook, 1 - (embedding <=> $1::vector) as sim
          from hands_on_notebooks
-        where embedding is not null and source <> 'fallback'
+        where embedding is not null and source <> 'fallback' and user_id = $2
         order by embedding <=> $1::vector
         limit 1`,
-      [lit]
+      [lit, userId]
     );
     if (rows.length && Number(rows[0].sim) >= KB_SIM_THRESHOLD) {
       const nb = typeof rows[0].notebook === "string" ? (JSON.parse(rows[0].notebook) as Notebook) : rows[0].notebook;
@@ -256,13 +257,14 @@ async function searchKB(embedText: string): Promise<{ notebook: Notebook; sim: n
 const memCache = new Map<string, NotebookResult>();
 
 async function readCache(key: string): Promise<NotebookResult | null> {
+  const userId = requireUserId();
   const mem = memCache.get(key);
   if (mem) return mem;
   if (!dbEnabled()) return null;
   try {
     const rows = await query<{ notebook: Notebook | string; source: string }>(
-      `select notebook, source from hands_on_notebooks where cache_key = $1`,
-      [key]
+      `select notebook, source from hands_on_notebooks where cache_key = $1 and user_id = $2`,
+      [key, userId]
     );
     if (rows.length) {
       const nb = typeof rows[0].notebook === "string" ? (JSON.parse(rows[0].notebook) as Notebook) : rows[0].notebook;
@@ -277,6 +279,7 @@ async function readCache(key: string): Promise<NotebookResult | null> {
 }
 
 async function writeCache(key: string, lessonId: string, moduleId: string | null, result: NotebookResult, model: string, embedText?: string): Promise<void> {
+  const userId = requireUserId();
   memCache.set(key, result);
   if (!dbEnabled()) return;
   // Push to the KB: embed the topic text so SIMILAR future lessons can retrieve this notebook.
@@ -292,10 +295,10 @@ async function writeCache(key: string, lessonId: string, moduleId: string | null
   }
   try {
     await query(
-      `insert into hands_on_notebooks (lesson_id, module_id, cache_key, notebook, source, model, embed_text, embedding)
-         values ($1, $2, $3, $4, $5, $6, $7, $8::vector)
+      `insert into hands_on_notebooks (lesson_id, module_id, cache_key, notebook, source, model, embed_text, embedding, user_id)
+         values ($1, $2, $3, $4, $5, $6, $7, $8::vector, $9)
          on conflict (cache_key) do nothing`,
-      [lessonId, moduleId, key, JSON.stringify(result.notebook), result.source, model, embedText ?? null, embedLit]
+      [lessonId, moduleId, key, JSON.stringify(result.notebook), result.source, model, embedText ?? null, embedLit, userId]
     );
   } catch {
     /* table/columns may be missing (migration not applied) → the memory cache still serves */
@@ -327,7 +330,7 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
   }
 
   let result: NotebookResult;
-  let model = "claude-haiku";
+  let model = configuredModelId("haiku");
   // One attempt + one stricter retry. The retry covers BOTH a validation failure AND a
   // structured-output parse throw (Haiku occasionally returns unparseable JSON), so a single
   // flaky response doesn't drop us straight to the fallback.
@@ -375,7 +378,7 @@ export async function resolveBlueprint(lessonId: string): Promise<Blueprint | nu
       const rows = await query<{ blueprint: Blueprint | string | null }>(
         `select blueprint from prebuilt_lessons where slug = $1
          union all
-         select blueprint from community_lessons where slug = $1
+         select blueprint from community_lessons where slug = $1 and hidden = false
          limit 1`,
         [lessonId]
       );
@@ -410,6 +413,7 @@ export interface HandsOnJob {
 const hoJobs = new Map<string, HandsOnJob>();
 
 export function createHandsOnJob(userId: string): HandsOnJob {
+  requireUserId(userId);
   const job: HandsOnJob = { id: randomUUID(), userId, status: "running", percent: 10, createdAt: Date.now() };
   hoJobs.set(job.id, job);
   // light GC: drop jobs older than 30 min so the map can't grow unbounded
@@ -419,11 +423,14 @@ export function createHandsOnJob(userId: string): HandsOnJob {
 }
 
 export function getHandsOnJob(id: string): HandsOnJob | undefined {
-  return hoJobs.get(id);
+  const userId = requireUserId();
+  const job = hoJobs.get(id);
+  return job?.userId === userId ? job : undefined;
 }
 
 /** Detached generator: moves percent 10 → 40 → 70 → 100 across the steps. */
 export async function runHandsOnJob(job: HandsOnJob, lessonId: string, moduleId: string | null, bp: Blueprint): Promise<void> {
+  requireUserId(job.userId);
   try {
     job.percent = 40;
     const result = await getOrCreate(lessonId, moduleId, bp);

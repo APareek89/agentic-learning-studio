@@ -11,7 +11,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, requireUserId, runWithUser } from "./db";
 
 export type LessonPhase = "pending" | "designing" | "ready" | "building" | "done" | "error";
 
@@ -59,6 +59,7 @@ export function releaseGenSlot(): void {
 }
 
 export function createJob(userId: string): Job {
+  requireUserId(userId);
   const job: Job = { id: randomUUID(), userId, status: "planning", isCourse: false, lessons: [], createdAt: Date.now() };
   jobs.set(job.id, job);
   void persistJob(job); // write-through so another instance can serve the first poll (multi-instance)
@@ -73,11 +74,14 @@ export function createJob(userId: string): Job {
 }
 
 export function getJob(id: string): Job | undefined {
-  return jobs.get(id);
+  const userId = requireUserId();
+  const job = jobs.get(id);
+  return job?.userId === userId ? job : undefined;
 }
 
 /** A learner's still-running jobs (drops anything older than 30 min so the dashboard stays clean). */
 export function activeJobs(userId: string): Job[] {
+  requireUserId(userId);
   const cutoff = Date.now() - 30 * 60 * 1000;
   return [...jobs.values()].filter((j) => j.userId === userId && j.createdAt > cutoff && j.status !== "done" && j.status !== "error");
 }
@@ -85,12 +89,12 @@ export function activeJobs(userId: string): Job[] {
 /**
  * Is a BUILD job currently building this artifact? Used by the public /api/module endpoint to decide
  * whether the background runBuildJob is already the builder (just poll) vs. needs an on-demand
- * single-module build kicked (standalone / library / restarted-mid-build lessons). Cross-user by
- * design — /api/module is unauthenticated (the artifact UUID is the access token).
+ * single-module build kicked for the authenticated owner. Artifact UUIDs are not access tokens.
  */
 export function hasActiveBuildForArtifact(artifactId: string): boolean {
+  const userId = requireUserId();
   for (const j of jobs.values()) {
-    if (j.stage === "build" && (j.status === "running" || j.status === "planning") && j.lessons.some((l) => l.artifactId === artifactId)) return true;
+    if (j.userId === userId && j.stage === "build" && (j.status === "running" || j.status === "planning") && j.lessons.some((l) => l.artifactId === artifactId)) return true;
   }
   return false;
 }
@@ -111,6 +115,7 @@ export function lessonPercent(l: JobLesson): number {
 
 /** Upsert one job tracker to Postgres (best-effort). */
 export async function persistJob(job: Job): Promise<void> {
+  requireUserId(job.userId);
   if (!dbEnabled()) return;
   try {
     await query(
@@ -118,7 +123,8 @@ export async function persistJob(job: Job): Promise<void> {
          values ($1,$2,$3,$4,$5,$6, now())
        on conflict (id) do update set
          status = excluded.status, stage = excluded.stage, error = excluded.error,
-         data = excluded.data, updated_at = now()`,
+         data = excluded.data, updated_at = now()
+       where gen_jobs.user_id = excluded.user_id`,
       [job.id, job.userId, job.status, job.stage ?? null, job.error ?? null, JSON.stringify(job)],
     );
   } catch { /* best-effort — in-memory is authoritative on this instance */ }
@@ -134,13 +140,15 @@ const STALE_JOB_MS = 30_000;
  *  null) so GET /api/job/:id 404s and the client's recovery path reveals the persisted lesson —
  *  otherwise a restart-mid-build would pin the progress bar at a frozen percent forever. */
 export async function getPersistedJob(id: string): Promise<Job | null> {
+  const userId = requireUserId();
   if (!dbEnabled()) return null;
   try {
     const rows = await query<{ data: unknown; updated_at: string | Date }>(
-      `select data, updated_at from gen_jobs where id = $1 limit 1`, [id]);
+      `select data, updated_at from gen_jobs where id = $1 and user_id = $2 limit 1`, [id, userId]);
     if (!rows.length) return null;
     const d = rows[0].data;
     const job = (typeof d === "string" ? JSON.parse(d) : d) as Job;
+    if (job.userId !== userId) return null;
     const terminal = job.status === "done" || job.status === "error";
     if (!terminal) {
       const ts = new Date(rows[0].updated_at as string).getTime();
@@ -159,7 +167,7 @@ function flushJobs(): void {
     const terminal = j.status === "done" || j.status === "error";
     if (terminal && flushedDone.has(j.id)) continue;
     if (terminal) flushedDone.add(j.id);
-    void persistJob(j);
+    void runWithUser(j.userId, () => persistJob(j));
   }
   for (const id of [...flushedDone]) if (!jobs.has(id)) flushedDone.delete(id);
 }

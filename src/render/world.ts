@@ -731,6 +731,7 @@ function gotoStage(n){if(n<0||n>=DATA.length)return;
     markVisited(n);
     vp.classList.remove("swap");
     nextBeat();
+    if(DATA[n].id==="_check" && DATA[n].cards.length) openPopup(n,0);
   },420);}
 window.__wgoto=gotoStage;
 function closePopupSilent(){$("w-po").classList.remove("on");$("w-poback").classList.remove("on");E._open=null;}
@@ -796,6 +797,7 @@ function markVisited(si){if(DATA[si]&&!DATA[si].special)E.visited[si]=1;
   var saved=null;try{saved=localStorage.getItem("als-theme");}catch(e){}
   apply(saved);
   window.addEventListener("message",function(e){
+    if(e.source!==window.parent)return;
     if(e.data&&e.data.type==="als-theme")apply(e.data.value);});})();
 /* ---- rail + boot ---- */
 (function(){var rail=$("wrail");

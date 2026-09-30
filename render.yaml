@@ -1,4 +1,4 @@
-# Render blueprint — one-click deploy for Agentic Learning Studio.
+# Legacy Render reference only. Current deployment uses Docker on AWS; see README.md.
 # In Render: New + → Blueprint → pick this repo. Or create a Web Service manually
 # with the same Build/Start/Health settings below.
 #
@@ -9,11 +9,11 @@ services:
     name: agentic-learning-studio
     runtime: node
     plan: standard            # 2GB RAM. Use `starter` only to experiment (may OOM).
-    region: oregon            # pick the region nearest you / your Supabase
+    region: oregon            # legacy region; current AWS deployment is ap-south-1
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /healthz
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: NODE_VERSION
         value: "22"
@@ -23,11 +23,11 @@ services:
       # --- Secrets: set these VALUES in the Render dashboard (sync:false = not in git) ---
       - key: ANTHROPIC_API_KEY      # REQUIRED
         sync: false
-      - key: DATABASE_URL           # Supabase pooler URL → enables RAG
+      - key: DATABASE_URL           # private PostgreSQL with verified TLS
         sync: false
-      - key: SUPABASE_URL           # set BOTH to require sign-up/login (Supabase Auth)
+      - key: AUTH_SECRET            # required Auth.js session secret
         sync: false
-      - key: SUPABASE_ANON_KEY      # PUBLIC anon key (never the service_role key)
+      - key: APP_URL                # required public HTTPS origin
         sync: false
       - key: ANTHROPIC_MODEL_SONNET
         sync: false

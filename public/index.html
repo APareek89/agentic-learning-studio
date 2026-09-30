@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="lovable-ui" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,7 +24,6 @@
     <link rel="icon" type="image/png" href="/wizbit-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
     <!-- Structured data: Organization + WebSite + SoftwareApplication + FAQPage (mirrors the visible FAQ) -->
     <script type="application/ld+json">
     {
@@ -58,7 +57,7 @@
             "@type": "Offer",
             "price": "0",
             "priceCurrency": "USD",
-            "description": "Free mental-map overview; pay per generated lesson. Every account starts with one free lesson credit."
+            "description": "Free mental-map overview; pay per generated lesson. Every account starts with two free lesson credits."
           },
           "publisher": { "@id": "https://prathibhax.com/#organization" }
         },
@@ -108,12 +107,13 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;480;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="/vendor/lovable-tokens.css" />
+    <link rel="stylesheet" href="/vendor/lovable-components.css" />
+    <link rel="stylesheet" href="/portfolio-theme.css" />
+    <script src="/vendor/lucide.min.js" defer></script><script src="/portfolio-ui.js" defer></script>
   </head>
   <body>
     <!-- Small-screen notice: the builder + interactive lessons are designed for desktop. Shown once
@@ -127,8 +127,8 @@
       </div>
     </div>
 
-    <!-- Beta feedback: a small persistent button + a free-text popup. Sends to Supabase via /api/feedback. -->
-    <button class="feedback-fab" id="feedback-fab" type="button" title="Send feedback">💬 Feedback</button>
+    <!-- Beta feedback: a small persistent button + a free-text popup. Sends to the application API. -->
+    <button class="feedback-fab" id="feedback-fab" type="button" title="Send feedback"><i data-lucide="message-square"></i> Feedback</button>
     <div class="feedback-modal" id="feedback-modal" hidden role="dialog" aria-modal="true" aria-labelledby="fb-title">
       <div class="feedback-card">
         <button class="fb-x" id="fb-x" type="button" aria-label="Close">×</button>
@@ -198,7 +198,7 @@
     <!-- ===== Top bar ===== -->
     <header class="topbar">
       <div class="brand"><img class="logo-img" src="/wizbit-logo.png" width="34" height="34" loading="lazy" alt="Agentic Learning Studio" /> Agentic Learning Studio</div>
-      <nav class="tabs" role="tablist">
+      <nav class="tabs" role="tablist" aria-label="Application sections">
         <button class="tab active" role="tab" aria-selected="true" data-tab="home">Home</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="configurator">Lesson Builder</button>
         <!-- Trainer + its open-lessons dropdown (the old visible tab bar moved in here). -->
@@ -225,7 +225,7 @@
           Build a project <span class="soon">soon</span>
         </button>
       </nav>
-      <div class="topbar-spacer"></div>
+      <div class="topbar-spacer"></div><button id="portfolio-theme" class="ui-button ghost icon" type="button" aria-label="Toggle color theme"><i data-lucide="moon"></i></button>
       <a class="credit-pill" id="credit-pill" data-tab="pricing" role="button" tabindex="0" hidden title="Your credits — click to buy more">
         <svg viewBox="0 0 24 24" class="credit-ico" aria-hidden="true"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
         <span id="credit-count">0</span>&nbsp;Credits
@@ -247,7 +247,7 @@
     </header>
 
     <!-- ===== TAB: Home (NEW — Halo landing; the only tab with a new layout) ===== -->
-    <section class="tabpanel home" id="tab-home" role="tabpanel">
+    <section class="tabpanel home" id="tab-home" role="tabpanel"><div class="portfolio-example-bar"><span>Explore a complete lesson before generating your own.</span><button class="ui-button primary pill" data-try-example type="button"><i data-lucide="play"></i> Try with an example</button></div>
       <div class="beta-strip" role="status">🚀 <strong>Beta launch</strong> — Free for one week · 2 free lessons.</div>
       <header class="wrap">
         <div class="hh">
@@ -726,7 +726,7 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
                 <div class="gen-suggest-grid" id="gen-suggest-grid"></div>
               </div>
             </div>
-            <iframe id="viewer-frame" title="Generated lesson" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads" hidden></iframe>
+            <iframe id="viewer-frame" title="Generated lesson" sandbox="allow-scripts allow-popups allow-downloads" hidden></iframe>
           </div>
         </div>
         <aside class="chat" id="chat" hidden>
@@ -948,7 +948,7 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
             <li><strong>1 credit = 1 generated lesson</strong> — a complete, interactive, self-contained lesson built to your topic and settings.</li>
             <li><strong>The overview is free.</strong> Generate and refine the overview / mental-map preview without spending a credit. A credit is charged only when you click <em>Generate Lesson</em> and the full build completes.</li>
             <li><strong>Failed builds are never charged.</strong> If a build errors out, no credit is deducted.</li>
-            <li><strong>Every account starts with 1 free lesson credit.</strong></li>
+            <li><strong>Every account starts with 2 free lesson credits.</strong></li>
           </ul>
           <h3>Terms</h3>
           <ul>
@@ -1019,7 +1019,7 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
             <ul class="auth-aside-feats">
               <li><span class="ck">✓</span> Free mental-map overview of any topic</li>
               <li><span class="ck">✓</span> Grounded on your repo, with cited sources</li>
-              <li><span class="ck">✓</span> Every account starts with 1 free lesson credit</li>
+              <li><span class="ck">✓</span> Every account starts with 2 free lesson credits</li>
             </ul>
           </div>
         </aside>
@@ -1041,8 +1041,10 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
                 </button>
               </div>
               <div class="auth-or" hidden><span>or</span></div>
+              <label class="auth-field-label" for="auth-email">Email</label>
               <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required />
-              <input id="auth-password" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" minlength="6" required />
+              <label class="auth-field-label" for="auth-password">Password</label>
+              <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" minlength="1" required />
               <label class="auth-consent" id="auth-consent-row" hidden>
                 <input id="auth-consent" type="checkbox" />
                 <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a>.</span>
@@ -1054,6 +1056,12 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
                 <button class="linkbtn" id="auth-toggle" type="button">Create an account</button>
               </div>
             </form>
+            <details class="password-setup"><summary>Existing account without a password?</summary>
+              <p>Use the private one-time setup token supplied by the app owner. Your email alone cannot reset a password.</p>
+              <form id="claim-form"><label>Private setup token<input id="claim-token" type="password" autocomplete="off" required /></label>
+              <label>New password<input id="claim-password" type="password" minlength="12" autocomplete="new-password" required /></label>
+              <button class="generate" type="submit">Set password</button><p id="claim-message" role="status"></p></form>
+            </details><p class="auth-help">Password reset by email is not available yet. Google sign-in is not configured.</p>
           </div>
         </div>
       </div>
@@ -1071,7 +1079,6 @@ graph.<span class="f">add_conditional_edges</span>(<span class="s">"plan"</span>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
     <script src="/app.js"></script>
     <script src="/skills.js"></script>

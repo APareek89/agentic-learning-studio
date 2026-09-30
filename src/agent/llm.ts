@@ -1,15 +1,16 @@
 /**
- * # The LLM factory — one place that builds our Claude clients
+ * # The LLM factory — explicit primary provider, shared task tiers
  *
  * Every node that "thinks" needs a chat model. We build them here so the model
  * ids, temperature, and the `top_p` workaround live in one spot.
  *
- * This app uses THREE model tiers (chosen per task to control cost/quality):
+ * Task tiers retain their names across Anthropic and OpenAI primary modes:
  *   - "sonnet" — the default workhorse (Profiler-infer, Architect, Critic, modules).
  *   - "opus"   — a quality escalation, used only when the Critic fails twice on hard
  *                (Advanced / Technical+Code) topics.
  *   - "haiku"  — cheap one-shots (e.g. defining a single glossary term on a miss).
- * Each tier's exact model id comes from an env var so you can swap without code edits.
+ * Each tier's exact model id comes from an env var. OpenAI primary maps the two
+ * larger tiers to OPENAI_MODEL_SONNET and the small tier to OPENAI_MODEL_HAIKU.
  *
  * Recurring terms (defined once):
  *   - "the language model" / "Claude": the AI text model we call over the internet.
@@ -22,11 +23,26 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import { RunnableLambda } from "@langchain/core/runnables";
 import type { Runnable, RunnableConfig } from "@langchain/core/runnables";
-import { SystemMessage, type BaseMessage } from "@langchain/core/messages";
+import { SystemMessage, HumanMessage, coerceMessageLikeToMessage, type BaseMessage } from "@langchain/core/messages";
 import type { BaseLanguageModelInput } from "@langchain/core/language_models/base";
+import type { ZodType } from "zod";
+import { safeProviderError } from "./provider-audit";
 
 /** The three quality/cost tiers. A plain union type pins the allowed values. */
 export type ModelTier = "sonnet" | "opus" | "haiku";
+export type ModelProvider = "anthropic" | "openai";
+export type StudioChatModel = ChatAnthropic | ChatOpenAI;
+type LLMOptions = { maxTokens?: number; streaming?: boolean; maxRetries?: number; auditRequest?: boolean; reasoningEffort?: "none" | "low" | "medium" };
+
+export function primaryProvider(): ModelProvider {
+  const configured = process.env.ALS_PRIMARY_PROVIDER || "anthropic";
+  if (configured !== "anthropic" && configured !== "openai") throw new Error("ALS_PRIMARY_PROVIDER must be anthropic or openai");
+  return configured;
+}
+
+export function configuredModelId(tier: ModelTier): string {
+  return primaryProvider() === "openai" ? gptModelIdFor(tier) : modelIdFor(tier);
+}
 
 // Default model ids per tier. `??` ("nullish coalescing") uses the env var if set,
 // otherwise the baked-in default — so the app works with zero model config.
@@ -37,7 +53,7 @@ function modelIdFor(tier: ModelTier): string {
 }
 
 /**
- * `makeLLM` — construct a configured Claude client for a given tier.
+ * `makeLLM` — construct the explicitly selected provider for a given tier.
  *
  * @param tier        which model tier to use (default "sonnet").
  * @param temperature 0 = deterministic (default). Some authoring steps use a touch higher.
@@ -46,19 +62,20 @@ function modelIdFor(tier: ModelTier): string {
 export function makeLLM(
   tier: ModelTier = "sonnet",
   temperature = 0,
-  opts: { maxTokens?: number; streaming?: boolean; maxRetries?: number } = {}
-): ChatAnthropic {
-  // Fail fast with a clear message if the one required key is missing.
+  opts: LLMOptions = {}
+): StudioChatModel {
+  if (primaryProvider() === "openai") return createGptLLM(tier, opts);
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key."
-    );
-  }
-
+  const disabled = process.env.ALS_MOCK_MODE === "1" || !apiKey;
   const model = modelIdFor(tier);
   const chat = new ChatAnthropic({
-    apiKey,
+    apiKey: apiKey || "provider-disabled",
+    ...(disabled ? { clientOptions: { fetch: async () => { throw new Error("Live model generation is disabled. Try the cached example."); } } } : opts.auditRequest ? { clientOptions: { fetch: async (input, init) => {
+      const response = await fetch(input, init);
+      const failure = response.ok ? {} : safeProviderError(response.status, await response.clone().json().catch(() => null));
+      console.info("[provider-request]", JSON.stringify({ provider: "anthropic", model, status: response.status, requestId: response.headers.get("request-id"), ...failure }));
+      return response;
+    } } } : {}),
     model,
     temperature,
     // Blueprints/modules are large, so default the cap generously (callers override).
@@ -81,6 +98,10 @@ export function makeLLM(
   // it's dropped from the request body entirely. (`as { topP?: number }` is a type
   // assertion letting us touch this non-public field; it changes nothing at runtime.)
   (chat as { topP?: number }).topP = undefined;
+
+  // This SDK version also serializes its topK=-1 sentinel. The API requires a
+  // nonnegative value on older models and rejects top_k on newer models. Omit it.
+  (chat as { topK?: number }).topK = undefined;
 
   // ---- The Opus-4.8 `temperature` gotcha (same class of bug as top_p above) ----
   // Opus 4.8 (and the Opus-4.7+/Fable family) REJECT an explicit `temperature` with a
@@ -138,7 +159,7 @@ export async function withOverloadRetry<T>(fn: () => Promise<T>): Promise<T> {
 
 /** True when an OpenAI key is configured → GPT failover is wired. Else: Claude-only (current behavior). */
 export function gptFallbackEnabled(): boolean {
-  return !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim());
+  return primaryProvider() === "anthropic" && process.env.ALS_MOCK_MODE !== "1" && !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim());
 }
 
 /** GPT failover model id per Claude tier. Claude Sonnet/Opus nodes → GPT-5.5; Haiku nodes →
@@ -156,24 +177,41 @@ function gptModelIdFor(tier: ModelTier): string {
  */
 export function makeGptLLM(
   tier: ModelTier = "sonnet",
-  opts: { maxTokens?: number; streaming?: boolean; maxRetries?: number } = {}
+  opts: LLMOptions = {}
 ): ChatOpenAI | null {
   if (!gptFallbackEnabled()) return null;
+  return createGptLLM(tier, opts);
+}
+
+function createGptLLM(tier: ModelTier, opts: LLMOptions): ChatOpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const disabled = process.env.ALS_MOCK_MODE === "1" || !apiKey;
+  const model = gptModelIdFor(tier);
   return new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    model: gptModelIdFor(tier),
-    maxTokens: opts.maxTokens,
+    apiKey: apiKey || "provider-disabled",
+    model,
+    maxTokens: opts.maxTokens ?? 4096,
     streaming: opts.streaming ?? false,
     maxRetries: opts.maxRetries ?? 2,
+    // Installed SDK typings predate "none"; its typed extension bag passes the
+    // documented Chat Completions parameter without narrowing it to old values.
+    modelKwargs: opts.reasoningEffort ? { reasoning_effort: opts.reasoningEffort } : undefined,
+    configuration: disabled ? { fetch: async () => { throw new Error("Live model generation is disabled. Try the cached example."); } } : opts.auditRequest ? { fetch: async (input, init) => {
+      const response = await fetch(input, init);
+      const failure = response.ok ? {} : safeProviderError(response.status, await response.clone().json().catch(() => null));
+      console.info("[provider-request]", JSON.stringify({ provider: "openai", model, status: response.status, requestId: response.headers.get("x-request-id"), ...failure }));
+      return response;
+    } } : undefined,
   });
 }
 
 /** Strip Anthropic-only `cache_control` blocks before a GPT fallback runs. A SystemMessage whose
  *  content is a `[{type:"text", text, cache_control}]` array becomes a plain-string SystemMessage;
  *  every other message passes through unchanged. (Only the module-body call uses cache_control.) */
-export const stripCacheControl = new RunnableLambda<BaseMessage[], BaseMessage[]>({
-  func: (msgs: BaseMessage[]) =>
-    msgs.map((m: BaseMessage) => {
+export const stripCacheControl = new RunnableLambda<BaseLanguageModelInput, BaseMessage[]>({
+  func: (input: BaseLanguageModelInput) => {
+    const messages = typeof input === "string" ? [new HumanMessage(input)] : Array.isArray(input) ? input.map(coerceMessageLikeToMessage) : input.toChatMessages();
+    return messages.map((m: BaseMessage) => {
       const content = (m as { content: unknown }).content;
       if (m instanceof SystemMessage && Array.isArray(content)) {
         const text = content
@@ -182,8 +220,19 @@ export const stripCacheControl = new RunnableLambda<BaseMessage[], BaseMessage[]
         return new SystemMessage(text);
       }
       return m;
-    }),
+    });
+  },
 });
+
+/** Typed structured output for direct notebook/skill/community consumers. */
+export function structuredOutput<T extends Record<string, unknown>>(
+  model: StudioChatModel,
+  schema: ZodType<T>,
+  opts: { name?: string } = {},
+): Runnable<BaseLanguageModelInput, T> {
+  if (model instanceof ChatOpenAI) return stripCacheControl.pipe(model.withStructuredOutput<T>(schema, { ...opts, method: "functionCalling" }));
+  return model.withStructuredOutput<T>(schema, opts);
+}
 
 /**
  * Wrap a Claude STRUCTURED-OUTPUT runnable with a GPT structured-output fallback. The GPT branch
@@ -191,36 +240,37 @@ export const stripCacheControl = new RunnableLambda<BaseMessage[], BaseMessage[]
  * Output shape (parsed object, or `{raw, parsed}` when `includeRaw`) matches across both providers.
  */
 export function structuredWithFallback(
-  claude: ChatAnthropic,
+  claude: StudioChatModel,
   gpt: ChatOpenAI | null,
   schema: Parameters<ChatAnthropic["withStructuredOutput"]>[0],
   opts?: Parameters<ChatAnthropic["withStructuredOutput"]>[1]
 ): Runnable<BaseLanguageModelInput, unknown> {
-  const claudeR = claude.withStructuredOutput(schema, opts as never) as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  if (claude instanceof ChatOpenAI) {
+    const common = { name: opts?.name, method: "functionCalling" as const };
+    return opts?.includeRaw
+      ? stripCacheControl.pipe(claude.withStructuredOutput(schema, { ...common, includeRaw: true }))
+      : stripCacheControl.pipe(claude.withStructuredOutput(schema, { ...common, includeRaw: false }));
+  }
+  const claudeR: Runnable<BaseLanguageModelInput, unknown> = opts?.includeRaw
+    ? claude.withStructuredOutput(schema, { name: opts.name, includeRaw: true })
+    : claude.withStructuredOutput(schema, { name: opts?.name, includeRaw: false });
   if (!gpt) return claudeR;
   // IMPORTANT: force OpenAI's "functionCalling" (tool-calling) structured-output method. OpenAI's
   // default strict json_schema mode rejects any `.optional()` Zod field that isn't also `.nullable()`
   // ("all fields must be required") — and our schemas (InferenceSchema, ModuleBlocks, OverviewProse…)
   // use `.optional()` heavily. Tool-calling mode has no all-required constraint, so the same schemas
   // work on GPT without a rewrite. (Claude's withStructuredOutput already uses tool-calling natively.)
-  const gptOpts = { ...(opts ?? {}), method: "functionCalling" as const };
-  const gptStructured = gpt.withStructuredOutput(schema, gptOpts as never) as unknown as Runnable<BaseMessage[], unknown>;
-  const gptLogged = new RunnableLambda<BaseMessage[], unknown>({
-    func: async (input: BaseMessage[]) => {
-      try { return await gptStructured.invoke(input); }
-      catch (e) { console.error("[gpt-fallback structured FAIL]", (e instanceof Error ? e.message : String(e)).slice(0, 300)); throw e; }
-    },
-  });
-  const gptR = stripCacheControl.pipe(gptLogged) as unknown as Runnable<BaseLanguageModelInput, unknown>;
+  const gptR = structuredWithFallback(gpt, null, schema, opts);
   return claudeR.withFallbacks([gptR]);
 }
 
 /** Wrap a Claude RAW chat runnable (planner/skeleton — text out, parsed by extractJsonObject) with a
  *  GPT raw fallback. No cache_control on these calls, so no strip needed. No key → Claude unchanged. */
-export function rawWithFallback(claude: ChatAnthropic, gpt: ChatOpenAI | null): Runnable<BaseLanguageModelInput, unknown> {
-  const claudeR = claude as unknown as Runnable<BaseLanguageModelInput, unknown>;
+export function rawWithFallback(claude: StudioChatModel, gpt: ChatOpenAI | null): Runnable<BaseLanguageModelInput, unknown> {
+  if (claude instanceof ChatOpenAI) return stripCacheControl.pipe(claude);
+  const claudeR: Runnable<BaseLanguageModelInput, unknown> = claude;
   if (!gpt) return claudeR;
-  return claudeR.withFallbacks([gpt as unknown as Runnable<BaseLanguageModelInput, unknown>]);
+  return claudeR.withFallbacks([gpt]);
 }
 
 /**
@@ -234,6 +284,6 @@ export async function invokeResilient<T>(
   input: BaseLanguageModelInput,
   config?: RunnableConfig
 ): Promise<T> {
-  if (gptFallbackEnabled()) return runnable.invoke(input, config);
+  if (primaryProvider() === "openai" || gptFallbackEnabled()) return runnable.invoke(input, config);
   return withOverloadRetry(() => runnable.invoke(input, config));
 }

@@ -2,13 +2,12 @@
  * # Lessons + preferences — the user's durable learning context (30-day window)
  *
  * Backs the dashboard ("your previous lessons") and the per-user preference
- * record the agent reads as standing context. All keyed by the Supabase auth user
- * id (or "local-dev" when auth is off, so the dashboard works locally too).
+ * record the agent reads as standing context. All private access uses the verified session user ID.
  *
  * Everything degrades to empty/no-op when the DB is off (graceful-optional).
  */
 
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, requireUserId } from "./db";
 
 export interface LessonCard {
   id: string;
@@ -38,6 +37,7 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
  * as ONE card (its kick-off lesson, course_index = 1); standalone lessons show as-is.
  */
 export async function listLessons(userId: string, email = ""): Promise<LessonCard[]> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId) return [];
   const rows = await query<{
     id: string; title: string | null; prompt: string | null;
@@ -45,8 +45,7 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     course_id: string | null; course_total: number | null; percent: number | null;
     built_modules: string | number | null; total_modules: number | null;
   }>(
-    // Match by user id OR email, so a learner's lessons follow their email across
-    // sign-ins / a project migration (their auth user id can change; email is stable).
+    // Source UUIDs survive migration; an email address never grants access.
     // Left-join lesson_progress for the % completed bar (0 when never opened).
     // BUILD progress is counted in SQL straight from the blueprint's module loadState (a module
     // is "built" once loadState = 'full' AND it has blocks) — so we NEVER ship the (large)
@@ -59,12 +58,12 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
             jsonb_array_length(coalesce(l.blueprint->'modules','[]'::jsonb)) as total_modules
        from lessons l
        left join lesson_progress p on p.lesson_id = l.id and p.user_id = $1
-      where (l.user_id = $1 or ($2 <> '' and l.user_email = $2)) and l.expires_at > now()
+      where l.user_id = $1 and l.expires_at > now()
         and l.kind = 'learning-artifact'
         and (l.course_id is null or l.course_index = 1)
       order by l.created_at desc
       limit 100`,
-    [userId, email]
+    [userId]
   ).catch(() => []);
   const now = Date.now();
   return rows.map((r) => {
@@ -96,11 +95,12 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
 export async function saveProgress(
   userId: string, email: string | undefined, lessonId: string, percent: number, visited: number, total: number
 ): Promise<void> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId || !lessonId) return;
   const pct = Math.max(0, Math.min(100, Math.round(percent || 0)));
   await query(
     `insert into lesson_progress (lesson_id, user_id, user_email, percent, visited, total, updated_at)
-     values ($1,$2,$3,$4,$5,$6, now())
+     select $1,$2,$3,$4,$5,$6,now() from lessons where id = $1 and user_id = $2
      on conflict (lesson_id, user_id) do update set
        percent = greatest(lesson_progress.percent, excluded.percent),
        visited = greatest(lesson_progress.visited, excluded.visited),
@@ -110,31 +110,34 @@ export async function saveProgress(
 }
 
 /** The lessons of one course, ordered — drives the lesson-tab strip when reopened. */
-export async function getCourse(courseId: string): Promise<{ id: string; index: number; title: string }[]> {
+export async function getCourse(courseId: string, expectedUserId?: string): Promise<{ id: string; index: number; title: string }[]> {
+  const userId = requireUserId(expectedUserId);
   if (!dbEnabled() || !courseId) return [];
   const rows = await query<{ id: string; course_index: number; title: string | null }>(
-    `select id, course_index, title from lessons where course_id = $1 order by course_index`,
-    [courseId]
+    `select id, course_index, title from lessons where course_id = $1 and user_id = $2 order by course_index`,
+    [courseId, userId]
   ).catch(() => []);
   return rows.map((r) => ({ id: r.id, index: r.course_index, title: r.title || `Lesson ${r.course_index}` }));
 }
 
 /** Save a 1..5 rating (+ optional comment) for a lesson the user owns. */
 export async function rateLesson(userId: string, lessonId: string, rating: number, comment?: string, email = ""): Promise<boolean> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId) return false;
   const clamped = Math.max(1, Math.min(5, Math.round(rating)));
   const res = await query(
     `update lessons set rating = $3, rating_comment = $4, updated_at = now()
-      where id = $1 and (user_id = $2 or ($5 <> '' and user_email = $5))`,
-    [lessonId, userId, clamped, comment ?? null, email]
+      where id = $1 and user_id = $2 returning id`,
+    [lessonId, userId, clamped, comment ?? null]
   ).catch(() => []);
-  return Array.isArray(res);
+  return res.length > 0;
 }
 
 export type UserPrefs = Record<string, unknown>;
 
 /** Read a user's stored landing preferences (empty object if none). */
 export async function getPreferences(userId: string): Promise<UserPrefs> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId) return {};
   const rows = await query<{ prefs: UserPrefs }>(`select prefs from user_preferences where user_id = $1`, [userId]).catch(() => []);
   return rows[0]?.prefs ?? {};
@@ -142,6 +145,7 @@ export async function getPreferences(userId: string): Promise<UserPrefs> {
 
 /** Upsert a user's landing preferences (called on each generation). */
 export async function savePreferences(userId: string, email: string | undefined, prefs: UserPrefs): Promise<void> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId) return;
   await query(
     `insert into user_preferences (user_id, user_email, prefs, updated_at)

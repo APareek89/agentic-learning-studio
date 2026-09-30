@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, currentUserId } from "./db";
 import { sha256 } from "./hash";
 
 export interface FeedbackInput {
@@ -30,7 +30,7 @@ export async function saveFeedback(input: FeedbackInput): Promise<{ id: string }
     await query(
       `insert into feedback (id, user_id, user_email, message, user_agent, ip_hash)
        values ($1,$2,$3,$4,$5,$6)`,
-      [id, input.userId ?? null, input.userEmail ?? null, msg,
+      [id, currentUserId() ?? null, input.userEmail ?? null, msg,
        (input.userAgent ?? "").slice(0, 400) || null, input.ip ? sha256(input.ip) : null],
     );
     return { id };
@@ -59,7 +59,7 @@ export async function logEvent(name: string, opts: { userId?: string; userEmail?
     await query(
       `insert into events (name, user_id, user_email, ref, props)
        values ($1,$2,$3,$4,$5)`,
-      [n, opts.userId ?? null, opts.userEmail ?? null, (opts.ref ?? "").slice(0, 200) || null,
+      [n, currentUserId() ?? null, opts.userEmail ?? null, (opts.ref ?? "").slice(0, 200) || null,
        JSON.stringify(opts.props ?? {}).slice(0, 4000)],
     );
   } catch (err) {

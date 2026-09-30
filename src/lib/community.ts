@@ -11,12 +11,12 @@
  */
 
 import { randomUUID, randomBytes } from "node:crypto";
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, requireUserId } from "./db";
 import { getArtifact } from "./artifacts";
 import { renderArtifact } from "../render/index";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { makeLLM } from "../agent/llm";
+import { makeLLM, structuredOutput } from "../agent/llm";
 
 export interface CommunityCard {
   slug: string;
@@ -65,7 +65,7 @@ async function classifyThumbCategory(title: string, topic: string, description: 
   const kw = deriveCategory(`${topic} ${title} ${description}`);
   if ((THUMB_CATS as readonly string[]).includes(kw)) return kw;
   try {
-    const llm = makeLLM("haiku", 0).withStructuredOutput(z.object({ category: z.enum(THUMB_CATS) }), { name: "thumb_category" });
+    const llm = structuredOutput(makeLLM("haiku", 0), z.object({ category: z.enum(THUMB_CATS) }), { name: "thumb_category" });
     const out = await llm.invoke([
       new SystemMessage(`Classify this AI/ML lesson into EXACTLY one of these 10 categories for its thumbnail image: ${THUMB_CATS.join(", ")}. Pick the single closest. Return only the category.`),
       new HumanMessage(`Title: ${title}\nTopic: ${topic}\nDescription: ${description}`.slice(0, 1500)),
@@ -96,7 +96,7 @@ export async function listCommunity(): Promise<CommunityCard[]> {
 export async function getCommunityHtml(slug: string): Promise<string | null> {
   if (!dbEnabled()) return null;
   const rows = await query<{ html: string; blueprint: unknown }>(
-    `select html, blueprint from community_lessons where slug = $1`, [slug]
+    `select html, blueprint from community_lessons where slug = $1 and hidden = false`, [slug]
   ).catch(() => []);
   if (!rows.length) return null;
   const bp = rows[0].blueprint;
@@ -139,16 +139,17 @@ export interface ShareResult { ok: boolean; slug?: string; rewarded?: boolean; e
 export async function shareLesson(
   lessonId: string, user: { id: string; email: string }, displayName?: string, opts: { contributor?: boolean } = {}
 ): Promise<ShareResult> {
+  requireUserId(user.id);
   if (!dbEnabled()) return { ok: false, error: "Sharing is unavailable right now." };
   const art = await getArtifact(lessonId);
   if (!art || !art.blueprint) return { ok: false, error: "Lesson not found." };
   // Ownership: only the owner can share their lesson.
-  const owns = (art.userId && art.userId === user.id) || (art.userEmail && art.userEmail === user.email);
+  const owns = art.userId === user.id;
   if (!owns) return { ok: false, error: "You can only share your own lessons." };
 
   // Don't double-publish the same source lesson.
   const existing = await query<{ slug: string }>(
-    `select slug from community_lessons where source_lesson_id = $1 limit 1`, [lessonId]
+    `select slug from community_lessons where source_lesson_id = $1 and submitter_user_id = $2 limit 1`, [lessonId, user.id]
   ).catch(() => []);
   if (existing.length) return { ok: true, slug: existing[0].slug, already: true };
 
@@ -179,7 +180,7 @@ export async function shareLesson(
        JSON.stringify(bp), html, name, user.id, user.email]
     );
   } catch (e) {
-    return { ok: false, error: "Couldn't share this lesson. " + ((e as Error).message?.slice(0, 80) ?? "") };
+    return { ok: false, error: "Couldn't share this lesson. Please try again." };
   }
 
   // Sharing to the Community is now its own reward — no free-lesson credit is granted (the beta
@@ -201,6 +202,7 @@ export interface ContributorInput {
 
 /** Read a contributor profile (null if not registered). */
 export async function getContributor(userId: string): Promise<Contributor | null> {
+  requireUserId(userId);
   if (!dbEnabled() || !userId) return null;
   const rows = await query<Contributor>(
     `select user_id, full_name, bio, expertise, motivation, motivation_other, link from contributors where user_id = $1`, [userId]
@@ -210,6 +212,7 @@ export async function getContributor(userId: string): Promise<Contributor | null
 
 /** Register (or update) a contributor. fullName + agreed are required. */
 export async function registerContributor(user: { id: string; email: string }, input: ContributorInput): Promise<{ ok: boolean; error?: string }> {
+  requireUserId(user.id);
   if (!dbEnabled()) return { ok: false, error: "Registration is unavailable right now." };
   const fullName = (input.fullName || "").trim().slice(0, 80);
   if (!fullName) return { ok: false, error: "Please enter your full name." };
@@ -247,7 +250,8 @@ export async function listDrivers(): Promise<DriverCard[]> {
 /** One contributor's profile + the courses they've published. */
 export async function getDriver(userId: string): Promise<{ profile: Contributor; courses: CommunityCard[] } | null> {
   if (!dbEnabled() || !userId) return null;
-  const profile = await getContributor(userId);
+  const profiles = await query<Contributor>(`select user_id, full_name, bio, expertise, link, null::text as motivation, null::text as motivation_other from contributors where user_id = $1`, [userId]);
+  const profile = profiles[0];
   if (!profile) return null;
   const rows = await query<CommunityRow>(
     `select slug, title, description, category, level, est_minutes, submitter_name, likes

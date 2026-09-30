@@ -9,6 +9,10 @@
  * gates in tokens.ts then show/hide content accordingly — no per-combo files.
  */
 
+import { readFileSync } from "node:fs";
+import { IFRAME_BRIDGE_JS } from "./iframe-bridge";
+const SHARED_THEME_CSS = ["vendor/lovable-tokens.css", "portfolio-theme.css"].map(path => readFileSync(new URL(`../../public/${path}`, import.meta.url), "utf8")).join("\n");
+
 import type { Blueprint } from "./schema";
 import { ARTIFACT_CSS } from "./tokens";
 import { RUNTIME_JS } from "./runtime";
@@ -69,7 +73,7 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
   const mathCss = bodyHtml.includes('class="katex') || (stubModuleIds.length && !world) ? `<style>${KATEX_CSS}</style>` : "";
 
   return `<!doctype html>
-<html lang="en" data-theme="${theme}">
+<html lang="en" class="lovable-ui" data-theme="${theme}">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -77,14 +81,15 @@ export function renderArtifact(bp: Blueprint, opts: { previewOnly?: boolean; cur
 <title>${escAttr(seo?.title ?? bp.meta.title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>${ARTIFACT_CSS}</style>${world ? `<style>${WORLD_CSS}</style>` : ""}${mathCss}${accentStyle}${seo?.headHtml ?? ""}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;480;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>${ARTIFACT_CSS}</style>${world ? `<style>${WORLD_CSS}</style>` : ""}${mathCss}${accentStyle}${seo?.headHtml ?? ""}<style>${SHARED_THEME_CSS}</style>
 </head>
 <body data-level="${escAttr(p.level)}" data-depth="${escAttr(p.depth)}" data-examples="${escAttr(p.examples)}" data-reading="${escAttr(p.readingMode || "vertical")}" data-theme="${theme}">${seo?.bodyTop ?? ""}
 ${bodyHtml}
 <div id="popover" role="dialog" aria-label="Definition"></div>
 <script type="application/json" id="glossary-data">${glossaryJson}</script>
 <script type="application/json" id="lesson-config">${configJson}</script>
+<script>${IFRAME_BRIDGE_JS}</script>
 <script>${world ? WORLD_JS : RUNTIME_JS}</script>
 ${seo?.bodyEnd ?? ""}
 </body>

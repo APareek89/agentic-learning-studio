@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="lovable-ui" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Hands-on · Agentic Learning Studio</title>
-  <link rel="canonical" href="https://prathibhax.com/hands-on" />
+  <link rel="canonical" href="/hands-on" />
     <link rel="icon" type="image/png" href="/wizbit-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;480;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <!-- CodeMirror 5: editable, syntax-highlighted Python cells (the JupyterLab look) -->
@@ -114,7 +114,7 @@
         .jp-cell-headrow { flex-direction: column; }
       }
     </style>
-  </head>
+  <link rel="stylesheet" href="/vendor/lovable-tokens.css"/><link rel="stylesheet" href="/vendor/lovable-components.css"/><link rel="stylesheet" href="/portfolio-theme.css"/><script src="/vendor/lucide.min.js" defer></script><script src="/portfolio-ui.js" defer></script></head>
   <body>
     <header class="nb-head">
       <span class="nb-brand"><img src="/wizbit-logo.png" alt="Agentic Learning Studio" /> Agentic Learning Studio <span class="nb-beta">Beta</span></span>
@@ -149,7 +149,6 @@
       </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       "use strict";
       const PYODIDE_VERSION = "v0.26.4";
@@ -170,20 +169,16 @@
         if (sub) el("prep-sub").textContent = sub;
       }
 
-      // ---- Auth: build a Supabase client from /api/config; getSession() for the bearer ----
-      let sb = null;
+      // Same-origin cookies are verified by Auth.js on every protected API.
       async function getToken() {
-        let cfg;
-        try { cfg = await fetch("/api/config").then((r) => r.json()); }
-        catch (e) { return { authEnabled: false, token: null }; }
-        if (!cfg.authEnabled || !cfg.supabaseUrl || !cfg.supabaseAnonKey) return { authEnabled: false, token: null };
         try {
-          sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-          const { data } = await sb.auth.getSession();
-          return { authEnabled: true, token: data && data.session ? data.session.access_token : null };
-        } catch (e) { return { authEnabled: true, token: null }; }
+          const cfg = await fetch("/api/config").then((r) => r.json());
+          if (!cfg.authEnabled) return { authEnabled: false, token: null };
+          const session = await fetch("/auth/session").then((r) => r.json());
+          return { authEnabled: true, token: session.user ? "session-present" : null };
+        } catch { return { authEnabled: true, token: null }; }
       }
-      const authHeaders = (token) => (token ? { Authorization: "Bearer " + token } : {});
+      const authHeaders = () => ({});
 
       // ---- Minimal, safe markdown (source is escaped first, so this can't inject) ----
       function renderMarkdown(src) {

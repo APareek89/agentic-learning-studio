@@ -23,6 +23,7 @@
  */
 
 import { pipeline, env } from "@huggingface/transformers";
+import { createBatchedEmbedder } from "./embedding-batches";
 
 // The ONNX-converted model that runs in Node, its output dimension, and the BGE
 // query instruction prefix.
@@ -45,9 +46,8 @@ function getExtractor(): Promise<unknown> {
   return extractorPromise;
 }
 
-/** Run the model over a batch of texts → an array of 384-number vectors. */
-async function embedBatch(texts: string[]): Promise<number[][]> {
-  if (texts.length === 0) return [];
+/** Share a bounded inference queue across passage uploads and single queries. */
+const embedBatch = createBatchedEmbedder(async (texts) => {
   const extractor = (await getExtractor()) as (
     t: string[],
     o: { pooling: "mean"; normalize: boolean }
@@ -56,7 +56,7 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   // scales each to unit length so cosine similarity == dot product.
   const output = await extractor(texts, { pooling: "mean", normalize: true });
   return output.tolist();
-}
+});
 
 /** The pluggable shape any embedding provider must implement. */
 export interface EmbeddingProvider {
@@ -94,7 +94,7 @@ export async function warmEmbeddings(): Promise<boolean> {
 
 /**
  * Format a vector as a pgvector TEXT literal `'[v0,v1,…]'`. We pass vectors this
- * way (not as a binary param) because the Supabase connection pooler is finicky
+ * way (not as a binary param) for compatibility with PostgreSQL connection poolers
  * about binary parameters.
  */
 export function toVectorLiteral(vec: number[]): string {

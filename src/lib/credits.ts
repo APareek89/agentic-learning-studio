@@ -12,7 +12,7 @@
  * the gate naturally disables itself.
  */
 
-import { query, rawPool, dbEnabled } from "./db";
+import { query, rawPool, dbEnabled, requireUserId } from "./db";
 
 /** Lots (and the free grant) expire 12 months after they're created. */
 const CREDIT_TTL = "12 months";
@@ -32,6 +32,7 @@ export interface AddCreditsOpts {
 
 /** Current spendable balance: sum of non-expired lots with credits left. */
 export async function getBalance(userId: string): Promise<number> {
+  requireUserId(userId);
   if (!userId || !dbEnabled()) return 0;
   const rows = await query<{ bal: string }>(
     `select coalesce(sum(lessons_remaining), 0) as bal
@@ -55,11 +56,12 @@ export async function addCredits(
   lessons: number,
   opts: AddCreditsOpts
 ): Promise<{ credited: boolean; balance: number }> {
+  requireUserId(userId);
   if (!userId || lessons <= 0 || !dbEnabled()) return { credited: false, balance: 0 };
   const pool = rawPool();
   if (!pool) return { credited: false, balance: 0 };
   const ttl = opts.ttl === undefined ? CREDIT_TTL : opts.ttl;
-  const expiresExpr = ttl == null ? "null" : `now() + interval '${ttl}'`;
+  const expiresExpr = "case when $8::text is null then null else now() + $8::interval end";
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -69,7 +71,7 @@ export async function addCredits(
        values ($1, $2, $2, $3, $4, $5, $6, $7, ${expiresExpr})
        on conflict (ls_order_id) do nothing
        returning id`,
-      [userId, lessons, opts.reason, opts.planId ?? null, opts.amountUsd ?? null, opts.code ?? null, opts.lsOrderId ?? null]
+      [userId, lessons, opts.reason, opts.planId ?? null, opts.amountUsd ?? null, opts.code ?? null, opts.lsOrderId ?? null, ttl]
     );
     const credited = (ins.rowCount ?? 0) > 0;
     if (credited) {
@@ -95,6 +97,7 @@ export async function addCredits(
  * so calling it on every page load / build is safe — only the first one credits.
  */
 export async function ensureFreeGrant(userId: string): Promise<number> {
+  requireUserId(userId);
   if (!userId || !dbEnabled()) return 0;
   const { balance } = await addCredits(userId, FREE_GRANT_LESSONS, {
     reason: "grant",
@@ -129,6 +132,7 @@ export interface AccountSummary {
 export async function getAccountSummary(userId: string, email = ""): Promise<AccountSummary> {
   const balance = await getBalance(userId);
   const empty: AccountSummary = { balance, creditsSpent: 0, creditsPurchased: 0, lessonsGenerated: 0, plan: "Free", memberSince: null };
+  requireUserId(userId);
   if (!userId || !dbEnabled()) return empty;
   const led = await query<{ spent: string; purchased: string }>(
     `select coalesce(sum(case when delta < 0 then -delta else 0 end), 0)::text as spent,
@@ -138,15 +142,15 @@ export async function getAccountSummary(userId: string, email = ""): Promise<Acc
   ).catch(() => []);
   const les = await query<{ n: string }>(
     `select count(*)::text as n from lessons
-      where (user_id = $1 or ($2 <> '' and user_email = $2)) and kind = 'learning-artifact'`,
-    [userId, email]
+      where user_id = $1 and kind = 'learning-artifact'`,
+    [userId]
   ).catch(() => []);
   const ms = await query<{ since: Date | null }>(
     `select least(
               (select min(created_at) from credit_ledger where user_id = $1),
-              (select min(created_at) from lessons where user_id = $1 or ($2 <> '' and user_email = $2))
+              (select min(created_at) from lessons where user_id = $1)
             ) as since`,
-    [userId, email]
+    [userId]
   ).catch(() => []);
   const purchased = Number(led[0]?.purchased ?? 0);
   return {
@@ -168,6 +172,7 @@ export async function getAccountSummary(userId: string, email = ""): Promise<Acc
  * `-amount` ledger row. Returns ok:false (no spend) when the spendable balance can't cover `amount`.
  */
 export async function spend(userId: string, amount: number, reason = "generation"): Promise<{ ok: boolean; balance: number }> {
+  requireUserId(userId);
   if (!userId || !dbEnabled() || !(amount > 0)) return { ok: false, balance: 0 };
   const pool = rawPool();
   if (!pool) return { ok: false, balance: 0 };
@@ -195,7 +200,7 @@ export async function spend(userId: string, amount: number, reason = "generation
     for (const lot of lots.rows) {
       if (remaining <= EPS) break;
       const take = Math.min(Number(lot.rem), remaining);
-      await client.query(`update credit_lots set lessons_remaining = lessons_remaining - $2 where id = $1`, [lot.id, take]);
+      await client.query(`update credit_lots set lessons_remaining = lessons_remaining - $2 where id = $1 and user_id = $3`, [lot.id, take, userId]);
       remaining -= take;
     }
     await client.query(`insert into credit_ledger (user_id, delta, reason) values ($1, $2, $3)`, [userId, -amount, reason]);

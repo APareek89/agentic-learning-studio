@@ -7,7 +7,7 @@
  *  - Generation streams over SSE; the raw node names are hidden behind a friendly
  *    progress line. A persistent chat lets the learner ask to modify the plan.
  *  - Star rating saved to the server. Animated neural-network hero backdrop.
- *  - Supabase auth via a modal opened from the Sign in / Sign up buttons.
+ *  - Auth.js password sessions via a form opened from the Sign in / Sign up buttons.
  */
 
 // ---- Elements ----
@@ -51,19 +51,17 @@ window.addEventListener("resize", syncTopbarH);
 // The bar GROWS after sign-in (credit pill, profile) — observe it so the var tracks reality.
 try { if (_topbar && window.ResizeObserver) new ResizeObserver(syncTopbarH).observe(_topbar); } catch (e) {}
 
-// Bar-2 Dark toggle — the lesson renders in a same-origin iframe, so we flip the shared
+// Bar-2 Dark toggle — the lesson renders in a sandboxed iframe, so we flip the shared
 // `als-theme` and post it live to the frame (its runtime applies it without a reload).
 const viewerTheme = document.getElementById("viewer-theme");
-if (viewerTheme) {
-  const reflectTheme = () => { try { viewerTheme.textContent = localStorage.getItem("als-theme") === "dark" ? "☀ Light" : "🌙 Dark"; } catch (e) {} };
-  reflectTheme();
-  viewerTheme.addEventListener("click", () => {
-    let next = "dark";
-    try { next = localStorage.getItem("als-theme") === "dark" ? "light" : "dark"; localStorage.setItem("als-theme", next); } catch (e) {}
-    try { if (viewerFrame.contentWindow) viewerFrame.contentWindow.postMessage({ type: "als-theme", value: next }, "*"); } catch (e) {}
-    reflectTheme();
-  });
-}
+viewerFrame.addEventListener("load", () => {
+  let theme = document.documentElement.dataset.theme || "light";
+  try { theme = localStorage.getItem("als-theme") || theme; } catch {}
+  viewerFrame.contentWindow?.postMessage({ type: "als-theme", value: theme }, "*");
+});
+if (viewerTheme) viewerTheme.addEventListener("click", () => {
+  window.setPortfolioTheme?.(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
 askMoreBtn.addEventListener("click", () => toggleChat());
 chatCloseBtn.addEventListener("click", () => toggleChat(false));
 function toggleChat(force) {
@@ -900,7 +898,7 @@ const tabBtnDashboard = document.getElementById("tab-btn-dashboard");
 
 let dashboardPollTimer = null;
 async function loadDashboard() {
-  // Don't fire authed fetches before the Supabase token is attached (a boot tab-restore can
+  // Don't fire authed fetches before the session has been restored (a boot tab-restore can
   // call this before bootAuth/applySession resolves → 401 race). applySession re-runs the
   // dashboard load once the session is ready, so simply skipping here is safe.
   if (authRequiredAndOut()) return;
@@ -1044,19 +1042,15 @@ const CATEGORY_STYLE = {
 };
 const DEFAULT_STYLE = { bg: "#EEF2F6", icon: "#64748B", text: "#334155", svg: svgIcon(`<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>`) };
 
-// Per-category thumbnail images (optimized webp, ~5–10KB each) live in THIS environment's own
-// Supabase Storage public bucket `lesson-thumbs` (CDN-backed). The base URL is derived from the
-// supabaseUrl that /api/config returns, so staging + prod each serve from their OWN project.
-// Library + Community read these via catStyle().img; set by setThumbBase() once config loads.
+// Category covers use the app CDN, with bundled images as the offline fallback.
 const CATEGORY_IMG = {
   "Agents": "agents", "RAG": "rag", "LLMs": "llms", "Frameworks": "frameworks", "Generative": "generative",
   "Evaluation": "evaluation", "Infrastructure": "infrastructure", "Safety": "safety", "Foundations": "foundations", "Build Projects": "build",
 };
-function setThumbBase(supabaseUrl) {
-  if (!supabaseUrl) return; // no Supabase → cards fall back to their flat category colour
-  const base = supabaseUrl.replace(/\/$/, "") + "/storage/v1/object/public/lesson-thumbs/";
-  for (const [cat, key] of Object.entries(CATEGORY_IMG)) { if (CATEGORY_STYLE[cat]) CATEGORY_STYLE[cat].img = base + key + ".webp"; }
-  // refresh covers if a catalog already rendered before config arrived
+function setThumbBase(storageBaseUrl) {
+  for (const [cat, key] of Object.entries(CATEGORY_IMG)) if (CATEGORY_STYLE[cat]) {
+    CATEGORY_STYLE[cat].img = storageBaseUrl ? storageBaseUrl.replace(/\/$/, "") + "/" + key + ".webp" : "/home-img/cat-" + key + ".jpg";
+  }
   if (libLoaded) renderLibrary();
   if (commLoaded) renderCommunity();
 }
@@ -1355,11 +1349,40 @@ window.addEventListener("message", (e) => {
   if (e.source !== viewerFrame.contentWindow) return;
   const d = e.data;
   if (!d) return;
-  // "⚡ Get Hands on" → open the browser-run notebook page in a new tab.
+  // The opaque lesson iframe may request only these two read/check actions.
+  // Select the active lesson here; never accept an iframe-supplied artifact/slug.
+  if (d.type === "als-api") {
+    if (typeof d.id !== "string" || d.id.length > 64 || !["/api/module", "/api/check"].includes(d.path)) return;
+    const targetWindow = e.source;
+    const activeUrl = new URL(viewerFrame.src, location.origin);
+    const b = d.body && typeof d.body === "object" ? d.body : {};
+    const payload = {};
+    if (currentLessonOwned && currentArtifactId) payload.artifactId = currentArtifactId;
+    else {
+      const match = activeUrl.pathname.match(/^\/api\/(community\/)?lesson\/([a-z0-9-]+)$/);
+      if (d.path !== "/api/check" || !match) return;
+      payload.slug = match[2]; payload.source = match[1] ? "community" : "library";
+    }
+    for (const key of ["moduleId", "blockId", "questionId", "text"]) if (typeof b[key] === "string") payload[key] = b[key].slice(0, key === "text" ? 4000 : 160);
+    if (typeof b.choiceIndex === "number") payload.choiceIndex = b.choiceIndex;
+    fetch(d.path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then(async (response) => ({ status: response.status, body: await response.json() }))
+      .catch(() => ({ status: 503, body: { error: "Lesson service is temporarily unavailable." } }))
+      .then((result) => { if (e.source === viewerFrame.contentWindow) targetWindow.postMessage({ type: "als-api-result", id: d.id, ...result }, "*"); });
+    return;
+  }
+  // "⚡ Get Hands on" → open the browser-run notebook page in this tab.
   if (d.type === "als-handson") {
-    const lid = encodeURIComponent(d.lessonId || "");
+    const path = new URL(viewerFrame.src, location.origin).pathname;
+    const active = currentLessonOwned ? currentArtifactId : path.match(/^\/api\/(?:community\/)?lesson\/([a-z0-9-]+)$/)?.[1];
+    const lid = encodeURIComponent(active || "");
     const mid = encodeURIComponent(d.moduleId || "");
-    if (lid) window.open(`/hands-on?lesson=${lid}&module=${mid}`, "_blank");
+    if (lid) {
+      const href = `/hands-on?lesson=${lid}&module=${mid}`;
+      // A postMessage callback has no reliable popup permission. Some embedded
+      // browsers even return a handle for a popup they do not display.
+      window.location.assign(href);
+    }
     return;
   }
   if (d.type !== "als-progress") return;
@@ -1891,11 +1914,11 @@ function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "
 })();
 
 // ============================================================================
-// Supabase Auth — modal opened from Sign in / Sign up. When auth is OFF (no
-// SUPABASE_URL/ANON on the server) the app runs open and the dashboard uses a
+// Password sessions — form opened from Sign in / Sign up. When auth is OFF (local
+// isolated fixture entry) the app runs open and the dashboard uses a
 // local identity, so everything works locally with zero auth config.
 // ============================================================================
-let sb = null;
+
 let accessToken = null;
 let currentUserEmail = "";
 let currentUserId = "";
@@ -1919,7 +1942,7 @@ const authConsent = document.getElementById("auth-consent");
 const logoutBtn = document.getElementById("logout");
 const authWho = document.getElementById("auth-who");
 
-function authHeaders() { return accessToken ? { Authorization: "Bearer " + accessToken } : {}; }
+function authHeaders() { return {}; } // HttpOnly session cookies travel on same-origin requests.
 function authRequiredAndOut() { return authIsEnabled && !accessToken; }
 function showAuthMsg(text, kind) { authMsg.hidden = !text; authMsg.textContent = text || ""; authMsg.className = "auth-msg" + (kind ? " " + kind : ""); }
 // The overlay is an on-demand MODAL (gates generation/dashboard; browsing stays open).
@@ -1942,6 +1965,8 @@ function setAuthMode(mode) {
   authSwitchText.textContent = signup ? "Already have an account?" : "New here?";
   authToggle.textContent = signup ? "Sign in" : "Create an account";
   authPassword.autocomplete = signup ? "new-password" : "current-password";
+  authPassword.minLength = signup ? 12 : 1;
+  authPassword.placeholder = signup ? "Password (12+ characters)" : "Password";
   // The Terms+Privacy consent checkbox is required for sign-up only.
   if (authConsentRow) authConsentRow.hidden = !signup;
   if (authConsent && !signup) authConsent.checked = false;
@@ -1955,7 +1980,7 @@ function logSignupConsent(email) {
   track("signup", email); // beta traction: count of new sign-ups
 }
 function applySession(session) {
-  accessToken = (session && session.access_token) || null;
+  accessToken = session && session.user ? "session-present" : null;
   const email = (session && session.user && session.user.email) || "";
   currentUserEmail = email;
   currentUserId = (session && session.user && session.user.id) || "";
@@ -1982,110 +2007,78 @@ function applySession(session) {
 document.getElementById("btn-signin").addEventListener("click", () => openAuth("signin"));
 document.getElementById("btn-signup").addEventListener("click", () => openAuth("signup"));
 
-// OAuth (Google / Apple) — Supabase redirects out and back to the app origin. The provider
-// must be enabled in the Supabase project (Auth → Providers) for this to succeed.
-async function oauthSignIn(provider) {
-  if (!sb) { showAuthMsg("Sign-in isn't ready yet — please try again in a moment.", "err"); return; }
-  showAuthMsg("Redirecting to " + (provider === "google" ? "Google" : "Apple") + "…", "ok");
-  try {
-    const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + "/" } });
-    if (error) throw error;
-  } catch (err) {
-    showAuthMsg((err && err.message) || "Couldn't start " + provider + " sign-in.", "err");
-  }
+// Auth.js uses same-origin, HttpOnly session cookies; no access token is stored in JS.
+async function authAction(action, fields = {}) {
+  const csrf = await fetch("/auth/csrf").then((r) => r.json());
+  const response = await fetch("/auth/" + action, { method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Auth-Return-Redirect": "1" },
+    body: new URLSearchParams({ csrfToken: csrf.csrfToken, callbackUrl: location.origin + "/", ...fields }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.url && new URL(result.url, location.origin).searchParams.has("error")) throw new Error("Email or password is incorrect. Passwordless accounts need their private setup link.");
+  return result;
 }
-const oauthGoogle = document.getElementById("oauth-google");
-const oauthApple = document.getElementById("oauth-apple");
-if (oauthGoogle) oauthGoogle.addEventListener("click", () => oauthSignIn("google"));
-if (oauthApple) oauthApple.addEventListener("click", () => oauthSignIn("apple"));
-
-// Show an OAuth button ONLY for providers actually enabled in Supabase (read from GoTrue's
-// public /auth/v1/settings). So the buttons stay hidden until Google/Apple are turned on in
-// the Supabase dashboard, and then appear automatically — no code/env change needed.
-async function applyOAuthProviders(supabaseUrl, anonKey) {
-  let ext = {};
-  try {
-    const r = await fetch(supabaseUrl.replace(/\/$/, "") + "/auth/v1/settings", { headers: { apikey: anonKey } });
-    if (r.ok) ext = (await r.json()).external || {};
-  } catch (e) { /* leave all hidden on error — email/password still works */ }
-  const g = document.getElementById("oauth-google");
-  const a = document.getElementById("oauth-apple");
-  if (g) g.hidden = !ext.google;
-  if (a) a.hidden = !ext.apple;
-  const anyOn = !!(ext.google || ext.apple);
-  const row = document.querySelector(".oauth-row");
-  const orDiv = document.querySelector(".auth-or");
-  if (row) row.hidden = !anyOn;
-  if (orDiv) orDiv.hidden = !anyOn;
+async function signOutSession() {
+  await authAction("signout");
+  resetWorkspace();
+  applySession(null);
+  switchTab("home");
 }
-
 async function bootAuth() {
   let cfg;
-  try { cfg = await (await fetch("/api/config")).json(); } catch { cfg = { authEnabled: false }; }
-  authIsEnabled = !!cfg.authEnabled;
+  try { cfg = await fetch("/api/config").then((r) => r.json()); }
+  catch { cfg = { authEnabled: true }; }
+  authIsEnabled = cfg.authEnabled !== false;
   billingIsEnabled = !!cfg.billingEnabled;
-  setThumbBase(cfg.supabaseUrl); // point catalog thumbnails at this env's own Supabase Storage bucket
-
+  setThumbBase(cfg.thumbnailBaseUrl);
+  document.querySelectorAll("#oauth-google, #oauth-apple").forEach((button) => { button.hidden = true; });
   if (!authIsEnabled) {
-    // Open mode (local dev): no gate; dashboard + prefs use the server's local id.
     if (tabBtnDashboard) tabBtnDashboard.hidden = false;
-    loadDashboard(); loadPreferences(); loadSuggestions(); maybeOnboard(); loadCredits();
-    routeFromUrl(); // honor a /account deep-link in open (no-auth) mode too
-    return;
+    loadDashboard(); loadPreferences(); loadSuggestions(); loadCredits(); routeFromUrl(); return;
   }
-
-  if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
-    if (authActions) authActions.hidden = false; // still show the buttons (they'll report the error)
-    return;
-  }
-  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  applyOAuthProviders(cfg.supabaseUrl, cfg.supabaseAnonKey); // reveal only enabled OAuth buttons
-  setAuthMode("signup"); // new visitors default to sign-up
-
-  const { data } = await sb.auth.getSession();
-  applySession(data.session);
-  sb.auth.onAuthStateChange((_e, session) => applySession(session));
-
+  if (authActions) authActions.hidden = false;
+  try { applySession(await fetch("/auth/session").then((r) => r.json())); }
+  catch { applySession(null); }
   authToggle.addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
-  authForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = authEmail.value.trim();
-    const password = authPassword.value;
-    if (!email || password.length < 6) { showAuthMsg("Enter an email and a 6+ character password.", "err"); return; }
-    if (authMode === "signup" && authConsent && !authConsent.checked) {
-      showAuthMsg("Please agree to the Terms and acknowledge the Privacy Notice to create an account.", "err"); return;
-    }
-    authSubmit.disabled = true;
-    showAuthMsg("Working…");
+  authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = authEmail.value.trim(), password = authPassword.value;
+    if (!email || !password || (authMode === "signup" && password.length < 12)) { showAuthMsg("Use your email and password. New passwords need at least 12 characters.", "err"); return; }
+    if (authMode === "signup" && authConsent && !authConsent.checked) { showAuthMsg("Please agree to the Terms and acknowledge the Privacy Notice.", "err"); return; }
+    authSubmit.disabled = true; showAuthMsg("Signing in…");
     try {
       if (authMode === "signup") {
-        const { data: d, error } = await sb.auth.signUp({ email, password });
-        if (error) throw error;
-        // Supabase returns a user with EMPTY identities when the email already exists.
-        if (d.user && Array.isArray(d.user.identities) && d.user.identities.length === 0) {
-          setAuthMode("signin"); authEmail.value = email;
-          showAuthMsg("This email is already registered — sign in instead (or reset your password).", "err");
-        } else if (!d.session) {
-          // Email confirmation is ON → verify before signing in.
-          logSignupConsent(email);
-          setAuthMode("signin"); authEmail.value = email;
-          showAuthMsg("✉️ Verify your email — we sent a confirmation link to " + email + ". Click it, then sign in here.", "ok");
-        } else {
-          // Email confirmation is OFF on the project → signed in immediately.
-          logSignupConsent(email);
-          showAuthMsg("Account created — you're signed in.", "ok");
-        }
-      } else {
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const response = await fetch("/api/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Account creation failed.");
       }
-    } catch (err) {
-      showAuthMsg((err && err.message) || "Sign-in failed.", "err");
-    } finally {
-      authSubmit.disabled = false;
-    }
+      await authAction("callback/credentials", { email, password });
+      applySession(await fetch("/auth/session").then((r) => r.json()));
+      if (authMode === "signup") logSignupConsent(email);
+      if (location.pathname === "/signin") { history.replaceState({}, "", "/builder"); switchTab("configurator"); }
+    } catch (error) { showAuthMsg(error.message || "Sign-in failed.", "err"); }
+    finally { authSubmit.disabled = false; }
   });
-  if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); applySession(null); });
+  if (logoutBtn) logoutBtn.addEventListener("click", () => signOutSession().catch((e) => showAuthMsg(e.message, "err")));
+  const claimForm = document.getElementById("claim-form");
+  if (claimForm) claimForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = document.getElementById("claim-message"), button = claimForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const token = document.getElementById("claim-token").value.trim(), password = document.getElementById("claim-password").value;
+      const response = await fetch("/api/auth/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, password }) });
+      const result = await response.json(); if (!response.ok) throw new Error(result.error);
+      claimForm.reset(); history.replaceState({}, "", "/signin");
+      message.textContent = "Password set. Sign in with your existing email above.";
+    } catch (error) { message.textContent = error.message || "Password setup failed."; }
+    finally { button.disabled = false; }
+  });
+  if (location.pathname === "/set-password") {
+    const token = location.hash.slice(1);
+    if (/^[a-f0-9]{64}$/.test(token)) document.getElementById("claim-token").value = token;
+    history.replaceState({}, "", "/set-password");
+  }
 }
 
 // ---- Preferences: pre-fill the dropdowns + context fields from last time ----
@@ -2214,7 +2207,7 @@ function updateCreditPill(balance) {
 }
 
 // Persist the last-known balance so the pill can render INSTANTLY on the next page
-// load — otherwise it stays hidden for ~1-2s while Supabase restores the session and
+// load — otherwise it stays hidden for ~1-2s while Auth.js restores the session and
 // /api/credits round-trips (the "pill flashes away on refresh" bug).
 function cacheCredits(balance) { try { localStorage.setItem("wb-credits", String(balance)); } catch (e) {} }
 function clearCachedCredits() { try { localStorage.removeItem("wb-credits"); } catch (e) {} }
@@ -2399,7 +2392,7 @@ function openAccount() { gotoAccount(true); }
 // If we boot (or finish signing in) on /account, show the page without a second push.
 // Map a deep-linked / refreshed URL to its tab so /pricing, /library, etc. land on the
 // right tab (the server's SPA fallback serves the shell; this routes once auth state is known).
-const URL_TAB_MAP = { "/builder": "configurator", "/library": "library", "/community": "community", "/pricing": "pricing", "/llm-skills": "llm-skills", "/build-community": "build-community", "/trainer": "trainer" };
+const URL_TAB_MAP = { "/signin": "auth", "/set-password": "auth", "/builder": "configurator", "/library": "library", "/community": "community", "/pricing": "pricing", "/llm-skills": "llm-skills", "/build-community": "build-community", "/trainer": "trainer" };
 function routeFromUrl() {
   const p = location.pathname.replace(/\/+$/, "");
   if (p === "/account") { gotoAccount(false); return; }
@@ -2499,7 +2492,7 @@ const pmSignout = document.getElementById("pm-signout");
 if (pmAccount) pmAccount.addEventListener("click", openAccount);
 if (pmSignout) pmSignout.addEventListener("click", async () => {
   closeProfileMenu();
-  try { if (sb) await sb.auth.signOut(); } catch (e) {}
+  try { await signOutSession(); } catch (e) { window.portfolioToast?.("Sign-out failed. Please retry."); return; }
   resetWorkspace();   // bug: the previous user's lesson stayed on screen after sign-out
   applySession(null);
 });

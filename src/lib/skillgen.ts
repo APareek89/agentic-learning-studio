@@ -22,9 +22,9 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { makeLLM, withOverloadRetry } from "../agent/llm";
+import { makeLLM, structuredOutput, invokeResilient } from "../agent/llm";
 import { retrieve } from "../rag/retrieve";
-import { ragEnabled, dbEnabled, query } from "./db";
+import { ragEnabled, dbEnabled, query, requireUserId } from "./db";
 import { spend } from "./credits";
 import { retrieveFromUploads } from "./uploads";
 import { releaseGenSlot } from "./jobs";
@@ -120,7 +120,8 @@ export interface SavedSkillRow {
 
 /** Upsert a generated skill into the user's history (keyed by user+slug). */
 export async function persistSkill(userId: string, email: string, pkg: SkillPackage, grounded: boolean): Promise<string | null> {
-  if (!dbEnabled() || (!userId && !email)) return null;
+  requireUserId(userId);
+  if (!dbEnabled() || !userId) return null;
   try {
     const rows = await query<{ id: string }>(
       `insert into generated_skills (user_id, user_email, slug, name, task, llm_interface, grounded, skill)
@@ -141,14 +142,15 @@ export async function persistSkill(userId: string, email: string, pkg: SkillPack
 
 /** A user's saved skills, newest first (matched by id OR email, like lessons). */
 export async function listSavedSkills(userId: string, email = ""): Promise<SavedSkillRow[]> {
-  if (!dbEnabled() || (!userId && !email)) return [];
+  requireUserId(userId);
+  if (!dbEnabled() || !userId) return [];
   const rows = await query<{ id: string; slug: string; name: string; task: string | null; llm_interface: string | null; grounded: boolean; created_at: Date }>(
     `select id::text, slug, name, task, llm_interface, grounded, created_at
        from generated_skills
-      where (user_id = $1 or ($2 <> '' and user_email = $2))
+      where user_id = $1
       order by created_at desc
       limit 200`,
-    [userId || "", email || ""]
+    [userId]
   ).catch(() => []);
   return rows.map((r) => ({
     id: r.id, slug: r.slug, name: r.name, task: r.task ?? "", llmInterface: r.llm_interface ?? "",
@@ -158,11 +160,12 @@ export async function listSavedSkills(userId: string, email = ""): Promise<Saved
 
 /** Fetch one saved skill's full package (scoped to the requesting user). */
 export async function getSavedSkill(id: string, userId: string, email = ""): Promise<{ skill: SkillPackage; grounded: boolean } | null> {
-  if (!dbEnabled() || !id || (!userId && !email)) return null;
+  requireUserId(userId);
+  if (!dbEnabled() || !id || !userId) return null;
   const rows = await query<{ skill: SkillPackage; grounded: boolean }>(
     `select skill, grounded from generated_skills
-      where id = $1 and (user_id = $2 or ($3 <> '' and user_email = $3)) limit 1`,
-    [id, userId || "", email || ""]
+      where id = $1 and user_id = $2 limit 1`,
+    [id, userId]
   ).catch(() => []);
   if (!rows[0]) return null;
   return { skill: rows[0].skill, grounded: !!rows[0].grounded };
@@ -170,11 +173,12 @@ export async function getSavedSkill(id: string, userId: string, email = ""): Pro
 
 /** Delete a saved skill (scoped to the requesting user). Returns true if removed. */
 export async function deleteSavedSkill(id: string, userId: string, email = ""): Promise<boolean> {
-  if (!dbEnabled() || !id || (!userId && !email)) return false;
+  requireUserId(userId);
+  if (!dbEnabled() || !id || !userId) return false;
   const rows = await query<{ id: string }>(
     `delete from generated_skills
-      where id = $1 and (user_id = $2 or ($3 <> '' and user_email = $3)) returning id::text`,
-    [id, userId || "", email || ""]
+      where id = $1 and user_id = $2 returning id::text`,
+    [id, userId]
   ).catch(() => []);
   return rows.length > 0;
 }
@@ -184,6 +188,7 @@ const skillJobs = new Map<string, SkillJob>();
 const skillCache = new Map<string, SkillPackage>();
 
 export function createSkillJob(userId: string): SkillJob {
+  requireUserId(userId);
   const job: SkillJob = { id: randomUUID(), userId, status: "running", percent: 4, createdAt: Date.now() };
   skillJobs.set(job.id, job);
   // Drop jobs older than 30 min so the map can't grow unbounded.
@@ -193,13 +198,17 @@ export function createSkillJob(userId: string): SkillJob {
 }
 
 export function getSkillJob(id: string): SkillJob | undefined {
-  return skillJobs.get(id);
+  const userId = requireUserId();
+  const job = skillJobs.get(id);
+  return job?.userId === userId ? job : undefined;
 }
 
 /** Stable cache key for a brief (so re-submitting the same brief is instant). */
 export function skillCacheKey(input: SkillInput): string {
+  const owner = requireUserId(input.userId);
   return sha256(
     JSON.stringify({
+      owner,
       i: input.llmInterface?.trim().toLowerCase() ?? "",
       t: input.task?.trim().toLowerCase() ?? "",
       d: input.dataSources?.trim().toLowerCase() ?? "",
@@ -364,6 +373,7 @@ export function sanitizeSkillPackage(pkg: SkillPackage, input: SkillInput): Skil
 // The job runner — detached; the route fires it and polls /api/skill/job/:id.
 // ---------------------------------------------------------------------------
 export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<void> {
+  requireUserId(job.userId);
   try {
     // 1) Cache hit → instant.
     const cached = skillCache.get(skillCacheKey(input));
@@ -429,10 +439,9 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
     job.percent = 46;
     const llm = makeLLM("sonnet", 0.3, { maxTokens: 12000, streaming: true });
     const userPrompt = buildUserPrompt(input, kbContext, uploadContext);
-    const raw = await withOverloadRetry(() =>
-      llm
-        .withStructuredOutput(SkillPackageSchema, { name: "skill_package" })
-        .invoke([new SystemMessage(SYSTEM_PROMPT), new HumanMessage(userPrompt)])
+    const raw = await invokeResilient(
+      structuredOutput(llm, SkillPackageSchema, { name: "skill_package" }),
+      [new SystemMessage(SYSTEM_PROMPT), new HumanMessage(userPrompt)]
     );
     job.percent = 88;
 

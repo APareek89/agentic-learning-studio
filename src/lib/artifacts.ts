@@ -20,7 +20,7 @@
 
 import { randomUUID } from "node:crypto";
 import type { Blueprint } from "../render/schema";
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, requireUserId } from "./db";
 
 /** The shape of one stored artifact. */
 export interface StoredArtifact {
@@ -63,8 +63,7 @@ function maybeParse<T>(v: unknown): T | undefined {
 
 /**
  * `registerArtifact` — save the HTML (+ Blueprint + ownership) and return a
- * lightweight reference. Writes the cache immediately (so the viewer's first
- * fetch hits memory) and persists to the DB in the background.
+ * lightweight reference. Persistence succeeds before the cache is published.
  */
 export async function registerArtifact(input: {
   kind: string;
@@ -80,17 +79,19 @@ export async function registerArtifact(input: {
   profile?: unknown;
   course?: { id: string; index: number; total: number; title?: string };
 }): Promise<{ id: string; kind: string; title: string }> {
+  const userId = requireUserId(input.userId);
   const id = randomUUID();
-  const art: StoredArtifact = { id, ...input };
+  const art: StoredArtifact = { id, ...input, userId };
+  await persist(art);
   cache.set(id, art);
-  await persist(art).catch((e) => console.warn("[artifacts] persist failed:", (e as Error).message));
   return { id, kind: input.kind, title: input.title };
 }
 
 /** Look one artifact up by id — cache first, then hydrate from the DB. */
-export async function getArtifact(id: string): Promise<StoredArtifact | undefined> {
+export async function getArtifact(id: string, expectedUserId?: string): Promise<StoredArtifact | undefined> {
+  const userId = requireUserId(expectedUserId);
   const hit = cache.get(id);
-  if (hit) return hit;
+  if (hit) return hit.userId === userId ? hit : undefined;
   if (!dbEnabled()) return undefined;
   const rows = await query<{
     id: string; kind: string; title: string; html: string;
@@ -100,8 +101,8 @@ export async function getArtifact(id: string): Promise<StoredArtifact | undefine
   }>(
     `select id, kind, title, html, blueprint, upload_ids, refer_only,
             user_id, user_email, prompt, cards, profile
-       from lessons where id = $1`,
-    [id]
+       from lessons where id = $1 and user_id = $2`,
+    [id, userId]
   ).catch(() => []);
   if (!rows.length) return undefined;
   const r = rows[0];
@@ -118,29 +119,32 @@ export async function getArtifact(id: string): Promise<StoredArtifact | undefine
 }
 
 /** Merge a patch into a stored artifact (e.g. refreshed html after building modules). */
-export async function updateArtifact(id: string, patch: Partial<Omit<StoredArtifact, "id">>): Promise<void> {
-  const a = cache.get(id) ?? (await getArtifact(id));
+export async function updateArtifact(id: string, patch: Partial<Omit<StoredArtifact, "id" | "userId" | "userEmail">>, expectedUserId?: string): Promise<void> {
+  const userId = requireUserId(expectedUserId);
+  const a = await getArtifact(id, userId);
   if (!a) return;
-  const next = { ...a, ...patch };
-  cache.set(id, next);
-  if (!dbEnabled()) return;
+  const next = { ...a, ...patch, userId: a.userId, userEmail: a.userEmail };
+  if (!dbEnabled()) { cache.set(id, next); return; }
   // Only the fields that change on a rebuild need updating. `kind` is included so the
   // overview-draft → real-lesson promotion (build stage) persists.
-  await query(
-    `update lessons set kind = $2, blueprint = $3, html = $4, updated_at = now() where id = $1`,
-    [id, next.kind, next.blueprint ?? null, next.html]
-  ).catch((e) => console.warn("[artifacts] update failed:", (e as Error).message));
+  const updated = await query(
+    `update lessons set kind = $2, blueprint = $3, html = $4, updated_at = now() where id = $1 and user_id = $5 returning id`,
+    [id, next.kind, next.blueprint ?? null, next.html, userId]
+  );
+  if (updated.length) cache.set(id, next);
 }
 
 /** Insert (or upsert) a freshly-generated artifact into the durable store. */
 async function persist(a: StoredArtifact): Promise<void> {
+  requireUserId(a.userId);
   if (!dbEnabled()) return;
   await query(
     `insert into lessons (id, user_id, user_email, kind, title, prompt, cards, profile, blueprint, html, upload_ids, refer_only,
                           course_id, course_index, course_total, course_title)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
      on conflict (id) do update set
-       title = excluded.title, blueprint = excluded.blueprint, html = excluded.html, updated_at = now()`,
+       title = excluded.title, blueprint = excluded.blueprint, html = excluded.html, updated_at = now()
+       where lessons.user_id = excluded.user_id`,
     [
       a.id, a.userId ?? null, a.userEmail ?? null, a.kind, a.title,
       a.prompt ?? null, JSON.stringify(a.cards ?? {}), a.profile ? JSON.stringify(a.profile) : null,

@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { dbEnabled, query } from "./db";
+import { dbEnabled, query, currentUserId } from "./db";
 import { sha256 } from "./hash";
 
 /** Bump when the consent wording changes (stored with each consent/support row). */
@@ -83,7 +83,7 @@ export async function saveConsent(input: ConsentInput): Promise<boolean> {
     await query(
       `insert into consent_events (user_id, email, consent_type, consent_version, consent_text, user_agent, ip_hash)
        values ($1,$2,$3,$4,$5,$6,$7)`,
-      [input.userId ?? null, input.email ?? null, input.consentType, input.consentVersion,
+      [currentUserId() ?? null, input.email ?? null, input.consentType, input.consentVersion,
        input.consentText ?? null, input.userAgent ?? null, ipHash(input.ip)]
     );
     return true;
