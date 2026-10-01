@@ -37,3 +37,7 @@ Repository input supports public repositories; private repository PAT/OAuth acce
 `npm run test:provider-wire` verifies both provider integrations with mocked SDK responses, including streaming structured output and failure handling. `npm run test:embedding-batches` verifies bounded local embedding batches and concurrent account context without downloading a model.
 
 Production uses the included Dockerfile on AWS in ap-south-1. Secrets come from SSM at boot; none belong in source control. `/healthz` returns503 when PostgreSQL is unavailable. The approved production model tiers were confirmed by a read-only model-list request; no generation is needed to verify availability.
+
+### Follow-up model selection
+
+Authenticated `POST /api/ask` accepts an optional `modelTier`: `haiku` uses the configured smaller model; `sonnet` uses the configured main model. Omitting it retains `sonnet`. Raw model IDs and other values are rejected. Both choices keep the same owned-lesson check, 500-token output limit and zero SDK retries. This selects one follow-up response, not a new lesson build.

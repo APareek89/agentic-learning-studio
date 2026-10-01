@@ -33,6 +33,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getArtifact, updateArtifact, registerArtifact } from "./lib/artifacts";
 import { publicCache, cachedHtml } from "./lib/httpcache";
+import { requireAskModelTier } from "./lib/ask-model-tier";
 import { loadSource } from "./rag/loaders";
 import { addUpload, addRepoUpload, hasUploads, hydrateUploads } from "./lib/uploads";
 import { authEnabled, getUser, mountAuth, requireAuth, requireSameOrigin } from "./lib/auth";
@@ -1121,7 +1122,7 @@ app.get("/api/artifact/:id/full", requireAuth, requireArtifactOwner, async (req,
 // ----------------------------------------------------------------------------
 // POST /api/ask — "Ask More": answer a learner question from RAG (short reply in chat).
 // ----------------------------------------------------------------------------
-app.post("/api/ask", heavyLimiter, requireAuth, requireArtifactOwner, requireLiveGeneration, async (req, res) => {
+app.post("/api/ask", heavyLimiter, requireAuth, requireArtifactOwner, requireLiveGeneration, requireAskModelTier, async (req, res) => {
   const { artifactId, question } = (req.body ?? {}) as { artifactId?: string; question?: string };
   if (!question?.trim()) { res.status(400).json({ error: "Missing question." }); return; }
   const art = artifactId ? await getArtifact(artifactId) : undefined;
@@ -1138,7 +1139,7 @@ app.post("/api/ask", heavyLimiter, requireAuth, requireArtifactOwner, requireLiv
       ? `LESSON: ${bp.meta.title}${bp.meta.thesis ? ` — ${bp.meta.thesis}` : ""}\nMODULES: ${bp.modules.map((m) => m.title).join("; ")}`
       : "";
     const sys = `You answer a learner's follow-up question about "${topic}" CONCISELY (3–5 sentences max, plain language). Answer from your own accurate knowledge and stay consistent with the lesson context below. Be concrete; do not pad.`;
-    const llm = makeLLM("sonnet", 0.2, { maxTokens: 500, maxRetries: 0, auditRequest: true, reasoningEffort: "none" });
+    const llm = makeLLM(res.locals.askModelTier, 0.2, { maxTokens: 500, maxRetries: 0, auditRequest: true, reasoningEffort: "none" });
     const out = await llm.invoke([new SystemMessage(sys), new HumanMessage(`${ctx ? ctx + "\n\n" : ""}QUESTION: ${question}`)]);
     console.info("[paid-call]", JSON.stringify({ provider: primaryProvider(), model: llm.model, inputTokens: out.usage_metadata?.input_tokens, outputTokens: out.usage_metadata?.output_tokens, inputCachedTokens: out.usage_metadata?.input_token_details?.cache_read, reasoningTokens: out.usage_metadata?.output_token_details?.reasoning, requestId: out.response_metadata?.id || out.id, endpoint: "/api/ask" }));
     const answer = typeof out.content === "string" ? out.content : Array.isArray(out.content) ? out.content.map((c) => ("text" in c ? c.text : "")).join("") : String(out.content);
