@@ -240,13 +240,14 @@ export function renderBodyWorld(bp: Blueprint, opts: { currentModuleId?: string 
   <nav id="wrail"></nav>
   <main id="wstage">
     <div class="w-head">
-      <button class="w-railbtn" id="w-railbtn" title="Modules" aria-label="Toggle module list"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
+      <button class="w-railbtn" id="w-railbtn" title="Modules" aria-label="Toggle module list" aria-controls="wrail" aria-expanded="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
       <span class="w-kick" id="w-kick"></span>
       <div class="w-grow"></div>
       ${handsOnEligible(bp) ? `<button class="w-btn w-handson" id="w-handson" title="Open a runnable Python notebook for this lesson">⚡ Get Hands on<span class="w-hobeta">Beta</span></button>` : ""}
       <button class="w-btn w-round w-zoom" id="w-zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
       <button class="w-btn w-round w-zoom" id="w-zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
       <button class="w-recenter" id="w-recenter">⤾ Recenter</button>
+      <button class="w-btn" id="w-retry" hidden title="Start a new module attempt. Earlier provider work may have been charged.">Retry module</button>
       <button class="w-btn w-primary" id="w-next">Next ▸</button>
       <button class="w-btn w-round" id="w-reset" title="Restart this module">↺</button>
       <span class="w-meta"><span id="w-sn">0</span>/<span id="w-st">0</span></span>
@@ -450,6 +451,17 @@ body[data-reading="world"]{overflow:hidden;height:100vh;height:100dvh;margin:0;
   border:1px solid var(--wline);border-radius:11px;padding:10px 12px;margin:6px 0}
 .w-pob .w-ref{font-size:12.5px;color:var(--wsoft);background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.3);
   border-radius:11px;padding:10px 13px;margin-top:8px}
+
+/* Mobile module navigation overlays the full-width canvas; it never shrinks it. */
+@media(max-width:760px){
+  #wroot{grid-template-columns:minmax(0,1fr);position:relative}
+  #wrail{position:absolute;left:0;top:54px;bottom:0;z-index:12;width:min(280px,85vw);box-shadow:12px 0 28px #0005}
+  #wroot:not(.rail-open) #wrail{visibility:hidden;pointer-events:none;box-shadow:none}
+  .w-head{padding:10px 8px;gap:6px;flex-wrap:wrap}
+  .w-kick{max-width:130px}
+  .w-head .w-handson{font-size:11px;padding:0 7px}
+  .w-zoom,.w-recenter,.w-meta{display:none}
+}
 
 /* ===== LIGHT THEME (toggle in the header; persisted in localStorage). The --w* vars
    flip here; block content inside popups follows automatically because ARTIFACT_CSS's
@@ -722,6 +734,7 @@ function beatsFor(si){var S=DATA[si],beats=[];
         :'<button class="w-nextmod" onclick="__wgoto(0)">↺ Replay lesson</button>');});
   return beats;}
 function gotoStage(n){if(n<0||n>=DATA.length)return;
+  if(window.matchMedia("(max-width: 760px)").matches)setRail(false);
   E.gen++;
   var vp=$("w-vp");vp.classList.add("swap");
   setTimeout(function(){E.si=n;E.bi=0;
@@ -738,10 +751,16 @@ function closePopupSilent(){$("w-po").classList.remove("on");$("w-poback").class
 function nextBeat(){if(E.bi>=BEATS.length){if(E.si<DATA.length-1)gotoStage(E.si+1);return;}
   BEATS[E.bi]();E.bi++;paint();}
 function paint(){$("w-sn").textContent=E.bi;
+  $("w-retry").hidden=!(ARTIFACT_ID && DATA[E.si] && DATA[E.si].stub);
   $("w-next").textContent=E.bi>=BEATS.length?(E.si<DATA.length-1?"Next module ▸":"Done ✓"):"Next ▸";
   $("w-next").disabled=E.bi>=BEATS.length&&E.si>=DATA.length-1;}
 $("w-next").onclick=function(){nextBeat();};
 $("w-reset").onclick=function(){gotoStage(E.si);};
+$("w-retry").onclick=function(){var b=$("w-retry"),s=DATA[E.si];if(!s||!s.stub||!ARTIFACT_ID)return;
+  b.disabled=true;b.textContent="Starting…";
+  fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:s.moduleId,retry:true})})
+    .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||"The module could not be started.");try{sessionStorage.removeItem("als-world-heal:"+ARTIFACT_ID);}catch(e){}location.reload();});})
+    .catch(function(e){b.disabled=false;b.textContent="Retry module";b.title=e.message;});};
 /* "⚡ Get Hands on" → open the browser-run Python notebook (same contract as the classic
    runtime): inside the host iframe ask the parent to open it (it has the window + token);
    standalone (downloaded / full-screen) open it ourselves. Passes the CURRENT module. */
@@ -754,13 +773,14 @@ $("w-reset").onclick=function(){gotoStage(E.si);};
 document.addEventListener("keydown",function(e){
   /* never swallow browser gestures — Cmd/Ctrl+(+/-) is the BROWSER's zoom (accessibility) */
   if(e.metaKey||e.ctrlKey)return;
-  if(e.key==="Escape"){closePopup();hidePopover();return;}
+  if(e.key==="Escape"){closePopup();hidePopover();setRail(false);return;}
   if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"))return;
   if(e.key==="ArrowRight"){e.preventDefault();nextBeat();}
   if(e.key==="ArrowLeft"){e.preventDefault();if(E.bi>1){E.bi=E.bi-2;BEATS[E.bi]();E.bi++;paint();}}
   if(e.key==="+"||e.key==="="){e.preventDefault();zoomBy(1.2);}
   if(e.key==="-"||e.key==="_"){e.preventDefault();zoomBy(.83);}});
-$("w-railbtn").onclick=function(){var on=$("wroot").classList.toggle("rail-open");$("w-railbtn").classList.toggle("on",on);};
+function setRail(on){$("wroot").classList.toggle("rail-open",on);$("w-railbtn").classList.toggle("on",on);$("w-railbtn").setAttribute("aria-expanded",String(on));}
+$("w-railbtn").onclick=function(){setRail(!$("wroot").classList.contains("rail-open"));};
 /* ---- progress relay to the host app (same contract as the classic runtime) ---- */
 var moduleStages=DATA.filter(function(s){return !s.special;}).length||1;
 function markVisited(si){if(DATA[si]&&!DATA[si].special)E.visited[si]=1;

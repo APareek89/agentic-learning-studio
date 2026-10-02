@@ -40,9 +40,22 @@ export function authConfig(): ExpressAuthConfig {
       },
     })],
     callbacks: {
-      jwt({ token, user }) { if (user) token.sub = user.id; return token; },
+      async jwt({ token, user }) {
+        if (user?.id) {
+          token.sub = user.id;
+          token.sessionId = randomUUID();
+          await query("insert into auth_sessions(id,user_id,expires_at) values($1,$2,now()+interval '7 days')", [token.sessionId,user.id]);
+        }
+        if (!token.sub || typeof token.sessionId !== "string") return null;
+        const active = await query("select 1 from auth_sessions where id=$1 and user_id=$2 and revoked_at is null and expires_at>now()", [token.sessionId,token.sub]);
+        return active.length ? token : null;
+      },
       session({ session, token }) { if (session.user && token.sub) session.user.id = token.sub; return session; },
     },
+    events: { async signOut(message) {
+      if ("token" in message && typeof message.token?.sessionId === "string")
+        await query("update auth_sessions set revoked_at=now() where id=$1", [message.token.sessionId]);
+    } },
     logger: { error(error) { console.warn("[auth]", error.name); }, warn(code) { console.warn("[auth]", code); }, debug() {} },
   };
   return config;

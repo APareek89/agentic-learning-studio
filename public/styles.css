@@ -390,7 +390,7 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 #chat-input:disabled { background: var(--bg); color: #aab; }
 
 /* ---- Viewer ---- */
-.viewer { display: flex; flex-direction: column; min-width: 0; }
+.viewer { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .viewer-bar { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; border-bottom: none; box-shadow: 0 1px 0 var(--border); background: var(--surface); gap: 10px; }
 .viewer-title { font-weight: 700; font-size: 16.5px; letter-spacing: -0.01em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .viewer-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
@@ -400,7 +400,7 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 .gen-status[hidden] { display: none; }
 .vbtn { border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 9px; cursor: pointer; text-decoration: none; }
 .vbtn:hover { border-color: var(--accent); color: var(--accent-2); }
-.viewer-body { flex: 1; position: relative; background: var(--bg); }
+.viewer-body { flex: 1; min-height: 0; position: relative; background: var(--bg); }
 .viewer-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
 #viewer-frame { width: 100%; height: 100%; border: none; background: #fff; }
 
@@ -418,7 +418,9 @@ body { background: var(--bg); color: var(--ink); line-height: 1.6; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 @media (max-width: 760px) {
-  .workspace { grid-template-columns: 1fr; grid-template-rows: 38% 62%; }
+  .workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .workspace.chat-open { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(180px, 40%); }
+  .workspace:not(.chat-open) .chat { display: none; }
   .hero-content h1, .hero-content .hero-title { font-size: 30px; }
 }
 /* Keep the option dropdowns + context fields 2-up until quite narrow. */

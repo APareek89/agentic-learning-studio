@@ -41,3 +41,10 @@ Production uses the included Dockerfile on AWS in ap-south-1. Secrets come from 
 ### Follow-up model selection
 
 Authenticated `POST /api/ask` accepts an optional `modelTier`: `haiku` uses the configured smaller model; `sonnet` uses the configured main model. Omitting it retains `sonnet`. Raw model IDs and other values are rejected. Both choices keep the same owned-lesson check, 500-token output limit and zero SDK retries. This selects one follow-up response, not a new lesson build.
+
+
+### Local free QA and session migration
+
+The October2 review is documented in [the FMEA report](docs/qa/2026-10-02/REPORT.md). Updated authentication requires the additive `0022_revocable_sessions.sql` migration before deployment; sign-out revokes a durable session, including copied cookies. Old sessions require a new sign-in. Document-only generation stops if its uploaded sources are unavailable. Detached generation errors use safe messages, and a failed coverage-brief step is not automatically repeated by the overview driver. No live model-quality claim is made by the fixture suite.
+
+Authoring model attempts now have zero automatic SDK/helper retries and no automatic cross-provider fallback. Failed sections remain explicit Retry module actions; automatic polling never repurchases them. Known-output editorial repairs are bounded and emit separate usage receipts. See the FMEA report for their limits and the remaining whole-lesson billing limitation. Prepared examples remain free, cannot be republished as original work, and use the responsive mobile lesson viewer.

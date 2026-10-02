@@ -1,3 +1,4 @@
+import { generationErrorCategory, safeGenerationError } from "./generation-errors";
 /**
  * # Density enforcement — verify prose against the tier spec, repair the offenders
  *
@@ -134,7 +135,7 @@ export async function repairCodeLength(bp: Blueprint, moduleId: string, config?:
     }
     return { repaired, residual: codeOffenders(m).length };
   } catch (err) {
-    console.warn("[repairCodeLength] failed:", (err as Error).message?.slice(0, 120));
+    console.warn("[repairCodeLength] failed:", generationErrorCategory(err));
     return { repaired: 0, residual: codeOffenders(m).length };
   }
 }
@@ -180,7 +181,7 @@ export async function repairDensity(bp: Blueprint, moduleId: string, density: De
     }
     return { repaired, residual: measureModule(m, density).overCeiling };
   } catch (err) {
-    console.warn("[repairDensity] failed:", (err as Error).message?.slice(0, 120));
+    console.warn("[repairDensity] failed:", generationErrorCategory(err));
     return { repaired: 0, residual: measureModule(m, density).overCeiling };
   }
 }

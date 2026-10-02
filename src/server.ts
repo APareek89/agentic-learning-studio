@@ -32,6 +32,7 @@ import { extname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getArtifact, updateArtifact, registerArtifact } from "./lib/artifacts";
+import { isPreparedArtifact } from "./lib/artifacts";
 import { publicCache, cachedHtml } from "./lib/httpcache";
 import { requireAskModelTier } from "./lib/ask-model-tier";
 import { loadSource } from "./rag/loaders";
@@ -363,7 +364,7 @@ app.post("/api/examples/start", heavyLimiter, requireAuth, async (req, res) => {
     bp.learnerProfile.readingMode = "world";
     const user = res.locals.user;
     const artifact = await registerArtifact({ kind: "learning-artifact", title: bp.meta.title,
-      html: renderArtifact(bp), blueprint: bp, userId: user.id, userEmail: user.email, prompt: `Cached example: ${bp.meta.title}` });
+      html: renderArtifact(bp), blueprint: bp, cards: { preparedExample: true }, userId: user.id, userEmail: user.email, prompt: `Cached example: ${bp.meta.title}` });
     if (slug === "agent-memory") {
       const notebook = {
         title: "A tiny agent memory store", kernelNote: "Cached example · runs locally in your browser. No API keys or model calls.",
@@ -913,6 +914,13 @@ app.post("/api/learn", heavyLimiter, requireAuth, requireLiveGeneration, async (
 // GET /api/artifact/:id — serve the self-contained HTML (used as the viewer's
 // iframe source and for "open in new window").
 // ----------------------------------------------------------------------------
+app.get("/api/artifact/:id/metadata", requireAuth, requireArtifactOwner, async (req, res) => {
+  const art = await getArtifact(req.params.id);
+  if (!art) { res.sendStatus(404); return; }
+  res.setHeader("Cache-Control", "private, no-store");
+  res.json({ prepared: isPreparedArtifact(art) });
+});
+
 app.get("/api/artifact/:id", requireAuth, requireArtifactOwner, async (req, res) => {
   const art = await getArtifact(req.params.id);
   if (!art) {
@@ -963,10 +971,8 @@ app.get("/api/artifact/:id/download", requireAuth, requireArtifactOwner, async (
 // (background queue + click-to-prioritize). Returns the rendered fragment to inject, or
 // 202 {building:true} when synthesis is in progress (the runtime then POLLS — see runtime.ts pump).
 // ----------------------------------------------------------------------------
-// PUBLIC (no requireAuth): the artifact's OWN runtime has no auth token. It only builds a module for
-// an already-existing artifact (an unguessable UUID, same access model as the public
-// /api/artifact/:id), and results are cached, so the cost/abuse surface is bounded. The expensive
-// entry points that CREATE lessons (/api/generate, /api/learn) stay auth-gated.
+// The parent relays signed-in iframe requests. Polling reads existing state; only
+// an explicit retry action may start a new module generation.
 
 /** Deterministic module_cache key for a module of a blueprint (shared by the route + builder). */
 function buildModuleCacheKey(bp: Blueprint, moduleId: string): string {
@@ -984,7 +990,7 @@ const moduleBuildsInFlight = new Set<string>();
  * Build ONE module's body OFF the HTTP request (Render gateway-timeout-safe — B3). Re-fetches the
  * artifact, runs the deep-dive, caches the fragment, and persists the grown blueprint. Idempotent
  * (skips if already built) and deduped (one in-flight build per artifact+module); a failed deep-dive
- * leaves the module as a stub so a later poll re-kicks it.
+ * leaves the module as a stub until a learner explicitly retries.
  */
 function ensureModuleBuild(artifactId: string, moduleId: string): void {
   const key = `${artifactId}:${moduleId}`;
@@ -998,7 +1004,7 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
       if (!art || !bp || !module || process.env.ALS_MOCK_MODE === "1") return;
       if (module.loadState === "full" && module.blocks.length > 0) return; // already built
       const { ok } = await runDeepDive(bp, moduleId, { uploadIds: art.uploadIds, referOnly: art.referOnly });
-      if (!ok) return; // leave as a stub; the next poll re-kicks a build
+      if (!ok) return; // a later poll cannot restart this paid operation
       const fragmentHtml = renderModuleFragment(module, bp);
       await query(
         `insert into module_cache (cache_key, fragment_html) values ($1, $2)
@@ -1020,7 +1026,7 @@ function ensureModuleBuild(artifactId: string, moduleId: string): void {
       }
       await updateArtifact(artifactId, { blueprint: fbp, html: renderArtifact(fbp) }).catch(() => {});
     } catch (e) {
-      console.warn("[ensureModuleBuild]", moduleId, e instanceof Error ? e.message : String(e));
+      console.warn("[ensureModuleBuild]", moduleId, "module_generation_failed");
     } finally {
       moduleBuildsInFlight.delete(key);
     }
@@ -1060,16 +1066,16 @@ app.post("/api/module", requireAuth, requireArtifactOwner, async (req, res) => {
       return;
     }
 
-    // 3) Not built → do NOT synthesize on the request (a ~16k-token Sonnet call exceeds Render's
-    //    gateway timeout → 502). If a build job is already building this artifact, IT is the builder
-    //    — just tell the runtime to poll. Otherwise (standalone / library / restarted-mid-build
-    //    lesson) kick a detached single-module build. Either way return 202 so the iframe POLLS.
-    if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "This module is not cached. Live generation is disabled in demo mode." }); return; }
-    if (!hasActiveBuildForArtifact(artifactId!)) {
-      heavyLimiter(req, res, () => { ensureModuleBuild(artifactId!, moduleId); res.status(202).json({ moduleId, building: true }); });
-      return;
+    // Polls must never repurchase a failed or interrupted attempt. Reading an
+    // active build returns 202; only an explicit learner retry starts new work.
+    if (hasActiveBuildForArtifact(artifactId!) || moduleBuildsInFlight.has(`${artifactId}:${moduleId}`)) {
+      res.status(202).json({ moduleId, building: true }); return;
     }
-    res.status(202).json({ moduleId, building: true });
+    if (req.body?.retry !== true) {
+      res.status(409).json({ error: "This section is incomplete. Choose Retry module to start a new attempt; earlier provider work may have been charged.", retryRequired: true }); return;
+    }
+    if (process.env.ALS_MOCK_MODE === "1") { res.status(409).json({ error: "This module is not cached. Live generation is disabled in demo mode." }); return; }
+    heavyLimiter(req, res, () => { ensureModuleBuild(artifactId!, moduleId); res.status(202).json({ moduleId, building: true }); });
   } catch (err) {
     console.warn("[/api/module]", err instanceof Error ? err.name : "Error");
     res.status(500).json({ error: "The request could not be completed. Please try again." });
@@ -1593,7 +1599,11 @@ app.get("/healthz", async (_req, res) => {
   let db = false;
 
   if (dbEnabled()) {
-    try { const r = await query<{ ok: number }>("select 1 as ok"); db = r.length > 0; }
+    try {
+      const r = await query<{ ok: number }>("select 1 as ok");
+      if (authEnabled()) await query("select id,user_id,expires_at,revoked_at from public.auth_sessions limit 0");
+      db = r.length > 0;
+    }
     catch { db = false; }
   }
   res.status(db ? 200 : 503).json({ ok: db, db, dbConfigured: dbEnabled(), rag: db, auth: authEnabled() });

@@ -462,7 +462,7 @@ export const RUNTIME_JS = String.raw`
   function kcGradeId(){ return ARTIFACT_ID ? {artifactId:ARTIFACT_ID} : (LESSON_SLUG ? {slug:LESSON_SLUG, source:LESSON_SRC} : null); }
   var queue=(cfg.stubModuleIds||[]).slice();
   var PREVIEW=!!cfg.previewOnly;   // overview gate: show the overview only, build nothing
-  var busy=false;
+  var busy=false, explicitModuleRetries={};
   // 202/poll state (B3): /api/module builds OFF the request and returns 202 while synthesizing; we
   // re-queue + poll. MAX_MODULE_POLLS*POLL_MS ~= 5 min backstop before a section is marked failed.
   var POLL_MS=2500, MAX_MODULE_POLLS=120, pollCount={};
@@ -488,7 +488,7 @@ export const RUNTIME_JS = String.raw`
   function markSectionFailed(id){
     var nav=navItem(id); if(nav){ nav.classList.remove("building"); nav.classList.add("failed"); }
     var panel=panelEl(id), b=panel&&panel.querySelector(".building");
-    if(b){ b.classList.add("failed"); b.textContent="⚠ Couldn't build this section — tap to retry."; }
+    if(b){ b.classList.add("failed"); b.textContent="⚠ Section incomplete — tap to retry. Earlier provider work may have been charged."; }
   }
   function pump(){
     if(busy || !ARTIFACT_ID) return;
@@ -497,7 +497,8 @@ export const RUNTIME_JS = String.raw`
     busy=true;
     var nav=navItem(id);
     var st=0;
-    fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:id})})
+    var retry=explicitModuleRetries[id]===true; delete explicitModuleRetries[id];
+    fetch("/api/module",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({artifactId:ARTIFACT_ID,moduleId:id,retry:retry})})
       .then(function(r){ st=r.status; if(!r.ok && r.status!==202) throw new Error("HTTP "+r.status); return r.json().catch(function(){ return {}; }); })
       .then(function(data){
         // 202 / {building:true}: the body is synthesized OFF the request (no gateway-timeout 502).
@@ -523,6 +524,7 @@ export const RUNTIME_JS = String.raw`
   }
   function prioritize(id){
     if(PREVIEW) return;               // preview gate: never build on demand
+    var nav=navItem(id); if(nav && nav.classList.contains("failed")) explicitModuleRetries[id]=true;
     var i=queue.indexOf(id);
     if(i>0){ queue.splice(i,1); queue.unshift(id); }
     else if(i===-1 && isStub(id)){ queue.unshift(id); }

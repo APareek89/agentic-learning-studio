@@ -1,3 +1,4 @@
+import { generationErrorCategory, safeGenerationError } from "../agent/generation-errors";
 /**
  * # Skill generation — turn a free-text brief into an installable Agent Skill
  *
@@ -135,7 +136,7 @@ export async function persistSkill(userId: string, email: string, pkg: SkillPack
     );
     return rows[0]?.id ?? null;
   } catch (e) {
-    console.warn("[persistSkill]", e instanceof Error ? e.message : String(e));
+    console.warn("[persistSkill]", safeGenerationError(e));
     return null;
   }
 }
@@ -416,7 +417,7 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
           console.warn("[runSkillJob] 'Agent Skills' KB returned no chunks — generating UNGROUNDED.");
         }
       } catch (e) {
-        console.warn("[runSkillJob] KB retrieval failed — generating UNGROUNDED:", e instanceof Error ? e.message : String(e));
+        console.warn("[runSkillJob] KB retrieval failed — generating UNGROUNDED:", safeGenerationError(e));
       }
     } else {
       console.warn("[runSkillJob] RAG disabled — generating UNGROUNDED.");
@@ -431,7 +432,7 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
         const hits = await retrieveFromUploads(`${input.task} ${input.dataSources} ${input.accessMethod}`, input.refDocIds, 6);
         uploadContext = hits.map((h) => `- ${h.title ? `(${h.title}) ` : ""}${h.content}`).join("\n").slice(0, 8000);
       } catch (e) {
-        console.warn("[runSkillJob] upload retrieval failed:", e instanceof Error ? e.message : String(e));
+        console.warn("[runSkillJob] upload retrieval failed:", safeGenerationError(e));
       }
     }
 
@@ -469,12 +470,12 @@ export async function runSkillJob(job: SkillJob, input: SkillInput): Promise<voi
     // mid-way failure never deducts — mirrors the lesson charge-on-success rule.
     if (input.userId && dbEnabled()) {
       try { await spend(input.userId, 0.5, "skill"); }
-      catch (e) { console.error("[runSkillJob] credit deduct failed", e); }
+      catch (e) { console.error("[runSkillJob] credit deduct failed", generationErrorCategory(e)); }
     }
   } catch (e) {
     job.status = "error";
-    job.error = e instanceof Error ? e.message : String(e);
-    console.error("[runSkillJob]", e);
+    job.error = safeGenerationError(e);
+    console.error("[runSkillJob]", generationErrorCategory(e));
   } finally {
     releaseGenSlot();
   }

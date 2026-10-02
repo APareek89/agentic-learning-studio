@@ -1,3 +1,4 @@
+import { DocumentOnlySourceError, generationErrorCategory } from "./generation-errors";
 /**
  * # Graph nodes — the steps that turn a request into a rendered lesson
  *
@@ -14,7 +15,7 @@
 import { z } from "zod";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { makeLLM, withOverloadRetry, makeGptLLM, gptFallbackEnabled, structuredWithFallback, rawWithFallback, invokeResilient } from "./llm";
+import { makeLLM, makeGptLLM, gptFallbackEnabled, structuredWithFallback, rawWithFallback, invokeResilient } from "./llm";
 import type { GraphStateType, LearnerProfile } from "./state";
 import {
   BlueprintSchema,
@@ -36,10 +37,8 @@ import { ragEnabled } from "../lib/db";
 import { hasUploads, getUploadTitles, retrieveFromUploads } from "../lib/uploads";
 import type { Intent, RetrievedSource } from "./state";
 
-// BATCH B — when GPT failover is wired (OPENAI_API_KEY set), cut the Claude SDK retry budget to ~2
-// quick tries so a bad Anthropic day fails over to GPT fast instead of riding the long overload
-// backoff. No key → 4 retries (unchanged). Each Claude tier gets a paired GPT client (null w/o key).
-const CLAUDE_RETRIES = gptFallbackEnabled() ? 2 : 4;
+// Every transport attempt is explicit; no SDK retry or cross-provider fallback.
+const CLAUDE_RETRIES = 0;
 // Profiler runs on HAIKU: it's a small prompt→structured-inference task (who/what extraction),
 // not content generation — Haiku is ~3x cheaper + faster and accurate enough here. Env-overridable.
 const profilerLLM = makeLLM("haiku", 0, { maxRetries: CLAUDE_RETRIES });
@@ -57,11 +56,8 @@ const briefGpt = makeGptLLM("haiku", { maxTokens: 3000 });
 //     structure EXACTLY. Sonnet is cheaper/faster for prose; raw-parsed via coerceSkeleton.
 //     16k streaming so a prose-rich skeleton doesn't truncate (Sonnet streams fine; the
 //     Opus-only streaming double-encode bug doesn't apply to Sonnet).
-// If the planner fails (e.g. a hard overload), state.plan is null and the architect plans +
-// writes in one Sonnet call (graceful fallback — see plannerUserPrompt / architectUserPrompt).
-// PLANNER on SONNET (was Opus 4.8 — the slow leg of the overview; B3 latency). Sonnet plans the
-// structure fast enough, and the graceful fallback (architect plans+writes in one) still covers a
-// miss. Env-overridable via ANTHROPIC_MODEL_SONNET (set ANTHROPIC_MODEL_OPUS-tier here to revert).
+// A planner failure stops the build; retry requires a new explicit user action.
+// Both planning and prose use the configured sonnet task tier.
 const plannerLLM = makeLLM("sonnet", 0.2, { maxTokens: 9000, maxRetries: CLAUDE_RETRIES });
 const plannerGpt = makeGptLLM("sonnet", { maxTokens: 9000 });
 const skeletonLLM = makeLLM("sonnet", 0.3, { maxTokens: 16000, streaming: true, maxRetries: CLAUDE_RETRIES });
@@ -266,7 +262,8 @@ export async function retriever(state: GraphStateType) {
     .filter(Boolean)
     .join(" — ");
   const uploadIds = state.uploadIds ?? [];
-  const referOnly = !!state.referOnly && hasUploads(uploadIds);
+  const referOnly = !!state.referOnly;
+  if (referOnly && !hasUploads(uploadIds)) throw new DocumentOnlySourceError("unavailable");
 
   // 1) the learner's own uploaded documents (prioritized; independent of the DB).
   let upSources: RetrievedSource[] = [];
@@ -276,9 +273,11 @@ export async function retriever(state: GraphStateType) {
       upSources = hits.map((h, i) => ({ sid: `U${i + 1}`, kbChunkId: "", title: h.title || "Your document", content: h.content, origin: "upload" as const }));
     } catch (err) {
       /* fall back to KB / model knowledge — but surface it (silent failure = invisible ungrounded build). */
-      console.warn("[retriever] upload retrieval failed; falling back to KB/model:", err instanceof Error ? err.message : err);
+      console.warn("[retriever] upload retrieval failed; falling back to KB/model:", generationErrorCategory(err));
     }
   }
+
+  if (referOnly && !upSources.length) throw new DocumentOnlySourceError("empty");
 
   // 2) the shared knowledge base — skipped entirely when "refer only this" is on.
   let kbSources: RetrievedSource[] = [];
@@ -417,7 +416,7 @@ export async function coverageBrief(state: GraphStateType, config: RunnableConfi
 }
 
 /** Pull the Blueprint JSON object out of a raw model response (tolerates a ```json fence
- *  or stray prose around it). Throws if no object / parse fails → caught as a repair retry. */
+ *  or stray prose around it). Throws if no object / parse fails → a visible build failure. */
 function extractJsonObject(text: string): unknown {
   let t = (text || "").trim();
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -434,7 +433,7 @@ function extractJsonObject(text: string): unknown {
  * required arrays (termIds/citations/edges/…); we fill those safe defaults, inject the
  * app's resolved learnerProfile (the skeleton's echo is ignored anyway), then run
  * BlueprintSchema so the rest is validated + defaulted. A genuinely malformed object
- * throws → the architect's catch routes it to a repair retry.
+ * throws → the architect reports an incomplete outline without repurchase.
  */
 /** Recursively delete null-valued keys — the model emits `null` for optional fields it
  *  doesn't fill, but Zod `.optional()` accepts `undefined`, not `null`. */
@@ -558,9 +557,8 @@ export async function planner(state: GraphStateType, config: RunnableConfig) {
     const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
     plan = extractJsonObject(text);
   } catch (err) {
-    // Graceful: if the planner fails, the architect (Sonnet) plans + writes in one call.
-    console.warn("[planner] failed — architect will plan + write in one:", (err as Error).message?.slice(0, 160));
-    plan = null;
+    console.warn("[planner] failed:", generationErrorCategory(err));
+    throw err; // No second planner/provider purchase after a failed request.
   }
   return {
     plan,
@@ -626,11 +624,11 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
     const text = typeof raw.content === "string" ? raw.content : Array.isArray(raw.content) ? raw.content.map((c) => (typeof c === "object" && c && "text" in c ? (c as { text: string }).text : "")).join("") : String(raw.content);
     candidate = coerceSkeleton(extractJsonObject(text), p);
   } catch (err) {
-    console.warn("[architect] skeleton generation failed:", (err as Error).message?.slice(0, 200));
+    console.warn("[architect] skeleton generation failed:", generationErrorCategory(err));
     return {
       validation: { ok: false, errors: [`The previous outline was incomplete/invalid. Return a COMPLETE Blueprint OUTLINE with ALL fields, ${intent?.moduleTarget ?? 5} modules, every module's blocks EMPTY ([]) and loadState \"stub\"; keep it tight.`] },
-      reviseCount: (state.reviseCount ?? 0) + 1,
-      messages: [{ role: "assistant" as const, node: "Architect", content: "Outline was incomplete — retrying…" }],
+      reviseCount: 2,
+      messages: [{ role: "assistant" as const, node: "Architect", content: "Outline was incomplete; review and retry explicitly." }],
     };
   }
 
@@ -672,7 +670,7 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
 
   const note = result.ok
     ? `Outlined **${blueprint.modules.length} building blocks** + a mental map (${Object.keys(blueprint.glossary).length} terms), grounded in ${sources.length} source(s). Writing the first one…`
-    : `Outline needs fixes (${result.errors.length}) — repairing…`;
+    : `Outline needs review (${result.errors.length}); no automatic paid retry.`;
 
   return {
     blueprint,
@@ -682,10 +680,9 @@ export async function architect(state: GraphStateType, config: RunnableConfig) {
   };
 }
 
-/** Conditional edge after architect: repair once on failure, else seed Module 1. */
+/** No automatic architect repurchase; subsequent gates retain best-effort validation. */
 export function routeAfterArchitect(state: GraphStateType): "architect" | "seedFirstModule" {
   if (state.validation?.ok) return "seedFirstModule";
-  if ((state.reviseCount ?? 0) < 2) return "architect"; // one repair attempt
   return "seedFirstModule"; // ship best-effort rather than fail outright
 }
 
@@ -703,7 +700,8 @@ export async function runDeepDive(
   if (!module) return { ok: false, sources: [] };
   const p = bp.learnerProfile;
   const config = opts.config;
-  const referOnly = !!opts.referOnly && hasUploads(opts.uploadIds);
+  const referOnly = !!opts.referOnly;
+  if (referOnly && !hasUploads(opts.uploadIds)) throw new DocumentOnlySourceError("unavailable");
 
   // Focused retrieval — sharper than the whole-topic pass (module title + its terms).
   const termLabels = module.termIds.map((id) => bp.glossary[id]?.label).filter(Boolean).join(" ");
@@ -717,9 +715,10 @@ export async function runDeepDive(
       sources = hits.map((h, i) => ({ sid: `U${i + 1}`, kbChunkId: "", title: h.title || "Your document", content: h.content, origin: "upload" as const }));
     } catch (err) {
       /* fall back — but surface it (silent failure = invisible ungrounded module). */
-      console.warn("[runDeepDive] upload retrieval failed for module; falling back:", err instanceof Error ? err.message : err);
+      console.warn("[runDeepDive] upload retrieval failed for module; falling back:", generationErrorCategory(err));
     }
   }
+  if (referOnly && !sources.length) throw new DocumentOnlySourceError("empty");
   if (!referOnly && ragEnabled()) {
     try {
       const { chunks } = await retrieve(query, 6);
@@ -776,23 +775,10 @@ export async function runDeepDive(
       })
     ),
   ];
-  // Retry transient failures with backoff. The two common causes need OPPOSITE waits:
-  //  - Anthropic 529 "Overloaded" / 429 rate-limit: an API-side capacity/throttle window
-  //    that typically clears in ~30-90s. A fast burn of 3 quick retries (the old ~3s total)
-  //    just guarantees the WHOLE build fails during an overload — so ride it out with long,
-  //    JITTERED backoff. (Jitter also de-syncs parallel module builds so they don't all
-  //    re-hammer the API on the same beat.)
-  //  - an occasional malformed structured-output / empty result: retry quickly.
-  // Each module is its own small call, so no token-wall risk from extra attempts.
-  const isOverloadOrRate = (m: string) =>
-    /overloaded|529|rate.?limit|\b429\b|too many requests/i.test(m);
-  const OVERLOAD_BACKOFF_MS = [2000, 5000, 12000, 25000, 40000]; // ~84s total across the waits
-  // BATCH B — the module-body runnable carries the GPT-5.5 fallback (cache_control stripped on the
-  // GPT branch). With failover wired, provider errors fail over to GPT WITHIN each invoke, so this
-  // outer loop only needs a couple of tries (mainly for the empty-blocks case); without failover,
-  // keep the 6-attempt overload ride-out.
+  // One generation attempt. Invalid output stays a visible stub; no transport,
+  // parse, overload, or cross-provider retry can silently purchase another body.
   const runnable = structuredWithFallback(moduleLLM, moduleGpt, ModuleBlocksSchema, { name: "module_blocks", includeRaw: true });
-  const MAX_ATTEMPTS = gptFallbackEnabled() ? 3 : 6;
+  const MAX_ATTEMPTS = 1;
   let blocks: Block[] = [];
   let nodeMeta: { what?: string; relevance?: string; laymanExplanation?: string } | undefined;
   let lastErr = "";
@@ -812,13 +798,9 @@ export async function runDeepDive(
       if (blocks.length) break;
       lastErr = "model returned no blocks";
     } catch (err) {
-      lastErr = (err as Error).message?.slice(0, 200) || "error";
+      lastErr = generationErrorCategory(err) || "error";
     }
-    if (attempt < MAX_ATTEMPTS - 1) {
-      const base = isOverloadOrRate(lastErr) ? (OVERLOAD_BACKOFF_MS[attempt] ?? 40000) : 900 * (attempt + 1);
-      const wait = base + Math.floor(base * 0.3 * Math.random()); // +0-30% jitter
-      await new Promise((r) => setTimeout(r, wait));
-    }
+
   }
   if (!blocks.length) {
     console.warn(`[runDeepDive] module "${moduleId}" failed after ${MAX_ATTEMPTS} attempts:`, lastErr);
@@ -958,7 +940,7 @@ export async function writeOverviewProse(bp: Blueprint, opts: { config?: Runnabl
     ],
     config ?? {}
   ).catch((err: unknown) => {
-    console.warn("[overview-prose] failed:", (err instanceof Error ? err.message : String(err)).slice(0, 160));
+    console.warn("[overview-prose] failed:", generationErrorCategory(err));
     return null;
   })) as z.infer<typeof OverviewProseSchema> | null;
   if (!out) return;

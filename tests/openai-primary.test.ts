@@ -72,7 +72,7 @@ test("OpenAI primary uses one provider for raw, notebook, streamed skill and inc
   reject = true;
   await assert.rejects(invokeResilient(makeLLM("sonnet", 0, opts), "Rejected once"));
   assert.equal(requests.length, 6, "no SDK, helper, or cross-provider retry");
-  assert.match(logs.at(-1)!, /"errorCategory":"insufficient_credits"/);
+  assert.match(logs.filter(l => l.startsWith("[provider-request]")).at(-1)!, /"errorCategory":"insufficient_credits"/);
   assert.equal(logs.join(" ").includes("secret-marker"), false);
   assert.equal(logs.join(" ").includes("private-prompt"), false);
   process.env.ALS_MOCK_MODE = "1";

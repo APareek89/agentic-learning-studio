@@ -13,6 +13,7 @@
 import { randomUUID, randomBytes } from "node:crypto";
 import { dbEnabled, query, requireUserId } from "./db";
 import { getArtifact } from "./artifacts";
+import { isPreparedArtifact } from "./artifacts";
 import { renderArtifact } from "../render/index";
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
@@ -146,6 +147,8 @@ export async function shareLesson(
   // Ownership: only the owner can share their lesson.
   const owns = art.userId === user.id;
   if (!owns) return { ok: false, error: "You can only share your own lessons." };
+
+  if (isPreparedArtifact(art)) return { ok: false, error: "Prepared examples cannot be published as your own work." };
 
   // Don't double-publish the same source lesson.
   const existing = await query<{ slug: string }>(

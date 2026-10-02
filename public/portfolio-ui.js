@@ -29,7 +29,7 @@
     try {
       const response = await fetch("/api/examples/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: "agent-memory" }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not load example.");
-      openLessonInWorkspace(data.artifact.id, data.artifact.title, "Cached example");
+      openLessonInWorkspace(data.artifact.id, data.artifact.title, "Cached example", true);
       loadDashboard(); window.portfolioToast("Cached example ready. No AI call was made.");
     } catch (error) { window.portfolioToast(error.message); }
     finally { button.disabled = false; }

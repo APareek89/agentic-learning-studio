@@ -12,7 +12,7 @@ assert(["127.0.0.1", "localhost"].includes(target.hostname) && target.pathname.e
 const db = new pg.Client({ connectionString: dbUrl, ssl: false });
 await db.connect();
 await db.query(`create table if not exists public.users(id uuid primary key,email text not null,password_hash text,name text,email_verified_at timestamptz,created_at timestamptz default now(),last_sign_in_at timestamptz,raw_user_meta_data jsonb default '{}',password_claim_token_hash text,password_claim_expires_at timestamptz,password_claim_used_at timestamptz); create unique index if not exists users_email_lower_unique on users(lower(email));`);
-for (const migration of ["0002_users_phase1", "0003_prebuilt", "0004_courses", "0005_library_rebuild", "0006_community", "0007_contributors", "0013_credits_billing", "0015_handson", "0017_generated_skills", "0019_fractional_credits", "0020_beta_feedback_events", "0021_persist_jobs_uploads"]) {
+for (const migration of ["0002_users_phase1", "0003_prebuilt", "0004_courses", "0005_library_rebuild", "0006_community", "0007_contributors", "0013_credits_billing", "0015_handson", "0017_generated_skills", "0019_fractional_credits", "0020_beta_feedback_events", "0021_persist_jobs_uploads", "0022_revocable_sessions"]) {
   await db.query(await readFile(`supabase/migrations/${migration}.sql`, "utf8"));
 }
 await db.query(`create table if not exists module_cache(cache_key text primary key,fragment_html text not null,sources jsonb,created_at timestamptz default now()); alter table hands_on_notebooks add column if not exists user_id text; alter table community_lessons add column if not exists hidden boolean default false;`);
@@ -26,12 +26,14 @@ const child = spawn(process.execPath, ["--import", "tsx", "src/server.ts"], { en
 let logs = ""; child.stdout.on("data", (v) => { logs += v; }); child.stderr.on("data", (v) => { logs += v; });
 function client() {
   const cookies = new Map();
-  return async (path, body, options = {}) => {
+  const request = async (path, body, options = {}) => {
     const headers = { cookie: [...cookies].map(([k,v]) => `${k}=${v}`).join("; "), ...(body !== undefined ? { origin: base, "content-type": "application/json" } : {}), ...options.headers };
     const r = await fetch(base + path, { method: body === undefined ? "GET" : "POST", ...options, headers, body: body === undefined ? undefined : options.form ? new URLSearchParams(body) : JSON.stringify(body), redirect: "manual" });
     for (const value of r.headers.getSetCookie()) { const [pair] = value.split(";"); const eq = pair.indexOf("="); cookies.set(pair.slice(0,eq), pair.slice(eq+1)); }
     return r;
   };
+  request.cookieHeader=()=>[...cookies].map(([k,v])=>`${k}=${v}`).join("; ");
+  return request;
 }
 async function signin(c, email, password) {
   const csrf = await (await c("/auth/csrf")).json();
@@ -58,6 +60,21 @@ try {
   assert(userA.id && userB.id && userA.id !== userB.id);
   const example = await a("/api/examples/start", {slug:"agent-memory"}); assert.equal(example.status,200);
   const {artifact} = await example.json();
+  assert.deepEqual(await (await a(`/api/artifact/${artifact.id}/metadata`)).json(),{prepared:true});
+  assert.equal((await b(`/api/artifact/${artifact.id}/metadata`)).status,404);
+  assert.equal((await a('/api/community/share',{lessonId:artifact.id,displayName:'Synthetic learner'})).status,400);
+  assert.equal(Number((await db.query('select count(*) n from community_lessons where source_lesson_id=$1',[artifact.id])).rows[0].n),0);
+  // A restart-era cached example predates the explicit marker: conservative legacy
+  // provenance must still block publication before classification/model work.
+  const legacyExampleId=randomUUID();
+  await db.query(`insert into lessons(id,user_id,kind,title,prompt,blueprint,html,cards) select $1,user_id,kind,title,prompt,blueprint,html,'{}'::jsonb from lessons where id=$2`,[legacyExampleId,artifact.id]);
+  assert.equal((await a('/api/community/share',{lessonId:legacyExampleId})).status,400);
+  assert.equal((await (await a('/api/lessons')).json()).lessons.find(l=>l.id===artifact.id).prepared,true);
+  assert.equal((await (await a('/api/lessons')).json()).lessons.find(l=>l.id===legacyExampleId).prepared,true);
+  const viewerHtml=await (await a(`/api/artifact/${legacyExampleId}`)).text();
+  assert(viewerHtml.includes('Mobile module navigation overlays'));
+  assert(viewerHtml.includes('aria-controls="wrail" aria-expanded="false"'));
+
   for (const tail of ["", "/download", "/full"]) {
     assert.equal((await anon(`/api/artifact/${artifact.id}${tail}`)).status,401);
     assert.equal((await b(`/api/artifact/${artifact.id}${tail}`)).status,404);
@@ -69,6 +86,10 @@ try {
   assert(notebookResult.notebook.cells.some(cell=>cell.type==="code"));
   assert.equal((await b("/api/hands-on/start",{lessonId:artifact.id})).status,404);
   const moduleId = fixture.modules[0].id;
+  const stubId=randomUUID(),stubBlueprint=structuredClone(fixture);stubBlueprint.modules[0].blocks=[];stubBlueprint.modules[0].loadState='stub';
+  await db.query(`insert into lessons(id,user_id,kind,title,prompt,blueprint,html,cards) select $1,user_id,kind,title,'Ordinary unfinished fixture',$3,html,'{}'::jsonb from lessons where id=$2`,[stubId,artifact.id,JSON.stringify(stubBlueprint)]);
+  for(let i=0;i<3;i++){const poll=await a('/api/module',{artifactId:stubId,moduleId});assert.equal(poll.status,409);assert.equal((await poll.json()).retryRequired,true);}
+
   assert.equal((await a("/api/module",{artifactId:artifact.id,moduleId})).status,200);
   assert.equal((await b("/api/module",{artifactId:artifact.id,moduleId})).status,404);
   const quiz = {artifactId:artifact.id,blockId:"_final_check",questionId:"memory-kind",choiceIndex:0};
@@ -97,9 +118,11 @@ try {
   const expiredToken=randomBytes(32).toString("hex");
   await db.query("insert into users(id,email,password_claim_token_hash,password_claim_expires_at) values($1,$2,$3,now()-interval '1 minute')",[randomUUID(),`expired-${suffix}@example.test`,createHash("sha256").update(expiredToken).digest("hex")]);
   assert.equal((await anon("/api/auth/claim",{token:expiredToken,password})).status,400);
+  const cookieSnapshot = a.cookieHeader();
   const csrf=await (await a("/auth/csrf")).json();
   await a("/auth/signout",{csrfToken:csrf.csrfToken,callbackUrl:base},{form:true,headers:{"content-type":"application/x-www-form-urlencoded","X-Auth-Return-Redirect":"1"}});
   assert.equal((await a("/api/lessons")).status,401);
+  assert.equal((await fetch(base+"/api/lessons", {headers:{cookie:cookieSnapshot}})).status,401,"Signout must revoke a copied session cookie, not only clear this browser");
   assert(!logs.includes("[paid-call]"));
   if(process.env.TEST_RATE_LIMIT==="1") {
     let throttled=false;

@@ -42,6 +42,12 @@ export interface StoredArtifact {
   course?: { id: string; index: number; total: number; title?: string };
 }
 
+/** Server-created examples, including legacy records made before the explicit marker.
+ * The legacy prefix is a conservative sharing restriction, never a free-provider switch. */
+export function isPreparedArtifact(art: Pick<StoredArtifact, "cards" | "prompt">): boolean {
+  return art.cards?.preparedExample === true || art.prompt?.startsWith("Cached example:") === true;
+}
+
 // In-memory cache (also the only store when the DB is off).
 const cache = new Map<string, StoredArtifact>();
 
@@ -83,7 +89,7 @@ export async function registerArtifact(input: {
   const id = randomUUID();
   const art: StoredArtifact = { id, ...input, userId };
   await persist(art);
-  cache.set(id, art);
+  cache.set(id, structuredClone(art));
   return { id, kind: input.kind, title: input.title };
 }
 
@@ -91,7 +97,7 @@ export async function registerArtifact(input: {
 export async function getArtifact(id: string, expectedUserId?: string): Promise<StoredArtifact | undefined> {
   const userId = requireUserId(expectedUserId);
   const hit = cache.get(id);
-  if (hit) return hit.userId === userId ? hit : undefined;
+  if (hit) return hit.userId === userId ? structuredClone(hit) : undefined;
   if (!dbEnabled()) return undefined;
   const rows = await query<{
     id: string; kind: string; title: string; html: string;
@@ -114,8 +120,8 @@ export async function getArtifact(id: string, expectedUserId?: string): Promise<
     userId: r.user_id ?? undefined, userEmail: r.user_email ?? undefined,
     prompt: r.prompt ?? undefined, cards: maybeParse<Record<string, unknown>>(r.cards), profile: maybeParse<unknown>(r.profile) ?? r.profile,
   };
-  cache.set(id, art);
-  return art;
+  cache.set(id, structuredClone(art));
+  return structuredClone(art);
 }
 
 /** Merge a patch into a stored artifact (e.g. refreshed html after building modules). */
@@ -124,14 +130,14 @@ export async function updateArtifact(id: string, patch: Partial<Omit<StoredArtif
   const a = await getArtifact(id, userId);
   if (!a) return;
   const next = { ...a, ...patch, userId: a.userId, userEmail: a.userEmail };
-  if (!dbEnabled()) { cache.set(id, next); return; }
+  if (!dbEnabled()) { cache.set(id, structuredClone(next)); return; }
   // Only the fields that change on a rebuild need updating. `kind` is included so the
   // overview-draft → real-lesson promotion (build stage) persists.
   const updated = await query(
     `update lessons set kind = $2, blueprint = $3, html = $4, updated_at = now() where id = $1 and user_id = $5 returning id`,
     [id, next.kind, next.blueprint ?? null, next.html, userId]
   );
-  if (updated.length) cache.set(id, next);
+  if (updated.length) cache.set(id, structuredClone(next));
 }
 
 /** Insert (or upsert) a freshly-generated artifact into the durable store. */

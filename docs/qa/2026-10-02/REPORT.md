@@ -1,11 +1,4 @@
-# Learning notes
-
-## 2026-10-01 — bounded follow-up model selection
-
-The quick-question endpoint always selected the main tier, so a smallest-model check could not use the already configured mini model. The request contract exposed no tier choice; environment changes would affect all users. Added only an optional `haiku`/`sonnet` allowlist, keeping the existing default, ownership checks, 500-token cap and zero retries. An actual Express/SDK offline regression rejects invalid tiers without dispatch and checks both configured mappings. The root operator subsequently deployed the isolated image update and verified one ordinary owned-lesson follow-up using gpt-5.4-mini: 193 input and 50 output tokens, estimated USD0.00036975. The saved lesson hash remained unchanged. This checks the follow-up path, not a complete new lesson generation.
-
-
-## Free FMEA review — 2 October 2026
+# Free workflow FMEA — 2 October 2026
 
 Current changes are local and unreleased. Normal Auth.js sign-in, owner-scoped PostgreSQL repositories, cached lesson/notebook flow, and an authored overview→approved five-module lesson driver were checked without real provider calls. See `docs/qa/2026-10-02/REPORT.md`, `fmea.json`, and `validation.json` for evidence boundaries.
 
@@ -18,3 +11,5 @@ SDK and helper retries and automatic cross-provider fallback are disabled. Faile
 Known-output editorial passes remain bounded: at most one density pass, one code-length pass and one code-gate repair per module, plus at most two notebook verification passes (the second only after a completed review requests correction). Every pass uses the same no-transport-retry factory and emits its own usage receipt. No automatic repeat follows a transport or parse failure. Synthetic lesson text proves orchestration and validation, not live teaching quality.
 
 Prepared examples are identified in server-owned metadata, with conservative recognition of historical cached examples. They cannot be published as original community work and never trigger the share nudge. Mobile lessons use the remaining viewport; the module rail overlays the canvas and closes on selection. Root visually accepted the prepared390×844flow:670.5pxiframe, no horizontal overflow, working module2navigation and no share popup. This is cached-flow evidence, not paid generation.
+
+Scores prioritize review (Severity × Occurrence × Detection); they are judgments, not measured production failure rates. Each row records its own evidence level. Local fixture passes do not imply provider quality, deployed behavior, or screenshot acceptance. Existing live receipts remain unchanged.

@@ -19,6 +19,8 @@
 import { profiler, retriever, planner, architect, coverageBrief, runDeepDive, writeOverviewProse } from "./nodes";
 import { registerArtifact, getArtifact, updateArtifact } from "../lib/artifacts";
 import { spendOne } from "../lib/credits";
+import { DocumentOnlySourceError, safeGenerationError, generationErrorCategory } from "./generation-errors";
+import { hasUploads } from "../lib/uploads";
 import { retrieveVisual } from "../lib/visuals";
 import { renderArtifact } from "../render/index";
 import { lessonPercent, releaseGenSlot, type Job, type JobLesson } from "../lib/jobs";
@@ -64,6 +66,7 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
   );
   const cfg = (runName: string) => ({ callbacks: langfuse ? [langfuse] : [], runName });
   try {
+    if (input.referOnly && !hasUploads(input.uploadIds)) throw new DocumentOnlySourceError("unavailable");
     const st: Record<string, unknown> = {
       userPrompt: input.userPrompt, cards: input.cards ?? {}, uploadIds: input.uploadIds ?? [], referOnly: !!input.referOnly,
       industry: input.industry ?? "", buildGoal: input.buildGoal ?? "", objective: input.objective ?? "", levels: input.levels ?? [], lessonTypes: input.lessonTypes ?? [],
@@ -84,18 +87,11 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     const profile = st.profile as any;
     const jl: JobLesson = { index: 1, title: profile?.topic || "Your lesson", artifactId: null, status: "designing", builtModules: 0, totalModules: 0, percent: 12 };
     job.lessons = [jl];
-    // FAST OVERVIEW — ONE small Haiku call fills the bullets-only coverage template (framing /
-    // concepts / examples / outcomes / planned sections) wrapped in a minimal valid Blueprint.
-    // The real skeleton (planner + architect, ~70s) moved into runBuildJob, which honors this
-    // approved brief. One quick retry on a transient miss (the call is only a few seconds).
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.assign(st, await coverageBrief(st as any, cfg("coverage-brief") as any));
-    } catch (e) {
-      console.warn("[runOverviewJob] coverage brief failed — retrying once:", e instanceof Error ? e.message : String(e));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.assign(st, await coverageBrief(st as any, cfg("coverage-brief-retry") as any));
-    }
+    // The brief has two bounded parallel outputs. Do not repeat both if one
+    // request fails: the other may already have completed and been charged.
+    // A later retry is an explicit learner action, with prior usage uncertain.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.assign(st, await coverageBrief(st as any, cfg("coverage-brief") as any));
     stageLog("coverage-brief");
     console.log(`[timing] overview TOTAL: ${Date.now() - ovStart}ms`);
 
@@ -117,8 +113,8 @@ export async function runOverviewJob(job: Job, input: GenerateInput): Promise<vo
     job.status = "done";
   } catch (e) {
     job.status = "error";
-    job.error = e instanceof Error ? e.message : String(e);
-    console.error("[runOverviewJob]", e);
+    job.error = safeGenerationError(e);
+    console.error("[runOverviewJob]", generationErrorCategory(e));
   } finally {
     releaseGenSlot();
     // Background jobs can exit before traces flush — force the flush.
@@ -193,13 +189,12 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Object.assign(st, await architect(st as any, cfg("architect") as any));
       stageLog("architect");
-      // Same repair policy the overview stage used: re-run only when nothing PARSED.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!(st.blueprint as any) && ((st.reviseCount as number) ?? 0) < 2) { Object.assign(st, await architect(st as any, cfg("architect-retry") as any)); stageLog("architect-retry"); }
+      // Invalid skeletons stop this attempt; another generation requires an
+      // explicit user action. No automatic semantic repair purchase.
       console.log(`[timing] build-design TOTAL: ${Date.now() - dStart}ms`);
 
       const skeleton = st.blueprint as Blueprint | null;
-      if (!skeleton) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design the lesson structure — please try again (you were not charged)."; return; }
+      if (!skeleton) { jl.status = "error"; job.status = "error"; job.error = "Couldn't design the lesson structure — please try again. Earlier provider work may have been charged."; return; }
       skeleton.meta.title = bp.meta.title; // honor the approved title
       skeleton.brief = bp.brief;           // carry the approved brief on the built lesson
       bp = skeleton;
@@ -247,7 +242,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     // DURABILITY (B3): build ONE module with skip-and-continue — a single module that errors (a 502,
     // an overload that exhausts retries, a parse fault) becomes a STUB and the build CONTINUES, so
     // the lesson reaches a usable state even if one module fails (the stub then builds on demand via
-    // /api/module). runDeepDive already rides out transient 429/529 internally (withOverloadRetry).
+    // /api/module). Each module attempts its provider exactly once.
     let successCount = 0, failCount = 0;
     const buildOne = async (mod: (typeof bp.modules)[number]): Promise<void> => {
       const t = Date.now();
@@ -259,7 +254,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         else { failCount++; console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" did not build (kept as stub; builds on demand)`); }
       } catch (e) {
         failCount++; // never let one module throw the whole build
-        console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" threw — skipping, build continues:`, e instanceof Error ? e.message : String(e));
+        console.warn(`[runBuildJob] module ${mod.order} "${mod.title}" threw — skipping, build continues:`, generationErrorCategory(e));
       }
       jl.builtModules++; // count toward progress regardless so the build can reach 100%
       jl.percent = lessonPercent(jl);
@@ -275,7 +270,7 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
         await writeOverviewProse(bp, { config: cfg("glossary+synthesis") });
         await persist();
       } catch (e) {
-        console.warn("[runBuildJob] overview-prose:", e instanceof Error ? e.message : String(e));
+        console.warn("[runBuildJob] overview-prose:", generationErrorCategory(e));
       }
     })();
 
@@ -312,15 +307,15 @@ export async function runBuildJob(job: Job, artifactId: string): Promise<void> {
     const fullSuccess = pending.length > 0 && failCount === 0;
     if (fullSuccess && art.userId) {
       try { await spendOne(art.userId); }
-      catch (e) { console.error("[runBuildJob] credit deduct failed", e); }
+      catch (e) { console.error("[runBuildJob] credit deduct failed", generationErrorCategory(e)); }
     } else if (!fullSuccess) {
       console.warn(`[runBuildJob] partial build (${failCount} stub(s)) — NOT charging; remaining modules build on demand via /api/module.`);
     }
     job.status = "done";
   } catch (e) {
     job.status = "error";
-    job.error = e instanceof Error ? e.message : String(e);
-    console.error("[runBuildJob]", e);
+    job.error = safeGenerationError(e);
+    console.error("[runBuildJob]", generationErrorCategory(e));
   } finally {
     releaseGenSlot();
     // Background jobs can exit before traces flush — force the flush.

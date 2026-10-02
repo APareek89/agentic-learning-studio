@@ -1,3 +1,4 @@
+import { generationErrorCategory } from "../agent/generation-errors";
 /**
  * # Hands-On notebooks — lazy, cached, browser-runnable Python practice
  *
@@ -64,7 +65,7 @@ export function cacheKey(lessonId: string, moduleId: string | null): string {
 // ============================================================================
 // VALIDATION — code runs in the user's browser, so reject anything network/FS/
 // shell/paid-SDK before we store or render it. (Defence in depth; Pyodide is also
-// sandboxed.) On a fail we regenerate once stricter, then fall back to a safe demo.
+// sandboxed.) A failed generation falls back to a labelled provider-free demo.
 // ============================================================================
 const FORBIDDEN: RegExp[] = [
   /\bimport\s+(?:os|subprocess|socket|requests|urllib|http|shutil)\b/i,
@@ -151,7 +152,7 @@ async function verifyNotebook(nb: Notebook): Promise<{ ok: boolean; notebook: No
     if (!v.ok) return { ok: true, notebook: nb };
     return { ok: !!out.ok, notebook: fixed };
   } catch (e) {
-    console.warn(`[handson] verify pass unavailable for "${nb.title}":`, (e as Error).message?.slice(0, 100));
+    console.warn(`[handson] verify pass unavailable for "${nb.title}":`, generationErrorCategory(e));
     return { ok: true, notebook: nb }; // verifier down → proceed with the validated notebook
   }
 }
@@ -246,7 +247,7 @@ async function searchKB(embedText: string): Promise<{ notebook: Notebook; sim: n
       return { notebook: nb, sim: Number(rows[0].sim) };
     }
   } catch (e) {
-    console.warn("[handson] KB search unavailable:", (e as Error).message?.slice(0, 100));
+    console.warn("[handson] KB search unavailable:", generationErrorCategory(e));
   }
   return null;
 }
@@ -310,7 +311,7 @@ export async function peekCache(lessonId: string, moduleId: string | null): Prom
   return readCache(cacheKey(lessonId, moduleId));
 }
 
-/** Cache → live-gen → validate (one stricter retry) → safe fallback → store. */
+/** Cache → one live generation → validate → bounded review or safe fallback → store. */
 export async function getOrCreate(lessonId: string, moduleId: string | null, bp: Blueprint): Promise<NotebookResult> {
   const key = cacheKey(lessonId, moduleId);
   const hit = await readCache(key);
@@ -331,9 +332,7 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
 
   let result: NotebookResult;
   let model = configuredModelId("haiku");
-  // One attempt + one stricter retry. The retry covers BOTH a validation failure AND a
-  // structured-output parse throw (Haiku occasionally returns unparseable JSON), so a single
-  // flaky response doesn't drop us straight to the fallback.
+  // One generation attempt. Validation or provider failure uses the labelled local fallback.
   const tryGen = async (strict: boolean): Promise<Notebook | null> => {
     try {
       const nb = await generateNotebook(ctx, strict);
@@ -342,12 +341,13 @@ export async function getOrCreate(lessonId: string, moduleId: string | null, bp:
       console.warn(`[handson] gen failed validation (${v.reason}) for "${ctx.topic}"${strict ? " [strict]" : ""}`);
       return null;
     } catch (e) {
-      console.warn(`[handson] gen threw for "${ctx.topic}"${strict ? " [strict]" : ""}:`, (e as Error).message?.slice(0, 120));
+      console.warn(`[handson] gen threw for "${ctx.topic}"${strict ? " [strict]" : ""}:`, generationErrorCategory(e));
       return null;
     }
   };
   let nb = await tryGen(false);
-  if (!nb) nb = await tryGen(true);
+  // A failed generation is not repurchased automatically. The fallback is
+  // explicit and provider-free.
   if (nb) {
     // Feedback loop: a second Haiku agent traces + fixes the code so it runs error-free and
     // prints output. Up to 2 passes; stop as soon as it certifies the notebook is clean.

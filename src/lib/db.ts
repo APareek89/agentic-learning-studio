@@ -27,7 +27,7 @@ function getPool(): pg.Pool | null {
   const connection = new URL(url);
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(connection.hostname);
   // Prevent URL sslmode flags from overriding the explicit verified TLS configuration.
-  for (const key of ["sslmode", "sslrootcert", "sslcert", "sslkey"]) connection.searchParams.delete(key);
+  for (const key of [...connection.searchParams.keys()]) if (key.toLowerCase().startsWith("ssl")) connection.searchParams.delete(key);
   if (process.env.DATABASE_SSL === "disable" && !local) throw new Error("Unencrypted database connections require loopback");
   const caFile = process.env.DATABASE_SSL_CA_FILE;
   pool = new pg.Pool({

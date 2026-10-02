@@ -28,6 +28,7 @@ export interface LessonCard {
   buildPct: number;
   modulesBuilt: number;
   modulesTotal: number;
+  prepared: boolean;
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -40,7 +41,7 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
   requireUserId(userId);
   if (!dbEnabled() || !userId) return [];
   const rows = await query<{
-    id: string; title: string | null; prompt: string | null;
+    id: string; title: string | null; prompt: string | null; prepared: boolean;
     created_at: Date; expires_at: Date; rating: number | null; profile: { industry?: string } | null;
     course_id: string | null; course_total: number | null; percent: number | null;
     built_modules: string | number | null; total_modules: number | null;
@@ -50,7 +51,7 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
     // BUILD progress is counted in SQL straight from the blueprint's module loadState (a module
     // is "built" once loadState = 'full' AND it has blocks) — so we NEVER ship the (large)
     // blueprint JSON to the client just to know how far a background build has got.
-    `select l.id, l.title, l.prompt, l.created_at, l.expires_at, l.rating, l.profile,
+    `select l.id, l.title, l.prompt, (coalesce(l.cards->>'preparedExample','false') = 'true' or coalesce(l.prompt,'') like 'Cached example:%') as prepared, l.created_at, l.expires_at, l.rating, l.profile,
             l.course_id, l.course_total, p.percent,
             (select count(*) from jsonb_array_elements(coalesce(l.blueprint->'modules','[]'::jsonb)) m
                where m->>'loadState' = 'full'
@@ -76,6 +77,7 @@ export async function listLessons(userId: string, email = ""): Promise<LessonCar
       id: r.id,
       title: r.title || "Untitled lesson",
       prompt: r.prompt,
+      prepared: r.prepared,
       createdAt: new Date(r.created_at).toISOString(),
       expiresAt: new Date(r.expires_at).toISOString(),
       daysRemaining: Math.max(0, Math.ceil((new Date(r.expires_at).getTime() - now) / MS_PER_DAY)),

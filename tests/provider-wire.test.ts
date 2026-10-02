@@ -37,9 +37,9 @@ test("real SDK serialization omits invalid sampling fields for all configured ti
   reject = true;
   await assert.rejects(makeLLM("sonnet", 0.2, { maxTokens: 500, maxRetries: 0, auditRequest: true }).invoke("Offline failure only"));
   assert.equal(requests.length, 4, "failed proof request must not retry");
-  assert.equal(logs.length, 4);
-  assert.match(logs.at(-1)!, /"status":400/);
-  assert.match(logs.at(-1)!, /"errorCategory":"top_k_validation"/);
+  assert.equal(logs.filter(l => l.startsWith("[provider-request]")).length, 4);
+  assert.match(logs.filter(l => l.startsWith("[provider-request]")).at(-1)!, /"status":400/);
+  assert.match(logs.filter(l => l.startsWith("[provider-request]")).at(-1)!, /"errorCategory":"top_k_validation"/);
   assert.ok(!logs.join(" ").includes("private-marker"));
   assert.ok(!logs.join(" ").includes("private-prompt"));
 });

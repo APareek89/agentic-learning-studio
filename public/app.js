@@ -680,6 +680,7 @@ function activateTab(id) {
       } else if (t.type === "lesson") {
         t._preview = false; // now showing the real (promoted) lesson render
         currentArtifactId = t.art; currentLessonOwned = true;
+        fetch("/api/artifact/" + encodeURIComponent(t.art) + "/metadata", { headers: authHeaders() }).then(r => r.ok ? r.json() : null).then(meta => { if (meta) t.prepared = meta.prepared === true; }).catch(() => {});
         downloadBtn.hidden = false; downloadBtn.href = "/api/artifact/" + t.art + "/full";
         openWindowBtn.hidden = false; askMoreBtn.hidden = false; resetStars(); ratingEl.hidden = false; setOverviewMode(false);
       } else { // library / community (public, read-only)
@@ -978,12 +979,12 @@ function lessonCard(l, buildingPct) {
     <div class="lr-actions">
       ${openBtn}
       ${isCourse ? "" : `<a class="ghost lr-dl" href="/api/artifact/${l.id}/full" download>Download</a>`}
-      <button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Share with Community"}</button>
+      ${l.prepared ? `<span class="lc-badge">Prepared example</span>` : `<button class="lr-share${shared ? " shared" : ""}" type="button" ${shared ? "disabled" : ""}>${shared ? "✓ Shared" : "Share with Community"}</button>`}
     </div>`;
   const openEl = el.querySelector(".lr-open");
   if (canOpen) openEl.addEventListener("click", () => {
     if (isCourse) { openCourseById(l.courseId, l.title); return; }
-    openLessonInWorkspace(l.id, l.title, l.prompt);
+    openLessonInWorkspace(l.id, l.title, l.prompt, l.prepared);
   });
   const share = el.querySelector(".lr-share");
   if (share && !shared) share.addEventListener("click", () => openShareModal(l.id));
@@ -1310,6 +1311,7 @@ let shareLessonId = null;
 const offeredShare = {}; // per-lesson, so the Trainer popup only fires once per session
 
 function openShareModal(lessonId) {
+  if (tabs.some(t => t.art === lessonId && t.prepared === true)) return;
   if (authRequiredAndOut()) { openAuth("signin"); return; }
   shareLessonId = lessonId;
   shareMsg.hidden = true; shareMsg.textContent = "";
@@ -1396,7 +1398,7 @@ window.addEventListener("message", (e) => {
   // Beta traction: count a completed lesson once, when the reader reaches 100%.
   if ((d.percent || 0) >= 100 && lessonId) { window.__alsCompleted = window.__alsCompleted || new Set(); if (!window.__alsCompleted.has(lessonId)) { window.__alsCompleted.add(lessonId); track("lesson_completed", lessonId); } }
   // After two modules, offer the share-and-save once (unless already shared).
-  if ((d.visited || 0) >= 2 && !offeredShare[lessonId] && !isShared(lessonId)) {
+  if (tabById(activeTabId)?.prepared === false && (d.visited || 0) >= 2 && !offeredShare[lessonId] && !isShared(lessonId)) {
     offeredShare[lessonId] = 1;
     openShareModal(lessonId);
   }
@@ -1839,7 +1841,7 @@ function pollJob(jobId, tabId) {
 }
 
 // Open a lesson (own/course) into a Trainer tab.
-function openLessonInWorkspace(id, title, prompt) { openTab({ type: "lesson", title, art: id, prompt }); }
+function openLessonInWorkspace(id, title, prompt, prepared) { openTab({ type: "lesson", title, art: id, prompt, prepared }); }
 // Courses open their first lesson as a single tab (the old course sub-strip is retired).
 function openCourse(courseId, lessons, activeIndex) {
   const a = (lessons || [])[activeIndex || 0] || (lessons || [])[0];

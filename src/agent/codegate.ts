@@ -1,3 +1,4 @@
+import { generationErrorCategory, safeGenerationError } from "./generation-errors";
 /**
  * # Code gate — objective checks on generated code snippets (content-integrity pass)
  *
@@ -131,7 +132,7 @@ export async function repairCodeIssues(bp: Blueprint, m: Module, lint: CodeLintR
     }
     return repaired;
   } catch (err) {
-    console.warn("[code-gate] repair failed:", (err as Error).message?.slice(0, 120));
+    console.warn("[code-gate] repair failed:", generationErrorCategory(err));
     return 0;
   }
 }
